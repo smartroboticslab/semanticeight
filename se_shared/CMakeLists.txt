@@ -10,6 +10,10 @@ add_library(${LIB_NAME} STATIC
   "src/str_utils.cpp"
   "src/point_cloud_utils.cpp"
   "src/stats.cpp"
+  "src/segmentation.cpp"
+  "src/detection_confidence.cpp"
+  "src/instance_segmentation.cpp"
+  "src/segmentation_result.cpp"
 )
 target_include_directories(${LIB_NAME}
   PUBLIC
@@ -22,6 +26,7 @@ target_link_libraries(${LIB_NAME}
     SRL::Projection
 	Lode::PNG
     ${YAML_CPP_LIBRARIES}
+    CNPY::cnpy
 )
 set_target_properties(${LIB_NAME} PROPERTIES
   CXX_STANDARD 14

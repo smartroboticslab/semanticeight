@@ -21,4 +21,5 @@ add_definitions(-DSE_SENSOR_IMPLEMENTATION=PinholeCamera)
 
 add_subdirectory(image)
 add_subdirectory(image_utils)
+add_subdirectory(segmentation)
 
