@@ -19,6 +19,7 @@ link_libraries(
 # Preprocessor definitions for all tests
 add_definitions(-DSE_SENSOR_IMPLEMENTATION=PinholeCamera)
 
+add_subdirectory(bounding_volume)
 add_subdirectory(image)
 add_subdirectory(image_utils)
 add_subdirectory(segmentation)

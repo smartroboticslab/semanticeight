@@ -14,6 +14,7 @@ add_library(${LIB_NAME} STATIC
   "src/detection_confidence.cpp"
   "src/instance_segmentation.cpp"
   "src/segmentation_result.cpp"
+  "src/bounding_volume.cpp"
 )
 target_include_directories(${LIB_NAME}
   PUBLIC
