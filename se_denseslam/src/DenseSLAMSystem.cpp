@@ -49,7 +49,8 @@
 #include "se/perfstats.h"
 #include "se/rendering.hpp"
 #include "se/semanticeight_definitions.hpp"
-
+#include "se/depth_utils.hpp"
+#include "se/object_utils.hpp"
 
 extern PerfStats stats;
 
@@ -87,7 +88,11 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     surface_normals_M_(image_res_.x(), image_res_.y(), Eigen::Vector3f::Zero()),
     render_T_MC_(&T_MC_),
     T_MW_(T_MW),
-    input_segmentation_(image_res_.x(), image_res_.y())
+    input_segmentation_(image_res_.x(), image_res_.y()),
+    processed_segmentation_(image_res_.x(), image_res_.y()),
+    object_surface_point_cloud_M_(image_res_.x(), image_res_.y()),
+    object_surface_normals_M_(image_res_.x(), image_res_.y()),
+    object_scale_image_(image_res_.x(), image_res_.y(), -1)
   {
 
     bool has_yaml_voxel_impl_config = false;
@@ -127,6 +132,11 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     // Initialize the map
     map_ = std::shared_ptr<se::Octree<VoxelImpl::VoxelType> >(new se::Octree<VoxelImpl::VoxelType>());
     map_->init(map_size_.x(), map_dim_.x());
+
+    // Semanticeight-only /////////////////////////////////////////////////////
+    valid_depth_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()), se::mask_t, cv::Scalar(255));
+    raycasted_instance_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()),
+        se::instance_mask_t, cv::Scalar(se::instance_bg));
 }
 
 
@@ -449,7 +459,7 @@ bool DenseSLAMSystem::preprocessSegmentation(
       << "   Objects " << segmentation.object_instances.size()
       << "\n";
 #endif
-  //updateValidDepthMask(depth_image_); // TODO implement and comment out
+
   // Copy the segmentation output and resize if needed
   input_segmentation_ = segmentation;
   input_segmentation_.resize(image_res_.x(), image_res_.y());
@@ -467,11 +477,156 @@ bool DenseSLAMSystem::preprocessSegmentation(
 
 
 
+bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor) {
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << "trackObjects in:   Number of current objects: "
+      << objects_.size() << "\n";
+#endif
+  updateValidDepthMask(depth_image_);
+
+  // Save the resulting masks in processed_segmentation_
+  processed_segmentation_ = se::SegmentationResult(input_segmentation_);
+
+  // Process masks to improve segmentation results.
+  processed_segmentation_.removeLowConfidence(class_confidence_threshold_);
+  processed_segmentation_.removeStuff();
+  processed_segmentation_.removeSmall(small_mask_threshold_);
+  processed_segmentation_.removeInvalidDepth(valid_depth_mask_);
+  //processed_segmentation_.morphologicalRefinement(10);
+  // TODO: more mask prerocessing
+
+  // Compute the objects visible from the camera pose computed by tracking based on their bounding
+  // volumes.
+  visible_objects_ = se::get_visible_object_ids(objects_, sensor, T_MC_);
+
+  // Raycast the background and objects from the current pose.
+  raycastObjectsAndBg(sensor);
+
+  // Match new objects to existing visible object instances.
+  matchObjectInstances(processed_segmentation_, iou_threshold_);
+
+  // Create object instances for all existing visible objects that were not
+  // present in the segmentation.
+  // TODO
+
+  // Add the new detected objects to the object list and to the
+  // visible_objects_.
+  generateObjects(processed_segmentation_, sensor);
+
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << processed_segmentation_;
+  std::cout << "trackObjects out:  Number of current objects: "
+      << objects_.size() << "\n\n";
+#endif
+  return true;
+}
+
+
+
+bool DenseSLAMSystem::integrateObjects(const SensorImpl& sensor,
+                                       const size_t      frame) {
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << "Integration in:    Number of objects to integrate: "
+      << processed_segmentation_.object_instances.size() << "\n";
+#endif
+  // Integrate each object detection, including the background.
+  for (auto& object_detection : processed_segmentation_.object_instances) {
+    const int object_instance = object_detection.instance_id;
+    Object& object = *(objects_[object_instance]);
+    object.integrate(depth_image_, rgba_image_, object_detection, T_MC_, sensor, frame);
+
+#if SE_BOUNDING_VOLUME != SE_BV_NONE
+    // Update the bounding volume from the new measurement.
+    if (object_instance != se::instance_bg) {
+      object.bounding_volume_M_.merge(input_point_cloud_C_[0], T_MC_,
+          object_detection.instance_mask);
+    }
+#else
+#endif
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+    std::cout << object_detection << "\n";
+#endif
+  }
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << "Integration out:    " << "\n\n";
+#endif
+#if SE_VERBOSE == SE_VERBOSE_MINIMAL
+  for (const auto& object : objects_) {
+    std::cout << *object << "\n";
+  }
+#endif
+  return true;
+}
+
+
+
+bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor) {
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << "Raycasting in:     " << "\n";
+#endif
+
+  // Raycast the background.
+  raycast(sensor);
+  // Raycast all objects.
+  raycastObjectListKernel(objects_, visible_objects_, object_surface_point_cloud_M_,
+      object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_, raycast_T_MC_, sensor);
+  // Compute regions where objects are occluded by the background.
+  cv::Mat mask = se::occlusion_mask(object_surface_point_cloud_M_, surface_point_cloud_M_,
+      map_->voxelDim(), raycast_T_MC_);
+  // Occlude the object raycasts by the background.
+#pragma omp parallel for
+  for (int pixel_idx = 0; pixel_idx < image_res_.prod(); ++pixel_idx) {
+    const bool object_occluded = mask.at<se::mask_elem_t>(pixel_idx);
+    if (object_occluded) {
+      object_surface_point_cloud_M_[pixel_idx] = surface_point_cloud_M_[pixel_idx];
+      object_surface_normals_M_[pixel_idx] = surface_normals_M_[pixel_idx];
+      raycasted_instance_mask_.at<se::instance_mask_elem_t>(pixel_idx) = se::instance_bg;
+      object_scale_image_[pixel_idx] = -1;
+    }
+  }
+
+#if SE_VERBOSE >= SE_VERBOSE_FLOOD
+  for (const auto& instance_id : visible_objects_) {
+    std::cout << instance_id << " ";
+  }
+  std::cout << "\n";
+#endif
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << "Raycasting out:    Visible objects: "
+    << visible_objects_.size() << "/" << objects_.size()
+    << "\n\n";
+#endif
+  return true;
+}
+
+
+
+void DenseSLAMSystem::renderObjects(uint32_t*              output_image_data,
+                                    const Eigen::Vector2i& output_image_res,
+                                    const SensorImpl&      sensor,
+                                    const RenderMode       render_mode,
+                                    const bool             render_bounding_volumes) {
+
+  // Render the background normally.
+  renderVolume(output_image_data, output_image_res, sensor);
+
+  // Overlay the objects using the current raycast.
+  renderObjectListKernel(output_image_data, output_image_res,
+      se::math::to_translation(*render_T_MC_), ambient, objects_, object_surface_point_cloud_M_,
+      object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_, render_mode);
+
+  if (render_bounding_volumes) {
+    overlayBoundingVolumeKernel(output_image_data, output_image_res, objects_,
+        *render_T_MC_, sensor, 1.0f);
+  }
+}
+
+
+
 void DenseSLAMSystem::renderObjectClasses(uint32_t*              output_image_data,
                                           const Eigen::Vector2i& output_image_res) const {
   renderMaskKernel<se::class_mask_elem_t>(output_image_data, output_image_res,
-      rgba_image_, input_segmentation_.classMask());
-      //rgba_image_, final_masks_.classMask()); // TODO implement and comment out
+      rgba_image_, processed_segmentation_.classMask());
 }
 
 
@@ -479,7 +634,205 @@ void DenseSLAMSystem::renderObjectClasses(uint32_t*              output_image_da
 void DenseSLAMSystem::renderObjectInstances(uint32_t*              output_image_data,
                                             const Eigen::Vector2i& output_image_res) const {
   renderMaskKernel<se::instance_mask_elem_t>(output_image_data, output_image_res,
-      rgba_image_, input_segmentation_.instanceMask());
-      //rgba_image_, final_masks_.instanceMask()); // TODO implement and comment out
+      rgba_image_, processed_segmentation_.instanceMask());
+}
+
+
+
+void DenseSLAMSystem::renderRaycast(uint32_t*              output_image_data,
+                                    const Eigen::Vector2i& output_image_res) {
+  renderMaskKernel<se::instance_mask_elem_t>(output_image_data, output_image_res,
+      rgba_image_, raycasted_instance_mask_, 0.8);
+}
+
+
+
+void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool print_path) {
+  for (const auto& object : objects_) {
+    std::vector<se::Triangle> mesh;
+    VoxelImpl::dumpMesh(*(object->map_), mesh);
+    const std::string f = filename + "_" + std::to_string(object->instance_id) + ".vtk";
+    const Eigen::Matrix4f T_WO = se::math::to_inverse_transformation(object->T_OM_ * T_MW_);
+    if (print_path) {
+      std::cout << "Saving triangle mesh to file :" << f  << "\n";
+    }
+    save_mesh_vtk(mesh, f.c_str(), T_WO, object->voxelDim());
+  }
+}
+
+
+
+// Private functions //////////////////////////////////////////////////////////
+void DenseSLAMSystem::computeNewObjectParameters(
+    Eigen::Matrix4f&       T_OM,
+    int&                   map_size,
+    float&                 map_dim,
+    const cv::Mat&         mask,
+    const int              class_id,
+    const Eigen::Matrix4f& T_MC) {
+
+  // Reference to the vertex map in camera coordinates.
+  const se::Image<Eigen::Vector3f>& point_cloud_C = input_point_cloud_C_[0];
+
+  // Compute the minimum, maximum and mean vertex values in world coordinates.
+  Eigen::Vector3f vertex_min;
+  Eigen::Vector3f vertex_max;
+  Eigen::Vector3f vertex_mean;
+
+#if SE_VERBOSE >= SE_VERBOSE_DETAILED
+  const int count =
+#endif
+  vertexMapStats(point_cloud_C, mask, T_MC, vertex_min, vertex_max, vertex_mean);
+
+  // Compute map dimensions
+  const float max_dim = (vertex_max - vertex_min).maxCoeff();
+  map_dim = fminf(2.5 * max_dim, 5.0);
+
+#if SE_VERBOSE >= SE_VERBOSE_DETAILED
+  std::cout<< __func__ << " max/min x/y/z: "
+      << vertex_min.x() << " " << vertex_max.x() << " "
+      << vertex_min.y() << " " << vertex_max.y() << " "
+      << vertex_min.z() << " " << vertex_max.z()
+      << std::endl;
+  std::cout<< __func__ << " average of vertex out of " << count << ": "
+      << vertex_mean.x() << " " << vertex_mean.y() << " " << vertex_mean.z()
+      << ", with the max size " << max_dim
+      << std::endl;
+#endif
+
+  // Select the map size depending on the object class.
+  if (se::is_class_stuff(class_id)) {
+    // "Stuff" should have the same resolution as the background.
+    map_size = objects_[0]->mapSize();
+  } else {
+    // For "things" compute the volume size to achieve a voxel size of se::class_res[class_id].
+    if (map_dim == 0.0f) {
+      map_size = 0;
+    } else {
+      const float size_f = map_dim / se::class_res[class_id];
+      // Round up to the nearest power of 2.
+      map_size = 2 << static_cast<int>(ceil(log2(size_f)));
+      // Saturate to 2048 voxels.
+      map_size = std::min(map_size, 2048);
+    }
+  }
+
+  // Put the origin of the Object frame at the corner of the object map. t_OM
+  // is the origin of the Map frame expressed in the Object frame.
+  T_OM = Eigen::Matrix4f::Identity();
+  T_OM.topRightCorner<3,1>() = Eigen::Vector3f::Constant(map_dim / 2.0f) - vertex_mean;
+}
+
+
+
+void DenseSLAMSystem::matchObjectInstances(
+    se::SegmentationResult& detections,
+    const float             matching_threshold) {
+  // Loop over all detected objects.
+  for (auto& detection : detections) {
+    // Loop over all visible objects to find the best match.
+    float best_score = 0.f;
+    int best_instance_id = se::instance_new;
+    for (const auto& object_id : visible_objects_) {
+      const Object& object = *(objects_[object_id]);
+      // Compute the IoU of the masks.
+      const cv::Mat object_mask = se::extract_instance(raycasted_instance_mask_, object.instance_id);
+      const float iou = se::notIoU(detection.instance_mask, object_mask);
+      const float score = iou;
+      //const int same_class = (detection.classId() == object.classId());
+      //const float score = iou * same_class;
+
+      // Test if a better match was found.
+      if ((score > matching_threshold) and (score > best_score)) {
+        best_score = score;
+        best_instance_id = object.instance_id;
+      }
+    }
+
+    // Set the instance ID to that of the best match.
+    detection.instance_id = best_instance_id;
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+    std::cout << "Matched " << detection << " with IoU: " << best_score << std::endl;
+#endif
+  }
+}
+
+
+
+void DenseSLAMSystem::generateObjects(se::SegmentationResult& masks,
+                                      const SensorImpl&       sensor) {
+  // TODO: Only call the below function once when tracking is run.
+  // Generate the vertex map from the current depth frame. When tracking is
+  // performed this step is redundant.
+  depthToPointCloudKernel(input_point_cloud_C_[0], scaled_depth_image_[0], sensor);
+
+  // Iterate over all detected objects
+  for (auto& object_detection : masks) {
+    // If this is not a new object, skip generating it.
+    const int& instance_id = object_detection.instance_id;
+    if (instance_id != se::instance_new)
+      continue;
+
+    // Get references to object data.
+    const cv::Mat& mask =  object_detection.instance_mask;
+    const int& class_id = object_detection.classId();
+
+    if ((class_id == se::class_bg) || (class_id == 255))
+      continue;
+
+    // Determine the new object volume size and pose.
+    int map_size;
+    float map_dim;
+    Eigen::Matrix4f T_OM;
+    computeNewObjectParameters(T_OM, map_size, map_dim,
+        mask, class_id, T_MC_);
+
+    // The mask may contain no valid depth measurements. In that case the
+    // detected object instance must be removed from the SegmentationResult.
+    // Set the instance ID to se::instance_invalid so that it is removed
+    // afterwards.
+    if (map_size == 0) {
+      object_detection.instance_id = se::instance_invalid;
+      continue;
+    }
+
+    // Add the object to the object list.
+    const int new_object_instance_id = objects_.size();
+    objects_.emplace_back(new Object(image_res_,
+        Eigen::Vector3i::Constant(map_size),
+        Eigen::Vector3f::Constant(map_dim),
+        T_OM, T_MC_, new_object_instance_id));
+    // Update the instance ID of the object detection as well.
+    object_detection.instance_id = new_object_instance_id;
+    // Add it to the visible_objects_.
+    visible_objects_.insert(object_detection.instance_id);
+
+#if SE_VERBOSE >= SE_VERBOSE_DETAILED
+    std::cout <<  __func__ << ":"
+        << "   volume extent: " << map_dim
+        << "   volume size: " << map_size
+        << "   volume step: " << map_dim / map_size
+        << "   class id: "<< class_id
+        << "   T_OM:\n" << T_OM << std::endl;
+#endif
+  }
+
+  // Remove all masks whose corresponding depth measurements are all invalid.
+  masks.removeInvalid();
+}
+
+
+
+void DenseSLAMSystem::updateValidDepthMask(const se::Image<float>& depth) {
+#pragma omp parallel for
+  for (int y = 0; y < depth.height(); y++) {
+    for (int x = 0; x < depth.width(); x++) {
+      if (depth[x + y * depth.width()] != 0.f) {
+        valid_depth_mask_.at<se::mask_elem_t>(y, x) = 255;
+      } else {
+        valid_depth_mask_.at<se::mask_elem_t>(y, x) = 0;
+      }
+    }
+  }
 }
 

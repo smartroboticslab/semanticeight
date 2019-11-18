@@ -39,6 +39,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <set>
+#include <vector>
 
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Dense>
@@ -56,6 +58,8 @@
 #include "preprocessing.hpp"
 #include "tracking.hpp"
 #include "se/io/octomap_io.hpp"
+#include "object.hpp"
+#include "object_rendering.hpp"
 
 
 
@@ -106,6 +110,110 @@ class DenseSLAMSystem {
      * The input segmentation for the current frame.
      */
     se::SegmentationResult input_segmentation_;
+
+    /**
+     * The segmentation for the current frame after it has been post processed
+     * and the detections matched to any existing objects.
+     */
+    se::SegmentationResult processed_segmentation_;
+
+    /**
+     * The objects detected and tracked by the pipeline. The background is
+     * always the first object.
+     */
+    Objects objects_;
+
+    /**
+     * The instance IDs of the objects that are currently visible by the
+     * camera.
+     */
+    std::set<int> visible_objects_;
+
+    /**
+     * The value of the mask is 1 for pixels with a valid depth measurement
+     * (not 0) and 0 elsewhere. Its type is se::mask_t.
+     */
+    cv::Mat valid_depth_mask_;
+
+    /**
+     * The value of the mask corresponds to the instance ID of the object that
+     * was raycasted at the corresponding pixel. Its type is se::instance_mask_t.
+     */
+    cv::Mat raycasted_instance_mask_;
+
+    se::Image<Eigen::Vector3f> object_surface_point_cloud_M_;
+    se::Image<Eigen::Vector3f> object_surface_normals_M_;
+
+    /**
+     * Contains the scale at which each pixel was hit in the last raycasting.
+     */
+    se::Image<int8_t> object_scale_image_;
+
+    /**
+     * IOU threshold in [0, 1] to consider two masks matched.
+     */
+    static constexpr float iou_threshold_ = 0.25;
+
+    /**
+     * Small mask removal threshold in [0, 1].
+     */
+    static constexpr float small_mask_threshold_ = 0.005;
+
+    /**
+     * Minimum acceptable confidence for class detections [0, 1].
+     */
+    static constexpr float class_confidence_threshold_ = 0.75;
+
+
+
+    /**
+     * Given a mask, compute the appropriate volume extent and size as well as
+     * its pose. Return volume extent and volume size of 0 if the object is
+     * invalid (e.g. if the masked region has no valid depth meausurements.
+     * Also compute the object bounding sphere.
+     *
+     * \note depth2vertexKernel() must have been called so that
+     * DenseSLAMSystem::input_point_cloud_C_[0] contains the vertex map
+     * produced from the current depth frame before calling this function.
+     *
+     * \todo TODO Improve the heuristics used for the object size.
+     */
+    void computeNewObjectParameters(Eigen::Matrix4f&       T_OM,
+                                    int&                   volume_size,
+                                    float&                 volume_extent,
+                                    const cv::Mat&         mask,
+                                    const int              class_id,
+                                    const Eigen::Matrix4f& T_MC);
+
+    /**
+     * Compare the current detections with the raycasted_object_mask_ created
+     * by DenseSLAMSystem::raycastObjectsAndBg() and match them using IoU
+     * (Intersection over Union).  When one of the current detections is
+     * matched to a mask of an existing object, set its instance ID to that of
+     * the object.
+     *
+     * \note The raycasted_object_mask_ must have been created by raycasting
+     * the current object list using DenseSLAMSystem::raycastObjectsAndBg().
+     */
+    void matchObjectInstances(se::SegmentationResult& detections,
+                              const float             matching_threshold);
+
+    /**
+     * Generate new objects based on the segmentation masks. Only generate
+     * objects for the masks whose respective instance ids are not already in
+     * object_list_. The instance_id_s of masks are updated where needed to
+     * reflect the instance IDs of the new objects.
+     *
+     * \param[in] masks The object masks resulting from the segmentation.
+     * \param[in] sensor
+     * ::Configuration.camera for details.
+     */
+    void generateObjects(se::SegmentationResult& masks,
+                         const SensorImpl&       sensor);
+
+    void updateValidDepthMask(const se::Image<float>& depth);
+
+
 
   public:
     /**
@@ -623,6 +731,58 @@ class DenseSLAMSystem {
     bool preprocessSegmentation(const se::SegmentationResult& segmentation);
 
     /**
+     * Process the semantic masks to create masks suitable for merging the
+     * detected objects. This is the third stage of the pipeline.
+     *
+     * \param[in] sensor
+     */
+    bool trackObjects(const SensorImpl& sensor);
+
+    /**
+     * Integrate the 3D reconstruction resulting from the current frame to the
+     * existing reconstruction. This integrates all objects detected in the
+     * current frame. This is the fourth stage of the pipeline.
+     *
+     * \param[in] sensor
+     * \param[in] frame The index of the current frame (starts from 0).
+     * \return true if the current 3D reconstruction was added to the octree
+     * and false if it wasn't.
+     */
+    bool integrateObjects(const SensorImpl& sensor,
+                          const size_t      frame);
+
+    /**
+     * Raycast the 3D reconstruction after integration to generate the vertex
+     * and normal maps for each object from the current pose. This is the fifth
+     * stage of the pipeline.
+     *
+     * \note Raycast is not performed on the first 3 frames (those with an
+     * index up to 2).
+     *
+     * \param[in] sensor
+     * \return true if raycasting was performed and false if it wasn't.
+     */
+    bool raycastObjectsAndBg(const SensorImpl& sensor);
+
+    /**
+     * Render the current 3D reconstruction.
+     *
+     * \param[out] output_image_data A pointer to an array where the image will
+     *                               be rendered. The array must be allocated
+     *                               before calling this function, one uint32_t
+     *                               per pixel.
+     * \param[in] output_image_res   The dimensions of the output array (width
+     *                               and height in pixels).
+     * \param[in] sensor
+     * details.
+     */
+    void renderObjects(uint32_t*              output_image_data,
+                       const Eigen::Vector2i& output_image_res,
+                       const SensorImpl&      sensor,
+                       const RenderMode       render_mode = RenderMode::InstanceID,
+                       const bool             render_bounding_volumes = true);
+
+    /**
      * Render the predicted class of each object overlaid on the current RGB
      * frame with a different colour.
      *
@@ -648,6 +808,25 @@ class DenseSLAMSystem {
      */
     void renderObjectInstances(uint32_t*              output_image_data,
                                const Eigen::Vector2i& output_image_res) const;
+
+    /**
+     * Render the object instance mask produced by raycasting blended with the
+     * current RGB frame.
+     *
+     * \param[out] output_image_data Pointer to an array containing the
+     * rendered frame, 4 channels, 8 bits per channel. The array must be
+     * allocated before calling this function.
+     * \param[in] output_image_res The dimensions of the output image (width
+     * and height in pixels).
+     */
+    void renderRaycast(uint32_t*              output_image_data,
+                       const Eigen::Vector2i& output_image_res);
+
+    void dumpObjectMeshes(const std::string filename, const bool print_path);
+
+    Objects getObjectMaps() {
+      return objects_;
+    }
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
