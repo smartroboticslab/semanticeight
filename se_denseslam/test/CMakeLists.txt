@@ -16,5 +16,6 @@ link_libraries(
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
+add_subdirectory(depth_utils)
 add_subdirectory(preprocessing)
 

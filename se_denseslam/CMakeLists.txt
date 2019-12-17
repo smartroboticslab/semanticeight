@@ -35,6 +35,7 @@ foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
       "./src/preprocessing.cpp"
       "./src/tracking.cpp"
       "./src/rendering.cpp"
+      "./src/depth_utils.cpp"
       "./src/DenseSLAMSystem.cpp"
     )
     target_include_directories(${LIB_NAME} BEFORE
