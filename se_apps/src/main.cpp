@@ -44,8 +44,10 @@ static uint32_t* rgba_render = nullptr;
 static uint32_t* depth_render = nullptr;
 static uint32_t* track_render = nullptr;
 static uint32_t* volume_render = nullptr;
+static uint32_t* volume_render_color = nullptr;
 static uint32_t* class_render = nullptr;
 static uint32_t* instance_render = nullptr;
+static uint32_t* raycast_render = nullptr;
 static se::Reader* reader = nullptr;
 static DenseSLAMSystem* pipeline = nullptr;
 
@@ -151,8 +153,10 @@ int main(int argc, char** argv) {
   depth_render =  new uint32_t[image_res.x() * image_res.y()];
   track_render =  new uint32_t[image_res.x() * image_res.y()];
   volume_render = new uint32_t[image_res.x() * image_res.y()];
+  volume_render_color = new uint32_t[image_res.x() * image_res.y()];
   class_render =    new uint32_t[image_res.x() * image_res.y()];
   instance_render = new uint32_t[image_res.x() * image_res.y()];
+  raycast_render  = new uint32_t[image_res.x() * image_res.y()];
 
   t_MW = config.t_MW_factor.cwiseProduct(config.map_dim);
   pipeline = new DenseSLAMSystem(
@@ -222,9 +226,9 @@ int main(int argc, char** argv) {
 #ifdef SE_GLUT
       drawthem(rgba_render,   image_res,
                depth_render,  image_res,
-               class_render,  image_res,
                instance_render, image_res,
-               track_render,  image_res,
+               raycast_render,  image_res,
+               volume_render_color,  image_res,
                volume_render, image_res);
 #endif
     }
@@ -251,8 +255,10 @@ int main(int argc, char** argv) {
   delete[] depth_render;
   delete[] track_render;
   delete[] volume_render;
+  delete[] volume_render_color;
   delete[] class_render;
   delete[] instance_render;
+  delete[] raycast_render;
 }
 
 
@@ -261,6 +267,9 @@ int processAll(se::Reader*        reader,
                bool               render_images,
                se::Configuration* config,
                bool               reset) {
+#if SE_VERBOSE >= SE_VERBOSE_MINIMAL
+    std::cout << "----------------------------------------------------------\n";
+#endif
   TICK("TOTAL");
   TICK("COMPUTATION")
   static int frame_offset = 0;
@@ -268,7 +277,6 @@ int processAll(se::Reader*        reader,
   bool tracked = false;
   bool integrated = false;
   const bool track = !config->enable_ground_truth;
-  const bool raycast = track;
   int frame = 0;
   const Eigen::Vector2i input_image_res = (reader != nullptr)
       ? reader->depthImageRes()
@@ -371,6 +379,8 @@ int processAll(se::Reader*        reader,
       pipeline->setT_WC(T_WB * config->T_BC);
       tracked = true;
     }
+    // Call object tracking.
+    pipeline->trackObjects(sensor);
 
 
 
@@ -378,12 +388,9 @@ int processAll(se::Reader*        reader,
     // or it is one of the first 4 frames.
     if ((tracked && (frame % config->integration_rate == 0)) || frame <= 3) {
       integrated = pipeline->integrate(sensor, frame);
+      integrated = pipeline->integrateObjects(sensor, frame);
     } else {
       integrated = false;
-    }
-
-    if (raycast && frame > 2) {
-      pipeline->raycast(sensor);
     }
   }
 
@@ -397,11 +404,15 @@ int processAll(se::Reader*        reader,
       render_volume = (config->rendering_rate < 0) ?
           frame == std::abs(config->rendering_rate) : frame % config->rendering_rate == 0;
     }
+    // Raycast first to avoid doing it during the rendering
+    pipeline->raycastObjectsAndBg(sensor);
     pipeline->renderRGBA(rgba_render, pipeline->getImageResolution());
     pipeline->renderDepth(depth_render, pipeline->getImageResolution(), sensor);
     pipeline->renderTrack(track_render, pipeline->getImageResolution());
     if (render_volume) {
-      pipeline->renderVolume(volume_render, pipeline->getImageResolution(), sensor);
+      pipeline->renderObjects(volume_render_color, pipeline->getImageResolution(), sensor, RenderMode::Color, false);
+      pipeline->renderObjects(volume_render, pipeline->getImageResolution(), sensor, RenderMode::InstanceID);
+      pipeline->renderRaycast(raycast_render, pipeline->getImageResolution());
     }
     pipeline->renderObjectClasses(class_render, pipeline->getImageResolution());
     pipeline->renderObjectInstances(instance_render, pipeline->getImageResolution());
@@ -447,6 +458,10 @@ int processAll(se::Reader*        reader,
                               << std::setw(4) << std::setfill('0') << frame << ".vtk";
     pipeline->dumpMesh(
         output_mesh_voxel_file_ss.str().c_str(), output_mesh_meter_file_ss.str().c_str(), !config->enable_benchmark);
+    std::stringstream output_mesh_object_file_ss;
+    output_mesh_object_file_ss << config->output_mesh_file << "_frame_"
+                              << std::setw(5) << std::setfill('0') << frame << "_object";
+    pipeline->dumpObjectMeshes(output_mesh_object_file_ss.str().c_str(), !config->enable_benchmark);
   }
 
   //  ===  SAVE OCTREE STRUCTURE AND SLICE ===
