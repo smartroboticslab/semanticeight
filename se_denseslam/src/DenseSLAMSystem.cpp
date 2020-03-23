@@ -50,22 +50,22 @@
 extern PerfStats Stats;
 static bool print_kernel_timing = false;
 
-DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& inputSize,
-                                 const Eigen::Vector3i& volumeResolution,
-                                 const Eigen::Vector3f& volumeDimensions,
-                                 const Eigen::Vector3f& initPose,
+DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
+                                 const Eigen::Vector3i& volume_resolution,
+                                 const Eigen::Vector3f& volume_dimensions,
+                                 const Eigen::Vector3f& init_pose,
                                  std::vector<int> & pyramid,
                                  const Configuration& config):
-      DenseSLAMSystem(inputSize, volumeResolution, volumeDimensions,
-          se::math::toMatrix4f(initPose), pyramid, config) { }
+      DenseSLAMSystem(input_size, volume_resolution, volume_dimensions,
+          se::math::toMatrix4f(init_pose), pyramid, config) { }
 
-DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& inputSize,
-                                 const Eigen::Vector3i& volumeResolution,
-                                 const Eigen::Vector3f& volumeDimensions,
+DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
+                                 const Eigen::Vector3i& volume_resolution,
+                                 const Eigen::Vector3f& volume_dimensions,
                                  const Eigen::Matrix4f& init_T_WC,
                                  std::vector<int> & pyramid,
                                  const Configuration& config) :
-  computation_size_(inputSize),
+  computation_size_(input_size),
   config_(config),
   vertex_(computation_size_.x(), computation_size_.y()),
   normal_(computation_size_.x(), computation_size_.y()),
@@ -74,8 +74,8 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& inputSize,
   {
 
     this->init_position_M_ = init_T_WC.block<3,1>(0,3);
-    this->volume_dimension_ = volumeDimensions;
-    this->volume_resolution_ = volumeResolution;
+    this->volume_dimension_ = volume_dimensions;
+    this->volume_resolution_ = volume_resolution;
     this->mu_ = config.mu;
     T_WC_ = init_T_WC;
     raycast_T_WC_ = init_T_WC;
