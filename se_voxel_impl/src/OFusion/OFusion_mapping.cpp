@@ -33,9 +33,9 @@
 
 #include <algorithm>
 
-#include <se/node.hpp>
-#include <se/functors/projective_functor.hpp>
-#include <se/image/image.hpp>
+#include "se/node.hpp"
+#include "se/functors/projective_functor.hpp"
+#include "se/image/image.hpp"
 #include "OFusion_bspline_lookup.cc"
 
 

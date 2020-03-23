@@ -33,9 +33,9 @@
 
 #include <algorithm>
 
-#include <se/octree.hpp>
-#include <se/node.hpp>
-#include <se/functors/projective_functor.hpp>
+#include "se/octree.hpp"
+#include "se/node.hpp"
+#include "se/functors/projective_functor.hpp"
 
 
 
