@@ -34,16 +34,16 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <se/DenseSLAMSystem.h>
-#include <se/voxel_block_ray_iterator.hpp>
-#include <se/algorithms/meshing.hpp>
-#include <se/geometry/octree_collision.hpp>
-#include <se/io/vtk-io.h>
-#include <se/io/ply_io.hpp>
-#include <se/algorithms/balancing.hpp>
-#include <se/functors/for_each.hpp>
-#include <se/timings.h>
-#include <se/perfstats.h>
+#include "se/DenseSLAMSystem.h"
+#include "se/voxel_block_ray_iterator.hpp"
+#include "se/algorithms/meshing.hpp"
+#include "se/geometry/octree_collision.hpp"
+#include "se/io/vtk-io.h"
+#include "se/io/ply_io.hpp"
+#include "se/algorithms/balancing.hpp"
+#include "se/functors/for_each.hpp"
+#include "se/timings.h"
+#include "se/perfstats.h"
 #include "se/rendering.hpp"
 
 
