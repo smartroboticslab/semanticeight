@@ -175,7 +175,7 @@ bool DenseSLAMSystem::track(const Eigen::Vector4f& k,
   }
 
   previous_T_WC_ = T_WC_;
-  const Eigen::Matrix4f projectReference = getCameraMatrix(k) * raycast_T_WC_.inverse();
+  const Eigen::Matrix4f project_reference = getCameraMatrix(k) * raycast_T_WC_.inverse();
 
   for (int level = iterations_.size() - 1; level >= 0; --level) {
     Eigen::Vector2i localimagesize(
@@ -184,7 +184,7 @@ bool DenseSLAMSystem::track(const Eigen::Vector4f& k,
     for (int i = 0; i < iterations_[level]; ++i) {
 
       trackKernel(tracking_result_.data(), input_vertex_[level], input_normal_[level],
-          vertex_, normal_, T_WC_, projectReference,
+          vertex_, normal_, T_WC_, project_reference,
           dist_threshold, normal_threshold);
 
       reduceKernel(reduction_output_.data(), tracking_result_.data(), computation_size_,
