@@ -30,8 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #ifndef BALANCING_HPP
 #define BALANCING_HPP
-#include <se/octree.hpp>
-#include <se/node_iterator.hpp>
+#include "se/octree.hpp"
+#include "se/node_iterator.hpp"
 #include <Eigen/Dense>
 #include <vector>
 #include <unordered_set>

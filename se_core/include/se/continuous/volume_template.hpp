@@ -31,8 +31,8 @@
 
 #include <iostream>
 #include <memory>
-#include <se/utils/memory_pool.hpp>
-#include <se/octree.hpp>
+#include "se/utils/memory_pool.hpp"
+#include "se/octree.hpp"
 #include <type_traits>
 #include <cstring>
 #include <Eigen/Dense>
