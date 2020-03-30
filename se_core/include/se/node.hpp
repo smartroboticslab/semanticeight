@@ -54,13 +54,13 @@ public:
   unsigned int timestamp_;
   bool active_;
 
-  Node(){
+  Node(typename T::VoxelData init_value = T::initValue()) {
     code_ = 0;
     side_ = 0;
     children_mask_ = 0;
     timestamp_ = 0;
-    for (unsigned int i = 0; i < 8; i++){
-      value_[i]     = T::initValue();
+    for (unsigned int i = 0; i < 8; i++) {
+      value_[i]     = init_value;
       parent_ptr_ = NULL;
       child_ptr_[i] = NULL;
     }
@@ -110,12 +110,13 @@ class VoxelBlock: public Node<T> {
     static constexpr unsigned int side_sq = side*side;
     static constexpr unsigned int side_cube = side*side*side;
 
-    VoxelBlock(){
+    VoxelBlock(typename T::VoxelData init_value = T::initValue()) {
       coordinates_ = Eigen::Vector3i::Constant(0);
       current_scale_ = 0;
       min_scale_ = -1;
-      for (unsigned int i = 0; i < buff_size; i++)
-        voxel_block_[i] = T::initValue();
+      for (unsigned int i = 0; i < buff_size; i++) {
+        voxel_block_[i] = init_value;
+      }
     }
 
     bool isLeaf(){ return true; }
