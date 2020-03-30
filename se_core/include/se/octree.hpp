@@ -106,6 +106,10 @@ public:
 
   inline int size() const { return size_; }
   inline float dim() const { return dim_; }
+  inline int numLevels() const { return num_levels_; }
+  inline int maxLevel() const { return max_level_; }
+  inline int maxBlockScale() const { return max_block_scale_; }
+  inline int leavesLevel() const { return leaves_level_; }
   inline Node<T>* const root() const { return root_; }
 
   /*! \brief Sets voxel value at coordinates (x,y,z), if not present it
@@ -282,7 +286,10 @@ private:
   Node<T> * root_;
   int size_;
   float dim_;
+  int num_levels_;
   int max_level_;
+  int max_block_scale_;
+  int leaves_level_;
   typename T::template MemoryPoolType<T> pool_;
 
   friend class VoxelBlockRayIterator<T>;
@@ -522,6 +529,9 @@ void Octree<T>::init(int size, float dim) {
   size_ = size;
   dim_ = dim;
   max_level_ = log2(size);
+  num_levels_ = max_level_ + 1;
+  max_block_scale_ = log2(blockSide);
+  leaves_level_ = max_level_ - max_block_scale_;
   root_ = pool_.root();
   root_->side_ = size;
   reserved_ = 1024;
