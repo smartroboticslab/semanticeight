@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include "octree_defines.h"
 #include "utils/math_utils.h"
-#include "utils/memory_pool.hpp"
 #include "io/se_serialise.hpp"
 
 namespace se {

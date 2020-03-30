@@ -54,6 +54,11 @@ struct OFusion {
 
     static inline VoxelData empty()     { return {0.f, 0.f}; }
     static inline VoxelData initValue() { return {0.f, 0.f}; }
+
+    template <typename T>
+    using MemoryPoolType = se::MemoryPool<T>;
+    template <typename BufferT>
+    using MemoryBufferType = se::MemoryBuffer<BufferT>;
   };
 
 

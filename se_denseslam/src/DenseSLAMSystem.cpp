@@ -292,7 +292,7 @@ void DenseSLAMSystem::renderRGBA(uint8_t*               output_RGBA,
 
 void DenseSLAMSystem::dump_mesh(const std::string filename){
 
-  se::functor::internal::parallel_for_each(volume_._map_index->getBlockBuffer(),
+  se::functor::internal::parallel_for_each(volume_._map_index->pool().blockBuffer(),
       [](auto block) {
         if(std::is_same<VoxelImpl, MultiresTSDF>::value) {
           block->current_scale(block->min_scale());
@@ -324,9 +324,9 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
         }
   };
 
-  se::functor::internal::parallel_for_each(volume_._map_index->getBlockBuffer(),
+  se::functor::internal::parallel_for_each(volume_._map_index->pool().blockBuffer(),
       interp_down);
-  se::functor::internal::parallel_for_each(volume_._map_index->getBlockBuffer(),
+  se::functor::internal::parallel_for_each(volume_._map_index->pool().blockBuffer(),
       [](auto block) {
           block->current_scale(0);
       });

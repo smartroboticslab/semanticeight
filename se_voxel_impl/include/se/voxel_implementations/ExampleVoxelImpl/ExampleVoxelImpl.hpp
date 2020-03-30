@@ -91,6 +91,11 @@ struct ExampleVoxelImpl {
      * \warning The function signature must not be changed.
      */
     static inline VoxelData initValue() { return {1.f}; }
+
+    template <typename T>
+    using MemoryPoolType = se::MemoryPool<T>;
+    template <typename BufferT>
+    using MemoryBufferType = se::MemoryBuffer<BufferT>;
   };
 
 

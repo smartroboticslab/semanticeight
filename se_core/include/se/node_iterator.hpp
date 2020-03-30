@@ -60,9 +60,10 @@ class node_iterator {
    */
   Node<T> *  next() {
     switch(state_) {
-      case BRANCH_NODES:
-        if(last < map_.nodes_buffer_.size()) {
-          Node<T>* n = map_.nodes_buffer_[last++];
+      case BRANCH_NODES: {
+        const auto &node_buffer = map_.pool().nodeBuffer();
+        if (last < node_buffer.size()) {
+          Node<T> *n = node_buffer[last++];
           return n;
         } else {
           last = 0;
@@ -70,19 +71,23 @@ class node_iterator {
           return next();
         }
         break;
-      case LEAF_NODES:
-        if(last < map_.block_buffer_.size()) {
-          VoxelBlock<T>* n = map_.block_buffer_[last++];
+      }
+      case LEAF_NODES: {
+        const auto& block_buffer = map_.pool().blockBuffer();
+        if(last < block_buffer.size()) {
+          VoxelBlock<T>* n = block_buffer[last++];
           return n;
-              /* the above int init required due to odr-use of static member */
+          /* the above int init required due to odr-use of static member */
         } else {
           last = 0;
           state_ = FINISHED;
           return nullptr;
         }
         break;
-      case FINISHED:
+      }
+      case FINISHED: {
         return nullptr;
+      }
     }
     return nullptr;
   }

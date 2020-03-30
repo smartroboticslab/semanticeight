@@ -92,9 +92,9 @@ TEST_F(MultiscaleESDFMovingSphereTest, Fusion) {
   };
 
   for(int i = 0; i < 5; ++i) {
-    se::functor::internal::parallel_for_each(oct_.getBlockBuffer(), update_op);
+    se::functor::internal::parallel_for_each(oct_.pool().blockBuffer(), update_op);
     auto op = [](se::VoxelBlock<MultiresTSDF::VoxelType>* b) { se::multires::propagate_up(b, 0); };
-    se::functor::internal::parallel_for_each(oct_.getBlockBuffer(), op);
+    se::functor::internal::parallel_for_each(oct_.pool().blockBuffer(), op);
 
     {
       std::stringstream f;
@@ -109,10 +109,10 @@ TEST_F(MultiscaleESDFMovingSphereTest, Fusion) {
   center += Eigen::Vector3f::Constant(10.f);
   scale = 2;
   for(int i = 5; i < 10; ++i) {
-    se::functor::internal::parallel_for_each(oct_.getBlockBuffer(), update_op);
+    se::functor::internal::parallel_for_each(oct_.pool().blockBuffer(), update_op);
     auto& oct_ref = oct_;
     auto op = [&oct_ref, scale](se::VoxelBlock<MultiresTSDF::VoxelType>* b) { se::multires::propagate_down(oct_ref, b, scale, 0); };
-    se::functor::internal::parallel_for_each(oct_.getBlockBuffer(), op);
+    se::functor::internal::parallel_for_each(oct_.pool().blockBuffer(), op);
 
     {
       std::stringstream f;

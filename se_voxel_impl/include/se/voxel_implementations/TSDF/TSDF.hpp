@@ -54,6 +54,11 @@ struct TSDF {
 
     static inline VoxelData empty()     { return {1.f, -1.f}; }
     static inline VoxelData initValue() { return {1.f,  0.f}; }
+
+    template <typename T>
+    using MemoryPoolType = se::MemoryPool<T>;
+    template <typename BufferT>
+    using MemoryBufferType = se::MemoryBuffer<BufferT>;
   };
 
 

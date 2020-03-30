@@ -441,10 +441,10 @@ void foreach(float voxelsize, const std::vector<se::VoxelBlock<T>*>& active_list
 
 template <typename T>
 std::vector<se::VoxelBlock<MultiresTSDF::VoxelType>*> buildActiveList(se::Octree<T>& map, const camera_parameter& camera_parameter, float voxel_size) {
-  const se::MemoryPool<se::VoxelBlock<MultiresTSDF::VoxelType> >& block_array =
-      map.getBlockBuffer();
-  for(unsigned int i = 0; i < block_array.size(); ++i) {
-    block_array[i]->active(false);
+  const se::MemoryPool<se::VoxelBlock<MultiresTSDF::VoxelType> >& block_buffer =
+      map.pool().blockBuffer();
+  for(unsigned int i = 0; i < block_buffer.size(); ++i) {
+    block_buffer[i]->active(false);
   }
 
   const Eigen::Matrix4f K = camera_parameter.K();
@@ -454,7 +454,7 @@ std::vector<se::VoxelBlock<MultiresTSDF::VoxelType>*> buildActiveList(se::Octree
   auto in_frustum_predicate =
       std::bind(se::algorithms::in_frustum<se::VoxelBlock<MultiresTSDF::VoxelType>>, std::placeholders::_1,
                 voxel_size, K*Tcw, camera_parameter.imageSize());
-  se::algorithms::filter(active_list, block_array, in_frustum_predicate);
+  se::algorithms::filter(active_list, block_buffer, in_frustum_predicate);
   return active_list;
 }
 

@@ -42,6 +42,11 @@ struct TestVoxelT {
   typedef float VoxelData;
   static inline VoxelData empty(){ return 0.f; }
   static inline VoxelData initValue(){ return 1.f; }
+
+  template <typename T>
+  using MemoryPoolType = se::MemoryPool<T>;
+  template <typename BufferT>
+  using MemoryBufferType = se::MemoryBuffer<BufferT>;
 };
 
 float test_fun(float x, float y, float z) {
