@@ -52,6 +52,7 @@ public:
   unsigned int side_;
   unsigned char children_mask_;
   unsigned int timestamp_;
+  bool active_;
 
   Node(){
     code_ = 0;
@@ -82,6 +83,9 @@ public:
 
   unsigned int timestamp() { return timestamp_; }
   unsigned int timestamp(unsigned int t) { return timestamp_ = t; }
+
+  void active(const bool a){ active_ = a; }
+  bool active() const { return active_; }
 
   virtual bool isLeaf() { return false; }
 
@@ -128,9 +132,6 @@ class VoxelBlock: public Node<T> {
     VoxelData data(const int i) const;
     void data(const int i, const VoxelData& value);
 
-    void active(const bool a){ active_ = a; }
-    bool active() const { return active_; }
-
     int current_scale() { return current_scale_; }
     void current_scale(const int s) { current_scale_ = s; }
 
@@ -143,7 +144,6 @@ class VoxelBlock: public Node<T> {
   private:
     VoxelBlock(const VoxelBlock&) = delete;
     Eigen::Vector3i coordinates_;
-    bool active_;
     int current_scale_;
     int min_scale_;
 
