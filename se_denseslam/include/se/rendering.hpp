@@ -96,7 +96,7 @@ void raycastKernel(const Volume<T>&            volume,
       const Eigen::Vector3f dir =
           (view.topLeftCorner<3, 3>() * Eigen::Vector3f(x, y, 1.f)).normalized();
       const Eigen::Vector3f transl = view.topRightCorner<3, 1>();
-      se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume._map_index, transl, dir, near_plane, far_plane);
+      se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.map_, transl, dir, near_plane, far_plane);
       ray.next();
       const float t_min = ray.tcmin(); /* Get distance to the first intersected block */
       const Eigen::Vector4f hit = t_min > 0.f
@@ -175,7 +175,7 @@ void renderVolumeKernel(const Volume<T>&                  volume,
         const Eigen::Vector3f dir =
             (view.topLeftCorner<3, 3>() * Eigen::Vector3f(x, y, 1.f)).normalized();
         const Eigen::Vector3f transl = view.topRightCorner<3, 1>();
-        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume._map_index, transl, dir, near_plane, far_plane);
+        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.map_, transl, dir, near_plane, far_plane);
         ray.next();
         const float t_min = ray.tmin(); /* Get distance to the first intersected block */
         hit = t_min > 0.f

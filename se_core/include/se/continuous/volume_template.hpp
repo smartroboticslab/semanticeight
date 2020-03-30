@@ -53,7 +53,7 @@ class VolumeTemplate {
 
     VolumeTemplate(){};
     VolumeTemplate(unsigned int r, float d, DiscreteMapT<VoxelType>* m) :
-      _map_index(m) {
+      map_(m) {
         size_ = r;
         dim_ = d;
       };
@@ -68,27 +68,27 @@ class VolumeTemplate {
     VoxelData operator[](const Eigen::Vector3f& p) const {
       const float inverseVoxelSize = size_ / dim_;
       const Eigen::Vector3i scaled_pos = (p * inverseVoxelSize).cast<int>();
-      return _map_index->get(scaled_pos.x(), scaled_pos.y(), scaled_pos.z());
+      return map_->get(scaled_pos.x(), scaled_pos.y(), scaled_pos.z());
     }
 
     VoxelData get(const Eigen::Vector3f& p, const int scale = 0) const {
       const float inverseVoxelSize = size_ / dim_;
       const Eigen::Vector4i scaled_pos = (inverseVoxelSize * p.homogeneous()).cast<int>();
-        return _map_index->get_fine(scaled_pos.x(),
+        return map_->get_fine(scaled_pos.x(),
                                     scaled_pos.y(),
                                     scaled_pos.z(),
                                     scale);
     }
 
     VoxelData operator[](const Eigen::Vector3i& p) const {
-      return _map_index->get(p.x(), p.y(), p.z());
+      return map_->get(p.x(), p.y(), p.z());
     }
 
     template <typename FieldSelector>
     std::pair<float, int> interp(const Eigen::Vector3f& pos, FieldSelector select) const {
       const float inverseVoxelSize = size_ / dim_;
       Eigen::Vector3f discrete_pos = inverseVoxelSize * pos;
-      return _map_index->interp(discrete_pos, select);
+      return map_->interp(discrete_pos, select);
     }
 
   /*! \brief Interp voxel value at metric position  (x,y,z)
@@ -102,7 +102,7 @@ class VolumeTemplate {
     std::pair<float, int> interp(const Eigen::Vector3f& pos, const int h, FieldSelector select) const {
       const float inverseVoxelSize = size_ / dim_;
       Eigen::Vector3f discrete_pos = (inverseVoxelSize * pos);
-      return _map_index->interp(discrete_pos, h, select);
+      return map_->interp(discrete_pos, h, select);
     }
 
     /*! \brief Compute gradient at metric position  (x,y,z)
@@ -115,7 +115,7 @@ class VolumeTemplate {
 
       const float inverseVoxelSize = size_ / dim_;
       Eigen::Vector3f discrete_pos = inverseVoxelSize * pos;
-      return _map_index->grad(discrete_pos, 1.f, select);
+      return map_->grad(discrete_pos, 1.f, select);
     }
 
     /*! \brief Compute gradient at metric position  (x,y,z)
@@ -131,14 +131,14 @@ class VolumeTemplate {
         FieldSelector select) const {
       const float inverseVoxelSize = size_ / dim_;
       Eigen::Vector3f discrete_pos = inverseVoxelSize * pos;
-      return _map_index->grad(discrete_pos, h, select);
+      return map_->grad(discrete_pos, h, select);
     }
 
     unsigned int size() const { return size_; }
     float dim() const { return dim_; }
 
     std::vector<se::key_t> _allocationList;
-    DiscreteMapT<VoxelType> * _map_index;
+    DiscreteMapT<VoxelType> * map_;
 
   private:
     unsigned int size_;
