@@ -101,7 +101,7 @@ TEST_F(MultiscaleESDFMovingSphereTest, Fusion) {
       f << "./out/sphere-interp-" << i << ".vtk";
       save3DSlice(oct_, Eigen::Vector3i(0, oct_.size()/2, 0),
           Eigen::Vector3i(oct_.size(), oct_.size()/2 + 1, oct_.size()),
-          [](const auto& val) { return val.x; }, oct_.block_depth, f.str().c_str());
+          [](const auto& val) { return val.x; }, oct_.maxBlockScale(), f.str().c_str());
     }
   }
 
@@ -119,7 +119,7 @@ TEST_F(MultiscaleESDFMovingSphereTest, Fusion) {
       f << "./out/sphere-interp-" << i << ".vtk";
       save3DSlice(oct_, Eigen::Vector3i(0, oct_.size()/2, 0),
           Eigen::Vector3i(oct_.size(), oct_.size()/2 + 1, oct_.size()),
-          [](const auto& val) { return val.x; }, oct_.block_depth, f.str().c_str());
+          [](const auto& val) { return val.x; }, oct_.maxBlockScale(), f.str().c_str());
     }
   }
   se::print_octree("./out/test-sphere.ply", oct_);
