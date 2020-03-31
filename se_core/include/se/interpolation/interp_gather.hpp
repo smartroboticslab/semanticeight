@@ -325,10 +325,8 @@ namespace se {
       while (level > 0) {
         int child_id = se::child_id(stack[level]->code_, max_depth);
         int sibling = child_id ^ dir;
-        std::cout << "parent code:" << se::keyops::decode(stack[level-1]->code_) << std::endl;
         if ((sibling & dir) == dir) { // if sibling still in octant's family
           const int side = 1 << (max_depth - level);
-          std::cout << "side: " << side << std::endl;
           const Eigen::Vector3i coords = se::keyops::decode(stack[level-1]->code_)
               + side * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
           return {select(stack[level-1]->value_[sibling]), coords};
