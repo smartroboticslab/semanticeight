@@ -229,7 +229,7 @@ public:
    * \return signed distance function value at voxel position (x, y, z)
    */
   template <typename FieldSelect>
-  Eigen::Vector3f grad(const Eigen::Vector3f& pos, const int stride,
+  Eigen::Vector3f grad(const Eigen::Vector3f& pos, const int scale,
       FieldSelect selector) const;
 
   /*! \brief Get the list of allocated block. If the active switch is set to
@@ -415,24 +415,33 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
 template <typename T>
 inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
     const int y, const int z, const int scale) const {
+  assert(scale < max_level_);
 
   Node<T> * n = root_;
   if(!n) {
     return T::initValue();
   }
 
+  int block_side = blockSide;
+  const unsigned min_edge = std::max((1 << scale), block_side);
   unsigned edge = size_ >> 1;
-  for(; edge >= blockSide; edge = edge >> 1){
-    const int childid = ((x & edge) > 0) +  2 * ((y & edge) > 0)
-      +  4*((z & edge) > 0);
+  int childid;
+  for(; edge >= min_edge; edge = edge >> 1) {
+    childid  = ((x & edge) > 0) + 2 * ((y & edge) > 0) + 4*((z & edge) > 0);
     Node<T>* tmp = n->child(childid);
     if(!tmp){
-      return T::initValue();
+      auto& value = n->value_[childid];
+      return value;
     }
     n = tmp;
   }
-  auto block = static_cast<VoxelBlock<T> *>(n);
-  return block->data(Eigen::Vector3i(x, y, z), std::max(scale, block->current_scale()));
+
+  if(min_edge == block_side) {
+    auto block = static_cast<VoxelBlock<T> *>(n);
+    return block->data(Eigen::Vector3i(x, y, z), std::max(scale, block->current_scale()));
+  } else {
+    return (n->parent())->value_[childid];
+  }
 }
 template <typename T>
 template <bool safe>
