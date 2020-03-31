@@ -43,14 +43,14 @@ namespace se {
   /*! \brief Write the octree structure to file in ply format.
    * Aggregated voxel blocks are written as a single octant of size block_side^3.
    * \param filename output filename
-   * \param map octree map
+   * \param octree octree map
    */
-    void print_octree(const char* filename, const se::Octree<T>& map) {
+    void print_octree(const char* filename, const se::Octree<T>& octree) {
       std::stringstream ss_vertex;
       std::stringstream ss_faces;
-      se::node_iterator<T> it(map);
+      se::node_iterator<T> it(octree);
       se::Node<T>* n = it.next();
-      const int depth = std::log2(map.size());
+      const int depth = std::log2(octree.size());
       int vertex_num = 0;
       int faces_num  = 0;
       while(n) {
