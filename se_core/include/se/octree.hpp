@@ -1092,6 +1092,7 @@ void Octree<T>::load(const std::string& filename) {
     internal::deserialise(tmp, is);
     Eigen::Vector3i coords = keyops::decode(tmp.code_);
     Node<T> * n = insert(coords(0), coords(1), coords(2), keyops::level(tmp.code_));
+    n->timestamp(tmp.timestamp());
     std::memcpy(n->value_, tmp.value_, 8 * sizeof(VoxelData));
   }
 
@@ -1103,6 +1104,8 @@ void Octree<T>::load(const std::string& filename) {
     Eigen::Vector3i coords = tmp.coordinates();
     VoxelBlock<T> * n =
       static_cast<VoxelBlock<T> *>(insert(coords(0), coords(1), coords(2), keyops::level(tmp.code_)));
+    n->min_scale(tmp.min_scale());
+    n->current_scale(tmp.current_scale());
     std::memcpy(n->getBlockRawPtr(), tmp.getBlockRawPtr(), (side_cubed + 64 + 8 + 1) * sizeof(*(tmp.getBlockRawPtr())));
   }
 }
