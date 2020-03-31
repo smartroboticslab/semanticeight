@@ -52,6 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "algorithms/unique.hpp"
 #include "geometry/aabb_collision.hpp"
 #include "interpolation/interp_gather.hpp"
+#include "interpolation/interp_multires_gather.hpp"
 #include "neighbors/neighbor_gather.hpp"
 
 namespace se {
