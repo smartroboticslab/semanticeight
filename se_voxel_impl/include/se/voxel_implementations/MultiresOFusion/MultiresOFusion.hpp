@@ -35,7 +35,6 @@
 #include <se/continuous/volume_template.hpp>
 #include <se/image/image.hpp>
 #include <se/voxel_implementations/MultiresOFusion/kernel_image.hpp>
-#include <se/voxel_implementations/MultiresOFusion/kernel_image_original.hpp>
 
 #include <sophus/se3.hpp>
 #include <chrono>
