@@ -106,7 +106,7 @@ class InterpolationTest : public ::testing::Test {
         f << "./sphere-interp.vtk";
         save3DSlice(oct_, Eigen::Vector3i(0, oct_.size()/2, 0),
             Eigen::Vector3i(oct_.size(), oct_.size()/2 + 1, oct_.size()),
-            [](const float& val) { return val; }, oct_.block_depth, f.str().c_str());
+            [](const float& val) { return val; }, oct_.maxBlockScale(), f.str().c_str());
       }
 
       // balance and print.
@@ -118,7 +118,7 @@ class InterpolationTest : public ::testing::Test {
         f << "./sphere-interp-balanced.vtk";
         save3DSlice(oct_, Eigen::Vector3i(0, oct_.size()/2, 0),
             Eigen::Vector3i(oct_.size(), oct_.size()/2 + 1, oct_.size()),
-            [](const float& val) { return val; }, oct_.block_depth, f.str().c_str());
+            [](const float& val) { return val; }, oct_.maxBlockScale(), f.str().c_str());
       }
 
     }
