@@ -147,10 +147,10 @@ namespace meshing {
   uint8_t compute_index(const OctreeT<FieldType>& volume,
   const se::VoxelBlock<FieldType>* cached, InsidePredicate inside,
   const unsigned x, const unsigned y, const unsigned z){
-    unsigned int blockSize =  se::VoxelBlock<FieldType>::side;
-    unsigned int local = ((x % blockSize == blockSize - 1) << 2) |
-      ((y % blockSize == blockSize - 1) << 1) |
-      ((z % blockSize) == blockSize - 1);
+    unsigned int block_size =  se::VoxelBlock<FieldType>::side;
+    unsigned int local = ((x % block_size == block_size - 1) << 2) |
+      ((y % block_size == block_size - 1) << 1) |
+      ((z % block_size) == block_size - 1);
 
     typename FieldType::VoxelData points[8];
     if(!local) gather_points(cached, points, x, y, z);
