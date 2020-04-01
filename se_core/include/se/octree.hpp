@@ -423,8 +423,8 @@ inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
     return T::initValue();
   }
 
-  int block_side = blockSide;
-  const unsigned min_edge = std::max((1 << scale), block_side);
+
+  const unsigned min_edge = std::max((1 << scale), (int) blockSide);
   unsigned edge = size_ >> 1;
   int childid;
   for(; edge >= min_edge; edge = edge >> 1) {
@@ -437,7 +437,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
     n = tmp;
   }
 
-  if(min_edge == block_side) {
+  if(min_edge == blockSide) {
     auto block = static_cast<VoxelBlock<T> *>(n);
     return block->data(Eigen::Vector3i(x, y, z), std::max(scale, block->current_scale()));
   } else {
