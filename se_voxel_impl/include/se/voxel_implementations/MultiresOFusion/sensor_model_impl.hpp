@@ -1,39 +1,31 @@
-/**
+/*
+ * Copyright 2019 Nils Funk, Imperial College London
  *
- * SLAMcore Confidential
- * ---------------------
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
- * SLAMcore Limited
- * All Rights Reserved.
- * (C) Copyright 2019
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
- * NOTICE:
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
  *
- * All information contained herein is, and remains the property of SLAMcore
- * Limited and its suppliers, if any. The intellectual and technical concepts
- * contained herein are proprietary to SLAMcore Limited and its suppliers and
- * may be covered by patents in process, and are protected by trade secret or
- * copyright law. Dissemination of this information or reproduction of this
- * material is strictly forbidden unless prior written permission is obtained
- * from SLAMcore Limited.
+ * 3. Neither the name of the copyright holder nor the names of its
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
  *
- */
-
-/**
- * @file
- * @brief sensor_model for abstracting diferent sensor inverse models from the alocation and evaluation logic.
- */
-
-/**
- * Class implementing a "Half Extended" SDF model:
- *                                          -1
- * |                   /|
- * |                  / |invalid____________ 0
- * |                 /|
- * |----------------  |                      1
- * |                 depth meassurement
- * |-----------------------------> distance
- * @tparam FieldType Data storage type.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 template <typename FieldType>
