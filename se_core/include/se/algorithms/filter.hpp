@@ -67,7 +67,7 @@ namespace algorithms {
 
   template <typename BufferType, typename... Predicates>
   void filter(std::vector<BufferType *>&        out,
-              const se::MemoryBuffer<BufferType>& buffer,
+              const se::PagedMemoryBuffer<BufferType>& buffer,
               Predicates...                    ps) {
 #ifdef _OPENMP
 #pragma omp declare reduction (merge : std::vector<BufferType *> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))

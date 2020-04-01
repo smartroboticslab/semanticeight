@@ -44,9 +44,9 @@ struct TestVoxelT {
   static inline VoxelData initValue(){ return 1.f; }
 
   template <typename T>
-  using MemoryPoolType = se::MemoryPool<T>;
+  using MemoryPoolType = se::PagedMemoryPool<T>;
   template <typename BufferT>
-  using MemoryBufferType = se::MemoryBuffer<BufferT>;
+  using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
 };
 
 float test_fun(float x, float y, float z) {

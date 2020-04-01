@@ -58,9 +58,9 @@ struct MultiresTSDF {
     static inline VoxelData initValue() { return {1.f, 1.f, 0, 0}; }
 
     template <typename T>
-    using MemoryPoolType = se::MemoryPool<T>;
-    template <typename BufferT>
-    using MemoryBufferType = se::MemoryBuffer<BufferT>;
+    using MemoryPoolType = se::PagedMemoryPool<T>;
+    template <typename ElemT>
+    using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };
 
 

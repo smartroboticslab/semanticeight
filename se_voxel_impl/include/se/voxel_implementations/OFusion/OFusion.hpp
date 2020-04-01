@@ -56,9 +56,9 @@ struct OFusion {
     static inline VoxelData initValue() { return {0.f, 0.f}; }
 
     template <typename T>
-    using MemoryPoolType = se::MemoryPool<T>;
-    template <typename BufferT>
-    using MemoryBufferType = se::MemoryBuffer<BufferT>;
+    using MemoryPoolType = se::PagedMemoryPool<T>;
+    template <typename ElemT>
+    using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };
 
 

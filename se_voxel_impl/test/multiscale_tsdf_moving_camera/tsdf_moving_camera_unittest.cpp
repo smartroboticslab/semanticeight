@@ -441,7 +441,7 @@ void foreach(float voxelsize, const std::vector<se::VoxelBlock<T>*>& active_list
 
 template <typename T>
 std::vector<se::VoxelBlock<MultiresTSDF::VoxelType>*> buildActiveList(se::Octree<T>& map, const camera_parameter& camera_parameter, float voxel_size) {
-  const se::MemoryBuffer<se::VoxelBlock<MultiresTSDF::VoxelType> >& block_buffer =
+  const se::PagedMemoryBuffer<se::VoxelBlock<MultiresTSDF::VoxelType> >& block_buffer =
       map.pool().blockBuffer();
   for(unsigned int i = 0; i < block_buffer.size(); ++i) {
     block_buffer[i]->active(false);

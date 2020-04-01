@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Sotiris Papatheodorou, Imperial College London
+ * Copyright 2019 Nils Funk, Imperial College London
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -71,19 +71,13 @@ struct MultiresOFusion {
       // empty() and initValue() to initialize all data members.
     };
 
-//    static inline VoxelData empty()     { return {min_occupancy, min_occupancy, min_occupancy, 1.f, true}; }
     static inline VoxelData empty()     { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
     static inline VoxelData initValue() { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
 
-    template <typename ValueT>
-    using MemoryPoolType = se::DummyMemoryPool<ValueT>;
-    template <typename BufferT>
-    using MemoryBufferType = std::vector<BufferT>;
-
-//    template <typename ValueT>
-//    using MemoryPoolType = se::MemoryPool<ValueT>;
-//    template <typename BufferT>
-//    using MemoryBufferType = se::MemoryBuffer<BufferT>;
+    template <typename T>
+    using MemoryPoolType = se::MemoryPool<T>;
+    template <typename ElemT>
+    using MemoryBufferType = std::vector<ElemT>;
   };
 
   /**
@@ -138,24 +132,6 @@ struct MultiresOFusion {
                                const se::Image<float>&        depth,
                                const float                    mu,
                                const unsigned                 frame);
-
-
-
-//  /**
-//   * Cast a ray and return the point where the surface was hit.
-//   *
-//   * \warning The function signature must not be changed.
-//   */
-//  static Eigen::Vector4f raycast(
-//      const VolumeTemplate<MultiresOFusion, se::Octree>& volume,
-//      const Eigen::Vector3f&                           origin,
-//      const Eigen::Vector3f&                           direction,
-//      const float                                      tnear,
-//      const float                                      tfar,
-//      const float                                      mu,
-//      const float                                      step,
-//      const float                                      large_step);
-
 
   static Eigen::Vector4f raycast(
       const VolumeTemplate<MultiresOFusion, se::Octree>& volume,

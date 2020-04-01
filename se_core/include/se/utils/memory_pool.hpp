@@ -44,15 +44,15 @@ namespace se {
  */
 
   template <typename T>
-  class DummyMemoryPool {
+  class MemoryPool {
   public:
-    DummyMemoryPool() {
+    MemoryPool() {
       root_ = new se::Node<T>;
       nodes_updated_ = false;
       blocks_updated_ = false;
     }
 
-    ~DummyMemoryPool() {
+    ~MemoryPool() {
       deleteNodeRecurse(root_);
     }
 
@@ -61,10 +61,8 @@ namespace se {
     void reserveNodes(const size_t n) { };
     void reserveBlocks(const size_t n) { };
 
-    se::Node<T>*       acquireNode()  { nodes_updated_ = false; return new se::Node<T>; };
-    se::Node<T>*       acquireNode(typename T::VoxelData init_value)  { nodes_updated_ = false; return new se::Node<T>(init_value); };
-    se::VoxelBlock<T>* acquireBlock() { blocks_updated_ = false; return new se::VoxelBlock<T>; };
-    se::VoxelBlock<T>* acquireBlock(typename T::VoxelData init_value) { blocks_updated_ = false; return new se::VoxelBlock<T>(init_value); };
+    se::Node<T>*       acquireNode(typename T::VoxelData init_value = T::initValue())  { nodes_updated_ = false; return new se::Node<T>(init_value); };
+    se::VoxelBlock<T>* acquireBlock(typename T::VoxelData init_value = T::initValue()) { blocks_updated_ = false; return new se::VoxelBlock<T>(init_value); };
 
     void deleteNode(se::Node<T>* node, size_t max_level) {
       nodes_updated_ = false;
@@ -175,19 +173,19 @@ namespace se {
     }
 
     // Disabling copy-constructor
-    DummyMemoryPool(const DummyMemoryPool& m);
+    MemoryPool(const MemoryPool& m);
   };
 
-  template <typename BufferType>
-  class MemoryBuffer {
+  template <typename ElemType>
+  class PagedMemoryBuffer {
   public:
-    MemoryBuffer(){
+    PagedMemoryBuffer(){
       current_index_ = 0;
       num_pages_ = 0;
       reserved_ = 0;
     }
 
-    ~MemoryBuffer(){
+    ~PagedMemoryBuffer(){
       for(auto&& i : pages_){
         delete [] i;
       }
@@ -195,7 +193,7 @@ namespace se {
 
     size_t size() const { return current_index_; };
 
-    BufferType* operator[](const size_t i) const {
+    ElemType* operator[](const size_t i) const {
       const int page_idx = i / pagesize_;
       const int ptr_idx = i % pagesize_;
       return pages_[page_idx] + (ptr_idx);
@@ -206,12 +204,12 @@ namespace se {
       if(requires_realloc) expand(n);
     }
 
-    BufferType * acquire(){
+    ElemType * acquire(){
       // Fetch-add returns the value before increment
       int current = current_index_.fetch_add(1);
       const int page_idx = current / pagesize_;
       const int ptr_idx = current % pagesize_;
-      BufferType * ptr = pages_[page_idx] + (ptr_idx);
+      ElemType * ptr = pages_[page_idx] + (ptr_idx);
       return ptr;
     }
 
@@ -220,14 +218,14 @@ namespace se {
     std::atomic<unsigned int> current_index_;
     const int pagesize_ = 1024; // # of blocks per page
     int num_pages_;
-    std::vector<BufferType *> pages_;
+    std::vector<ElemType *> pages_;
 
     void expand(const size_t n){
 
       // std::cout << "Allocating " << n << " blocks" << std::endl;
       const int new_pages = std::ceil(n/pagesize_);
       for(int p = 0; p <= new_pages; ++p){
-        pages_.push_back(new BufferType[pagesize_]);
+        pages_.push_back(new ElemType[pagesize_]);
         ++num_pages_;
         reserved_ += pagesize_;
       }
@@ -235,13 +233,13 @@ namespace se {
     }
 
     // Disabling copy-constructor
-    MemoryBuffer(const MemoryBuffer& m);
+    PagedMemoryBuffer(const PagedMemoryBuffer& m);
   };
 
   template <typename T>
-  class MemoryPool {
+  class PagedMemoryPool {
   public:
-    MemoryPool() {
+    PagedMemoryPool() {
       node_buffer_.reserve(1);
       root_ = node_buffer_.acquire();
     }
@@ -254,22 +252,22 @@ namespace se {
     se::Node<T>*       acquireNode()  { return node_buffer_.acquire(); };
     se::VoxelBlock<T>* acquireBlock() { return block_buffer_.acquire(); };
 
-    se::MemoryBuffer<se::Node<T>>&       nodeBuffer()  { return node_buffer_; };
-    se::MemoryBuffer<se::VoxelBlock<T>>& blockBuffer() { return block_buffer_; };
+    se::PagedMemoryBuffer<se::Node<T>>&       nodeBuffer()  { return node_buffer_; };
+    se::PagedMemoryBuffer<se::VoxelBlock<T>>& blockBuffer() { return block_buffer_; };
 
-    const se::MemoryBuffer<se::Node<T>>&       nodeBuffer() const { return node_buffer_; };
-    const se::MemoryBuffer<se::VoxelBlock<T>>& blockBuffer() const { return block_buffer_; };
+    const se::PagedMemoryBuffer<se::Node<T>>&       nodeBuffer() const { return node_buffer_; };
+    const se::PagedMemoryBuffer<se::VoxelBlock<T>>& blockBuffer() const { return block_buffer_; };
 
     size_t nodeBufferSize()  { return node_buffer_.size();}
     size_t blockBufferSize() { return block_buffer_.size();}
 
   private:
     se::Node<T>* root_;
-    se::MemoryBuffer<se::Node<T>>       node_buffer_;
-    se::MemoryBuffer<se::VoxelBlock<T>> block_buffer_;
+    se::PagedMemoryBuffer<se::Node<T>>       node_buffer_;
+    se::PagedMemoryBuffer<se::VoxelBlock<T>> block_buffer_;
 
     // Disabling copy-constructor
-    MemoryPool(const MemoryPool& m);
+    PagedMemoryPool(const PagedMemoryPool& m);
   };
 }
 #endif
