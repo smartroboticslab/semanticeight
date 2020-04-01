@@ -747,7 +747,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     }
 
     int low_variance; // -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface
-    se::KernelImage::PixelT pix; // min, max pixel batch depth + crossing frustum state + contains unknown values state
+    se::KernelImage::Pixel pix; // min, max pixel batch depth + crossing frustum state + contains unknown values state
 
     if(level < max_level_ - log2(se::VoxelBlock<MultiresOFusion::VoxelType>::side) + 1) {
       if (num_corners_infront < 8) {
@@ -782,7 +782,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         }
 
         // CASE 0.4 (OUT OF BOUNDS): The node is outside frustum (i.e left, right, below, above) or all pixel values are unknown -> return intermediately
-        if(pix.status_2 == 2) {
+        if(pix.status_known == se::KernelImage::Pixel::statusKnown::unknown) {
           return;
         }
 
@@ -799,7 +799,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         }
 
         // CASE 2 (FRUSTUM BOUNDARY): The node is crossing the frustum boundary
-        if(pix.status_1 == 1) {
+        if(pix.status_crossing == se::KernelImage::Pixel::statusCrossing::crossing) {
           // EXCEPTION: The node is crossing the frustum boundary, but already reached the min allocation scale for crossing nodes
 //          if (node_size == se::VoxelBlock<MultiresOFusion::VoxelType>::side) {
 //            return;
@@ -808,7 +808,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         }
 
         // CASE 3: The node is inside the frustum, but projects into partially known pixel
-        else if(pix.status_2 == 1) {
+        else if(pix.status_known == se::KernelImage::Pixel::statusKnown::part_known) {
           should_split = true;
         }
 

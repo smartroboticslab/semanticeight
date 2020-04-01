@@ -32,124 +32,103 @@
 
 namespace se {
   KernelImage::KernelImage(const se::Image<float>& depth_map) :
-      image_width_(depth_map.width()), image_heigth_(depth_map.height()) {
-    size_t image_max_dim = std::max(image_width_, image_heigth_);
+      image_width_(depth_map.width()), image_height(depth_map.height()) {
+    size_t image_max_dim = std::max(image_width_, image_height);
     image_max_level_ = size_t(log2((image_max_dim - 1) / 4) + 2) - 1;
 
     for (size_t l = 0; l <= image_max_level_; l++)
-      pyramid_image_.emplace_back(image_width_ * image_heigth_);
+      pyramid_image_.emplace_back(image_width_ * image_height);
 
     // Initalize image frame at single pixel resolution
-    ImgT coarse_image = pyramid_image_.front();
-    for (int v = 0; v < image_heigth_; v++) {
+    for (int v = 0; v < image_height; v++) {
 #pragma omp parallel for
       for (int u = 0; u < image_width_; u++) {
-        ValueT pixel_depth = (depth_map.data())[u + v * image_width_];
+        Value pixel_depth = (depth_map.data())[u + v * image_width_];
         if (pixel_depth <= 0)
-          coarse_image[u + v * image_width_] = PixelT::unknownPixel(); // state_1 := inside (0); state_2 := unknown (2)
+          pyramid_image_[0][u + v * image_width_] = Pixel::unknownPixel(); // state_1 := inside (0); state_2 := unknown (2)
         else {
-          PixelT& pixel = coarse_image[u + v * image_width_];
-          pixel = PixelT::knownPixel(); // state_1 := inside (0); state_2 := known (0)
+          Pixel& pixel = pyramid_image_[0][u + v * image_width_];
+          pixel = Pixel::knownPixel(); // state_1 := inside (0); state_2 := known (0)
           pixel.min     = pixel_depth;
           pixel.max     = pixel_depth;
         }
       }
     }
-    pyramid_image_[0] = coarse_image;
 
-    size_t num_pixel = image_width_ * image_heigth_;
-//    ImgT default_image = std::vector<PixelT>(num_pixel, PixelT::knownPixel()); // state_1 := inside (0); state_2 := known (0)
-    ImgT default_image = std::vector<PixelT>(num_pixel, PixelT::crossingKnownPixel()); // state_1 := crossing (1); state_2 := known (0)
+    size_t num_pixel = image_width_ * image_height;
+    Img default_image = std::vector<Pixel>(num_pixel, Pixel::crossingKnownPixel()); // state_1 := crossing (1); state_2 := known (0)
 
     // Initalize first pixel batch at 3x3 batch resolution
-    ImgT fine_image = coarse_image;
-    coarse_image    = default_image;
-
-    for (int y = 0; y < image_heigth_; y++) {
+    for (int y = 0; y < image_height; y++) {
 #pragma omp parallel for
       for (int x = 0; x < image_width_; x++) {
-        PixelT& pixel = coarse_image[x + image_width_ * y];
+        Pixel& pixel = pyramid_image_[1][x + image_width_ * y];
 
-//        if (y == 0 || x == 0 || y == image_heigth_ - 1 || x == image_width_ - 1)
-//          pixel.status_1 = 1;
-        if (y >= 1 && y < image_heigth_ - 1 && x >= 1 && x < image_width_ - 1) {
-          pixel.status_1 = 0; // inside (0)
+        if (y >= 1 && y < image_height - 1 && x >= 1 && x < image_width_ - 1) {
+          pixel.status_crossing = Pixel::statusCrossing::inside; // inside (0)
         }
 
 
         int top    = (y > 0) ? y - 1 : 0;
-        int bottom = (y < image_heigth_ - 1 ? y + 1 : image_heigth_ - 1);
+        int bottom = (y < image_height - 1 ? y + 1 : image_height - 1);
         int left   = (x > 0) ? x - 1 : 0;
         int right  = (x < image_width_ - 1 ? x + 1 : image_width_ - 1);
 
-        pixel.min = std::min(fine_image[x + y * image_width_].min,
-                             std::min(std::min(std::min(fine_image[left  + top * image_width_].min, fine_image[x + top * image_width_].min),
-                                               std::min(fine_image[right + top * image_width_].min, fine_image[right + y * image_width_].min)),
-                                      std::min(std::min(fine_image[right + bottom * image_width_].min, fine_image[x + bottom * image_width_].min),
-                                               std::min(fine_image[left  + bottom * image_width_].min, fine_image[left + y * image_width_].min))));
-        pixel.max = std::max(fine_image[x + y * image_width_].max,
-                             std::max(std::max(std::max(fine_image[left  + top * image_width_].max, fine_image[x + top * image_width_].max),
-                                               std::max(fine_image[right + top * image_width_].max, fine_image[right + y * image_width_].max)),
-                                      std::max(std::max(fine_image[right + bottom * image_width_].max, fine_image[x + bottom * image_width_].max),
-                                               std::max(fine_image[left  + bottom * image_width_].max, fine_image[left + y * image_width_].max))));
-        int unknown_factor = fine_image[x + y * image_width_].status_2 +
-                             fine_image[left  + top * image_width_].status_2 + fine_image[x + top * image_width_].status_2 +
-                             fine_image[right + top * image_width_].status_2 + fine_image[right + y * image_width_].status_2 +
-                             fine_image[right + bottom * image_width_].status_2 + fine_image[x + bottom * image_width_].status_2 +
-                             fine_image[left  + bottom * image_width_].status_2 + fine_image[left + y * image_width_].status_2;
+        pixel.min = std::min(pyramid_image_[0][x + y * image_width_].min,
+                             std::min(std::min(std::min(pyramid_image_[0][left  + top * image_width_].min, pyramid_image_[0][x + top * image_width_].min),
+                                               std::min(pyramid_image_[0][right + top * image_width_].min, pyramid_image_[0][right + y * image_width_].min)),
+                                      std::min(std::min(pyramid_image_[0][right + bottom * image_width_].min, pyramid_image_[0][x + bottom * image_width_].min),
+                                               std::min(pyramid_image_[0][left  + bottom * image_width_].min, pyramid_image_[0][left + y * image_width_].min))));
+        pixel.max = std::max(pyramid_image_[0][x + y * image_width_].max,
+                             std::max(std::max(std::max(pyramid_image_[0][left  + top * image_width_].max, pyramid_image_[0][x + top * image_width_].max),
+                                               std::max(pyramid_image_[0][right + top * image_width_].max, pyramid_image_[0][right + y * image_width_].max)),
+                                      std::max(std::max(pyramid_image_[0][right + bottom * image_width_].max, pyramid_image_[0][x + bottom * image_width_].max),
+                                               std::max(pyramid_image_[0][left  + bottom * image_width_].max, pyramid_image_[0][left + y * image_width_].max))));
+        int unknown_factor = pyramid_image_[0][x + y * image_width_].status_known +
+                             pyramid_image_[0][left  + top * image_width_].status_known + pyramid_image_[0][x + top * image_width_].status_known +
+                             pyramid_image_[0][right + top * image_width_].status_known + pyramid_image_[0][right + y * image_width_].status_known +
+                             pyramid_image_[0][right + bottom * image_width_].status_known + pyramid_image_[0][x + bottom * image_width_].status_known +
+                             pyramid_image_[0][left  + bottom * image_width_].status_known + pyramid_image_[0][left + y * image_width_].status_known;
         if (unknown_factor == 18) // All pixel are unknown -> 9 * unknown (2) = 18
-          pixel.status_2 = 2; // unknown (2)
+          pixel.status_known = Pixel::statusKnown::unknown; // unknown (2)
         else if (unknown_factor > 0) // Some pixel are unknown
-          pixel.status_2 = 1; // paritally known (1) - else known (0) - see initialization value;
+          pixel.status_known = Pixel::statusKnown::part_known; // paritally known (1) - else known (0) - see initialization value;
       }
     }
-
-//    for (int y = 1; y < image_heigth_ - 1; y++) {
-//#pragma omp simd
-//      for (int x = 1; x < image_width_ - 1; x++) {
-//        PixelT& pixel = coarse_image[x + image_width_ * y];
-//        pixel.status_1 = 0; // inside (0)
-//      }
-//    }
-
     // Compute remaining pixel batch for remaining resolutions (5x5, 9x9, 17x17, 33x33, ...)
-//    default_image = std::vector<PixelT>(num_pixel, PixelT::crossingKnownPixel()); // state_1 := crossing (1); state_2 := known (0)
-    pyramid_image_[1] = coarse_image;
-
     for (size_t l = 2, s = 2; l <= image_max_level_; ++l, (s <<= 1U)) {
-      fine_image = coarse_image;
-      coarse_image = default_image;
+      pyramid_image_[l] = default_image;
       int s_half = s / 2;
-      for (int y = 0; y < image_heigth_; y++) {
+      for (int y = 0; y < image_height; y++) {
 #pragma omp parallel for
         for (int x = 0; x < image_width_; x++) {
-          PixelT& pixel = coarse_image[x + y * image_width_];
+          Pixel& pixel = pyramid_image_[l][x + y * image_width_];
 
           int left, right, top, bottom;
           if (x - s_half < 0) {
             left = 0;
-            pixel.status_1 = 1; // crossing (1)
+            pixel.status_crossing = Pixel::statusCrossing::crossing; // crossing (1)
           } else {
             left = x - s_half;
           }
 
           if ((x + s_half) >= image_width_) {
             right = image_width_ - 1;
-            pixel.status_1 = 1; // crossing (1)
+            pixel.status_crossing = Pixel::statusCrossing::crossing; // crossing (1)
           } else {
             right = x + s_half;
           }
 
           if (y - s_half < 0) {
             top = 0;
-            pixel.status_1 = 1; // crossing (1)
+            pixel.status_crossing = Pixel::statusCrossing::crossing; // crossing (1)
           } else {
             top = y - s_half;
           }
 
-          if ((y + s_half) >= image_heigth_) {
-            bottom = image_heigth_ - 1;
-            pixel.status_1 = 1; // crossing (1)
+          if ((y + s_half) >= image_height) {
+            bottom = image_height - 1;
+            pixel.status_crossing = Pixel::statusCrossing::crossing; // crossing (1)
           } else {
             bottom = y + s_half;
           }
@@ -167,36 +146,26 @@ namespace se {
         |________|_|________|
 
 */
-          pixel.min = std::min(std::min(fine_image[left + top * image_width_].min,
-                                        fine_image[right + top * image_width_].min),
-                               std::min(fine_image[left + bottom * image_width_].min,
-                                        fine_image[right + bottom * image_width_].min));
-          pixel.max = std::max(std::max(fine_image[left + top * image_width_].max,
-                                        fine_image[right + top * image_width_].max),
-                               std::max(fine_image[left + bottom * image_width_].max,
-                                        fine_image[right + bottom * image_width_].max));
-          int unknown_factor = fine_image[left + top * image_width_].status_2 + fine_image[right + top * image_width_].status_2 +
-                               fine_image[left + bottom * image_width_].status_2 + fine_image[right + bottom * image_width_].status_2;
+          pixel.min = std::min(std::min(pyramid_image_[l-1][left + top * image_width_].min,
+                                        pyramid_image_[l-1][right + top * image_width_].min),
+                               std::min(pyramid_image_[l-1][left + bottom * image_width_].min,
+                                        pyramid_image_[l-1][right + bottom * image_width_].min));
+          pixel.max = std::max(std::max(pyramid_image_[l-1][left + top * image_width_].max,
+                                        pyramid_image_[l-1][right + top * image_width_].max),
+                               std::max(pyramid_image_[l-1][left + bottom * image_width_].max,
+                                        pyramid_image_[l-1][right + bottom * image_width_].max));
+          int unknown_factor = pyramid_image_[l-1][left + top * image_width_].status_known + pyramid_image_[l-1][right + top * image_width_].status_known +
+                               pyramid_image_[l-1][left + bottom * image_width_].status_known + pyramid_image_[l-1][right + bottom * image_width_].status_known;
           if (unknown_factor == 8) // All pixel are unknown -> 4 * unknown (2) = 8
-            pixel.status_2 = 2; // unknown (2)
+            pixel.status_known = Pixel::statusKnown::unknown; // unknown (2)
           else if (unknown_factor > 0) // Some pixel are unknown
-            pixel.status_2 = 1; // paritally known (1) - else known (0) - see initialization value;
+            pixel.status_known = Pixel::statusKnown::part_known; // paritally known (1) - else known (0) - see initialization value;
 
-          if (y >= s && y < image_heigth_ - s && x >= s && x < image_width_ - s) {
-            pixel.status_1 = 0; // inside (0)
+          if (y >= s && y < image_height - s && x >= s && x < image_width_ - s) {
+            pixel.status_crossing = Pixel::statusCrossing::inside; // inside (0)
           }
         }
       }
-
-//      for (size_t y = s; y < image_heigth_ - s; y++) {
-//#pragma omp parallel for
-//        for (size_t x = s; x < image_width_ - s; x++) {
-//          PixelT &pixel = coarse_image[x + y * image_width_];
-//          pixel.status_1 = 0; // inside (0)
-//        }
-//      }
-
-      pyramid_image_[l] = coarse_image;
     }
 
     // Find max value at by iterating through coarsest kernel pixel batches touching each other
@@ -204,9 +173,9 @@ namespace se {
     image_max_value_ = 0;
     for (int v = s; true ; v += 2 * s)
     {
-      if (v > image_heigth_ - s - 1)
+      if (v > image_height - s - 1)
       {
-        v = image_heigth_ - s - 1;
+        v = image_height - s - 1;
       }
       for (int u = s; true ; u += 2 * s)
       {
@@ -214,7 +183,7 @@ namespace se {
           u = image_width_ - s - 1;
         }
         int pixel_pos = u + image_width_ * v;
-        KernelImage::PixelT pixel = coarse_image[pixel_pos];
+        KernelImage::Pixel pixel = pyramid_image_[image_max_level_][pixel_pos];
         if (image_max_value_ < pixel.max) {
           image_max_value_ = pixel.max;
         }
@@ -222,21 +191,21 @@ namespace se {
           break;
         }
       }
-      if (v == image_heigth_ - s - 1) {
+      if (v == image_height - s - 1) {
         break;
       }
     }
   }
 
   bool KernelImage::inImage(const int u, const int v) const {
-    if (   u >= 0 && u < static_cast<ValueT>(image_width_)
-        && v >= 0 && v < static_cast<ValueT>(image_heigth_)) {
+    if (   u >= 0 && u < static_cast<Value>(image_width_)
+        && v >= 0 && v < static_cast<Value>(image_height)) {
       return true;
     }
     return false;
   }
 
-  KernelImage::PixelT KernelImage::conservativeQuery(Eigen::Vector2i bb_min, Eigen::Vector2i bb_max) const {
+  KernelImage::Pixel KernelImage::conservativeQuery(Eigen::Vector2i& bb_min, Eigen::Vector2i& bb_max) const {
     bool u_in = true;   // << Pixel batch width is entirely contained within the image
     bool u_out = false; // << Pixel batch width is entirely outside the image
 
@@ -245,48 +214,48 @@ namespace se {
     int u_max = bb_max.x();
     int v_max = bb_max.y();
 
-    if(u_min < ValueT(0)) {
+    if(u_min < Value(0)) {
       u_in  = false;
       u_min = 0;
-      if(u_max < ValueT(0))
+      if(u_max < Value(0))
         u_out = true;
-    } else if(u_min > static_cast<ValueT>(image_width_ - 1U)) {
+    } else if(u_min > static_cast<Value>(image_width_ - 1U)) {
         u_out = true;
     }
 
-    if (u_max > static_cast<ValueT>(image_width_ - 1U)) {
+    if (u_max > static_cast<Value>(image_width_ - 1U)) {
       u_in = false;
-      u_max = static_cast<ValueT>(image_width_ - 1U);
+      u_max = static_cast<Value>(image_width_ - 1U);
     }
 
     bool v_in = true;   // << Pixel batch height is entirely contained within the image
     bool v_out = false; // << Pixel batch height is entirely outside the image
 
-    if(v_min < ValueT(0)) {
+    if(v_min < Value(0)) {
       v_in = false;
       v_min = 0;
-      if(v_max < ValueT(0))
+      if(v_max < Value(0))
         v_out = true;
-    } else if(v_min > static_cast<ValueT>(image_heigth_ - 1U)) {
+    } else if(v_min > static_cast<Value>(image_height - 1U)) {
         v_out = true;
     }
 
-    if(v_max > static_cast<ValueT>(image_heigth_ - 1U)) {
+    if(v_max > static_cast<Value>(image_height - 1U)) {
       v_in = false;
-      v_max = static_cast<ValueT>(image_heigth_ - 1U);
+      v_max = static_cast<Value>(image_height - 1U);
     }
 
     // Check if the pixel batch is entirely outside the image
     if (u_out || v_out || u_min == u_max || v_min == v_max) {
-      return KernelImage::PixelT::outsidePixelBatch();
+      return KernelImage::Pixel::outsidePixelBatch();
     }
 
-    KernelImage::PixelT pix = poolBoundingBox(u_min, u_max, v_min, v_max);
+    KernelImage::Pixel pix = poolBoundingBox(u_min, u_max, v_min, v_max);
 
     // Check if the pixel batch is partly inside the image. Given the previous check this is equivalent to
     // not entirely inside or outside the image
     if (!u_in || !v_in) {
-      pix.status_1 = 1;
+      pix.status_crossing = Pixel::statusCrossing::crossing;
 
       return pix;
     } else {
@@ -294,16 +263,16 @@ namespace se {
     }
   }
 
-  KernelImage::PixelT KernelImage::poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const {
+  KernelImage::Pixel KernelImage::poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const {
 
-    int u_diff = u_max - u_min;
-    int v_diff = v_max - v_min;
+    const int u_diff = u_max - u_min;
+    const int v_diff = v_max - v_min;
 
-    int min_side = std::min(u_diff, v_diff);
-    int level = std::max((int) 0, std::min((int) image_max_level_, (int) (ceil(log2(min_side / 2)))));
-    int s = 1 << std::max((int) level - 1, 0);
+    const int min_side = std::min(u_diff, v_diff);
+    const int level = std::max((int) 0, std::min((int) image_max_level_, (int) (ceil(log2(min_side / 2)))));
+    const int s = 1 << std::max((int) level - 1, 0);
 
-    PixelT pixel_batch = PixelT::knownPixel();
+    Pixel pixel_batch = Pixel::knownPixel();
 
     int num_pix = 0;
     int num_unknown_pix = 0;
@@ -320,7 +289,7 @@ namespace se {
         }
 
         int pixel_pos = u + image_width_ * v;
-        KernelImage::PixelT pixel = pyramid_image_[level][pixel_pos];
+        KernelImage::Pixel pixel = pyramid_image_[level][pixel_pos];
         if (pixel_batch.max < pixel.max) {
           pixel_batch.max = pixel.max;
         }
@@ -328,7 +297,7 @@ namespace se {
           pixel_batch.min = pixel.min;
         }
 
-        if (pixel.status_2 == 2) {
+        if (pixel.status_known == 2) {
           num_unknown_pix++;
         }
         num_pix++;
@@ -342,7 +311,7 @@ namespace se {
       }
     }
     if (num_pix == num_unknown_pix)
-      pixel_batch.status_2 = 2;
+      pixel_batch.status_known = Pixel::statusKnown::unknown;
     return pixel_batch;
   };
 

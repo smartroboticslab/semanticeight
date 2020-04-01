@@ -39,92 +39,100 @@ namespace se {
 
   class KernelImage {
   public:
-    using ValueT  = float;
-    using StatusT = int;
+    using Value = float;
+    using Status= int;
 
-    struct PixelT {
-      ValueT  min;
-      ValueT  max;
+    struct Pixel {
+      Value min;
+      Value max;
 
-      // STATUS 1: Voxel image intersection
+      // STATUS Crossing: Voxel image intersection
       // outside  := 2;
       // crossing := 1;
       // inside   := 0;
-      StatusT status_1;
+      enum statusCrossing { inside = 0, crossing = 1, outside = 2 };
 
-      // STATUS 2: Voxel content
+      // STATUS Known: Voxel content
       // unknown          := 2;
       // partially known  := 1;
       // known            := 0;
-      StatusT status_2;
+      enum statusKnown { known = 0, part_known = 1, unknown = 2 };
 
-      PixelT() {};
+      statusCrossing status_crossing;
+      statusKnown    status_known;
 
-      PixelT(ValueT min, ValueT max, StatusT status_1, StatusT status_2)
-            : min(min), max(max), status_1(status_1), status_2(status_2) {};
+      Pixel() {};
+
+      Pixel(Value min, Value max, statusCrossing status_crossing, statusKnown status_known)
+            : min(min), max(max), status_crossing(status_crossing), status_known(status_known) {};
 
       // Inside pixel //
 
       // Init known pixel
-      static PixelT knownPixel() {
-        PixelT knownPixel(std::numeric_limits<ValueT>::max(), std::numeric_limits<ValueT>::min(), 0, 0);
+      static Pixel knownPixel() {
+        Pixel knownPixel(std::numeric_limits<Value>::max(), std::numeric_limits<Value>::min(),
+            statusCrossing::inside, statusKnown::known);
         return knownPixel;
       };
 
       // Init unknown pixel
-      static PixelT unknownPixel() {
-        PixelT unknownPixel(std::numeric_limits<ValueT>::max(), std::numeric_limits<ValueT>::min(), 0, 2);
+      static Pixel unknownPixel() {
+        Pixel unknownPixel(std::numeric_limits<Value>::max(), std::numeric_limits<Value>::min(),
+            statusCrossing::inside, statusKnown::known);
         return unknownPixel;
       };
 
       // Crossing pixel //
 
-      static PixelT crossingKnownPixel() {
-        PixelT crossingPixel(std::numeric_limits<ValueT>::max(), std::numeric_limits<ValueT>::min(), 1, 0);
+      static Pixel crossingKnownPixel() {
+        Pixel crossingPixel(std::numeric_limits<Value>::max(), std::numeric_limits<Value>::min(),
+            statusCrossing::crossing, statusKnown::known);
         return crossingPixel;
       };
 
       // Init crossing partially known pixel
-      static PixelT crossingPartKnownPixel() {
-        PixelT crossingPixel(std::numeric_limits<ValueT>::max(), std::numeric_limits<ValueT>::min(), 1, 1);
+      static Pixel crossingPartKnownPixel() {
+        Pixel crossingPixel(std::numeric_limits<Value>::max(), std::numeric_limits<Value>::min(),
+            statusCrossing::crossing, statusKnown::part_known);
         return crossingPixel;
       };
 
-      static PixelT crossingUnknownPixel() {
-        PixelT crossingPixel(std::numeric_limits<ValueT>::max(), std::numeric_limits<ValueT>::min(), 1, 2);
+      static Pixel crossingUnknownPixel() {
+        Pixel crossingPixel(std::numeric_limits<Value>::max(), std::numeric_limits<Value>::min(),
+            statusCrossing::crossing, statusKnown::unknown);
         return crossingPixel;
       };
 
       // Outside pixel //
 
       // Init outside pixel
-      static PixelT outsidePixelBatch() {
-        PixelT outsidePixel(0, 0, 2, 2);
+      static Pixel outsidePixelBatch() {
+        Pixel outsidePixel(0, 0, statusCrossing::outside, statusKnown::unknown);
         return outsidePixel;
       };
 
     };
 
-    using ImgT = std::vector<PixelT>;
-    using PyramidT = std::vector<ImgT>;
+    using Img = std::vector<Pixel>;
+    using Pyramid = std::vector<Img>;
 
     KernelImage(const se::Image<float>& depth_image);
 
     bool inImage(const int u, const int v) const;
-    KernelImage::PixelT conservativeQuery(Eigen::Vector2i bb_min, Eigen::Vector2i bb_max) const;
-    KernelImage::PixelT poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const;
+    KernelImage::Pixel conservativeQuery(Eigen::Vector2i& bb_min, Eigen::Vector2i& bb_max) const;
+    KernelImage::Pixel poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const;
 
     size_t width() const {return image_width_;};
-    size_t height() const {return image_heigth_;};
-    ValueT maxValue() const {return image_max_value_;};
+    size_t height() const {return image_height;};
+    Value  maxValue() const {return image_max_value_;};
     size_t maxLevel() const {return image_max_level_;}
     
   private:
     size_t    image_max_level_;
     size_t    image_width_;
-    size_t    image_heigth_;
-    PyramidT  pyramid_image_;
-    ValueT    image_max_value_;
+    size_t    image_height;
+    Pyramid  pyramid_image_;
+    Value   image_max_value_;
   };
 
 } // namespace se
