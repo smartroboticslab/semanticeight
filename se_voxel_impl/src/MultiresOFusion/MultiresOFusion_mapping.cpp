@@ -284,8 +284,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   static float interp(const se::Octree<MultiresOFusion::VoxelType>& map,
                       const se::VoxelBlock<MultiresOFusion::VoxelType>* block,
                       const Eigen::Vector3i& vox, const int scale, bool& valid) {
-    Eigen::IOFormat CleanFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", " << ", ";");
-
     // Compute base point in parent block
     const int side   = se::VoxelBlock<MultiresOFusion::VoxelType>::side >> (scale + 1);
     const int stride = 1 << (scale + 1);

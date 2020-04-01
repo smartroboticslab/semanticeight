@@ -131,7 +131,6 @@ float computeMapIntersection( const Eigen::Vector3f& curr_pos, const Eigen::Vect
 void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map, const Eigen::Vector3f& origin_pos,
                             const Eigen::Vector3f& direction, float& t, const float& t_near, float& t_far, const float& map_res,
                             int max_scale, bool& is_valid) {
-//  Eigen::IOFormat CleanFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "");
   int scale = max_scale;  // Initialize scale
   // Additional distance travelled in [voxel]
   float v_add  = 0;                     // TODO: I'll have to re-evaluate this value.
