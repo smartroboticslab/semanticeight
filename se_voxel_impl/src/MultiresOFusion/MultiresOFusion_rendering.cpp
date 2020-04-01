@@ -58,7 +58,7 @@ float computeMapIntersection( const Eigen::Vector3f& curr_pos, const Eigen::Vect
   */
   const int map_min = 0;
   const int map_max = map_dim;
-  int num_dim = 3;
+  constexpr int num_dim = 3;
   Eigen::Vector3f hit_point = -1*Eigen::Vector3f::Ones();				/* hit point */
   bool inside = true;
   Eigen::Vector3i quadrant;
@@ -128,9 +128,28 @@ float computeMapIntersection( const Eigen::Vector3f& curr_pos, const Eigen::Vect
   return t;
 }
 
-void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map, const Eigen::Vector3f& origin_pos,
-                            const Eigen::Vector3f& direction, float& t, const float& t_near, float& t_far, const float& map_res,
-                            int max_scale, bool& is_valid) {
+/*!
+ * @brief Advance ray from the camera position until a voxel block with a max occupancy
+ * log-odd value of at least -0.2 is reached
+ * @param map           Map
+ * @param origin_pos    Position of the camera
+ * @param t             Distance until the search voxel block is reached
+ * @param t_near        Distance to near plane or until the map is entered
+ * @param t_far         Distance to far plane or until the map is surpassed
+ * @param map_res       Resolution of the map
+ * @param max_scale     Finest scale at which to check the occupancy
+ * @param is_valid      Indiactes if a voxel block was found
+ * \return              Surface intersection point in [m] and scale
+ */
+void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
+                const Eigen::Vector3f& origin_pos,
+                const Eigen::Vector3f& direction,
+                float&                 t,
+                const float&           t_near,
+                float&                 t_far,
+                const float&           map_res,
+                int                    max_scale,
+                bool&                  is_valid) {
   int scale = max_scale;  // Initialize scale
   // Additional distance travelled in [voxel]
   float v_add  = 0;                     // TODO: I'll have to re-evaluate this value.
@@ -175,7 +194,6 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map, const E
 
   Eigen::Vector3f curr_vox = origin_vox;
 
-  auto start = std::chrono::system_clock::now();
   int iter_1 = 0;
   while ((v + v_add) < v_far) {
     if (scale <= 2) {
@@ -276,12 +294,10 @@ Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, s
     return Eigen::Vector4f::Zero();
   }
 
-  int max_scale = 7;  // Max possible free space skipped per iteration (node size = 2^max_scale)
-  max_scale = std::min(max_scale, volume.octree_->maxLevel() - 1);
+  const int max_scale = std::min(7, volume.octree_->maxLevel() - 1); // Max possible free space skipped per iteration (node size = 2^max_scale)
 
   advanceRay(volume.octree_, origin_pos, direction, t, t_near, t_far, map_res, max_scale, is_valid);
 
-  auto start = std::chrono::system_clock::now();
   if (!is_valid) {
     // Ray passes only through free space or intersects with the map before t_near or after t_far.
     return Eigen::Vector4f::Zero();
