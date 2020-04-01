@@ -434,7 +434,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   }
 
   /**
-   * Update a voxel block at a given scale by first updating the observad state of all voxels at the
+   * Update a voxel block at a given scale by first updating the observed state of all voxels at the
    * scale to true if the have been partially observed (y > 0);
   */
   void propagateUpdate(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
@@ -548,7 +548,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
       }
   }
 
-  void freeNodeRecurs(se::Node<MultiresOFusion::VoxelType>* node, int level) {
+  void freeNodeRecurse(se::Node<MultiresOFusion::VoxelType>* node, int level) {
     for (int i = 0; i < 8; i++) {
       auto child_node = node->child(i);
       if (child_node) {
@@ -562,7 +562,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
             voxel_block_list_.push_back(dynamic_cast<se::VoxelBlock<MultiresOFusion::VoxelType>*>(block));
           }
         } else {
-          freeNodeRecurs(child_node, level + 1);
+          freeNodeRecurse(child_node, level + 1);
         }
       } else {
         sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::freeNode(node->value_[i], frame_);
@@ -694,14 +694,11 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
    * @param rel_step    Relative step of node within parent node (e.g. [1, 0, 1], [0, 1, 1])
    * @param parent_node Pointer to the nodes parent
    */
-  void operator()(const Eigen::Vector3i&               corner,
-                  const int                            node_size,
-                  const int                            level,
-                  const                                Eigen::Vector3i& rel_step,
+  void operator()(const Eigen::Vector3i&                 corner,
+                  const int                              node_size,
+                  const int                              level,
+                  const                                  Eigen::Vector3i& rel_step,
                   se::Node <MultiresOFusion::VoxelType>* parent_node) {
-//    std::cout << corner.x() << "," << corner.y() << "," << corner.z() << "|" << node_size << std::endl;
-//    if (corner.x() == 384 && corner.y() == 256 && corner.z() == 128) {
-
     /*
      * Approximate max and min depth to quickly check if the node is behind the camera or maximum depth
      */
@@ -733,9 +730,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     // Project the 8 corners into the image plane
     Eigen::Matrix<float, 4, 8> corners_cam_hom = P_ * corners_m.colwise().homogeneous();
     // TODO: There is no validation yet that non of the depth is within the zero_depth_band_
-//    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-//    std::cout << P_.format(OctaveFmt) << std::endl;
-
     bool should_split = false;
 
     Eigen::VectorXi corners_infront(8);
@@ -886,7 +880,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
             // Node has children
             if (low_variance == -1) {
               //Free node recursively
-              freeNodeRecurs(node, level);
+              freeNodeRecurse(node, level);
             } // else node has low variance behind surface (ignore)
           }
       }
@@ -934,7 +928,6 @@ void MultiresOFusion::integrate(se::Octree<MultiresOFusion::VoxelType>& map,
                               const se::Image<float>&                   depth_image,
                               const float                               mu,
                               const unsigned                            frame) {
-
   // Create min/map depth pooling image for different bounding box sizes
   const se::KernelImage* const kernel_depth_image = new se::KernelImage(depth_image); // TODO: Should be changed to unique pointer?
 

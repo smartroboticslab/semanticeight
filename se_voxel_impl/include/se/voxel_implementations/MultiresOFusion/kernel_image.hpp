@@ -28,13 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __KERNEL_IMAGE
-#define __KERNEL_IMAGE
+#ifndef KERNEL_IMAGE
+#define KERNEL_IMAGE
 
 #include <Eigen/Dense>
 #include <se/image/image.hpp>
 #include <iostream>
-//#include "thirdparty/cutil_math.h"
 
 namespace se {
 
@@ -130,4 +129,4 @@ namespace se {
 
 } // namespace se
 
-#endif // __KERNEL_IMAGE
+#endif // KERNEL_IMAGE

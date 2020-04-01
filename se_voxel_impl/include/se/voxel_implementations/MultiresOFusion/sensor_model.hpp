@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __SENSOR_MODEL_HPP
-#define __SENSOR_MODEL_HPP
+#ifndef SENSOR_MODEL_HPP
+#define SENSOR_MODEL_HPP
 
 /**
  * @file
@@ -50,44 +50,55 @@ public:
   /**
    * @brief Return a conservative measure of the expected variance of a sensor model inside a voxel
    *  given its position and depth variance.
-   * @param[in] depth_min Depth measurement max value inside voxel.
-   * @param[in] depth_max Depth measurement min value inside voxel.
-   * @param[in] voxel_min Voxel depth min value.
-   * @param[in] voxel_max Voxel depth max value.
-   * @param[in] sigma Model uncertainty value for sensor, equivalent to TSDF narrow band
-   * @param[in] projScale Scaling due to ray position.
-   * @param[in] hasUnknownData Is there unknown data on the voxel area.
-   * @return Estimate of variance
+   * @param depth_min   Minimum depth in depth image bounding box
+   * @param depth_max   Maximum depth in depth image bounding box
+   * @param voxel_min_m Minimum distance of the node/voxel block to the camera
+   * @param voxel_max_m Maximum distance of the node/voxel block to the camera
+   * @param mu
    */
-  inline static int lowVariance(float depth_min, float depth_max, float voxel_min_m, float voxel_max_m,
-                                                         float mu)
-  {
+  inline static int lowVariance(float depth_min,
+                                float depth_max,
+                                float voxel_min_m,
+                                float voxel_max_m,
+                                float mu) {
     return Derived::lowVariance(depth_min, depth_max, voxel_min_m, voxel_max_m, mu);
   }
 
-  inline static float computeSigma()
-  {
+  inline static float computeSigma() {
     return Derived::computeSigma();
   }
 
   /**
-   * @brief Update a field with a new measurement, a weighting of 1 is considered for the new measurement.
-   * @param diffMeasToVox Difference from the depth measurement to the evaluation position (depth_meas - voxel_pos).
-   * @param sigma Uncertainty or truncation band assigned to the model.
-   * @param field Field to update.
+   * @brief Update a field with a new measurement, a weighting of 1 is considered for the new measurement.\
+   * @param pos_z         Depth of the voxel to be updated
+   * @param depth_sample  Depth measurement that the voxel projects to
+   * @param sigma         Uncertainty
+   * @param voxel_size    Size of the voxel
+   * @param field         Voxel content
+   * @param frame         Current frame of integration
+   * @param scale         Scale at which to update the voxel
+   * @param project_scale Factor to correct depth to reach
    */
-  inline static void updateBlock(float pos_z, float depth_sample, float sigma, float voxel_size, MultiresOFusion::VoxelType::VoxelData& field, const unsigned frame, const int scale, const float proj_scale = 1)
-  {
+  inline static void updateBlock(float          pos_z,
+                                 float          depth_sample,
+                                 float          sigma,
+                                 float          voxel_size,
+                                 MultiresOFusion::VoxelType::VoxelData& field,
+                                 const unsigned frame,
+                                 const int      scale,
+                                 const float    proj_scale = 1) {
     Derived::updateBlock(pos_z, depth_sample, sigma, voxel_size, field, frame, scale, proj_scale);
   }
 
-  inline static void freeBlock(MultiresOFusion::VoxelType::VoxelData& field, const unsigned frame, const int scale)
-  {
+
+  inline static void freeBlock(MultiresOFusion::VoxelType::VoxelData& field,
+                               const unsigned frame,
+                               const int      scale) {
     Derived::freeBlock(field, frame, scale);
   }
 
-  inline static void freeNode(MultiresOFusion::VoxelType::VoxelData& field, const unsigned frame)
-  {
+  inline static void freeNode(MultiresOFusion::VoxelType::VoxelData& field,
+                              const unsigned frame) {
     Derived::freeNode(field, frame);
   }
 
@@ -95,23 +106,23 @@ public:
 
   /**
    * @brief Check if a field should be marked as occupied.
-   * @param value Field to evaluate.
-   * @param hysteresis An hysteresis band over the 0 crossing.
+   * @param value       Field to evaluate.
+   * @param hysteresis  An hysteresis band over the 0 crossing.
    * @return True if considered occupied.
    */
-  inline static bool isOccupied(const MultiresOFusion::VoxelType::VoxelData& value, const float hysteresis)
-  {
+  inline static bool isOccupied(const MultiresOFusion::VoxelType::VoxelData& value,
+                                const float hysteresis) {
     return Derived::is_occupied(value, hysteresis);
   }
 
   /**
    * @brief Check if a field should be marked as free.
-   * @param value Field to evaluate.
-   * @param hysteresis An hysteresis band over the 0 crossing.
+   * @param value       Field to evaluate.
+   * @param hysteresis  An hysteresis band over the 0 crossing.
    * @return True if considered free.
    */
-  inline static bool isFree(const MultiresOFusion::VoxelType::VoxelData& value, const float hysteresis)
-  {
+  inline static bool isFree(const MultiresOFusion::VoxelType::VoxelData& value,
+                            const float hysteresis) {
     return Derived::is_free(value, hysteresis);
   }
 };

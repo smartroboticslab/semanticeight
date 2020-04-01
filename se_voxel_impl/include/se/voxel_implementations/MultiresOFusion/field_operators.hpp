@@ -41,8 +41,10 @@ namespace field_operations
 
   inline float value(const MultiresOFusionData& field) { return field.x; }
 
-  inline void addValue2Block(MultiresOFusionData& field, float value, const unsigned frame, const int scale)
-  {
+  inline void addValueToBlock(MultiresOFusionData& field,
+                             float                value,
+                             const unsigned       frame,
+                             const int            scale) {
     field.x        = (field.x * field.y + value) / (field.y + 1);
     field.y        = std::min(field.y + 1, MultiresOFusion::max_weight);
     field.x_max    = std::max(std::min(field.x * field.y, MultiresOFusion::max_occupancy), MultiresOFusion::min_occupancy);
@@ -50,7 +52,9 @@ namespace field_operations
     field.observed = true;
   }
 
-  inline void addValue2Node(MultiresOFusionData& field, float value, const unsigned frame) {
+  inline void addValueToNode(MultiresOFusionData& field,
+                            float                value,
+                            const unsigned       frame) {
     if (field.y == MultiresOFusion::max_weight) {
       field.x_max    = std::max(std::min(factor * field.x_max + value, MultiresOFusion::max_occupancy), MultiresOFusion::min_occupancy);
     } else {

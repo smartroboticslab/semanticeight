@@ -53,13 +53,15 @@ public:
    * @param[in] hasUnknownData Is there unknown data on the voxel area.
    * @return Estimate of variance
    */
-  static int lowVariance(float depth_min, float depth_max, float voxel_min_m, float voxel_max_m, float mu)
-  {
+  static int lowVariance(float depth_min,
+                         float depth_max,
+                         float voxel_min_m,
+                         float voxel_max_m,
+                         float mu) {
 
     // Assume worst case scenario -> no multiplication with projScale
     float diff_max = (voxel_max_m - depth_min); // * projScale;
     float diff_min = (voxel_min_m - depth_max); // * projScale;
-
 
     // TODO: if 10cm
 //    const float tau_max   =     tau_max_; // Case: 10cm res
@@ -84,8 +86,14 @@ public:
     return tau_max_;
   }
 
-  inline static void updateBlock(float pos_z, float depth_sample, float mu, float voxel_size, MultiresOFusion::VoxelType::VoxelData& field, const unsigned frame, const int scale, const float proj_scale)
-  {
+  inline static void updateBlock(float          pos_z,
+                                 float          depth_sample,
+                                 float          mu,
+                                 float          voxel_size,
+                                 MultiresOFusion::VoxelType::VoxelData& field,
+                                 const unsigned frame,
+                                 const int      scale,
+                                 const float    proj_scale) {
     const float diff = (pos_z - depth_sample) * proj_scale;
 
     // TODO: if 10cm
@@ -107,26 +115,27 @@ public:
     } else {
       return;
     }
-    field_operations::addValue2Block(field, sample, frame, scale);
+    field_operations::addValueToBlock(field, sample, frame, scale);
   }
 
-  inline static void freeBlock(MultiresOFusion::VoxelType::VoxelData& field, const unsigned frame, const int scale)
-  {
-    field_operations::addValue2Block(field, log_odd_min_, frame, scale);
+  inline static void freeBlock(MultiresOFusion::VoxelType::VoxelData& field,
+                               const unsigned frame,
+                               const int      scale) {
+    field_operations::addValueToBlock(field, log_odd_min_, frame, scale);
   }
 
-  inline static void freeNode(MultiresOFusion::VoxelType::VoxelData& field, const unsigned frame)
-  {
-    field_operations::addValue2Node(field, log_odd_min_, frame);
+  inline static void freeNode(MultiresOFusion::VoxelType::VoxelData& field,
+                              const unsigned frame) {
+    field_operations::addValueToNode(field, log_odd_min_, frame);
   }
 
-  inline static bool isOccupied(const MultiresOFusion::VoxelType::VoxelData& field, const float hysteresis)
-  {
+  inline static bool isOccupied(const MultiresOFusion::VoxelType::VoxelData& field,
+                                const float hysteresis) {
     return field_operations::value(field) > hysteresis;
   }
 
-  inline static bool isFree(const MultiresOFusion::VoxelType::VoxelData& value, const float hysteresis)
-  {
+  inline static bool isFree(const MultiresOFusion::VoxelType::VoxelData& value,
+                            const float hysteresis) {
     return field_operations::value(value) < -hysteresis;
   }
 };
