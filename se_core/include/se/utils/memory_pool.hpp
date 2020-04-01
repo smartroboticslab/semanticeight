@@ -36,8 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <atomic>
 #include <mutex>
-#include <se/node.hpp>
-#include <se/octant_ops.hpp>
+#include "se/node.hpp"
+#include "se/octant_ops.hpp"
 
 namespace se {
 /*! \brief Manage the memory allocated for Octree nodes.
