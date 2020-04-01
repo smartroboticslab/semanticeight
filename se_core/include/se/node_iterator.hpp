@@ -44,7 +44,7 @@ class node_iterator {
 
   public:
 
-  node_iterator(const Octree<T>& m): map_(m){
+  node_iterator(const Octree<T>& octree): octree_(octree){
     state_ = BRANCH_NODES;
     last = 0;
   };
@@ -61,7 +61,7 @@ class node_iterator {
   Node<T> *  next() {
     switch(state_) {
       case BRANCH_NODES: {
-        const auto &node_buffer = map_.pool().nodeBuffer();
+        const auto &node_buffer = octree_.pool().nodeBuffer();
         if (last < node_buffer.size()) {
           Node<T> *n = node_buffer[last++];
           return n;
@@ -73,7 +73,7 @@ class node_iterator {
         break;
       }
       case LEAF_NODES: {
-        const auto& block_buffer = map_.pool().blockBuffer();
+        const auto& block_buffer = octree_.pool().blockBuffer();
         if(last < block_buffer.size()) {
           VoxelBlock<T>* n = block_buffer[last++];
           return n;
@@ -99,7 +99,7 @@ class node_iterator {
     FINISHED
   } ITER_STATE;
 
-  const Octree<T>& map_;
+  const Octree<T>& octree_;
   ITER_STATE state_;
   size_t last;
 };

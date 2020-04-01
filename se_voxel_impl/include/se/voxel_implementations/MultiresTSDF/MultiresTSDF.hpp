@@ -85,7 +85,7 @@ struct MultiresTSDF {
   static size_t buildAllocationList(
       se::key_t*                           allocation_list,
       size_t                               reserved,
-      se::Octree<MultiresTSDF::VoxelType>& map_index,
+      se::Octree<MultiresTSDF::VoxelType>& map,
       const Eigen::Matrix4f&               T_wc,
       const Eigen::Matrix4f&               K,
       const float*                         depth_map,

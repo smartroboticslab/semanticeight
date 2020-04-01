@@ -100,7 +100,7 @@ void raycastKernel(const Volume<T>&            volume,
       if (std::is_same<T, MultiresOFusion>::value) {
         hit = T::raycast(volume, transl, dir, near_plane, far_plane, 0, 0, 0);
       } else {
-        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.map_, transl, dir, near_plane, far_plane);
+        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, transl, dir, near_plane, far_plane);
         ray.next();
         const float t_min = ray.tmin(); /* Get distance to the first intersected block */
         hit = t_min > 0.f
@@ -183,7 +183,7 @@ void renderVolumeKernel(const Volume<T>&                  volume,
         if (std::is_same<T, MultiresOFusion>::value) {
           hit = T::raycast(volume, transl, dir, near_plane, far_plane, 0, 0, 0);
         } else {
-          se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.map_, transl, dir, near_plane, far_plane);
+          se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, transl, dir, near_plane, far_plane);
           ray.next();
           const float t_min = ray.tmin(); /* Get distance to the first intersected block */
           hit = t_min > 0.f

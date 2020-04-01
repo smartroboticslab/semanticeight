@@ -323,9 +323,9 @@ Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, s
   }
 
   int max_scale = 7;  // Max possible free space skipped per iteration (node size = 2^max_scale)
-  max_scale = std::min(max_scale, volume.map_->maxLevel() - 1);
+  max_scale = std::min(max_scale, volume.octree_->maxLevel() - 1);
 
-  advanceRay(volume.map_, origin_pos, direction, t, t_near, t_far, map_res, max_scale, is_valid);
+  advanceRay(volume.octree_, origin_pos, direction, t, t_near, t_far, map_res, max_scale, is_valid);
 
   auto start = std::chrono::system_clock::now();
   if (!is_valid) {
