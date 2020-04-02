@@ -417,7 +417,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                   continue;
                 }
 
-                float proj_scale =  std::sqrt( 1 + se::math::sq(pos.x() / pos.z())
+                const float proj_scale =  std::sqrt( 1 + se::math::sq(pos.x() / pos.z())
                                                                          + se::math::sq(pos.y() / pos.z()));
                 // Update the LogOdd
                 sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(pos[2], depth_sample, mu_, map_res_, curr, frame_, scale, proj_scale);
@@ -478,7 +478,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
             continue;
           }
 
-          float proj_scale = std::sqrt(1 + se::math::sq(pos.x() / pos.z())
+          const float proj_scale = std::sqrt(1 + se::math::sq(pos.x() / pos.z())
                                        + se::math::sq(pos.y() / pos.z()));
           // Update the LogOdd
           sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(pos[2], depth_sample, mu_,
@@ -537,7 +537,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
           if (depth_sample <=  0) continue;
           auto data = block->data(pix, scale);
 
-          float proj_scale =  std::sqrt( 1 + se::math::sq(pos.x() / pos.z())
+          const float proj_scale =  std::sqrt( 1 + se::math::sq(pos.x() / pos.z())
                                          + se::math::sq(pos.y() / pos.z()));
           // Update the LogOdd
           sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(pos[2], depth_sample, mu_, map_res_, data, frame_, scale, proj_scale);
@@ -929,7 +929,7 @@ void MultiresOFusion::integrate(se::Octree<MultiresOFusion::VoxelType>& map,
   // Create min/map depth pooling image for different bounding box sizes
   const se::KernelImage* const kernel_depth_image = new se::KernelImage(depth_image); // TODO: Should be changed to unique pointer?
 
-  float max_depth = std::min(farPlane, kernel_depth_image->maxValue() + sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::computeSigma());
+  const float max_depth = std::min(farPlane, kernel_depth_image->maxValue() + sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::computeSigma());
   const Eigen::Matrix4f P      = K * T_cw.matrix();
   const float map_res          = map.dim() / map.size();
   const Eigen::Vector3f offset = se::Octree<MultiresOFusion::VoxelType>::_offset;

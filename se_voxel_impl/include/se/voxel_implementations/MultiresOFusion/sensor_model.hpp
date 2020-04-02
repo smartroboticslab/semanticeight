@@ -129,4 +129,4 @@ public:
 
 #include "se/voxel_implementations/MultiresOFusion/sensor_model_impl.hpp"
 
-#endif // __SENSOR_MODEL_HPP
+#endif // SENSOR_MODEL_HPP
