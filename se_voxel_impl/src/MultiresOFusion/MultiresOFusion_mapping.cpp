@@ -40,17 +40,17 @@ struct AllocateAndUpdateRecurse {
 AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                        map,
                          std::vector<se::VoxelBlock<MultiresOFusion::VoxelType>*>&      voxel_block_list,
                          std::vector<std::set<se::Node<MultiresOFusion::VoxelType>*>>&  node_list,
-                         const se::Image<float>&                                      depth_image,
-                         const se::KernelImage* const                                 kernel_depth_image,
-                         const Eigen::Matrix4f&                                       K,
-                         const Eigen::Matrix4f&                                       P,
-                         const Sophus::SE3f&                                          T_cw,
-                         const float                                                  mu,
-                         const float                                                  map_res,
-                         const Eigen::Vector3f&                                       offset,
-                         const size_t                                                 max_level,
-                         const float                                                  max_depth,
-                         const unsigned                                               frame) :
+                         const se::Image<float>&                                        depth_image,
+                         const se::KernelImage* const                                   kernel_depth_image,
+                         const Eigen::Matrix4f&                                         K,
+                         const Eigen::Matrix4f&                                         P,
+                         const Sophus::SE3f&                                            T_cw,
+                         const float                                                    mu,
+                         const float                                                    map_res,
+                         const Eigen::Vector3f&                                         offset,
+                         const size_t                                                   max_level,
+                         const float                                                    max_depth,
+                         const unsigned                                                 frame) :
                          map_(map),
                          pool_(map.pool()),
                          voxel_block_list_(voxel_block_list),
@@ -72,14 +72,11 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                          dist_thresh_1_(3   * map_res / scaled_pix_),
                          dist_thresh_2_(6   * map_res / scaled_pix_),
                          zero_depth_band_(1.0e-6f),
-                         size_2_radius_(std::sqrt(3.0f) / 2.0f){
-
+                         size_2_radius_(std::sqrt(3.0f) / 2.0f) {
   point_offset_ << 0, 1, 0, 1, 0, 1, 0, 1,
-      0, 0, 1, 1, 0, 0, 1, 1,
-      0, 0, 0, 0, 1, 1, 1, 1;
-
-
-};
+                   0, 0, 1, 1, 0, 0, 1, 1,
+                   0, 0, 0, 0, 1, 1, 1, 1;
+  };
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   se::Octree<MultiresOFusion::VoxelType>& map_;
@@ -107,36 +104,31 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 
   static inline constexpr int max_scale_ = se::math::log2_const(se::VoxelBlock<MultiresOFusion::VoxelType>::side);
 
-  float getDepthSample(float center_u, float center_v, float center_d)
-  {
-    int32_t cUi = static_cast<int32_t>(center_u + 0.5f);
-    int32_t cVi = static_cast<int32_t>(center_v + 0.5f);
+  float getDepthSample(float center_u, float center_v, float center_d) {
+    const int32_t cUi = static_cast<int32_t>(center_u + 0.5f);
+    const int32_t cVi = static_cast<int32_t>(center_v + 0.5f);
 
     if(cUi < 0 || cUi >= depth_image_.width() || cVi < 0 || cVi >= depth_image_.height() || center_d <= 0)
     {
       return 0.0f;
     }
-
-    auto depth = (depth_image_.data())[cUi + cVi * depth_image_.width()];
-    return depth;
+    return (depth_image_.data())[cUi + cVi * depth_image_.width()];
   }
 
   /**
-   * \brief Computes the scale corresponding to the back-projected pixel size
-   * in voxel space
-   * \param[in] vox centroid coordinates of the test voxel
-   * \param[in] twc translational component of the camera position
-   * \param[in] scale_pix unitary pixel side after application of inverse
-   * calibration matrixfre
-   * \param[out] scale scale from which propagate up voxel values
+   * \brief Computes the scale depending on the voxel block distance to the camera.
+   * \param vox         Centroid coordinates of the voxel block
+   * \param t_wc        Translational component of the camera position
+   * \param scale_pix   Unitary pixel side after application of inverse
+   *                        calibration matrix
+   * \return scale      Scale at which to integrate new measurements
    */
   inline float computeScale(const Eigen::Vector3f& vox,
-                            const Eigen::Vector3f& twc,
-                            const Eigen::Matrix3f& Rcw,
+                            const Eigen::Vector3f& t_wc,
+                            const Eigen::Matrix3f& R_cw,
                             const int              last_scale,
                             const int              min_scale) {
-
-    const float dist = (Rcw * (map_res_ * vox - twc)).z();
+    const float dist = (R_cw * (map_res_ * vox - t_wc)).z();
 
     int scale = 0;
     if (dist < dist_thresh_0_)
@@ -174,8 +166,16 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     return scale;
   }
 
-  static MultiresOFusionData propagateUp(se::Node<MultiresOFusion::VoxelType>* node, const int max_level,
-                           const unsigned frame) {
+  /**
+   * \brief Propagate a summary of the eight nodes children to its parent
+   * \param node        Node to be summariesed
+   * \param max_level   Maximum level of the octree
+   * \param frame       Current frame
+   * \return data       Summary of the node
+   */
+  static MultiresOFusionData propagateUp(se::Node<MultiresOFusion::VoxelType>* node,
+                                         const int      max_level,
+                                         const unsigned frame) {
     if(!node->parent()) {
       node->timestamp(frame);
       return MultiresOFusion::VoxelType::empty();
@@ -219,20 +219,20 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   }
 
   /**
-   * Update the subgrids of a voxel block starting from a given scale up
-   * to a maximum scale.
-   *
-   * \param[in] block VoxelBlock to be updated
-   * \param[in] scale scale from which propagate up voxel values
+   * \brief Summariese the values from the current integration scale recursively
+   * up to the block's max scale.
+   * \param block Voxel block to be updated
+   * \param scale Scale from which propagate up voxel values
   */
-  static void propagateUp(se::VoxelBlock<MultiresOFusion::VoxelType>* block, const int scale) {
+  static void propagateUp(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
+                          const int scale) {
     const Eigen::Vector3i base = block->coordinates();
     const int side = se::VoxelBlock<MultiresOFusion::VoxelType>::side;
     for(int curr_scale = scale; curr_scale < max_scale_; ++curr_scale) {
       const int stride = 1 << (curr_scale + 1);
-      for(int z = 0; z < side; z += stride)
-        for(int y = 0; y < side; y += stride)
-          for(int x = 0; x < side; x += stride) {
+      for(int z = 0; z < side; z += stride) {
+        for (int y = 0; y < side; y += stride) {
+          for (int x = 0; x < side; x += stride) {
             const Eigen::Vector3i curr = base + Eigen::Vector3i(x, y, z);
             float mean_x = 0;
             float mean_y = 0;
@@ -240,10 +240,10 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
             int num_observed = 0;
             unsigned last_frame = 0;
             float x_max = MultiresOFusion::min_occupancy;
-            for(int k = 0; k < stride; k += stride/2)
-              for(int j = 0; j < stride; j += stride/2 )
-                for(int i = 0; i < stride; i += stride/2) {
-                  auto tmp = block->data(curr + Eigen::Vector3i(i, j , k), curr_scale);
+            for (int k = 0; k < stride; k += stride / 2)
+              for (int j = 0; j < stride; j += stride / 2)
+                for (int i = 0; i < stride; i += stride / 2) {
+                  auto tmp = block->data(curr + Eigen::Vector3i(i, j, k), curr_scale);
                   if (tmp.y > 0) {
                     mean_x += tmp.x;
                     mean_y += tmp.y;
@@ -253,37 +253,46 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                     if (tmp.frame > last_frame)
                       last_frame = tmp.frame;
                   }
-                  if (tmp.observed)
-                  {
+                  if (tmp.observed) {
                     num_observed++;
                   }
                 }
             auto data = block->data(curr, curr_scale + 1);
 
-            if(num_data != 0) {
-              // TODO: This needs to be discussed.
-              //  Should be devided by num_data or num_children for probability voxel type
-              mean_x       /= num_data;
-              mean_y       /= num_data;
-              data.x        = mean_x;
-              data.x_last   = mean_x;
-              data.y        = mean_y;
-              data.y_last   = mean_y;
-              data.x_max    = x_max;
-              data.frame    = last_frame;
+            if (num_data != 0) {
+              mean_x /= num_data;
+              mean_y /= num_data;
+              data.x = mean_x;
+              data.x_last = mean_x;
+              data.y = mean_y;
+              data.y_last = mean_y;
+              data.x_max = x_max;
+              data.frame = last_frame;
               if (num_observed == 8)
                 data.observed = true;
-            } else { // TODO: SEEMS REDUNDANT
-              data = MultiresOFusion::VoxelType::initValue();
+              block->data(curr, curr_scale + 1, data);
             }
-            block->data(curr, curr_scale + 1, data);
           }
+        }
+      }
     }
   }
 
-  static float interp(const se::Octree<MultiresOFusion::VoxelType>& map,
+  /**
+   * \brief Interpolate occupancy log-odd via tri-linear interpolation based on
+   * the neighboring values at a finest common scale
+   * \param map     Currently saved map
+   * \param block   Block containing the voxel value to be interpolated
+   * \param vox     Voxel coordinates of the occupancy log-odd to be interpolated
+   * \param scale   Scale at which to interpolate the occupancy log-odd
+   * \param valid   Flag indicating that the interpolation was successful
+   * \return val    Interpolated occupancy log-odd
+  */
+  static float interp(const se::Octree<MultiresOFusion::VoxelType>&     map,
                       const se::VoxelBlock<MultiresOFusion::VoxelType>* block,
-                      const Eigen::Vector3i& vox, const int scale, bool& valid) {
+                      const Eigen::Vector3i& vox,
+                      const int              scale,
+                      bool&                  valid) {
     // Compute base point in parent block
     const int side   = se::VoxelBlock<MultiresOFusion::VoxelType>::side >> (scale + 1);
     const int stride = 1 << (scale + 1);
@@ -332,10 +341,10 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   }
 
   /**
-   * Update a voxel block at a given scale by first propagating down the parent
+   * \brief Update a voxel block at a given scale by first propagating down the parent
    * values and then integrating the new measurement;
   */
-  void propagateDowndate(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
+  void propagateDownAndUpdate(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
                          const int scale) {
 
     const int side = se::VoxelBlock<MultiresOFusion::VoxelType>::side;
@@ -385,7 +394,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                   curr.x = se::math::clamp(curr.x + delta_x, -5.015f, 5.015f);
                   curr.frame = data.frame;
                   curr.observed = true;
-                  if (is_valid) { // TODO: occupancy is not scaled correctly
+                  if (is_valid) {
                     curr.x = (curr.x * curr.y + occupancy * delta_y) / (curr.y + delta_y);
                   }
                   curr.y = curr.y + delta_y_curr;
@@ -432,10 +441,10 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   }
 
   /**
-   * Update a voxel block at a given scale by first updating the observed state of all voxels at the
+   * \brief Update a voxel block at a given scale by first updating the observed state of all voxels at the
    * scale to true if the have been partially observed (y > 0);
   */
-  void propagateUpdate(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
+  void propagateUpAndUpdate(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
                        const int scale) {
     const Eigen::Vector3i base = block->coordinates();
     constexpr int side = se::VoxelBlock<MultiresOFusion::VoxelType>::side;
@@ -490,6 +499,9 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     }
   }
 
+  /**
+   * \brief Compute integration scale for a given voxel block and update all voxels that project into the image plane.
+  */
   void updateBlock(se::VoxelBlock<MultiresOFusion::VoxelType>* block, int min_scale = 0) {
     constexpr int side = se::VoxelBlock<MultiresOFusion::VoxelType>::side;
     const Eigen::Vector3i base = block->coordinates();
@@ -501,11 +513,11 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 
     if(last_scale > scale) {
       // Down propagate values first
-      propagateDowndate(block, scale);
+      propagateDownAndUpdate(block, scale);
       return;
     } else if (last_scale < scale) {
       // Update observed state at new scale
-      propagateUpdate(block, scale);
+      propagateUpAndUpdate(block, scale);
       return;
     }
 
@@ -546,6 +558,9 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
       }
   }
 
+  /**
+   * \brief Recursively reduce all children by the minimum occupancy log-odd for a single integration.
+  */
   void freeNodeRecurse(se::Node<MultiresOFusion::VoxelType>* node, int level) {
     for (int i = 0; i < 8; i++) {
       auto child_node = node->child(i);
@@ -572,17 +587,21 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     }
   }
 
+  /**
+   * \brief Reduce the nodes occupancy log-odd by the minimum occupancy log-odd for a single integration.
+  */
   void freeNode(MultiresOFusion::VoxelType::VoxelData& data) {
     sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::freeNode(data, frame_);
   }
 
   /**
-   * @brief Get reference to a child value given a father node.
-   * @param parent_node Ptr to father node.
-   * @param rel_step Child relative position with respect to father.
-   * @return Reference to value for update.
+   * \brief Get reference to a child value for a given parent node.
+   * \param parent_node Pointer to the parent node
+   * \param rel_step    Child relative position with respect to the parent
+   * \return Reference to child's value
    */
-  MultiresOFusion::VoxelType::VoxelData& getChildValue(se::Node<MultiresOFusion::VoxelType>* parent_node, const Eigen::Vector3i& rel_step)
+  MultiresOFusion::VoxelType::VoxelData& getChildValue(se::Node<MultiresOFusion::VoxelType>* parent_node,
+                                                       const Eigen::Vector3i& rel_step)
   {
     assert(!parent_node->isLeaf() && "Father node must not be a leaf");
 
@@ -590,17 +609,19 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   }
 
   /**
-   * @brief Allocate a child node given a father node
-   * @param parent_node Ptr to father node.
-   * @param childblock_size Size in integer coordinates of the node to allocate
-   * @param rel_step Child relative position with respect to father.
-   * @return Ptr to allocated node
+   * \brief Allocate a child node for a given parent node
+   * \param parent_node Pointer to the parent node
+   * \param corner      Coordinates of the parent node in voxel coordinates
+   * \param rel_step    Child relative position with respect to the parent
+   * \param node_size   Size of the child node in voxel units
+   * \param level       Level of the child in the octree
+   * \return node       Pointer to the allocated node
    */
   auto allocateChild(se::Node<MultiresOFusion::VoxelType>* parent_node,
                      const Eigen::Vector3i& corner,
                      const Eigen::Vector3i& rel_step,
-                     const int node_size,
-                     const unsigned level) -> se::Node<MultiresOFusion::VoxelType>* {
+                     const int              node_size,
+                     const unsigned         level) -> se::Node<MultiresOFusion::VoxelType>* {
     int id = rel_step[0] + rel_step[1] * 2 + rel_step[2] * 4;
     se::Node<MultiresOFusion::VoxelType>*& node = parent_node->child(id);
     if(node) {
@@ -653,7 +674,16 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     return node;
   }
 
-  bool cameraInNode(const Eigen::Vector3i corner, const int node_size, Eigen::Vector3f t_wc) {
+  /**
+   * \brief Verify if the camera is inside a given node
+   * \param corner      Coordinates of the parent node in voxel coordinates
+   * \param node_size   Size of the child node in voxel units
+   * \param t_wc        Translational component of the camera position
+   * \return True/false statement if the camera is inside the node.
+   */
+  bool cameraInNode(const Eigen::Vector3i& corner,
+                    const int              node_size,
+                    Eigen::Vector3f&       t_wc) {
     Eigen::Vector3f voxel_pos = t_wc / map_res_;
     if (   voxel_pos.x() >= corner.x() && voxel_pos.x() <= corner.x() + node_size
         && voxel_pos.y() >= corner.y() && voxel_pos.y() <= corner.y() + node_size
@@ -663,7 +693,16 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     return false;
   }
 
-  bool crossesFrustum(const Eigen::Matrix<float, 4, 8> corners_cam_hom, const Eigen::VectorXi corners_infront, const int num_corners_infront) {
+  /**
+   * \brief Verify if the node crosses the camera frustum
+   * \param corners_cam_hom      4x8 matrix containing the eight non normalised (devided by depth) projected corners
+   * \param corners_infront      8x1 binary mask indicating if a corner is infront (1) of the camera or not (0)
+   * \param num_corners_infront  Number of number of node corners infront of the camera
+   * \return True/false statement node crosses the camera frustum.
+   */
+  bool crossesFrustum(const Eigen::Matrix<float, 4, 8>& corners_cam_hom,
+                      const Eigen::VectorXi&            corners_infront,
+                      const int                         num_corners_infront) {
     Eigen::MatrixXf corners_cam_hom_infront(3, num_corners_infront);
     int corner_id_infront = 0;
     for (int corner_id = 0; corner_id < 8; corner_id++) {
@@ -685,12 +724,12 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   }
 
   /**
-   * @brief Update and allocate a given node and all its children recursively
-   * @param corner      Corner of the node to be processed (bottom, left, front coordinates)
-   * @param node_size   Size in [voxel] of the node to be processed
-   * @param level       Level of the node to be processed (root = 0)
-   * @param rel_step    Relative step of node within parent node (e.g. [1, 0, 1], [0, 1, 1])
-   * @param parent_node Pointer to the nodes parent
+   * \brief Update and allocate a given node and all its children recursively
+   * \param corner      Corner of the node to be processed (bottom, left, front coordinates)
+   * \param node_size   Size in [voxel] of the node to be processed
+   * \param level       Level of the node to be processed (root = 0)
+   * \param rel_step    Relative step of node within parent node (e.g. [1, 0, 1], [0, 1, 1])
+   * \param parent_node Pointer to the nodes parent
    */
   void operator()(const Eigen::Vector3i&                 corner,
                   const int                              node_size,
@@ -727,7 +766,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 
     // Project the 8 corners into the image plane
     Eigen::Matrix<float, 4, 8> corners_cam_hom = P_ * corners_m.colwise().homogeneous();
-    // TODO: There is no validation yet that non of the depth is within the zero_depth_band_
     bool should_split = false;
 
     Eigen::VectorXi corners_infront(8);
@@ -885,6 +923,9 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     }
   };
 
+  /**
+   * \brief Propage all newly integrated values from the voxel block level up to the root of the octree
+   */
   void propagateNodes() {
     for(const auto& b : voxel_block_list_) {
       if(b->parent()) {
@@ -920,6 +961,11 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   }
 };
 
+/**
+ * \brief Update and allocate all nodes and voxel blocks in the camera frustum using a map-to-camera integration scheme.
+ * Starting from the eight roots children each node is projected into the image plane and an appropriate allocation and
+ * updating scale is choosen depending on the variation of occupancy log-odds within each node/voxel block
+ */
 void MultiresOFusion::integrate(se::Octree<MultiresOFusion::VoxelType>& map,
                               const Sophus::SE3f&                       T_cw,
                               const Eigen::Matrix4f&                    K,
