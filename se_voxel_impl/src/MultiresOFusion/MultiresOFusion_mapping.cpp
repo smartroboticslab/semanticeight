@@ -927,7 +927,7 @@ void MultiresOFusion::integrate(se::Octree<MultiresOFusion::VoxelType>& map,
                               const float                               mu,
                               const unsigned                            frame) {
   // Create min/map depth pooling image for different bounding box sizes
-  const se::KernelImage* const kernel_depth_image = new se::KernelImage(depth_image); // TODO: Should be changed to unique pointer?
+  const std::unique_ptr<se::KernelImage> kernel_depth_image(new se::KernelImage(depth_image));
 
   const float max_depth = std::min(farPlane, kernel_depth_image->maxValue() + sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::computeSigma());
   const Eigen::Matrix4f P      = K * T_cw.matrix();
@@ -936,7 +936,7 @@ void MultiresOFusion::integrate(se::Octree<MultiresOFusion::VoxelType>& map,
 
   std::vector<se::VoxelBlock<MultiresOFusion::VoxelType>*> voxel_block_list;
   std::vector<std::set<se::Node<MultiresOFusion::VoxelType>*>> node_list(map.leavesLevel());
-  AllocateAndUpdateRecurse funct(map, voxel_block_list, node_list, depth_image, kernel_depth_image, K, P, T_cw, mu,
+  AllocateAndUpdateRecurse funct(map, voxel_block_list, node_list, depth_image, kernel_depth_image.get(), K, P, T_cw, mu,
       map_res, offset, map.maxLevel(), max_depth, frame);
 
   // Launch on the 8 voxels of the first level
@@ -950,5 +950,4 @@ void MultiresOFusion::integrate(se::Octree<MultiresOFusion::VoxelType>& map,
   }
 
   funct.propagateNodes();
-  delete(kernel_depth_image);
 }
