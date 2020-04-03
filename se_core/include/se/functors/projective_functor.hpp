@@ -62,7 +62,7 @@ namespace functor {
       void build_active_list() {
         using namespace std::placeholders;
         /* Retrieve the active list */
-        const typename FieldType::template MemoryBufferType<se::VoxelBlock<FieldType>>& block_buffer = _map.pool().blockBuffer();
+        const typename FieldType::template MemoryBufferType<se::VoxelBlock<FieldType>>& block_buffer = _octree.pool().blockBuffer();
 
         /* Predicates definition */
         const Eigen::Matrix4f Tcw = _Tcw.matrix();
@@ -166,7 +166,7 @@ namespace functor {
         _active_list.clear();
 
         /* Update the intermediate Octree nodes (Node). */
-        typename FieldType::template MemoryBufferType<se::Node<FieldType>>& node_buffer = _map.pool().nodeBuffer();
+        typename FieldType::template MemoryBufferType<se::Node<FieldType>>& node_buffer = _octree.pool().nodeBuffer();
 #pragma omp parallel for
           for (unsigned int i = 0; i < node_buffer.size(); ++i) {
             update_node(node_buffer[i], voxel_size);

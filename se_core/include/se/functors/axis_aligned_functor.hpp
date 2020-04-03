@@ -88,13 +88,13 @@ namespace se {
 
         void apply() {
 
-          auto& block_buffer = _map.pool().blockBuffer();
+          auto& block_buffer = _octree.pool().blockBuffer();
 #pragma omp parallel for
           for (unsigned int i = 0; i < block_buffer.size(); ++i) {
             update_block(block_buffer[i]);
           }
 
-          auto& node_buffer = _map.pool().nodeBuffer();
+          auto& node_buffer = _octree.pool().nodeBuffer();
 #pragma omp parallel for
           for (unsigned int i = 0; i < node_buffer.size(); ++i) {
             update_node(node_buffer[i]);
@@ -115,14 +115,14 @@ namespace se {
      */
     template <typename FieldType, template <typename FieldT> class OctreeT,
               typename UpdateF>
-    void axis_aligned_octree(OctreeT<FieldType>& octree, UpdateF funct) {
+    void axis_aligned_map(OctreeT<FieldType>& octree, UpdateF funct) {
     axis_aligned<FieldType, OctreeT, UpdateF> aa_functor(octree, funct);
     aa_functor.apply();
     }
 
     template <typename FieldType, template <typename FieldT> class OctreeT,
               typename UpdateF>
-    void axis_aligned_octree(OctreeT<FieldType>& octree, UpdateF funct,
+    void axis_aligned_map(OctreeT<FieldType>& octree, UpdateF funct,
         const Eigen::Vector3i& min, const Eigen::Vector3i& max) {
     axis_aligned<FieldType, OctreeT, UpdateF> aa_functor(octree, funct, min,  max);
     aa_functor.apply();

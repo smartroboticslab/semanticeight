@@ -51,7 +51,6 @@
 
 #include "voxel_implementations.hpp"
 
-
 template <typename T>
 using Volume = VolumeTemplate<T, se::Octree>;
 
