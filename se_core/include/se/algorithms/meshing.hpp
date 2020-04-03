@@ -62,7 +62,7 @@ namespace meshing {
 
       f << "ply" << std::endl;
       f << "format ascii 1.0" << std::endl;
-      f << "comment Octree structure" << std::endl;
+      f << "comment octree structure" << std::endl;
       f << "element vertex " << num_points <<  std::endl;
       f << "property float x" << std::endl;
       f << "property float y" << std::endl;
@@ -72,8 +72,8 @@ namespace meshing {
     }
   }
 
-  template <typename Octree, typename FieldSelector>
-    inline Eigen::Vector3f compute_intersection(const Octree& volume, FieldSelector select,
+  template <typename OctreeT, typename FieldSelector>
+    inline Eigen::Vector3f compute_intersection(const OctreeT& volume, FieldSelector select,
         const Eigen::Vector3i& source, const Eigen::Vector3i& dest){
       const float voxelSize = volume.dim()/volume.size();
       Eigen::Vector3f s = Eigen::Vector3f(source(0) * voxelSize, source(1) * voxelSize, source(2) * voxelSize);
@@ -83,8 +83,8 @@ namespace meshing {
       return s + (0.0 - v1)*(d - s)/(v2-v1);
     }
 
-  template <typename Octree, typename FieldSelector>
-    inline Eigen::Vector3f interp_vertexes(const Octree& volume, FieldSelector select,
+  template <typename OctreeT, typename FieldSelector>
+    inline Eigen::Vector3f interp_vertexes(const OctreeT& volume, FieldSelector select,
         const unsigned x, const unsigned y, const unsigned z, const int edge){
       switch(edge){
         case 0:  return compute_intersection(volume, select, Eigen::Vector3i(x,   y, z),

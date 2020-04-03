@@ -52,7 +52,7 @@ namespace functor {
                          const Eigen::Matrix4f& K,
                          const Eigen::Vector3f& offset,
                          const Eigen::Vector2i& framesize) :
-        _octree(octree), _function(f), _Tcw(Tcw), _K(K), _offset(offset),
+        octree_(octree), _function(f), _Tcw(Tcw), _K(K), _offset(offset),
         _frame_size(framesize) {
       }
 
@@ -62,11 +62,11 @@ namespace functor {
       void build_active_list() {
         using namespace std::placeholders;
         /* Retrieve the active list */
-        const typename FieldType::template MemoryBufferType<se::VoxelBlock<FieldType>>& block_buffer = _octree.pool().blockBuffer();
+        const typename FieldType::template MemoryBufferType<se::VoxelBlock<FieldType>>& block_buffer = octree_.pool().blockBuffer();
 
         /* Predicates definition */
         const Eigen::Matrix4f Tcw = _Tcw.matrix();
-        const float voxel_size = _octree.dim()/_octree.size();
+        const float voxel_size = octree_.dim()/octree_.size();
         auto in_frustum_predicate =
           std::bind(algorithms::in_frustum<se::VoxelBlock<FieldType>>,
               std::placeholders::_1, voxel_size, _K*Tcw, _frame_size);
@@ -155,7 +155,7 @@ namespace functor {
 
       void apply() {
 
-        const float voxel_size = _octree.dim() / _octree.size();
+        const float voxel_size = octree_.dim() / octree_.size();
 
         /* Update the leaf Octree nodes (VoxelBlock). */
         build_active_list();
@@ -166,7 +166,7 @@ namespace functor {
         _active_list.clear();
 
         /* Update the intermediate Octree nodes (Node). */
-        typename FieldType::template MemoryBufferType<se::Node<FieldType>>& node_buffer = _octree.pool().nodeBuffer();
+        typename FieldType::template MemoryBufferType<se::Node<FieldType>>& node_buffer = octree_.pool().nodeBuffer();
 #pragma omp parallel for
           for (unsigned int i = 0; i < node_buffer.size(); ++i) {
             update_node(node_buffer[i], voxel_size);
@@ -174,7 +174,7 @@ namespace functor {
       }
 
     private:
-      OctreeT<FieldType>& _octree;
+      OctreeT<FieldType>& octree_;
       UpdateF _function;
       Sophus::SE3f _Tcw;
       Eigen::Matrix4f _K;
@@ -200,7 +200,7 @@ namespace functor {
    */
   template <typename FieldType, template <typename FieldT> class OctreeT,
             typename UpdateF>
-  void projective_octree(OctreeT<FieldType>& octree, const Sophus::SE3f& Tcw,
+  void projectiveoctree_(OctreeT<FieldType>& octree, const Sophus::SE3f& Tcw,
           const Eigen::Matrix4f& K, const Eigen::Vector2i& framesize,
           UpdateF funct) {
 
