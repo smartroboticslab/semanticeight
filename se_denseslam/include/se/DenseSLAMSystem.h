@@ -42,13 +42,13 @@
 
 #include <Eigen/Dense>
 
-#include <se/commons.h>
-#include <se/perfstats.h>
-#include <se/timings.h>
-#include <se/config.h>
-#include <se/octree.hpp>
-#include <se/image/image.hpp>
-#include <se/continuous/volume_template.hpp>
+#include "se/commons.h"
+#include "se/perfstats.h"
+#include "se/timings.h"
+#include "se/config.h"
+#include "se/octree.hpp"
+#include "se/image/image.hpp"
+#include "se/continuous/volume_template.hpp"
 #include "voxel_implementations.hpp"
 #include "preprocessing.hpp"
 #include "tracking.hpp"
