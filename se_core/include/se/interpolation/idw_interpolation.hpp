@@ -34,10 +34,10 @@
 namespace se {
   namespace internal {
 template <typename Precision, typename FieldType, 
-         template<typename FieldT> class OctreeIndex,
+         template<typename FieldT> class OctreeT,
          class FieldSelector>
 static inline std::pair<Precision, bool>
-    idw_interp(const OctreeIndex<FieldType>& octree, const Eigen::Vector3f& pos, 
+    idw_interp(const OctreeT<FieldType>& octree, const Eigen::Vector3f& pos, 
         FieldSelector select) {
       std::pair<Precision, Eigen::Vector3i> samples[8];
 

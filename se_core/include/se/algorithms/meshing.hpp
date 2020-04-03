@@ -62,7 +62,7 @@ namespace meshing {
 
       f << "ply" << std::endl;
       f << "format ascii 1.0" << std::endl;
-      f << "comment octree structure" << std::endl;
+      f << "comment Octree structure" << std::endl;
       f << "element vertex " << num_points <<  std::endl;
       f << "property float x" << std::endl;
       f << "property float y" << std::endl;

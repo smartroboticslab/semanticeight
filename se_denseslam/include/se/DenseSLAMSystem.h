@@ -329,8 +329,6 @@ class DenseSLAMSystem {
      * \return A vector containing the x, y and z coordinates of the camera.
      */
     Eigen::Vector3f getPosition() {
-      //std::cerr << "init_pose =" << _init_pose.x << "," << _init_pose.y  <<"," << _init_pose.z << "    ";
-      //std::cerr << "pose =" << pose.data[0].w << "," << pose.data[1].w  <<"," << pose.data[2].w << "    ";
       float xt = T_WC_(0, 3) - init_position_M_.x();
       float yt = T_WC_(1, 3) - init_position_M_.y();
       float zt = T_WC_(2, 3) - init_position_M_.z();

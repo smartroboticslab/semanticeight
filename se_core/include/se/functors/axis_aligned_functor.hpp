@@ -46,12 +46,12 @@ namespace se {
 
       class axis_aligned {
         public:
-        axis_aligned(OctreeT<FieldType>& octree, UpdateF f) : _octree(octree), _function(f),
+        axis_aligned(OctreeT<FieldType>& octree, UpdateF f) : octree_(octree), function_(f),
         _min(Eigen::Vector3i::Constant(0)),
         _max(Eigen::Vector3i::Constant(octree.size())){ }
 
         axis_aligned(OctreeT<FieldType>& octree, UpdateF f, const Eigen::Vector3i min,
-            const Eigen::Vector3i max) : _octree(octree), _function(f),
+            const Eigen::Vector3i max) : octree_(octree), function_(f),
         _min(min), _max(max){ }
 
         void update_block(se::VoxelBlock<FieldType> * block) {
@@ -66,7 +66,7 @@ namespace se {
               for (x = start(0); x < last(0); ++x) {
                 Eigen::Vector3i vox = Eigen::Vector3i(x, y, z);
                 VoxelBlockHandler<FieldType> handler = {block, vox};
-                _function(handler, vox);
+                function_(handler, vox);
               }
             }
           }
@@ -82,19 +82,19 @@ namespace se {
                  se::math::in(voxel(1), _min(1), _max(1)) &&
                  se::math::in(voxel(2), _min(2), _max(2)))) continue;
             NodeHandler<FieldType> handler = {node, i};
-            _function(handler, voxel);
+            function_(handler, voxel);
           }
         }
 
         void apply() {
 
-          auto& block_buffer = _octree.pool().blockBuffer();
+          auto& block_buffer = octree_.pool().blockBuffer();
 #pragma omp parallel for
           for (unsigned int i = 0; i < block_buffer.size(); ++i) {
             update_block(block_buffer[i]);
           }
 
-          auto& node_buffer = _octree.pool().nodeBuffer();
+          auto& node_buffer = octree_.pool().nodeBuffer();
 #pragma omp parallel for
           for (unsigned int i = 0; i < node_buffer.size(); ++i) {
             update_node(node_buffer[i]);
@@ -102,8 +102,8 @@ namespace se {
         }
 
       private:
-        OctreeT<FieldType>& _octree;
-        UpdateF _function;
+        OctreeT<FieldType>& octree_;
+        UpdateF function_;
         Eigen::Vector3i _min;
         Eigen::Vector3i _max;
       };

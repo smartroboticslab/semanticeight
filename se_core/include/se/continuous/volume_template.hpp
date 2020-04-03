@@ -86,8 +86,8 @@ class VolumeTemplate {
 
     template <typename FieldSelector>
     std::pair<float, int> interp(const Eigen::Vector3f& pos, FieldSelector select) const {
-      const float inverseVoxelSize = size_ / dim_;
-      Eigen::Vector3f discrete_pos = inverseVoxelSize * pos;
+      const float inverse_voxel_size = size_ / dim_;
+      Eigen::Vector3f discrete_pos = inverse_voxel_size * pos;
       return octree_->interp(discrete_pos, select);
     }
 
