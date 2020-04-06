@@ -1,25 +1,21 @@
-cmake_minimum_required(VERSION 3.10)
-project(se_shared_unit_testing)
+cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+project(se-shared-tests LANGUAGES C CXX)
 
 # Build the dependencies inside the test build directory.
 add_subdirectory(../../third_party/lodepng lodepng)
 add_subdirectory(../../se_shared se_shared)
 
-# Add local path for finding packages.
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+# Make sure that custom modules are found
+list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
 
+# Testing dependencies
+set(CMAKE_THREAD_PREFER_PTHREAD ON)
+find_package(Threads REQUIRED)
 find_package(GTest REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(LodePNG REQUIRED)
 
 enable_testing()
-set(CMAKE_CXX_STANDARD 14)
-include_directories(
-  ../include/se
-  ../include
-  ${EIGEN3_INCLUDE_DIR})
 
-# Build the tests.
+# Build the tests
 add_subdirectory(image)
 add_subdirectory(image_utils)
 

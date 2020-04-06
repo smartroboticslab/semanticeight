@@ -1,10 +1,21 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+project(image-test LANGUAGES C CXX)
 
-set(PROJECT_TEST_NAME image-unittest)
+find_package(Eigen3 REQUIRED)
 
-set(UNIT_TEST_NAME image-unittest)
-add_executable(${UNIT_TEST_NAME} image_unittest.cpp)
-target_include_directories(${UNIT_TEST_NAME} PUBLIC ${GTEST_INCLUDE_DIRS})
-target_link_libraries(${UNIT_TEST_NAME} ${GTEST_BOTH_LIBRARIES} pthread)
+add_executable(${PROJECT_NAME}
+  image_unittest.cpp
+)
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    ../../include
+    ${EIGEN3_INCLUDE_DIR}
+    ${GTEST_INCLUDE_DIRS}
+)
+target_link_libraries(${PROJECT_NAME}
+  ${GTEST_BOTH_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT}
+)
 
-GTEST_ADD_TESTS(${UNIT_TEST_NAME} "" AUTO)
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+

@@ -1,15 +1,24 @@
-cmake_minimum_required(VERSION 2.10)
-project(se_shared)
+cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+project(image-utils-test LANGUAGES C CXX)
 
-set(PROJECT_TEST_NAME image_utils)
-add_executable(${PROJECT_TEST_NAME} "image_utils_unittest.cpp")
-target_include_directories(${PROJECT_TEST_NAME} PUBLIC ${GTEST_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_TEST_NAME}
-  se-shared
+find_package(Eigen3 REQUIRED)
+find_package(LodePNG REQUIRED)
+
+add_executable(${PROJECT_NAME}
+  image_utils_unittest.cpp
+)
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    ../../include
+    ${EIGEN3_INCLUDE_DIR}
+    ${GTEST_INCLUDE_DIRS}
+)
+target_link_libraries(${PROJECT_NAME}
+  SE::Shared
+  LodePNG::lodepng
   ${GTEST_BOTH_LIBRARIES}
-  pthread
-  lodepng
+  ${CMAKE_THREAD_LIBS_INIT}
 )
 
-GTEST_ADD_TESTS(${PROJECT_TEST_NAME} "" AUTO)
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 

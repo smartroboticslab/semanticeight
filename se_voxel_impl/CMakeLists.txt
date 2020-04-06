@@ -20,7 +20,7 @@ endif()
 
 # Set the compiler flags and linked libraries.
 set(compile_flags -Wall -Wextra -Wno-unknown-pragmas)
-set(libraries se-shared se-core)
+set(libraries SE::Shared se-core)
 if(APPLE)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__APPLE__")
 endif(APPLE)
