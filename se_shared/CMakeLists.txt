@@ -8,15 +8,17 @@ project(se-shared LANGUAGES C CXX)
 # Make sure that custom modules are found
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
 
-##############################################
 # Dependencies
 find_package(Eigen3 REQUIRED)
 find_package(LodePNG REQUIRED)
+find_package(SRLProjection REQUIRED)
 
+##############################################
 # Create library target
 add_library(${PROJECT_NAME} STATIC
-  src/str_utils.cpp
   src/image_utils.cpp
+  src/sensor.cpp
+  src/str_utils.cpp
 )
 
 # Add an alias so that the library can be used inside the build tree, e.g.
@@ -33,6 +35,7 @@ target_include_directories(${PROJECT_NAME} BEFORE
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
     LodePNG::lodepng
+    SRL::Projection
 )
 
 ##############################################

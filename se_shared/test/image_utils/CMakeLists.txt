@@ -2,20 +2,17 @@ cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 project(image-utils-test LANGUAGES C CXX)
 
 find_package(Eigen3 REQUIRED)
-find_package(LodePNG REQUIRED)
 
 add_executable(${PROJECT_NAME}
   image_utils_unittest.cpp
 )
 target_include_directories(${PROJECT_NAME}
   PUBLIC
-    ../../include
     ${EIGEN3_INCLUDE_DIR}
     ${GTEST_INCLUDE_DIRS}
 )
 target_link_libraries(${PROJECT_NAME}
   SE::Shared
-  LodePNG::lodepng
   ${GTEST_BOTH_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )

@@ -8,11 +8,11 @@ add_executable(${PROJECT_NAME}
 )
 target_include_directories(${PROJECT_NAME}
   PUBLIC
-    ../../include
     ${EIGEN3_INCLUDE_DIR}
     ${GTEST_INCLUDE_DIRS}
 )
 target_link_libraries(${PROJECT_NAME}
+  SE::Shared
   ${GTEST_BOTH_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
