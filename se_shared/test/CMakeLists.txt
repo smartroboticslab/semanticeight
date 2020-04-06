@@ -18,5 +18,6 @@ include_directories(
 add_subdirectory(../../se_shared se_shared)
 
 # Build the tests.
+add_subdirectory(image)
 add_subdirectory(image_utils)
 
