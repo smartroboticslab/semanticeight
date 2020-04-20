@@ -19,6 +19,9 @@ namespace se {
     // General
     int width = 0;
     int height = 0;
+    float near_plane = 0.f;
+    float far_plane = INFINITY;
+    float mu = 0.1f;
     // Pinhole camera
     double fx = nan("");
     double fy = nan("");
@@ -37,8 +40,9 @@ namespace se {
     PinholeCamera(const SensorConfig& c);
 
     srl::projection::PinholeCamera<srl::projection::NoDistortion> sensor;
-    float near_plane = 0.f;
-    float far_plane  = INFINITY;
+    float near_plane;
+    float far_plane;
+    float mu;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
@@ -49,8 +53,9 @@ namespace se {
     OusterLidar(const SensorConfig& c);
 
     srl::projection::OusterLidar sensor;
-    float near_plane = 0.f;
-    float far_plane  = INFINITY;
+    float near_plane;
+    float far_plane;
+    float mu;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
