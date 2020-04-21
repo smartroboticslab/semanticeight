@@ -82,27 +82,27 @@ namespace functor {
       void update_block(se::VoxelBlock<FieldType> * block,
                         const float voxel_size) {
         /* Is this the VoxelBlock center? */
-        const Eigen::Vector3i blockCoord = block->coordinates();
+        const Eigen::Vector3i block_coord = block->coordinates();
         const Eigen::Vector3f delta = _Tcw.rotationMatrix() * Eigen::Vector3f(voxel_size, 0, 0);
         const Eigen::Vector3f cameraDelta = _K.topLeftCorner<3,3>() * delta;
         bool is_visible = false;
 
         unsigned int y, z, blockSide;
         blockSide = se::VoxelBlock<FieldType>::side;
-        unsigned int ylast = blockCoord(1) + blockSide;
-        unsigned int zlast = blockCoord(2) + blockSide;
+        unsigned int ylast = block_coord(1) + blockSide;
+        unsigned int zlast = block_coord(2) + blockSide;
         block->current_scale(0);
 
         /* Iterate over each voxel in the VoxelBlock. */
-        for(z = blockCoord(2); z < zlast; ++z)
-          for (y = blockCoord(1); y < ylast; ++y){
-            Eigen::Vector3i pix = Eigen::Vector3i(blockCoord(0), y, z);
+        for(z = block_coord(2); z < zlast; ++z)
+          for (y = block_coord(1); y < ylast; ++y){
+            Eigen::Vector3i pix = Eigen::Vector3i(block_coord(0), y, z);
             Eigen::Vector3f start = _Tcw * (voxel_size * (pix.cast<float>() + _offset));
             Eigen::Vector3f camerastart = _K.topLeftCorner<3,3>() * start;
 #pragma omp simd
             for (unsigned int x = 0; x < blockSide; ++x){
-              pix(0) = x + blockCoord(0);
-              const Eigen::Vector3f camera_voxel = camerastart + (x*cameraDelta);
+              pix(0) = x + block_coord(0);
+              const Eigen::Vector3f camera_voxel = camera_start + (x*camera_delta);
               const Eigen::Vector3f pos = start + (x*delta);
               if (pos(2) < 0.0001f) continue;
 
