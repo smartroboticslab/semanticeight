@@ -187,25 +187,15 @@ namespace functor {
    */
   template <typename FieldType, template <typename FieldT> class OctreeT,
             typename UpdateF>
-  void projective_octree(OctreeT<FieldType>& octree, const Eigen::Vector3f& offset,
-      const Sophus::SE3f& Tcw, const Eigen::Matrix4f& K,
-      const Eigen::Vector2i& framesize, UpdateF funct) {
+  void projective_octree(OctreeT<FieldType>&    octree,
+                         const Eigen::Vector3f& offset,
+                         const Sophus::SE3f&    Tcw,
+                         const Eigen::Matrix4f& K,
+                         const Eigen::Vector2i& framesize,
+                         UpdateF                funct) {
 
     projective_functor<FieldType, OctreeT, UpdateF>
       it(octree, funct, Tcw, K, offset, framesize);
-    it.apply();
-  }
-
-  /*! \brief Create a projective_functor and call projective_functor::apply.
-   */
-  template <typename FieldType, template <typename FieldT> class OctreeT,
-            typename UpdateF>
-  void projectiveoctree_(OctreeT<FieldType>& octree, const Sophus::SE3f& Tcw,
-          const Eigen::Matrix4f& K, const Eigen::Vector2i& framesize,
-          UpdateF funct) {
-
-    projective_functor<FieldType, OctreeT, UpdateF>
-      it(octree, funct, Tcw, K, Eigen::Vector3f::Constant(0.f), framesize);
     it.apply();
   }
 }
