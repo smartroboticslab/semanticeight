@@ -46,18 +46,18 @@ namespace functor {
 
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-      projective_functor(OctreeT<FieldType>& octree,
-                         UpdateF f,
-                         const Sophus::SE3f& Tcw,
+      projective_functor(OctreeT<FieldType>&    octree,
+                         UpdateF                funct,
+                         const Sophus::SE3f&    Tcw,
                          const Eigen::Matrix4f& K,
                          const Eigen::Vector3f& offset,
-                         const Eigen::Vector2i& framesize) :
-        octree_(octree), _function(f), _Tcw(Tcw), _K(K), _offset(offset),
-        _frame_size(framesize) {
+                         const Eigen::Vector2i& image_size) :
+        octree_(octree), funct_(funct), Tcw_(Tcw), K_(K), offset_(offset),
+        image_size_(image_size) {
       }
 
       /*! \brief Get all the blocks that are active or inside the camera
-       * frustum. The blocks are stored in projective_functor::_active_list.
+       * frustum. The blocks are stored in projective_functor::active_list_.
        */
       void build_active_list() {
         using namespace std::placeholders;
@@ -65,17 +65,17 @@ namespace functor {
         const typename FieldType::template MemoryBufferType<se::VoxelBlock<FieldType>>& block_buffer = octree_.pool().blockBuffer();
 
         /* Predicates definition */
-        const Eigen::Matrix4f Tcw = _Tcw.matrix();
-        const float voxel_size = octree_.dim()/octree_.size();
+        const Eigen::Matrix4f Tcw = Tcw_.matrix();
+        const float voxel_size = octree_.dim() / octree_.size();
         auto in_frustum_predicate =
           std::bind(algorithms::in_frustum<se::VoxelBlock<FieldType>>,
-              std::placeholders::_1, voxel_size, _K*Tcw, _frame_size);
+              std::placeholders::_1, voxel_size, K_ * Tcw, image_size_);
         auto is_active_predicate = [](const se::VoxelBlock<FieldType>* b) {
           return b->active();
         };
 
         /* Get all the blocks that are active or inside the camera frustum. */
-        algorithms::filter(_active_list, block_buffer, is_active_predicate,
+        algorithms::filter(active_list_, block_buffer, is_active_predicate,
             in_frustum_predicate);
       }
 
@@ -83,8 +83,8 @@ namespace functor {
                         const float voxel_size) {
         /* Is this the VoxelBlock center? */
         const Eigen::Vector3i block_coord = block->coordinates();
-        const Eigen::Vector3f delta = _Tcw.rotationMatrix() * Eigen::Vector3f(voxel_size, 0, 0);
-        const Eigen::Vector3f cameraDelta = _K.topLeftCorner<3,3>() * delta;
+        const Eigen::Vector3f delta = Tcw_.rotationMatrix() * Eigen::Vector3f(voxel_size, 0, 0);
+        const Eigen::Vector3f camera_delta = K_.topLeftCorner<3,3>() * delta;
         bool is_visible = false;
 
         unsigned int y, z, blockSide;
@@ -97,12 +97,12 @@ namespace functor {
         for(z = block_coord(2); z < zlast; ++z)
           for (y = block_coord(1); y < ylast; ++y){
             Eigen::Vector3i pix = Eigen::Vector3i(block_coord(0), y, z);
-            Eigen::Vector3f start = _Tcw * (voxel_size * (pix.cast<float>() + _offset));
-            Eigen::Vector3f camerastart = _K.topLeftCorner<3,3>() * start;
+            Eigen::Vector3f start = Tcw_ * (voxel_size * (pix.cast<float>() + offset_));
+            Eigen::Vector3f camera_start = K_.topLeftCorner<3,3>() * start;
 #pragma omp simd
             for (unsigned int x = 0; x < blockSide; ++x){
               pix(0) = x + block_coord(0);
-              const Eigen::Vector3f camera_voxel = camera_start + (x*camera_delta);
+              const Eigen::Vector3f camera_voxel = camera_start + (x * camera_delta);
               const Eigen::Vector3f pos = start + (x*delta);
               if (pos(2) < 0.0001f) continue;
 
@@ -111,13 +111,13 @@ namespace functor {
                   camera_voxel(0) * inverse_depth + 0.5f,
                   camera_voxel(1) * inverse_depth + 0.5f);
               /* Skip voxels that are not visible from the camera. */
-              if (pixel(0) < 0.5f || pixel(0) > _frame_size(0) - 1.5f ||
-                  pixel(1) < 0.5f || pixel(1) > _frame_size(1) - 1.5f) continue;
+              if (pixel(0) < 0.5f || pixel(0) > image_size_(0) - 1.5f ||
+                  pixel(1) < 0.5f || pixel(1) > image_size_(1) - 1.5f) continue;
               is_visible = true;
 
               /* Update the voxel. */
               VoxelBlockHandler<FieldType> handler = {block, pix};
-              _function(handler, pix, pos, pixel);
+              funct_(handler, pix, pos, pixel);
             }
           }
         block->active(is_visible);
@@ -125,31 +125,31 @@ namespace functor {
 
       void update_node(se::Node<FieldType> * node, const float voxel_size) {
         const Eigen::Vector3i voxel = Eigen::Vector3i(unpack_morton(node->code_));
-        const Eigen::Vector3f delta = _Tcw.rotationMatrix() *
+        const Eigen::Vector3f delta = Tcw_.rotationMatrix() *
           Eigen::Vector3f::Constant(0.5f * voxel_size * node->side_);
-        const Eigen::Vector3f delta_c = _K.topLeftCorner<3,3>() * delta;
-        Eigen::Vector3f base_cam = _Tcw *
-          (voxel_size * (voxel.cast<float> () + _offset*node->side_));
-        Eigen::Vector3f basepix_hom = _K.topLeftCorner<3,3>() * base_cam;
+        const Eigen::Vector3f delta_c = K_.topLeftCorner<3,3>() * delta;
+        Eigen::Vector3f base_cam = Tcw_ *
+          (voxel_size * (voxel.cast<float> () + offset_ * node->side_));
+        Eigen::Vector3f base_pix_hom = K_.topLeftCorner<3,3>() * base_cam;
 
         /* Iterate over the Node children. */
 #pragma omp simd
         for(int i = 0; i < 8; ++i) {
           const Eigen::Vector3i dir =  Eigen::Vector3i((i & 1) > 0, (i & 2) > 0, (i & 4) > 0);
           const Eigen::Vector3f vox_cam = base_cam + dir.cast<float>().cwiseProduct(delta);
-          const Eigen::Vector3f pix_hom = basepix_hom + dir.cast<float>().cwiseProduct(delta_c);
+          const Eigen::Vector3f pix_hom = base_pix_hom + dir.cast<float>().cwiseProduct(delta_c);
 
           if (vox_cam(2) < 0.0001f) continue;
           const float inverse_depth = 1.f / pix_hom(2);
           const Eigen::Vector2f pixel = Eigen::Vector2f(
               pix_hom(0) * inverse_depth + 0.5f,
               pix_hom(1) * inverse_depth + 0.5f);
-          if (pixel(0) < 0.5f || pixel(0) > _frame_size(0) - 1.5f ||
-              pixel(1) < 0.5f || pixel(1) > _frame_size(1) - 1.5f) continue;
+          if (pixel(0) < 0.5f || pixel(0) > image_size_(0) - 1.5f ||
+              pixel(1) < 0.5f || pixel(1) > image_size_(1) - 1.5f) continue;
 
           /* Update the child Node. */
           NodeHandler<FieldType> handler = {node, i};
-          _function(handler, voxel + dir, vox_cam, pixel);
+          funct_(handler, voxel + dir, vox_cam, pixel);
         }
       }
 
@@ -160,10 +160,10 @@ namespace functor {
         /* Update the leaf Octree nodes (VoxelBlock). */
         build_active_list();
 #pragma omp parallel for
-        for (unsigned int i = 0; i < _active_list.size(); ++i) {
-          update_block(_active_list[i], voxel_size);
+        for (unsigned int i = 0; i < active_list_.size(); ++i) {
+          update_block(active_list_[i], voxel_size);
         }
-        _active_list.clear();
+        active_list_.clear();
 
         /* Update the intermediate Octree nodes (Node). */
         typename FieldType::template MemoryBufferType<se::Node<FieldType>>& node_buffer = octree_.pool().nodeBuffer();
@@ -175,12 +175,12 @@ namespace functor {
 
     private:
       OctreeT<FieldType>& octree_;
-      UpdateF _function;
-      Sophus::SE3f _Tcw;
-      Eigen::Matrix4f _K;
-      Eigen::Vector3f _offset;
-      Eigen::Vector2i _frame_size;
-      std::vector<se::VoxelBlock<FieldType>*> _active_list;
+      UpdateF funct_;
+      const Sophus::SE3f Tcw_;
+      const Eigen::Matrix4f K_;
+      const Eigen::Vector3f offset_;
+      const Eigen::Vector2i image_size_;
+      std::vector<se::VoxelBlock<FieldType>*> active_list_;
   };
 
   /*! \brief Create a projective_functor and call projective_functor::apply.
@@ -191,11 +191,11 @@ namespace functor {
                          const Eigen::Vector3f& offset,
                          const Sophus::SE3f&    Tcw,
                          const Eigen::Matrix4f& K,
-                         const Eigen::Vector2i& framesize,
+                         const Eigen::Vector2i& image_size,
                          UpdateF                funct) {
 
     projective_functor<FieldType, OctreeT, UpdateF>
-      it(octree, funct, Tcw, K, offset, framesize);
+      it(octree, funct, Tcw, K, offset, image_size);
     it.apply();
   }
 }

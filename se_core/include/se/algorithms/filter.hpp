@@ -35,8 +35,10 @@ namespace se {
 namespace algorithms {
 
   template <typename VoxelBlockType>
-    static inline bool in_frustum(const VoxelBlockType* v, float voxelSize,
-        const Eigen::Matrix4f& camera, const Eigen::Vector2i& frameSize) {
+    static inline bool in_frustum(const VoxelBlockType*  block,
+                                  const float            voxel_size,
+                                  const Eigen::Matrix4f& P,
+                                  const Eigen::Vector2i& image_size) {
 
       const int side = VoxelBlockType::side;
       const static Eigen::Matrix<int, 4, 8> offsets =
@@ -45,14 +47,13 @@ namespace algorithms {
                                        0, 0   , 0   , 0   , side, side, side, side,
                                        0, 0   , 0   , 0   , 0   , 0   , 0   , 0   ).finished();
 
-      Eigen::Matrix<float, 4, 8> v_camera =
-        camera *
-        Eigen::Vector4f(voxelSize, voxelSize, voxelSize, 1.f).asDiagonal() *
-         (offsets.colwise() + v->coordinates().homogeneous()).template cast<float>();
-      v_camera.row(0).array() /= v_camera.row(2).array();
-      v_camera.row(1).array() /= v_camera.row(2).array();
-      return ((v_camera.row(0).array() >= 0.f && v_camera.row(0).array() < frameSize.x()) &&
-       (v_camera.row(1).array() >= 0.f && v_camera.row(1).array() < frameSize.y())).any();
+      Eigen::Matrix<float, 4, 8> projected_corners = P *
+        Eigen::Vector4f(voxel_size, voxel_size, voxel_size, 1.f).asDiagonal() *
+         (offsets.colwise() + block->coordinates().homogeneous()).template cast<float>();
+      projected_corners.row(0).array() /= projected_corners.row(2).array();
+      projected_corners.row(1).array() /= projected_corners.row(2).array();
+      return ((projected_corners.row(0).array() >= 0.f && projected_corners.row(0).array() < image_size.x()) &&
+       (projected_corners.row(1).array() >= 0.f && projected_corners.row(1).array() < image_size.y())).any();
     }
 
   template <typename ValueType, typename P>
@@ -66,9 +67,9 @@ namespace algorithms {
     }
 
   template <typename BufferType, typename... Predicates>
-  void filter(std::vector<BufferType *>&        out,
+  void filter(std::vector<BufferType *>&               out,
               const se::PagedMemoryBuffer<BufferType>& buffer,
-              Predicates...                    ps) {
+              Predicates...                            ps) {
 #ifdef _OPENMP
 #pragma omp declare reduction (merge : std::vector<BufferType *> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
 #pragma omp parallel for reduction(merge: out)
