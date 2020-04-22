@@ -23,13 +23,13 @@ namespace se {
     float far_plane = INFINITY;
     float mu = 0.1f;
     // Pinhole camera
-    double fx = nan("");
-    double fy = nan("");
-    double cx = nan("");
-    double cy = nan("");
+    float fx = nan("");
+    float fy = nan("");
+    float cx = nan("");
+    float cy = nan("");
     // LIDAR
-    Eigen::VectorXd beam_azimuth_angles = Eigen::VectorXd(0);
-    Eigen::VectorXd beam_elevation_angles = Eigen::VectorXd(0);
+    Eigen::VectorXf beam_azimuth_angles = Eigen::VectorXf(0);
+    Eigen::VectorXf beam_elevation_angles = Eigen::VectorXf(0);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
