@@ -45,6 +45,7 @@
 #include "se/commons.h"
 #include "se/utils/math_utils.h"
 #include "se/image/image.hpp"
+#include "se/sensor_implementation.hpp"
 
 
 
@@ -57,12 +58,12 @@ void bilateralFilterKernel(se::Image<float>&         out,
 
 
 void depth2vertexKernel(se::Image<Eigen::Vector3f>& vertex,
-                        const se::Image<float>&     depth,
-                        const Eigen::Matrix4f&      inv_K);
+                        const se::Image<float>&     depth_image,
+                        const SensorImpl&           sensor);
 
 
 
-void vertex2depthKernel(se::Image<float>&                 depth,
+void vertex2depthKernel(se::Image<float>&                 depth_image,
                         const se::Image<Eigen::Vector3f>& vertex,
                         const Eigen::Matrix4f&            T_cw);
 

@@ -243,13 +243,13 @@ void trackKernel(TrackData*                        output,
                  const se::Image<Eigen::Vector3f>& in_normal,
                  const se::Image<Eigen::Vector3f>& ref_vertex,
                  const se::Image<Eigen::Vector3f>& ref_normal,
-                 const Eigen::Matrix4f&            T_track,
                  const Eigen::Matrix4f&            T_WC,
+                 const SensorImpl&                 sensor,
                  const float                       dist_threshold,
                  const float                       normal_threshold) {
 
   TICK();
-  const Eigen::Vector2i  in_size( in_vertex.width(),  in_vertex.height());
+  const Eigen::Vector2i in_size( in_vertex.width(),  in_vertex.height());
   const Eigen::Vector2i ref_size(ref_vertex.width(), ref_vertex.height());
 
 #pragma omp parallel for
@@ -264,14 +264,12 @@ void trackKernel(TrackData*                        output,
         continue;
       }
 
-      const Eigen::Vector3f projected_vertex = (T_track *
+      const Eigen::Vector3f vertex_W = (T_WC *
           in_vertex[pixel.x() + pixel.y() * in_size.x()].homogeneous()).head<3>();
-      const Eigen::Vector3f projected_pos = (T_WC * projected_vertex.homogeneous()).head<3>();
-      const Eigen::Vector2f proj_pixel(
-          projected_pos.x() / projected_pos.z() + 0.5f,
-          projected_pos.y() / projected_pos.z() + 0.5f);
-      if (   proj_pixel.x() < 0 || proj_pixel.x() > ref_size.x() - 1
-          || proj_pixel.y() < 0 || proj_pixel.y() > ref_size.y() - 1) {
+
+      Eigen::Vector3f vertex_C = in_vertex[pixel.x() + pixel.y() * in_size.x()];
+      Eigen::Vector2f proj_pixel;
+      if (sensor.model.project(vertex_C, &proj_pixel) != srl::projection::ProjectionStatus::Successful) {
         row.result = -2;
         continue;
       }
@@ -286,8 +284,8 @@ void trackKernel(TrackData*                        output,
       }
 
       const Eigen::Vector3f diff = ref_vertex[ref_pixel.x() + ref_pixel.y() * ref_size.x()]
-          - projected_vertex;
-      const Eigen::Vector3f projected_normal = T_track.topLeftCorner<3, 3>()
+          - vertex_W;
+      const Eigen::Vector3f projected_normal = T_WC.topLeftCorner<3, 3>()
           * in_normal[pixel.x() + pixel.y() * in_size.x()];
 
       if (diff.norm() > dist_threshold) {
@@ -304,7 +302,7 @@ void trackKernel(TrackData*                        output,
       row.J[1] = reference_normal.y();
       row.J[2] = reference_normal.z();
 
-      Eigen::Vector3f cross_res = projected_vertex.cross(reference_normal);
+      Eigen::Vector3f cross_res = vertex_W.cross(reference_normal);
       row.J[3] = cross_res.x();
       row.J[4] = cross_res.y();
       row.J[5] = cross_res.z();

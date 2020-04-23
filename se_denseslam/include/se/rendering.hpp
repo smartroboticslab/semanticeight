@@ -50,6 +50,7 @@
 #include "se/voxel_block_ray_iterator.hpp"
 
 #include "voxel_implementations.hpp"
+#include "se/sensor_implementation.hpp"
 
 template <typename T>
 using Volume = VolumeTemplate<T, se::Octree>;
@@ -80,10 +81,8 @@ template<typename T>
 void raycastKernel(const Volume<T>&            volume,
                    se::Image<Eigen::Vector3f>& vertex,
                    se::Image<Eigen::Vector3f>& normal,
-                   const Eigen::Matrix4f&      view,
-                   const float                 near_plane,
-                   const float                 far_plane,
-                   const float                 mu,
+                   const Eigen::Matrix4f&      T_WC,
+                   const SensorImpl&           sensor,
                    const float                 step,
                    const float                 large_step) {
 
@@ -93,19 +92,22 @@ void raycastKernel(const Volume<T>&            volume,
 #pragma omp simd
     for (int x = 0; x < vertex.width(); x++) {
       Eigen::Vector4f hit;
-      const Eigen::Vector2i pos(x, y);
-      const Eigen::Vector3f dir =
-          (view.topLeftCorner<3, 3>() * Eigen::Vector3f(x, y, 1.f)).normalized();
-      const Eigen::Vector3f transl = view.topRightCorner<3, 1>();
-//        if (std::is_same<T, MultiresOFusion>::value) {
+
+      Eigen::Vector2f pixel(x, y);
+      Eigen::Vector3f dir_C;
+      sensor.model.backProject(pixel, &dir_C);
+      Eigen::Vector3f dir_W = (T_WC.topLeftCorner<3, 3>() * dir_C.normalized()).head(3);
+      const Eigen::Vector3f t_WC = T_WC.topRightCorner<3, 1>();
+
+//      if (std::is_same<T, MultiresOFusion>::value) {
       if (false) {
-        hit = T::raycast(volume, transl, dir, near_plane, far_plane, 0, 0, 0);
+        hit = T::raycast(volume, t_WC, dir_W, sensor.near_plane, sensor.far_plane, 0, 0, 0);
       } else {
-        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, transl, dir, near_plane, far_plane);
+        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_WC, dir_W, sensor.near_plane, sensor.far_plane);
         ray.next();
         const float t_min = ray.tmin(); /* Get distance to the first intersected block */
         hit = t_min > 0.f
-              ? T::raycast(volume, transl, dir, t_min, ray.tmax(), mu, step, large_step)
+              ? T::raycast(volume, t_WC, dir_W, t_min, ray.tmax(), sensor.mu, step, large_step)
               : Eigen::Vector4f::Zero();
       }
       if (hit.w() >= 0.f) {
@@ -115,16 +117,16 @@ void raycastKernel(const Volume<T>&            volume,
             [](const auto& val){ return val.x; });
         se::internal::scale_image(x, y) = static_cast<int>(hit.w());
         if (surface_normal.norm() == 0.f) {
-          normal[pos.x() + pos.y() * normal.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
+          normal[pixel.x() + pixel.y() * normal.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
         } else {
           // Invert normals for TSDF representations.
-          normal[pos.x() + pos.y() * normal.width()] = T::invert_normals
+          normal[pixel.x() + pixel.y() * normal.width()] = T::invert_normals
               ? (-1.f * surface_normal).normalized()
               : surface_normal.normalized();
         }
       } else {
-        vertex[pos.x() + pos.y() * vertex.width()] = Eigen::Vector3f::Zero();
-        normal[pos.x() + pos.y() * normal.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
+        vertex[pixel.x() + pixel.y() * vertex.width()] = Eigen::Vector3f::Zero();
+        normal[pixel.x() + pixel.y() * normal.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
       }
     }
   }
@@ -156,11 +158,9 @@ void renderTrackKernel(unsigned char*         out,
 template <typename T>
 void renderVolumeKernel(const Volume<T>&                  volume,
                         unsigned char*                    out, // RGBW packed
-                        const Eigen::Vector2i&            depth_size,
-                        const Eigen::Matrix4f&            view,
-                        const float                       near_plane,
-                        const float                       far_plane,
-                        const float                       mu,
+                        const Eigen::Vector2i&            image_size,
+                        const Eigen::Matrix4f&            T_WC,
+                        const SensorImpl&                 sensor,
                         const float                       step,
                         const float                       large_step,
                         const Eigen::Vector3f&            light,
@@ -171,25 +171,27 @@ void renderVolumeKernel(const Volume<T>&                  volume,
 
   TICK();
 #pragma omp parallel for
-  for (int y = 0; y < depth_size.y(); y++) {
-    for (int x = 0; x < depth_size.x(); x++) {
+  for (int y = 0; y < image_size.y(); y++) {
+    for (int x = 0; x < image_size.x(); x++) {
       Eigen::Vector4f hit;
       Eigen::Vector3f test, surface_normal;
-      const int idx = (x + depth_size.x()*y) * 4;
+      const int idx = (x + image_size.x()*y) * 4;
 
       if (raycast_normals) {
-        const Eigen::Vector3f dir =
-            (view.topLeftCorner<3, 3>() * Eigen::Vector3f(x, y, 1.f)).normalized();
-        const Eigen::Vector3f transl = view.topRightCorner<3, 1>();
+        Eigen::Vector2f pixel(x, y);
+        Eigen::Vector3f dir_C;
+        sensor.model.backProject(pixel, &dir_C);
+        Eigen::Vector3f dir_W = (T_WC.topLeftCorner<3, 3>() * dir_C.normalized()).head(3);
+        const Eigen::Vector3f t_WC = T_WC.topRightCorner<3, 1>();
 //        if (std::is_same<T, MultiresOFusion>::value) {
         if (false) {
-          hit = T::raycast(volume, transl, dir, near_plane, far_plane, 0, 0, 0);
+          hit = T::raycast(volume, t_WC, dir_W, sensor.near_plane, sensor.far_plane, 0, 0, 0);
         } else {
-          se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, transl, dir, near_plane, far_plane);
+          se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_WC, dir_W, sensor.near_plane, sensor.far_plane);
           ray.next();
           const float t_min = ray.tmin(); /* Get distance to the first intersected block */
           hit = t_min > 0.f
-                ? T::raycast(volume, transl, dir, t_min, ray.tmax(), mu, step, large_step)
+                ? T::raycast(volume, t_WC, dir_W, t_min, ray.tmax(), sensor.mu, step, large_step)
                 : Eigen::Vector4f::Zero();
         }
         if (hit.w() >= 0.f) {
@@ -202,8 +204,8 @@ void renderVolumeKernel(const Volume<T>&                  volume,
           surface_normal = Eigen::Vector3f(INVALID, 0.f, 0.f);
         }
       } else {
-        test = vertex[x + depth_size.x() * y];
-        surface_normal = normal[x + depth_size.x() * y];
+        test = vertex[x + image_size.x() * y];
+        surface_normal = normal[x + image_size.x() * y];
       }
 
       if (surface_normal.x() != INVALID && surface_normal.norm() > 0.f) {
@@ -225,7 +227,7 @@ void renderVolumeKernel(const Volume<T>&                  volume,
       }
     }
   }
-  TOCK("renderVolumeKernel", depth_size.x() * depth_size.y());
+  TOCK("renderVolumeKernel", image_size.x() * image_size.y());
 }
 
 

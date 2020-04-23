@@ -33,6 +33,7 @@
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
 #include "se/continuous/volume_template.hpp"
+#include "se/sensor_implementation.hpp"
 
 
 

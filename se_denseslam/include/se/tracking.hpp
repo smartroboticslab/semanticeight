@@ -42,6 +42,8 @@
 #include "se/perfstats.h"
 #include "se/commons.h"
 #include "se/image/image.hpp"
+#include "se/sensor_implementation.hpp"
+
 
 
 
@@ -65,8 +67,8 @@ void trackKernel(TrackData*                        output,
                  const se::Image<Eigen::Vector3f>& in_normal,
                  const se::Image<Eigen::Vector3f>& ref_vertex,
                  const se::Image<Eigen::Vector3f>& ref_normal,
-                 const Eigen::Matrix4f&            Ttrack,
                  const Eigen::Matrix4f&            T_WC,
+                 const SensorImpl&                 sensor,
                  const float                       dist_threshold,
                  const float                       normal_threshold);
 

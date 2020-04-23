@@ -182,8 +182,7 @@ class DenseSLAMSystem {
      * \param[in] icp_threshold The ICP convergence threshold.
      * \return true if the camera pose was updated and false if it wasn't.
      */
-    bool track(const Eigen::Vector4f& k,
-               const float            icp_threshold);
+    bool track(const float            icp_threshold);
 
     /**
      * Integrate the 3D reconstruction resulting from the current frame to the
@@ -215,8 +214,7 @@ class DenseSLAMSystem {
      * details.
      * \return true (does not fail).
      */
-    bool raycast(const Eigen::Vector4f& k,
-                 float                  mu);
+    bool raycast();
 
     /*
      * TODO Implement this.
@@ -238,15 +236,10 @@ class DenseSLAMSystem {
      * layout is rgbwrgbwrgbw.
      * \param[in] output_size The dimensions of the output array (width and
      * height in pixels).
-     * \param[in] k The intrinsic camera parameters. See
-     * ::Configuration.camera for details.
-     * \param[in] mu TSDF truncation bound. See ::Configuration.mu for more
-     * details.
+     * \param[in] large_step
      */
     void renderVolume(unsigned char*         output,
-                      const Eigen::Vector2i& output_size,
-                      const Eigen::Vector4f& k,
-                      const float            mu);
+                      const Eigen::Vector2i& output_size);
 
     /**
      * Render the output of the tracking algorithm. The meaning of the colors is as follows:

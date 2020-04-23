@@ -95,39 +95,40 @@ void bilateralFilterKernel(se::Image<float>&         out,
 
 
 void depth2vertexKernel(se::Image<Eigen::Vector3f>& vertex,
-                        const se::Image<float>&     depth,
-                        const Eigen::Matrix4f&      inv_K) {
+                        const se::Image<float>&     depth_image,
+                        const SensorImpl&           sensor) {
 
   TICK();
 #pragma omp parallel for
-  for (int y = 0; y < depth.height(); y++) {
-    for (int x = 0; x < depth.width(); x++) {
-
-      if (depth[x + y * depth.width()] > 0) {
-        vertex[x + y * depth.width()] = (depth[x + y * depth.width()]
-            * inv_K * Eigen::Vector4f(x, y, 1.f, 0.f)).head<3>();
+  for (int y = 0; y < depth_image.height(); y++) {
+    for (int x = 0; x < depth_image.width(); x++) {
+      if (depth_image[x + y * depth_image.width()] > 0) {
+        Eigen::Vector2f pixel(x, y);
+        Eigen::Vector3f dir_C;
+        sensor.model.backProject(pixel, &dir_C);
+        vertex[x + y * depth_image.width()] = depth_image[x + y * depth_image.width()] * dir_C;
       } else {
-        vertex[x + y * depth.width()] = Eigen::Vector3f::Zero();
+        vertex[x + y * depth_image.width()] = Eigen::Vector3f::Zero();
       }
     }
   }
-  TOCK("depth2vertexKernel", depth.width() * depth.height());
+  TOCK("depth2vertexKernel", depth_image.width() * depth_image.height());
 }
 
 
 
-void vertex2depthKernel(se::Image<float>&                 depth,
+void vertex2depthKernel(se::Image<float>&                 depth_image,
                         const se::Image<Eigen::Vector3f>& vertex,
                         const Eigen::Matrix4f&            T_cw) {
 
   TICK();
 #pragma omp parallel for
-  for (int y = 0; y < depth.height(); y++) {
-    for (int x = 0; x < depth.width(); x++) {
-      depth(x, y) = (T_cw * vertex(x, y).homogeneous()).z();
+  for (int y = 0; y < depth_image.height(); y++) {
+    for (int x = 0; x < depth_image.width(); x++) {
+      depth_image(x, y) = (T_cw * vertex(x, y).homogeneous()).z();
     }
   }
-  TOCK("vertex2depthKernel", depth.width() * depth.height());
+  TOCK("vertex2depthKernel", depth_image.width() * depth_image.height());
 }
 
 

@@ -69,7 +69,8 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
   config_(config),
   sensor_({input_size.x(), input_size.y(), config.left_hand_frame,
         nearPlane, farPlane, config.mu,
-        config.camera[0], config.camera[1], config.camera[2], config.camera[3],
+        config.camera[0] / config.compute_size_ratio, config.camera[1] / config.compute_size_ratio,
+        config.camera[2] / config.compute_size_ratio, config.camera[3] / config.compute_size_ratio,
         Eigen::VectorXf(0), Eigen::VectorXf(0)}),
   vertex_(computation_size_.x(), computation_size_.y()),
   normal_(computation_size_.x(), computation_size_.y()),
@@ -158,8 +159,7 @@ bool DenseSLAMSystem::preprocessColor(const uint8_t*         input_RGB,
 
 
 
-bool DenseSLAMSystem::track(const Eigen::Vector4f& k,
-                            float                  icp_threshold) {
+bool DenseSLAMSystem::track(float                  icp_threshold) {
 
   // half sample the input depth maps into the pyramid levels
   for (unsigned int i = 1; i < iterations_.size(); ++i) {
@@ -167,32 +167,30 @@ bool DenseSLAMSystem::track(const Eigen::Vector4f& k,
   }
 
   // prepare the 3D information from the input depth maps
-  Eigen::Vector2i localimagesize = computation_size_;
+  Eigen::Vector2i local_image_size = computation_size_;
   for (unsigned int i = 0; i < iterations_.size(); ++i) {
-    Eigen::Matrix4f invK = getInverseCameraMatrix(k / float(1 << i));
-    depth2vertexKernel(input_vertex_[i], scaled_depth_[i], invK);
+    SensorImpl scaled_sensor(sensor_, float(1 << i));
+    depth2vertexKernel(input_vertex_[i], scaled_depth_[i], scaled_sensor);
     if(sensor_.left_hand_frame)
       vertex2normalKernel<true>(input_normal_[i], input_vertex_[i]);
     else
       vertex2normalKernel<false>(input_normal_[i], input_vertex_[i]);
-    localimagesize /= 2;;
+    local_image_size /= 2;
   }
 
   previous_T_WC_ = T_WC_;
-  const Eigen::Matrix4f project_reference = getCameraMatrix(k) * raycast_T_WC_.inverse();
 
   for (int level = iterations_.size() - 1; level >= 0; --level) {
-    Eigen::Vector2i localimagesize(
+    Eigen::Vector2i local_image_size(
         computation_size_.x() / (int) pow(2, level),
         computation_size_.y() / (int) pow(2, level));
     for (int i = 0; i < iterations_[level]; ++i) {
 
       trackKernel(tracking_result_.data(), input_vertex_[level], input_normal_[level],
-          vertex_, normal_, T_WC_, project_reference,
-          dist_threshold, normal_threshold);
+          vertex_, normal_, T_WC_, sensor_, dist_threshold, normal_threshold);
 
       reduceKernel(reduction_output_.data(), tracking_result_.data(), computation_size_,
-          localimagesize);
+          local_image_size);
 
       if (updatePoseKernel(T_WC_, reduction_output_.data(), icp_threshold))
         break;
@@ -242,14 +240,11 @@ bool DenseSLAMSystem::integrate(const Eigen::Vector4f& k,
 
 
 
-bool DenseSLAMSystem::raycast(const Eigen::Vector4f& k,
-                              float                  mu) {
+bool DenseSLAMSystem::raycast() {
 
   raycast_T_WC_ = T_WC_;
   float step = volume_dimension_.x() / volume_resolution_.x();
-  raycastKernel(volume_, vertex_, normal_,
-      raycast_T_WC_ * getInverseCameraMatrix(k), nearPlane,
-      farPlane, mu, step, step*BLOCK_SIDE);
+  raycastKernel(volume_, vertex_, normal_, raycast_T_WC_, sensor_, step, step*BLOCK_SIDE);
 
   return true;
 }
@@ -261,27 +256,25 @@ void DenseSLAMSystem::dump_volume(std::string ) {
 }
 
 void DenseSLAMSystem::renderVolume(unsigned char*         output,
-                                   const Eigen::Vector2i& output_size,
-                                   const Eigen::Vector4f& k,
-                                   const float            large_step) {
+                                   const Eigen::Vector2i& output_size) {
 
-  const float step = volume_dimension_.x() / volume_resolution_.x();
+  const float step = volume_dimension_.x() / volume_resolution_.x();\
+  const float large_step = 0.75 * sensor_.mu;
   renderVolumeKernel(volume_, output, output_size,
-      *(this->render_T_WC_) * getInverseCameraMatrix(k), nearPlane,
-      farPlane * 2.0f, mu_, step, large_step,
+      *(this->render_T_WC_), sensor_, step, large_step,
       this->render_T_WC_->topRightCorner<3, 1>(), ambient,
       !(this->render_T_WC_->isApprox(raycast_T_WC_)), vertex_,
       normal_);
 }
 
 void DenseSLAMSystem::renderTrack(unsigned char* out,
-    const Eigen::Vector2i& outputSize) {
-        renderTrackKernel(out, tracking_result_.data(), outputSize);
+    const Eigen::Vector2i& output_size) {
+        renderTrackKernel(out, tracking_result_.data(), output_size);
 }
 
 void DenseSLAMSystem::renderDepth(unsigned char* out,
-    const Eigen::Vector2i& outputSize) {
-        renderDepthKernel(out, float_depth_.data(), outputSize, nearPlane, farPlane);
+    const Eigen::Vector2i& output_size) {
+        renderDepthKernel(out, float_depth_.data(), output_size, sensor_.near_plane, sensor_.far_plane);
 }
 
 

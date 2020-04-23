@@ -39,6 +39,8 @@ namespace se {
 
   struct PinholeCamera {
     PinholeCamera(const SensorConfig& c);
+    PinholeCamera(const PinholeCamera& pinhole_camera,
+                  const int            down_sampling_rate);
 
     srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
     bool  left_hand_frame;
@@ -53,6 +55,8 @@ namespace se {
 
   struct OusterLidar {
     OusterLidar(const SensorConfig& c);
+    OusterLidar(const OusterLidar& ouster_lidar,
+                const int          down_sampling_rate);
 
     srl::projection::OusterLidar model;
     bool  left_hand_frame;

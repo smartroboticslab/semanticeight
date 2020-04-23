@@ -279,7 +279,7 @@ int processAll(DepthReader*   reader,
     if (config->groundtruth_file == "") {
       // No ground truth used, call track every tracking_rate frames.
       if (frame % config->tracking_rate == 0) {
-        tracked = pipeline->track(camera, config->icp_threshold);
+        tracked = pipeline->track(config->icp_threshold);
       } else {
         tracked = false;
       }
@@ -304,7 +304,7 @@ int processAll(DepthReader*   reader,
     timings[4] = std::chrono::steady_clock::now();
 
     if (frame > 2) {
-      pipeline->raycast(camera, config->mu);
+      pipeline->raycast();
     }
 
     timings[5] = std::chrono::steady_clock::now();
@@ -314,8 +314,7 @@ int processAll(DepthReader*   reader,
     pipeline->renderDepth((unsigned char*)depth_render, pipeline->getComputationResolution());
     pipeline->renderTrack((unsigned char*)track_render, pipeline->getComputationResolution());
     if (frame % config->rendering_rate == 0) {
-      pipeline->renderVolume((unsigned char*)volume_render, pipeline->getComputationResolution(),
-          camera, 0.75 * config->mu);
+      pipeline->renderVolume((unsigned char*)volume_render, pipeline->getComputationResolution());
     }
     timings[6] = std::chrono::steady_clock::now();
   }
