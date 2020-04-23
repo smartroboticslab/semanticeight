@@ -26,10 +26,10 @@
 #ifndef ACTIVE_LIST_HPP
 #define ACTIVE_LIST_HPP
 
-#include "../utils/math_utils.h"
-#include "../node.hpp"
-#include "../utils/memory_pool.hpp"
-#include "../utils/morton_utils.hpp"
+#include "se/utils/math_utils.h"
+#include "se/node.hpp"
+#include "se/utils/memory_pool.hpp"
+#include "se/utils/morton_utils.hpp"
 #include "se/sensor_implementation.hpp"
 
 namespace se {

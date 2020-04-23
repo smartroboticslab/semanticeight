@@ -33,7 +33,6 @@
 #include <vector>
 
 #include "../utils/math_utils.h"
-#include "../algorithms/filter.hpp"
 #include "../node.hpp"
 #include "../functors/data_handler.hpp"
 #include "../geometry/aabb_collision.hpp"

@@ -33,10 +33,10 @@
 #include <vector>
 
 #include <sophus/se3.hpp>
-#include "../utils/math_utils.h"
-#include "../algorithms/filter.hpp"
-#include "../node.hpp"
-#include "../functors/data_handler.hpp"
+#include "se/utils/math_utils.h"
+#include "filter.hpp"
+#include "se/node.hpp"
+#include "se/functors/data_handler.hpp"
 #include "se/sensor_implementation.hpp"
 
 namespace se {

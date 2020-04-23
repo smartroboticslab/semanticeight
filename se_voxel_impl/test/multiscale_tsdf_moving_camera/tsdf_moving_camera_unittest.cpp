@@ -2,7 +2,7 @@
 #include "se/octree.hpp"
 #include "se/algorithms/balancing.hpp"
 #include "se/functors/axis_aligned_functor.hpp"
-#include "se/algorithms/filter.hpp"
+#include "se/filter.hpp"
 #include "se/io/vtk-io.h"
 #include "se/io/ply_io.hpp"
 #include "sophus/se3.hpp"
