@@ -28,6 +28,7 @@ static const int default_iterations[DEFAULT_ITERATION_COUNT] = { 10, 5, 4 };
 const float default_mu = 0.1f;
 const bool default_blocking_read = false;
 const int default_fps = 0;
+const bool default_left_hand_frame = false;
 const float default_icp_threshold = 1e-5;
 const int default_compute_size_ratio = 1;
 const int default_integration_rate = 2;
@@ -45,7 +46,7 @@ const std::string default_log_file = "";
 const std::string default_groundtruth_file = "";
 const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
 
-static std::string short_options = "a:qc:d:f:g:G:hi:l:m:k:o:p:r:s:t:v:y:z:FC:M";
+static std::string short_options = "a:qc:d:f:g:G:hi:l:m:k:o:p:r:s:t:v:y:z:FC:M:L";
 
 static struct option long_options[] =
 {
@@ -55,6 +56,7 @@ static struct option long_options[] =
   {"fps",                required_argument, 0, 'f'},
   {"input-file",         required_argument, 0, 'i'},
   {"camera",             required_argument, 0, 'k'},
+  {"left-hand-frame",    no_argument, 0, 'L'},
   {"icp-threshold",      required_argument, 0, 'l'},
   {"log-file",           required_argument, 0, 'o'},
   {"mu",                 required_argument, 0, 'm'},
@@ -77,6 +79,7 @@ inline
 void print_arguments() {
   std::cerr << "-b  (--block-read)                        : default is False: Block on read " << std::endl;
   std::cerr << "-c  (--compute-size-ratio)                : default is " << default_compute_size_ratio << "   (same size)      " << std::endl;
+  std::cerr << "-L  (--left-hand-frame)                   : default is False: Right hand coordinate system" << std::endl;
   std::cerr << "-d  (--dump-volume) <filename>            : Output volume file              " << std::endl;
   std::cerr << "-f  (--fps)                               : default is " << default_fps       << std::endl;
   std::cerr << "-F  (--bilateral-filter                   : default is disabled"               << std::endl;
@@ -179,6 +182,7 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
   Configuration config;
 
   config.compute_size_ratio = default_compute_size_ratio;
+  config.left_hand_frame = default_left_hand_frame;
   config.integration_rate = default_integration_rate;
   config.tracking_rate = default_tracking_rate;
   config.rendering_rate = default_rendering_rate;
@@ -240,6 +244,10 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
             << optarg << ")\n";
           flagErr++;
         }
+        break;
+      case 'L':
+        config.left_hand_frame = true;
+        std::cerr << "update to left hand coordinate system" << std::endl;
         break;
       case 'd':
         config.dump_volume_file = optarg;

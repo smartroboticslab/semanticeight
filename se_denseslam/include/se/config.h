@@ -167,6 +167,11 @@ struct Configuration {
   Eigen::Vector4f camera;
 
   /**
+   * Indicates if the camera uses a left hand coordinate system
+   */
+  bool left_hand_frame;
+
+  /**
    * Whether the default intrinsic camera parameters have been overriden.
    */
   bool camera_overrided;
@@ -239,6 +244,7 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
                                      << config.camera.y() << " "
                                      << config.camera.z() << " "
                                      << config.camera.w() << "\n";
+  out << "Left hand frame:         " << config.left_hand_frame << "\n";
   out << "Mu:                      " << config.mu << "\n";
   out << "Filter depth:            " << (config.bilateral_filter
                                         ? "true" : "false") << "\n";

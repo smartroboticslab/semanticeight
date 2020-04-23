@@ -14,8 +14,8 @@ const srl::projection::NoDistortion _distortion;
 
 
 se::PinholeCamera::PinholeCamera(const SensorConfig& c)
-    : sensor(c.width, c.height, c.fx, c.fy, c.cx, c.cy, _distortion),
-      near_plane(c.near_plane), far_plane(c.far_plane), mu(c.mu) {
+    : model(c.width, c.height, c.fx, c.fy, c.cx, c.cy, _distortion),
+      left_hand_frame(c.left_hand_frame), near_plane(c.near_plane), far_plane(c.far_plane), mu(c.mu) {
   assert(c.width  > 0);
   assert(c.height > 0);
   assert(c.near_plane >= 0.f);
@@ -30,8 +30,8 @@ se::PinholeCamera::PinholeCamera(const SensorConfig& c)
 
 
 se::OusterLidar::OusterLidar(const SensorConfig& c)
-    : sensor(c.width, c.height, c.beam_azimuth_angles, c.beam_elevation_angles),
-      near_plane(c.near_plane), far_plane(c.far_plane), mu(c.mu) {
+    : model(c.width, c.height, c.beam_azimuth_angles, c.beam_elevation_angles),
+      left_hand_frame(c.left_hand_frame), near_plane(c.near_plane), far_plane(c.far_plane), mu(c.mu) {
   assert(c.width  > 0);
   assert(c.height > 0);
   assert(c.near_plane >= 0.f);

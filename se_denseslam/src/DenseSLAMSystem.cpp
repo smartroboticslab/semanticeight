@@ -67,7 +67,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
                                  const Configuration& config) :
   computation_size_(input_size),
   config_(config),
-  sensor_({input_size.x(), input_size.y(),
+  sensor_({input_size.x(), input_size.y(), config.left_hand_frame,
         nearPlane, farPlane, config.mu,
         config.camera[0], config.camera[1], config.camera[2], config.camera[3],
         Eigen::VectorXf(0), Eigen::VectorXf(0)}),
@@ -171,7 +171,7 @@ bool DenseSLAMSystem::track(const Eigen::Vector4f& k,
   for (unsigned int i = 0; i < iterations_.size(); ++i) {
     Eigen::Matrix4f invK = getInverseCameraMatrix(k / float(1 << i));
     depth2vertexKernel(input_vertex_[i], scaled_depth_[i], invK);
-    if(k.y() < 0)
+    if(sensor_.left_hand_frame)
       vertex2normalKernel<true>(input_normal_[i], input_vertex_[i]);
     else
       vertex2normalKernel<false>(input_normal_[i], input_vertex_[i]);
@@ -296,14 +296,14 @@ void DenseSLAMSystem::renderRGBA(uint8_t*               output_RGBA,
 
 void DenseSLAMSystem::dump_mesh(const std::string filename){
 
-  se::functor::internal::parallel_for_each(volume_.octree_->pool().blockBuffer(),
-      [](auto block) {
-        if(std::is_same<VoxelImpl, MultiresTSDF>::value) {
-          block->current_scale(block->min_scale());
-        } else {
-          block->current_scale(0);
-        }
-      });
+//  se::functor::internal::parallel_for_each(volume_.octree_->pool().blockBuffer(),
+//      [](auto block) {
+//        if(std::is_same<VoxelImpl, MultiresTSDF>::value) {
+//          block->current_scale(block->min_scale());
+//        } else {
+//          block->current_scale(0);
+//        }
+//      });
 
   auto interp_down = [this](auto block) {
     if(block->min_scale() == 0) return;

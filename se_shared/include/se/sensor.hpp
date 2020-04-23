@@ -19,6 +19,7 @@ namespace se {
     // General
     int width = 0;
     int height = 0;
+    bool left_hand_frame = false;
     float near_plane = 0.f;
     float far_plane = INFINITY;
     float mu = 0.1f;
@@ -39,7 +40,8 @@ namespace se {
   struct PinholeCamera {
     PinholeCamera(const SensorConfig& c);
 
-    srl::projection::PinholeCamera<srl::projection::NoDistortion> sensor;
+    srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
+    bool  left_hand_frame;
     float near_plane;
     float far_plane;
     float mu;
@@ -52,7 +54,8 @@ namespace se {
   struct OusterLidar {
     OusterLidar(const SensorConfig& c);
 
-    srl::projection::OusterLidar sensor;
+    srl::projection::OusterLidar model;
+    bool  left_hand_frame;
     float near_plane;
     float far_plane;
     float mu;

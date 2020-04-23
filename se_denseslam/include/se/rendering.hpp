@@ -97,7 +97,8 @@ void raycastKernel(const Volume<T>&            volume,
       const Eigen::Vector3f dir =
           (view.topLeftCorner<3, 3>() * Eigen::Vector3f(x, y, 1.f)).normalized();
       const Eigen::Vector3f transl = view.topRightCorner<3, 1>();
-      if (std::is_same<T, MultiresOFusion>::value) {
+//        if (std::is_same<T, MultiresOFusion>::value) {
+      if (false) {
         hit = T::raycast(volume, transl, dir, near_plane, far_plane, 0, 0, 0);
       } else {
         se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, transl, dir, near_plane, far_plane);
@@ -180,7 +181,8 @@ void renderVolumeKernel(const Volume<T>&                  volume,
         const Eigen::Vector3f dir =
             (view.topLeftCorner<3, 3>() * Eigen::Vector3f(x, y, 1.f)).normalized();
         const Eigen::Vector3f transl = view.topRightCorner<3, 1>();
-        if (std::is_same<T, MultiresOFusion>::value) {
+//        if (std::is_same<T, MultiresOFusion>::value) {
+        if (false) {
           hit = T::raycast(volume, transl, dir, near_plane, far_plane, 0, 0, 0);
         } else {
           se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, transl, dir, near_plane, far_plane);
