@@ -35,8 +35,8 @@ namespace se {
         const T* data() const { return data_.data(); }
 
       private:
-        const int width_;
-        const int height_;
+        int width_;
+        int height_;
         std::vector<T, Eigen::aligned_allocator<T> > data_;
     };
 
