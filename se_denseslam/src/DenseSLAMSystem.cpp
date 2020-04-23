@@ -203,9 +203,7 @@ bool DenseSLAMSystem::track(float                  icp_threshold) {
 
 
 
-bool DenseSLAMSystem::integrate(const Eigen::Vector4f& k,
-                                float                  mu,
-                                unsigned int           frame) {
+bool DenseSLAMSystem::integrate(unsigned int frame) {
 
   const float voxel_size = volume_.dim() / volume_.size();
   const int num_vox_per_pix = volume_.dim()
@@ -215,25 +213,21 @@ bool DenseSLAMSystem::integrate(const Eigen::Vector4f& k,
   allocation_list_.reserve(total);
 
   const Sophus::SE3f& T_CW = Sophus::SE3f(T_WC_).inverse();
-  const Eigen::Matrix4f& K = getCameraMatrix(k);
   const size_t allocated = VoxelImpl::buildAllocationList(
       allocation_list_.data(),
       allocation_list_.capacity(),
       *volume_.octree_,
       T_WC_,
-      getCameraMatrix(k),
-      float_depth_.data(),
-      computation_size_,
-      mu);
+      sensor_,
+      float_depth_);
 
   volume_.octree_->allocate(allocation_list_.data(), allocated);
 
   VoxelImpl::integrate(
       *volume_.octree_,
       T_CW,
-      K,
       float_depth_,
-      mu,
+      sensor_,
       frame);
   return true;
 }

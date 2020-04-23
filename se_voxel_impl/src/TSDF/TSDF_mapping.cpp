@@ -40,16 +40,15 @@
 
 
 struct tsdf_update {
-  const float* depth;
-  Eigen::Vector2i depth_size;
+  const se::Image<float>& depth_image;
+  Eigen::Vector2i image_size;
   float mu;
 
 
 
-  tsdf_update(const float*           depth,
-             const Eigen::Vector2i& depth_size,
-             float                  mu)
-    : depth(depth), depth_size(depth_size), mu(mu) {};
+  tsdf_update(const se::Image<float>& depth_image,
+              float                   mu)
+    : depth_image(depth_image), image_size(depth_image.width(), depth_image.height()), mu(mu) {};
 
 
 
@@ -60,13 +59,13 @@ struct tsdf_update {
                   const Eigen::Vector2f& pixel) {
 
     const Eigen::Vector2i px = pixel.cast<int>();
-    const float depth_sample = depth[px.x() + depth_size.x() * px.y()];
+    const float depth_value = depth_image.data()[px.x() + image_size.x() * px.y()];
     // Return on invalid depth measurement
-    if (depth_sample <= 0.f)
+    if (depth_value <= 0.f)
       return;
 
     // Update the TSDF
-    const float diff = (depth_sample - pos.z())
+    const float diff = (depth_value - pos.z())
       * std::sqrt(1 + se::math::sq(pos.x() / pos.z()) + se::math::sq(pos.y() / pos.z()));
     if (diff > -mu) {
       const float tsdf_new = fminf(1.f, diff / mu);
@@ -83,15 +82,14 @@ struct tsdf_update {
 
 void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
                      const Sophus::SE3f&          T_cw,
-                     const Eigen::Matrix4f&       K,
-                     const se::Image<float>&      depth,
-                     const float                  mu,
+                     const se::Image<float>&      depth_image,
+                     const SensorImpl&            sensor,
                      const unsigned) {
 
-  const Eigen::Vector2i depth_size (depth.width(), depth.height());
+  const Eigen::Vector2i image_size(depth_image.width(), depth_image.height());
 
-  struct tsdf_update funct(depth.data(), depth_size, mu);
+  struct tsdf_update funct(depth_image, sensor.mu);
 
-  se::functor::projective_octree(map, map._offset, T_cw, K, depth_size, funct);
+  se::functor::projective_octree(map, map._offset, T_cw, sensor, image_size, funct);
 }
 

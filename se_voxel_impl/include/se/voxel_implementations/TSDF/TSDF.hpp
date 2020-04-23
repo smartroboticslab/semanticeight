@@ -32,6 +32,7 @@
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
 #include "se/continuous/volume_template.hpp"
+#include "se/sensor_implementation.hpp"
 
 
 
@@ -84,10 +85,8 @@ struct TSDF {
       size_t                       reserved,
       se::Octree<TSDF::VoxelType>& map,
       const Eigen::Matrix4f&       T_wc,
-      const Eigen::Matrix4f&       K,
-      const float*                 depth_map,
-      const Eigen::Vector2i&       image_size,
-      const float                  mu);
+      const SensorImpl&            sensor,
+      const se::Image<float>&      depth_image);
 
 
 
@@ -96,9 +95,8 @@ struct TSDF {
    */
   static void integrate(se::Octree<TSDF::VoxelType>& map,
                         const Sophus::SE3f&          T_cw,
-                        const Eigen::Matrix4f&       K,
-                        const se::Image<float>&      depth,
-                        const float                  mu,
+                        const se::Image<float>&      depth_image,
+                        const SensorImpl&            sensor,
                         const unsigned               frame);
 
 

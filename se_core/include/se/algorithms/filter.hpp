@@ -30,6 +30,7 @@
 #include "../node.hpp"
 #include "../utils/memory_pool.hpp"
 #include "../utils/morton_utils.hpp"
+#include "se/sensor_implementation.hpp"
 
 namespace se {
 namespace algorithms {
@@ -37,7 +38,8 @@ namespace algorithms {
   template <typename VoxelBlockType>
     static inline bool in_frustum(const VoxelBlockType*  block,
                                   const float            voxel_size,
-                                  const Eigen::Matrix4f& P,
+                                  const Eigen::Matrix4f& Tcw,
+                                  const SensorImpl&      sensor,
                                   const Eigen::Vector2i& image_size) {
 
       const int side = VoxelBlockType::side;
@@ -46,14 +48,13 @@ namespace algorithms {
                                        0, 0   , side, side, 0   , 0   , side, side,
                                        0, 0   , 0   , 0   , side, side, side, side,
                                        0, 0   , 0   , 0   , 0   , 0   , 0   , 0   ).finished();
-
-      Eigen::Matrix<float, 4, 8> projected_corners = P *
-        Eigen::Vector4f(voxel_size, voxel_size, voxel_size, 1.f).asDiagonal() *
-         (offsets.colwise() + block->coordinates().homogeneous()).template cast<float>();
-      projected_corners.row(0).array() /= projected_corners.row(2).array();
-      projected_corners.row(1).array() /= projected_corners.row(2).array();
-      return ((projected_corners.row(0).array() >= 0.f && projected_corners.row(0).array() < image_size.x()) &&
-       (projected_corners.row(1).array() >= 0.f && projected_corners.row(1).array() < image_size.y())).any();
+      Eigen::Matrix3Xf block_corners_C = (Tcw * Eigen::Vector4f(voxel_size, voxel_size, voxel_size, 1.f).asDiagonal() *
+          (offsets.colwise() + block->coordinates().homogeneous()).template cast<float>()).topRows(3);
+      Eigen::Matrix2Xf projected_corners(2, 8);
+      std::vector<srl::projection::ProjectionStatus> projection_stati;
+      sensor.model.projectBatch(block_corners_C, &projected_corners, &projection_stati);
+      return (*projection_stati.begin() == srl::projection::ProjectionStatus::Successful)
+        && std::equal(projection_stati.begin() + 1, projection_stati.end(), projection_stati.begin());
     }
 
   template <typename ValueType, typename P>

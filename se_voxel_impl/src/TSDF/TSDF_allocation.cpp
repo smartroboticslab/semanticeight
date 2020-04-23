@@ -58,20 +58,17 @@ size_t TSDF::buildAllocationList(
     size_t                       reserved,
     se::Octree<TSDF::VoxelType>& map,
     const Eigen::Matrix4f&       T_wc,
-    const Eigen::Matrix4f&       K,
-    const float*                 depth_map,
-    const Eigen::Vector2i&       image_size,
-    const float                  mu) {
+    const SensorImpl&            sensor,
+    const se::Image<float>&      depth_image) {
 
+  const Eigen::Vector2i image_size (depth_image.width(), depth_image.height());
   const float voxel_size = map.dim() / map.size();
   const float inverse_voxel_size = 1.f / voxel_size;
-  const Eigen::Matrix4f inv_K = K.inverse();
-  const Eigen::Matrix4f inv_P = T_wc * inv_K;
   const int volume_size = map.size();
   const int max_depth = log2(volume_size);
   const unsigned leaf_depth = max_depth
       - se::math::log2_const(se::Octree<TSDF::VoxelType>::blockSide);
-  const float band = 2.f * mu;
+  const float band = 2.f * sensor.mu;
 
 
 
@@ -86,12 +83,15 @@ size_t TSDF::buildAllocationList(
 #pragma omp parallel for
   for (int y = 0; y < image_size.y(); ++y) {
     for (int x = 0; x < image_size.x(); ++x) {
-      if (depth_map[x + y*image_size.x()] == 0.f)
+      if (depth_image.data()[x + y*image_size.x()] == 0.f)
         continue;
 
-      const float depth = depth_map[x + y * image_size.x()];
-      const Eigen::Vector3f world_vertex = (inv_P * Eigen::Vector3f((x + 0.5f) * depth,
-            (y + 0.5f) * depth, depth).homogeneous()).head<3>();
+      const float depth_value = depth_image.data()[x + y * image_size.x()];
+
+      Eigen::Vector3f ray;
+      Eigen::Vector2f image_point(x + 0.5f,y + 0.5f);
+      sensor.model.backProject(image_point, &ray);
+      const Eigen::Vector3f world_vertex = (T_wc * (depth_value * ray).homogeneous()).head<3>();
 
       const Eigen::Vector3f direction = (camera_pos - world_vertex).normalized();
       const Eigen::Vector3f origin = world_vertex - (band * 0.5f) * direction;

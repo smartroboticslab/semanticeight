@@ -229,13 +229,6 @@ int processAll(DepthReader*   reader,
   const Eigen::Vector2i input_size = (reader != nullptr)
       ? Eigen::Vector2i(reader->getinputSize().x, reader->getinputSize().y)
       : Eigen::Vector2i(640, 480);
-  Eigen::Vector4f camera = (reader != nullptr)
-      ? reader->getK()
-      : Eigen::Vector4f::Constant(0.0f);
-  camera /= config->compute_size_ratio;
-
-  if (config->camera_overrided)
-    camera = config->camera / config->compute_size_ratio;
 
   if (reset) {
     frame_offset = reader->getFrameNumber();
@@ -296,7 +289,7 @@ int processAll(DepthReader*   reader,
     // Integrate only if tracking was successful every integration_rate frames
     // or it is one of the first 4 frames.
     if ((tracked && (frame % config->integration_rate == 0)) || frame <= 3) {
-        integrated = pipeline->integrate(camera, config->mu, frame);
+        integrated = pipeline->integrate(frame);
     } else {
       integrated = false;
     }

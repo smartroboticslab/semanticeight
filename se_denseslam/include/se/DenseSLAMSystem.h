@@ -195,9 +195,7 @@ class DenseSLAMSystem {
      * \param[in] frame The index of the current frame (starts from 0).
      * \return true (does not fail).
      */
-    bool integrate(const Eigen::Vector4f& k,
-                   float                  mu,
-                   unsigned               frame);
+    bool integrate(unsigned frame);
 
     /**
      * Raycast the map from the current pose to create a point cloud (vertex
