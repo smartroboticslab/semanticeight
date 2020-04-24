@@ -234,7 +234,6 @@ class DenseSLAMSystem {
      * layout is rgbwrgbwrgbw.
      * \param[in] output_size The dimensions of the output array (width and
      * height in pixels).
-     * \param[in] large_step
      */
     void renderVolume(unsigned char*         output,
                       const Eigen::Vector2i& output_size);
