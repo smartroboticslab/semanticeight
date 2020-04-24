@@ -48,7 +48,7 @@ namespace algorithms {
                                        0, 0   , side, side, 0   , 0   , side, side,
                                        0, 0   , 0   , 0   , side, side, side, side,
                                        0, 0   , 0   , 0   , 0   , 0   , 0   , 0   ).finished();
-      Eigen::Matrix3Xf block_corners_C = (T_CW * Eigen::Vector4f(voxel_size, voxel_size, voxel_size, 1.f).asDiagonal() *
+      const Eigen::Matrix3Xf block_corners_C = (T_CW * Eigen::Vector4f(voxel_size, voxel_size, voxel_size, 1.f).asDiagonal() *
           (offsets.colwise() + block->coordinates().homogeneous()).template cast<float>()).topRows(3);
       Eigen::Matrix2Xf projected_corners(2, 8);
       std::vector<srl::projection::ProjectionStatus> projection_stati;
