@@ -45,9 +45,9 @@ public:
   camera_parameter() {};
 
   camera_parameter(float pixel_size_mm, float focal_length_mm,
-      const Eigen::Vector2i& image_size, const Eigen::Matrix4f& Twc)
+      const Eigen::Vector2i& image_size, const Eigen::Matrix4f& T_WC)
     : pixel_size_mm_(pixel_size_mm), focal_length_mm_(focal_length_mm),
-    image_size_(image_size), Twc_(Twc) {
+    image_size_(image_size), T_WC_(T_WC) {
     focal_length_pix_ = focal_length_mm/pixel_size_mm;
     K_ << focal_length_pix_, 0                , image_size.x()/2, 0,
           0                , focal_length_pix_, image_size.y()/2, 0,
@@ -58,11 +58,11 @@ public:
   float pixel_size_mm() const {return pixel_size_mm_;}
   float focal_length_mm() const {return focal_length_mm_;}
   float focal_length_pix() const {return focal_length_pix_;}
-  void setPose(Eigen::Matrix4f Twc) {Twc_ = Twc;}
+  void setPose(Eigen::Matrix4f T_WC) {T_WC_ = T_WC;}
   Eigen::Vector2i imageSize() const {return image_size_;}
-  Eigen::Matrix4f Twc() const {return Twc_;}
-  Eigen::Vector3f twc() const {return Twc_.topRightCorner(3,1);}
-  Eigen::Matrix3f Rwc() const {return Twc_.topLeftCorner(3,3);};
+  Eigen::Matrix4f T_WC() const {return T_WC_;}
+  Eigen::Vector3f twc() const {return T_WC_.topRightCorner(3,1);}
+  Eigen::Matrix3f Rwc() const {return T_WC_.topLeftCorner(3,3);};
   Eigen::Matrix4f K() const {return K_;}
 
 private:
@@ -70,7 +70,7 @@ private:
   float focal_length_mm_; // [mm]
   float focal_length_pix_; //[vox]
   Eigen::Vector2i image_size_;
-  Eigen::Matrix4f Twc_;
+  Eigen::Matrix4f T_WC_;
   Eigen::Matrix4f K_;
 };
 
@@ -383,9 +383,9 @@ void foreach(float voxelsize, const std::vector<se::VoxelBlock<T>*>& active_list
     const Eigen::Vector3i base = block->coordinates();
     const int side = se::VoxelBlock<T>::side;
 
-    const Eigen::Matrix4f Tcw = (camera_parameter.Twc()).inverse();
-    const Eigen::Matrix3f Rcw = Tcw.topLeftCorner<3,3>();
-    const Eigen::Vector3f tcw = Tcw.topRightCorner<3,1>();
+    const Eigen::Matrix4f T_CW = (camera_parameter.T_WC()).inverse();
+    const Eigen::Matrix3f Rcw = T_CW.topLeftCorner<3,3>();
+    const Eigen::Vector3f tcw = T_CW.topRightCorner<3,1>();
     const Eigen::Matrix4f K = camera_parameter.K();
     const Eigen::Vector2i image_size = camera_parameter.imageSize();
     const float scaled_pix = (camera_parameter.K().inverse() * (Eigen::Vector3f(1, 0 ,1) - Eigen::Vector3f(0, 0, 1)).homogeneous()).x();
@@ -448,12 +448,12 @@ std::vector<se::VoxelBlock<MultiresTSDF::VoxelType>*> buildActiveList(se::Octree
   }
 
   const Eigen::Matrix4f K = camera_parameter.K();
-  const Eigen::Matrix4f Twc = camera_parameter.Twc();
-  const Eigen::Matrix4f Tcw = (camera_parameter.Twc()).inverse();
+  const Eigen::Matrix4f T_WC = camera_parameter.T_WC();
+  const Eigen::Matrix4f T_CW = (camera_parameter.T_WC()).inverse();
   std::vector<se::VoxelBlock<MultiresTSDF::VoxelType>*> active_list;
   auto in_frustum_predicate =
       std::bind(se::algorithms::in_frustum<se::VoxelBlock<MultiresTSDF::VoxelType>>, std::placeholders::_1,
-                voxel_size, K*Tcw, camera_parameter.imageSize());
+                voxel_size, K*T_CW, camera_parameter.imageSize());
   se::algorithms::filter(active_list, block_buffer, in_frustum_predicate);
   return active_list;
 }

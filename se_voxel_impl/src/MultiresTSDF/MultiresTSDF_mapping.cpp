@@ -276,7 +276,7 @@ void propagate_down(const se::Octree<MultiresTSDF::VoxelType>& map,
 */
 void propagate_update(const se::Octree<MultiresTSDF::VoxelType>& map,
                     se::VoxelBlock<MultiresTSDF::VoxelType>* block,
-                    const Sophus::SE3f& Tcw,
+                    const Sophus::SE3f& T_CW,
                     const Eigen::Matrix4f& K,
                     const float voxelsize,
                     const Eigen::Vector3f& offset,
@@ -292,11 +292,11 @@ void propagate_update(const se::Octree<MultiresTSDF::VoxelType>& map,
   bool visible = false;
 
   const Eigen::Vector3i base = block->coordinates();
-  const Eigen::Vector3f delta = Tcw.rotationMatrix() *
+  const Eigen::Vector3f delta = T_CW.rotationMatrix() *
     Eigen::Vector3f::Constant(voxelsize);
   const Eigen::Vector3f cameraDelta = K.topLeftCorner<3,3>() * delta;
   const Eigen::Vector3f base_scaled =
-    Tcw * (voxelsize * (block->coordinates().template cast<float>() + half_stride * offset));
+    T_CW * (voxelsize * (block->coordinates().template cast<float>() + half_stride * offset));
   const Eigen::Vector3f base_camera = K.topLeftCorner<3, 3>() * base_scaled;
 
   for(int z = 0; z < side; z += stride) {
@@ -385,7 +385,7 @@ struct multires_block_update {
                   const float m,
                   const int mw) :
                   map(octree),
-                  Tcw(T),
+                  T_CW(T),
                   K(calib),
                   voxel_size(vsize),
                   offset(off),
@@ -394,7 +394,7 @@ struct multires_block_update {
                   max_weight(mw) {}
 
   const se::Octree<MultiresTSDF::VoxelType>& map;
-  const Sophus::SE3f& Tcw;
+  const Sophus::SE3f& T_CW;
   const Eigen::Matrix4f& K;
   float voxel_size;
   const Eigen::Vector3f& offset;
@@ -410,11 +410,11 @@ struct multires_block_update {
     const Eigen::Vector3i base = block->coordinates();
     const int last_scale = block->current_scale();
     int scale = compute_scale((base + Eigen::Vector3i::Constant(side/2)).cast<float>(),
-        Tcw.inverse().translation(), Tcw.rotationMatrix(), scaled_pix, voxel_size, se::math::log2_const(side >> 1));
+        T_CW.inverse().translation(), T_CW.rotationMatrix(), scaled_pix, voxel_size, se::math::log2_const(side >> 1));
     scale = std::max(last_scale - 1, scale);
     block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
     if(last_scale > scale) {
-      propagate_update(map, block, Tcw, K, voxel_size, offset, depth, mu, max_weight, scale);
+      propagate_update(map, block, T_CW, K, voxel_size, offset, depth, mu, max_weight, scale);
       return;
     }
 
@@ -422,12 +422,12 @@ struct multires_block_update {
     const int stride = 1 << scale;
     bool visible = false;
 
-    const Eigen::Vector3f delta = Tcw.rotationMatrix() * Eigen::Vector3f(voxel_size, 0, 0);
+    const Eigen::Vector3f delta = T_CW.rotationMatrix() * Eigen::Vector3f(voxel_size, 0, 0);
     const Eigen::Vector3f cameraDelta = K.topLeftCorner<3,3>() * delta;
     for(int z = 0; z < side; z += stride)
       for(int y = 0; y < side; y += stride) {
         Eigen::Vector3i pix = base + Eigen::Vector3i(0, y, z);
-        Eigen::Vector3f start = Tcw * (voxel_size * (pix.cast<float>() + stride*offset));
+        Eigen::Vector3f start = T_CW * (voxel_size * (pix.cast<float>() + stride*offset));
         Eigen::Vector3f camerastart = K.topLeftCorner<3,3>() * start;
         for(int x = 0; x < side; x += stride, pix.x() += stride) {
           const Eigen::Vector3f camera_voxel = camerastart + (x*cameraDelta);
@@ -471,7 +471,7 @@ void propagate(se::VoxelBlock<MultiresTSDF::VoxelType>* block) {
   propagate_up(block, block->current_scale());
 }
 
-static void integrate(se::Octree<MultiresTSDF::VoxelType>& map, const Sophus::SE3f& Tcw, const
+static void integrate(se::Octree<MultiresTSDF::VoxelType>& map, const Sophus::SE3f& T_CW, const
     Eigen::Matrix4f& K, float voxelsize, const Eigen::Vector3f& offset, const
     se::Image<float>& depth, float mu, int max_weight, const unsigned frame) {
       // Filter visible blocks
@@ -482,7 +482,7 @@ static void integrate(se::Octree<MultiresTSDF::VoxelType>& map, const Sophus::SE
         return b->active();
       };
       const Eigen::Vector2i framesize(depth.width(), depth.height());
-      const Eigen::Matrix4f Pcw = K*Tcw.matrix();
+      const Eigen::Matrix4f Pcw = K*T_CW.matrix();
       auto in_frustum_predicate =
         std::bind(se::algorithms::in_frustum<se::VoxelBlock<MultiresTSDF::VoxelType>>,
             std::placeholders::_1, voxelsize, Pcw, framesize);
@@ -491,7 +491,7 @@ static void integrate(se::Octree<MultiresTSDF::VoxelType>& map, const Sophus::SE
 
       std::deque<Node<MultiresTSDF::VoxelType>*> prop_list;
       std::mutex deque_mutex;
-      struct multires_block_update funct(map, Tcw, K, voxelsize,
+      struct multires_block_update funct(map, T_CW, K, voxelsize,
           offset, depth, mu, max_weight);
       se::functor::internal::parallel_for_each(active_list, funct);
 
