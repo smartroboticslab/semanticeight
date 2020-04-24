@@ -159,7 +159,7 @@ bool DenseSLAMSystem::preprocessColor(const uint8_t*         input_RGB,
 
 
 
-bool DenseSLAMSystem::track(float                  icp_threshold) {
+bool DenseSLAMSystem::track(float icp_threshold) {
 
   // half sample the input depth maps into the pyramid levels
   for (unsigned int i = 1; i < iterations_.size(); ++i) {
@@ -252,7 +252,7 @@ void DenseSLAMSystem::dump_volume(std::string ) {
 void DenseSLAMSystem::renderVolume(unsigned char*         output,
                                    const Eigen::Vector2i& output_size) {
 
-  const float step = volume_dimension_.x() / volume_resolution_.x();\
+  const float step = volume_dimension_.x() / volume_resolution_.x();
   const float large_step = 0.75 * sensor_.mu;
   renderVolumeKernel(volume_, output, output_size,
       *(this->render_T_WC_), sensor_, step, large_step,

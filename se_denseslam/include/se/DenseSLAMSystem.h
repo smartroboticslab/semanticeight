@@ -182,7 +182,7 @@ class DenseSLAMSystem {
      * \param[in] icp_threshold The ICP convergence threshold.
      * \return true if the camera pose was updated and false if it wasn't.
      */
-    bool track(const float            icp_threshold);
+    bool track(const float icp_threshold);
 
     /**
      * Integrate the 3D reconstruction resulting from the current frame to the
