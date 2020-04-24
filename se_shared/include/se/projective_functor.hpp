@@ -50,7 +50,7 @@ namespace functor {
       projective_functor(OctreeT<FieldType>&    octree,
                          UpdateF                funct,
                          const Sophus::SE3f&    T_CW,
-                         const SensorImpl&      sensor,
+                         const SensorImpl       sensor,
                          const Eigen::Vector3f& offset,
                          const Eigen::Vector2i& image_size) :
         octree_(octree), funct_(funct), T_CW_(T_CW), sensor_(sensor), offset_(offset),
@@ -161,7 +161,7 @@ namespace functor {
       UpdateF funct_;
       const Sophus::SE3f T_CW_;
       const Eigen::Matrix4f K_;
-      const SensorImpl&     sensor_;
+      const SensorImpl sensor_;
       const Eigen::Vector3f offset_;
       const Eigen::Vector2i image_size_;
       std::vector<se::VoxelBlock<FieldType>*> active_list_;
