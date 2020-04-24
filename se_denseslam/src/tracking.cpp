@@ -267,7 +267,7 @@ void trackKernel(TrackData*                        output,
       const Eigen::Vector3f vertex_W = (T_WC *
           in_vertex[pixel.x() + pixel.y() * in_size.x()].homogeneous()).head<3>();
 
-      Eigen::Vector3f vertex_C = in_vertex[pixel.x() + pixel.y() * in_size.x()];
+      const Eigen::Vector3f vertex_C = in_vertex[pixel.x() + pixel.y() * in_size.x()];
       Eigen::Vector2f proj_pixel;
       if (sensor.model.project(vertex_C, &proj_pixel) != srl::projection::ProjectionStatus::Successful) {
         row.result = -2;

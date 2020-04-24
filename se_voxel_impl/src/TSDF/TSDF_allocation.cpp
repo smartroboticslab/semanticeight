@@ -89,7 +89,7 @@ size_t TSDF::buildAllocationList(
       const float depth_value = depth_image.data()[x + y * image_size.x()];
 
       Eigen::Vector3f ray;
-      Eigen::Vector2f image_point(x + 0.5f,y + 0.5f);
+      const Eigen::Vector2f image_point(x + 0.5f,y + 0.5f);
       sensor.model.backProject(image_point, &ray);
       const Eigen::Vector3f world_vertex = (T_wc * (depth_value * ray).homogeneous()).head<3>();
 

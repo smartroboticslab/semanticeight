@@ -88,16 +88,16 @@ namespace functor {
 
         /* Iterate over each voxel in the VoxelBlock. */
         const unsigned int block_side = se::VoxelBlock<FieldType>::side;
-        unsigned int xlast = block_coord(0) + block_side;
-        unsigned int ylast = block_coord(1) + block_side;
-        unsigned int zlast = block_coord(2) + block_side;
+        const unsigned int xlast = block_coord(0) + block_side;
+        const unsigned int ylast = block_coord(1) + block_side;
+        const unsigned int zlast = block_coord(2) + block_side;
 
         for (unsigned int z = block_coord(2); z < zlast; ++z) {
           for (unsigned int y = block_coord(1); y < ylast; ++y) {
 #pragma omp simd
             for (unsigned int x = block_coord(0); x < xlast; ++x) {
-              Eigen::Vector3i voxel_corner_W = Eigen::Vector3i(x, y, z);
-              Eigen::Vector3f voxel_pos_C = (T_CW_ * (voxel_size * (voxel_corner_W.cast<float>() + offset_)));
+              const Eigen::Vector3i voxel_corner_W = Eigen::Vector3i(x, y, z);
+              const Eigen::Vector3f voxel_pos_C = (T_CW_ * (voxel_size * (voxel_corner_W.cast<float>() + offset_)));
               Eigen::Vector2f pixel;
               if (sensor_.model.project(voxel_pos_C, &pixel) != srl::projection::ProjectionStatus::Successful) {
                 continue;
@@ -124,7 +124,7 @@ namespace functor {
           const Eigen::Vector3i dir = node->side_ / 2 *
               Eigen::Vector3i((i & 1) > 0, (i & 2) > 0, (i & 4) > 0); // TODO: Offset needs to be discussed
           const Eigen::Vector3i child_node_corner_W = node_coord + dir;
-          Eigen::Vector3f child_node_pos_C = (T_CW_ * (voxel_size * (child_node_corner_W.cast<float>() + node->side_ * offset_)));
+          const Eigen::Vector3f child_node_pos_C = (T_CW_ * (voxel_size * (child_node_corner_W.cast<float>() + node->side_ * offset_)));
           Eigen::Vector2f pixel;
           if (sensor_.model.project(child_node_pos_C, &pixel) != srl::projection::ProjectionStatus::Successful) {
             continue;

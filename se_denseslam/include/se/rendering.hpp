@@ -93,10 +93,10 @@ void raycastKernel(const Volume<T>&            volume,
     for (int x = 0; x < vertex.width(); x++) {
       Eigen::Vector4f hit;
 
-      Eigen::Vector2f pixel(x, y);
+      const Eigen::Vector2f pixel(x, y);
       Eigen::Vector3f dir_C;
       sensor.model.backProject(pixel, &dir_C);
-      Eigen::Vector3f dir_W = (T_WC.topLeftCorner<3, 3>() * dir_C.normalized()).head(3);
+      const Eigen::Vector3f dir_W = (T_WC.topLeftCorner<3, 3>() * dir_C.normalized()).head(3);
       const Eigen::Vector3f t_WC = T_WC.topRightCorner<3, 1>();
 
 //      if (std::is_same<T, MultiresOFusion>::value) {
@@ -178,10 +178,10 @@ void renderVolumeKernel(const Volume<T>&                  volume,
       const int idx = (x + image_size.x()*y) * 4;
 
       if (raycast_normals) {
-        Eigen::Vector2f pixel(x, y);
+        const Eigen::Vector2f pixel(x, y);
         Eigen::Vector3f dir_C;
         sensor.model.backProject(pixel, &dir_C);
-        Eigen::Vector3f dir_W = (T_WC.topLeftCorner<3, 3>() * dir_C.normalized()).head(3);
+        const Eigen::Vector3f dir_W = (T_WC.topLeftCorner<3, 3>() * dir_C.normalized()).head(3);
         const Eigen::Vector3f t_WC = T_WC.topRightCorner<3, 1>();
 //        if (std::is_same<T, MultiresOFusion>::value) {
         if (false) {

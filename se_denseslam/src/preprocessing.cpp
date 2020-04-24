@@ -103,7 +103,7 @@ void depth2vertexKernel(se::Image<Eigen::Vector3f>& vertex,
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
       if (depth_image[x + y * depth_image.width()] > 0) {
-        Eigen::Vector2f pixel(x, y);
+        const Eigen::Vector2f pixel(x, y);
         Eigen::Vector3f dir_C;
         sensor.model.backProject(pixel, &dir_C);
         vertex[x + y * depth_image.width()] = depth_image[x + y * depth_image.width()] * dir_C;
