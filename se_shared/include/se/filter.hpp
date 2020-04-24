@@ -53,8 +53,8 @@ namespace algorithms {
       Eigen::Matrix2Xf projected_corners(2, 8);
       std::vector<srl::projection::ProjectionStatus> projection_stati;
       sensor.model.projectBatch(block_corners_C, &projected_corners, &projection_stati);
-      return (*projection_stati.begin() == srl::projection::ProjectionStatus::Successful)
-        && std::equal(projection_stati.begin() + 1, projection_stati.end(), projection_stati.begin());
+      return std::all_of(projection_stati.begin(), projection_stati.end(),
+          [](const auto it){ return it == srl::projection::ProjectionStatus::Successful; });
     }
 
   template <typename ValueType, typename P>
