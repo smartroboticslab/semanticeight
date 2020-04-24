@@ -54,12 +54,12 @@
  * \param band maximum extent of the allocating region, per ray
  */
 size_t TSDF::buildAllocationList(
-    se::key_t*                   allocation_list,
-    size_t                       reserved,
     se::Octree<TSDF::VoxelType>& map,
+    const se::Image<float>&      depth_image,
     const Eigen::Matrix4f&       T_wc,
     const SensorImpl&            sensor,
-    const se::Image<float>&      depth_image) {
+    se::key_t*                   allocation_list,
+    size_t                       reserved) {
 
   const Eigen::Vector2i image_size (depth_image.width(), depth_image.height());
   const float voxel_size = map.dim() / map.size();

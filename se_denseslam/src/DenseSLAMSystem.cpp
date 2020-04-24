@@ -215,19 +215,19 @@ bool DenseSLAMSystem::integrate(unsigned int frame) {
 
   const Sophus::SE3f& T_CW = Sophus::SE3f(T_WC_).inverse();
   const size_t allocated = VoxelImpl::buildAllocationList(
-      allocation_list_.data(),
-      allocation_list_.capacity(),
       *volume_.octree_,
+      float_depth_,
       T_WC_,
       sensor_,
-      float_depth_);
+      allocation_list_.data(),
+      allocation_list_.capacity());
 
   volume_.octree_->allocate(allocation_list_.data(), allocated);
 
   VoxelImpl::integrate(
       *volume_.octree_,
-      T_CW,
       float_depth_,
+      T_CW,
       sensor_,
       frame);
   return true;

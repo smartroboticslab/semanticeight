@@ -81,8 +81,8 @@ struct tsdf_update {
 
 
 void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
-                     const Sophus::SE3f&          T_cw,
                      const se::Image<float>&      depth_image,
+                     const Sophus::SE3f&          T_cw,
                      const SensorImpl&            sensor,
                      const unsigned) {
 

@@ -81,12 +81,12 @@ struct TSDF {
    * camera pose.
    */
   static size_t buildAllocationList(
-      se::key_t*                   allocation_list,
-      size_t                       reserved,
       se::Octree<TSDF::VoxelType>& map,
+      const se::Image<float>&      depth_image,
       const Eigen::Matrix4f&       T_wc,
       const SensorImpl&            sensor,
-      const se::Image<float>&      depth_image);
+      se::key_t*                   allocation_list,
+      size_t                       reserved);
 
 
 
@@ -94,8 +94,8 @@ struct TSDF {
    * Integrate a depth image into the map.
    */
   static void integrate(se::Octree<TSDF::VoxelType>& map,
-                        const Sophus::SE3f&          T_cw,
                         const se::Image<float>&      depth_image,
+                        const Sophus::SE3f&          T_cw,
                         const SensorImpl&            sensor,
                         const unsigned               frame);
 
