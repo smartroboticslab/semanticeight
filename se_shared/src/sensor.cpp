@@ -27,10 +27,10 @@ se::PinholeCamera::PinholeCamera(const SensorConfig& c)
   assert(!isnan(c.cy));
 }
 
-se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const int dsr)
-    : model(pc.model.imageWidth() / dsr, pc.model.imageHeight() / dsr,
-            pc.model.focalLengthU() / dsr, pc.model.focalLengthV() / dsr,
-            pc.model.imageCenterU() / dsr, pc.model.imageCenterV() / dsr, _distortion),
+se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
+    : model(pc.model.imageWidth() * sf, pc.model.imageHeight() * sf,
+            pc.model.focalLengthU() * sf, pc.model.focalLengthV() * sf,
+            pc.model.imageCenterU() * sf, pc.model.imageCenterV() * sf, _distortion),
             left_hand_frame(pc.left_hand_frame), near_plane(pc.near_plane), far_plane(pc.far_plane), mu(pc.mu) {
 }
 
@@ -47,8 +47,8 @@ se::OusterLidar::OusterLidar(const SensorConfig& c)
   assert(c.beam_elevation_angles.size() > 0);
 }
 
-se::OusterLidar::OusterLidar(const OusterLidar& ol, const int dsr)
-    : model(ol.model.imageWidth() / dsr, ol.model.imageHeight() / dsr,
+se::OusterLidar::OusterLidar(const OusterLidar& ol, const float sf)
+    : model(ol.model.imageWidth() * sf, ol.model.imageHeight() * sf,
             ol.model.beamAzimuthAngles(), ol.model.beamElevationAngles()), // TODO: Does the beam need to be scaled too?
             left_hand_frame(ol.left_hand_frame), near_plane(ol.near_plane), far_plane(ol.far_plane), mu(ol.mu) {
 }

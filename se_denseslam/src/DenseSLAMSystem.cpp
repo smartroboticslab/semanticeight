@@ -169,7 +169,8 @@ bool DenseSLAMSystem::track(float icp_threshold) {
   // prepare the 3D information from the input depth maps
   Eigen::Vector2i local_image_size = computation_size_;
   for (unsigned int i = 0; i < iterations_.size(); ++i) {
-    SensorImpl scaled_sensor(sensor_, float(1 << i));
+    float scaling_factor = 1.f / float(1 << i);
+    SensorImpl scaled_sensor(sensor_, scaling_factor);
     depth2vertexKernel(input_vertex_[i], scaled_depth_[i], scaled_sensor);
     if(sensor_.left_hand_frame)
       vertex2normalKernel<true>(input_normal_[i], input_vertex_[i]);
