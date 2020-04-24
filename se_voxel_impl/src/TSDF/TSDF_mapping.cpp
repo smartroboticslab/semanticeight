@@ -59,7 +59,7 @@ struct tsdf_update {
                   const Eigen::Vector2f& pixel) {
 
     const Eigen::Vector2i px = pixel.cast<int>();
-    const float depth_value = depth_image.data()[px.x() + image_size.x() * px.y()];
+    const float depth_value = depth_image[px.x() + image_size.x() * px.y()];
     // Return on invalid depth measurement
     if (depth_value <= 0.f)
       return;

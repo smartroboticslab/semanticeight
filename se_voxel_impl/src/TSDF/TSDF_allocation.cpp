@@ -83,10 +83,10 @@ size_t TSDF::buildAllocationList(
 #pragma omp parallel for
   for (int y = 0; y < image_size.y(); ++y) {
     for (int x = 0; x < image_size.x(); ++x) {
-      if (depth_image.data()[x + y*image_size.x()] == 0.f)
+      if (depth_image[x + y*image_size.x()] == 0.f)
         continue;
 
-      const float depth_value = depth_image.data()[x + y * image_size.x()];
+      const float depth_value = depth_image[x + y * image_size.x()];
 
       Eigen::Vector3f ray;
       const Eigen::Vector2f image_point(x + 0.5f,y + 0.5f);
