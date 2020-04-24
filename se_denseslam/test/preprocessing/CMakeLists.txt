@@ -9,6 +9,7 @@ add_executable(${PROJECT_TEST_NAME}
 target_include_directories(${PROJECT_TEST_NAME} PUBLIC ${GTEST_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_TEST_NAME}
   LodePNG::lodepng
+  SRL::Projection
   ${GTEST_BOTH_LIBRARIES}
   pthread
 )
