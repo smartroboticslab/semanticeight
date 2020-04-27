@@ -65,7 +65,7 @@ void depth2vertexKernel(se::Image<Eigen::Vector3f>& vertex,
 
 void vertex2depthKernel(se::Image<float>&                 depth_image,
                         const se::Image<Eigen::Vector3f>& vertex,
-                        const Eigen::Matrix4f&            T_cw);
+                        const Eigen::Matrix4f&            T_CW);
 
 
 

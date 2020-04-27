@@ -119,13 +119,13 @@ void depth2vertexKernel(se::Image<Eigen::Vector3f>& vertex,
 
 void vertex2depthKernel(se::Image<float>&                 depth_image,
                         const se::Image<Eigen::Vector3f>& vertex,
-                        const Eigen::Matrix4f&            T_cw) {
+                        const Eigen::Matrix4f&            T_CW) {
 
   TICK();
 #pragma omp parallel for
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
-      depth_image(x, y) = (T_cw * vertex(x, y).homogeneous()).z();
+      depth_image(x, y) = (T_CW * vertex(x, y).homogeneous()).z();
     }
   }
   TOCK("vertex2depthKernel", depth_image.width() * depth_image.height());

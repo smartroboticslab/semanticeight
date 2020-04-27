@@ -83,7 +83,7 @@ struct TSDF {
   static size_t buildAllocationList(
       se::Octree<TSDF::VoxelType>& map,
       const se::Image<float>&      depth_image,
-      const Eigen::Matrix4f&       T_wc,
+      const Eigen::Matrix4f&       T_WC,
       const SensorImpl&            sensor,
       se::key_t*                   allocation_list,
       size_t                       reserved);
@@ -95,7 +95,7 @@ struct TSDF {
    */
   static void integrate(se::Octree<TSDF::VoxelType>& map,
                         const se::Image<float>&      depth_image,
-                        const Sophus::SE3f&          T_cw,
+                        const Sophus::SE3f&          T_CW,
                         const SensorImpl&            sensor,
                         const unsigned               frame);
 

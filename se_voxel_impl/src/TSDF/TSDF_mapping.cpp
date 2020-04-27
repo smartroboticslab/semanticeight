@@ -82,7 +82,7 @@ struct tsdf_update {
 
 void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
                      const se::Image<float>&      depth_image,
-                     const Sophus::SE3f&          T_cw,
+                     const Sophus::SE3f&          T_CW,
                      const SensorImpl&            sensor,
                      const unsigned) {
 
@@ -90,6 +90,6 @@ void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
 
   struct tsdf_update funct(depth_image, sensor.mu);
 
-  se::functor::projective_octree(map, map._offset, T_cw, sensor, image_size, funct);
+  se::functor::projective_octree(map, map._offset, T_CW, sensor, image_size, funct);
 }
 

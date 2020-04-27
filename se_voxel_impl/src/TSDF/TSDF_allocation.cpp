@@ -56,7 +56,7 @@
 size_t TSDF::buildAllocationList(
     se::Octree<TSDF::VoxelType>& map,
     const se::Image<float>&      depth_image,
-    const Eigen::Matrix4f&       T_wc,
+    const Eigen::Matrix4f&       T_WC,
     const SensorImpl&            sensor,
     se::key_t*                   allocation_list,
     size_t                       reserved) {
@@ -78,7 +78,7 @@ size_t TSDF::buildAllocationList(
   unsigned int voxel_count = 0;
 #endif
 
-  const Eigen::Vector3f camera_pos = T_wc.topRightCorner<3, 1>();
+  const Eigen::Vector3f camera_pos = T_WC.topRightCorner<3, 1>();
   const int num_steps = ceil(band * inverse_voxel_size);
 #pragma omp parallel for
   for (int y = 0; y < image_size.y(); ++y) {
@@ -91,7 +91,7 @@ size_t TSDF::buildAllocationList(
       Eigen::Vector3f ray;
       const Eigen::Vector2f image_point(x + 0.5f,y + 0.5f);
       sensor.model.backProject(image_point, &ray);
-      const Eigen::Vector3f world_vertex = (T_wc * (depth_value * ray).homogeneous()).head<3>();
+      const Eigen::Vector3f world_vertex = (T_WC * (depth_value * ray).homogeneous()).head<3>();
 
       const Eigen::Vector3f direction = (camera_pos - world_vertex).normalized();
       const Eigen::Vector3f origin = world_vertex - (band * 0.5f) * direction;
