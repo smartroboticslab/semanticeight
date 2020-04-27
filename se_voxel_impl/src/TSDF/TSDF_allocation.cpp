@@ -41,17 +41,13 @@
  * \brief Given a depth map and camera matrix it computes the list of
  * voxels intersected but not allocated by the rays around the measurement m in
  * a region comprised between m +/- band.
+ * \param map indexing structure used to index voxel blocks
+ * \param T_wc camera to world frame transformation
+ * \param sensor model
+ * \param size discrete extent of the map, in number of voxels
  * \param allocation_list output list of keys corresponding to voxel blocks to
  * be allocated
  * \param reserved allocated size of allocation_list
- * \param map indexing structure used to index voxel blocks
- * \param T_wc camera to world frame transformation
- * \param K camera intrinsics matrix
- * \param depth_map input depth map
- * \param image_size dimensions of depth_map
- * \param size discrete extent of the map, in number of voxels
- * \param voxelSize spacing between two consegutive voxels, in metric space
- * \param band maximum extent of the allocating region, per ray
  */
 size_t TSDF::buildAllocationList(
     se::Octree<TSDF::VoxelType>& map,
