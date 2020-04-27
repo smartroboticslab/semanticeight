@@ -57,13 +57,12 @@ size_t TSDF::buildAllocationList(
     se::key_t*                   allocation_list,
     size_t                       reserved) {
 
-  const Eigen::Vector2i image_size (depth_image.width(), depth_image.height());
+  const Eigen::Vector2i image_size(depth_image.width(), depth_image.height());
   const float voxel_size = map.dim() / map.size();
   const float inverse_voxel_size = 1.f / voxel_size;
   const int volume_size = map.size();
-  const int max_depth = log2(volume_size);
-  const unsigned leaf_depth = max_depth
-      - se::math::log2_const(se::Octree<TSDF::VoxelType>::blockSide);
+  const int max_level = map.maxLevel();
+  const unsigned leaves_level = map.leavesLevel();
   const float band = 2.f * sensor.mu;
 
 
@@ -74,7 +73,7 @@ size_t TSDF::buildAllocationList(
   unsigned int voxel_count = 0;
 #endif
 
-  const Eigen::Vector3f camera_pos = T_WC.topRightCorner<3, 1>();
+  const Eigen::Vector3f t_WC = T_WC.topRightCorner<3, 1>();
   const int num_steps = ceil(band * inverse_voxel_size);
 #pragma omp parallel for
   for (int y = 0; y < image_size.y(); ++y) {
@@ -84,35 +83,34 @@ size_t TSDF::buildAllocationList(
 
       const float depth_value = depth_image[x + y * image_size.x()];
 
-      Eigen::Vector3f ray;
+      Eigen::Vector3f ray_direction_C;
       const Eigen::Vector2f image_point(x + 0.5f,y + 0.5f);
-      sensor.model.backProject(image_point, &ray);
-      const Eigen::Vector3f world_vertex = (T_WC * (depth_value * ray).homogeneous()).head<3>();
+      sensor.model.backProject(image_point, &ray_direction_C);
+      const Eigen::Vector3f surface_vertex_W = (T_WC * (depth_value * ray_direction_C).homogeneous()).head<3>();
 
-      const Eigen::Vector3f direction = (camera_pos - world_vertex).normalized();
-      const Eigen::Vector3f origin = world_vertex - (band * 0.5f) * direction;
-      const Eigen::Vector3f step = (direction * band) / num_steps;
+      const Eigen::Vector3f reverse_ray_direction_W = (t_WC - surface_vertex_W).normalized();
 
-      Eigen::Vector3f voxel_pos = origin;
+      const Eigen::Vector3f ray_origin_W = surface_vertex_W - (band * 0.5f) * reverse_ray_direction_W;
+      const Eigen::Vector3f step = (reverse_ray_direction_W * band) / num_steps;
+
+      Eigen::Vector3f ray_position_W = ray_origin_W;
       for (int i = 0; i < num_steps; i++) {
 
-        const Eigen::Vector3f voxel_scaled = (voxel_pos * inverse_voxel_size).array().floor();
-
-        if (   (voxel_scaled.x() < volume_size)
-            && (voxel_scaled.y() < volume_size)
-            && (voxel_scaled.z() < volume_size)
-            && (voxel_scaled.x() >= 0)
-            && (voxel_scaled.y() >= 0)
-            && (voxel_scaled.z() >= 0)) {
-          const Eigen::Vector3i voxel = voxel_scaled.cast<int>();
+        const Eigen::Vector3i voxel_W = (ray_position_W * inverse_voxel_size).cast<int>();
+        if (   (voxel_W.x() < volume_size)
+            && (voxel_W.y() < volume_size)
+            && (voxel_W.z() < volume_size)
+            && (voxel_W.x() >= 0)
+            && (voxel_W.y() >= 0)
+            && (voxel_W.z() >= 0)) {
           se::VoxelBlock<TSDF::VoxelType> * node_ptr = map.fetch(
-              voxel.x(), voxel.y(), voxel.z());
+              voxel_W.x(), voxel_W.y(), voxel_W.z());
           if (node_ptr == nullptr) {
-            const se::key_t k = map.hash(voxel.x(), voxel.y(), voxel.z(),
-                leaf_depth);
+            const se::key_t voxel_key = map.hash(voxel_W.x(), voxel_W.y(), voxel_W.z(),
+                leaves_level);
             const unsigned int idx = voxel_count++;
             if (idx < reserved) {
-              allocation_list[idx] = k;
+              allocation_list[idx] = voxel_key;
             } else {
               break;
             }
@@ -120,7 +118,7 @@ size_t TSDF::buildAllocationList(
             node_ptr->active(true);
           }
         }
-        voxel_pos += step;
+        ray_position_W += step;
       }
     }
   }

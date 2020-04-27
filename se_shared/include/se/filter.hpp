@@ -43,13 +43,13 @@ namespace algorithms {
                                   const Eigen::Vector2i& image_size) {
 
       const int side = VoxelBlockType::side;
-      const static Eigen::Matrix<int, 4, 8> offsets =
+      const static Eigen::Matrix<int, 4, 8> corner_offsets =
         (Eigen::Matrix<int, 4, 8>() << 0, side, 0   , side, 0   , side, 0   , side,
                                        0, 0   , side, side, 0   , 0   , side, side,
                                        0, 0   , 0   , 0   , side, side, side, side,
                                        0, 0   , 0   , 0   , 0   , 0   , 0   , 0   ).finished();
       const Eigen::Matrix3Xf block_corners_C = (T_CW * Eigen::Vector4f(voxel_size, voxel_size, voxel_size, 1.f).asDiagonal() *
-          (offsets.colwise() + block->coordinates().homogeneous()).template cast<float>()).topRows(3);
+          (corner_offsets.colwise() + block->coordinates().homogeneous()).template cast<float>()).topRows(3);
       Eigen::Matrix2Xf projected_corners(2, 8);
       std::vector<srl::projection::ProjectionStatus> projection_stati;
       sensor.model.projectBatch(block_corners_C, &projected_corners, &projection_stati);

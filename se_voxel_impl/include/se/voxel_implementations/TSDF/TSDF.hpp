@@ -108,8 +108,8 @@ struct TSDF {
       const VolumeTemplate<TSDF, se::Octree>& volume,
       const Eigen::Vector3f&                  origin,
       const Eigen::Vector3f&                  direction,
-      const float                             tnear,
-      const float                             tfar,
+      const float                             near_plane,
+      const float                             far_plane,
       const float                             mu,
       const float                             step,
       const float                             large_step);

@@ -41,36 +41,36 @@
 
 struct tsdf_update {
   const se::Image<float>& depth_image;
-  Eigen::Vector2i image_size;
   float mu;
 
 
 
   tsdf_update(const se::Image<float>& depth_image,
               float                   mu)
-    : depth_image(depth_image), image_size(depth_image.width(), depth_image.height()), mu(mu) {};
+    : depth_image(depth_image), mu(mu) {};
 
 
 
   template <typename DataHandlerT>
   void operator()(DataHandlerT&          handler,
                   const Eigen::Vector3i&,
-                  const Eigen::Vector3f& pos,
-                  const Eigen::Vector2f& pixel) {
+                  const Eigen::Vector3f& position_C,
+                  const Eigen::Vector2f& image_point) {
 
-    const Eigen::Vector2i px = pixel.cast<int>();
-    const float depth_value = depth_image[px.x() + image_size.x() * px.y()];
+    const Eigen::Vector2i pixel = image_point.cast<int>();
+    const float depth_value = depth_image[pixel.x() + depth_image.width() * pixel.y()];
     // Return on invalid depth measurement
     if (depth_value <= 0.f)
       return;
 
     // Update the TSDF
-    const float diff = (depth_value - pos.z())
-      * std::sqrt(1 + se::math::sq(pos.x() / pos.z()) + se::math::sq(pos.y() / pos.z()));
+    const float diff = (depth_value - position_C.z())
+      * std::sqrt(1 + se::math::sq(position_C.x() / position_C.z())
+      + se::math::sq(position_C.y() / position_C.z()));
     if (diff > -mu) {
-      const float tsdf_new = fminf(1.f, diff / mu);
+      const float tsdf = fminf(1.f, diff / mu);
       auto data = handler.get();
-      data.x = (data.y * data.x + tsdf_new) / (data.y + 1.f);
+      data.x = (data.y * data.x + tsdf) / (data.y + 1.f);
       data.x = se::math::clamp(data.x, -1.f, 1.f);
       data.y = fminf(data.y + 1, TSDF::max_weight);
       handler.set(data);
