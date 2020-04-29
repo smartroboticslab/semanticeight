@@ -53,9 +53,9 @@ class AxisAlignedTest : public ::testing::Test {
 
       const unsigned center = 2.5f;
 
-      const float voxelsize = octree_.dim()/octree_.size();
-      const float inverse_voxelsize = 1.f/voxelsize;
-      const int band = 1 * inverse_voxelsize;
+      const float voxel_dim = octree_.dim()/octree_.size();
+      const float inverse_voxel_dim = 1.f/voxel_dim;
+      const int band = 1 * inverse_voxel_dim;
       const Eigen::Vector3i offset =
         Eigen::Vector3i::Constant(octree_.size()/2 - band/2);
       for(int z = 0; z < band; ++z) {

@@ -75,9 +75,9 @@ namespace meshing {
   template <typename OctreeT, typename FieldSelector>
     inline Eigen::Vector3f compute_intersection(const OctreeT& volume, FieldSelector select,
         const Eigen::Vector3i& source, const Eigen::Vector3i& dest){
-      const float voxelSize = volume.dim()/volume.size();
-      Eigen::Vector3f s = Eigen::Vector3f(source(0) * voxelSize, source(1) * voxelSize, source(2) * voxelSize);
-      Eigen::Vector3f d = Eigen::Vector3f(dest(0) * voxelSize, dest(1) * voxelSize, dest(2) * voxelSize);
+      const float voxel_dim = volume.dim() / volume.size();
+      Eigen::Vector3f s = Eigen::Vector3f(source(0) * voxel_dim, source(1) * voxel_dim, source(2) * voxel_dim);
+      Eigen::Vector3f d = Eigen::Vector3f(dest(0) * voxel_dim, dest(1) * voxel_dim, dest(2) * voxel_dim);
       float v1 = select(volume.get_fine(source(0), source(1), source(2)));
       float v2 = select(volume.get_fine(dest(0), dest(1), dest(2)));
       return s + (0.0 - v1)*(d - s)/(v2-v1);

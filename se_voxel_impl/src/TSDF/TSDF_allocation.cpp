@@ -57,8 +57,8 @@ size_t TSDF::buildAllocationList(
     se::key_t*                   allocation_list,
     size_t                       reserved) {
 
-  const Eigen::Vector2i image_size(depth_image.width(), depth_image.height());
-  const float voxel_size = map.dim() / map.size();
+  const float voxel_dim = map.dim() / map.size();
+  const float inverse_voxel_dim = 1.f / voxel_dim;
   const float inverse_voxel_size = 1.f / voxel_size;
   const int volume_size = map.size();
   const unsigned block_depth = map.blockDepth();
@@ -95,7 +95,7 @@ size_t TSDF::buildAllocationList(
       Eigen::Vector3f ray_position_W = ray_origin_W;
       for (int i = 0; i < num_steps; i++) {
 
-        const Eigen::Vector3i voxel_W = (ray_position_W * inverse_voxel_size).cast<int>();
+        const Eigen::Vector3i voxel_W = (ray_position_W * inverse_voxel_dim).cast<int>();
         if (   (voxel_W.x() < volume_size)
             && (voxel_W.y() < volume_size)
             && (voxel_W.z() < volume_size)

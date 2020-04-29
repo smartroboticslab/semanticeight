@@ -66,10 +66,10 @@ namespace functor {
         const typename FieldType::template MemoryBufferType<se::VoxelBlock<FieldType>>& block_buffer = octree_.pool().blockBuffer();
 
         /* Predicates definition */
-        const float voxel_size = octree_.dim() / octree_.size();
+        const float voxel_dim = octree_.dim() / octree_.size();
         auto in_frustum_predicate =
           std::bind(algorithms::in_frustum<se::VoxelBlock<FieldType>>,
-              std::placeholders::_1, voxel_size, T_CW_.matrix(), sensor_, image_size_);
+              std::placeholders::_1, voxel_dim, T_CW_.matrix(), sensor_, image_size_);
         auto is_active_predicate = [](const se::VoxelBlock<FieldType>* block) {
           return block->active();
         };
@@ -80,7 +80,7 @@ namespace functor {
       }
 
       void update_block(se::VoxelBlock<FieldType>* block,
-                        const float                voxel_size) {
+                        const float                voxel_dim) {
         /* Is this the VoxelBlock center? */
         const Eigen::Vector3i block_coord = block->coordinates();
         bool is_visible = false;
@@ -97,11 +97,13 @@ namespace functor {
 #pragma omp simd
             for (unsigned int x = block_coord(0); x < xlast; ++x) {
               const Eigen::Vector3i voxel_corner_W = Eigen::Vector3i(x, y, z);
-              const Eigen::Vector3f voxel_pos_C = (T_CW_ * (voxel_size * (voxel_corner_W.cast<float>() + offset_)));
+              const Eigen::Vector3f voxel_pos_C = (T_CW_ * (voxel_dim * (voxel_corner_W.cast<float>() + offset_)));
               Eigen::Vector2f pixel;
               if (sensor_.model.project(voxel_pos_C, &pixel) != srl::projection::ProjectionStatus::Successful) {
                 continue;
               }
+              pixel += Eigen::Vector2f::Constant(0.5f);        
+              
               is_visible = true;
 
               /* Update the voxel. */
@@ -114,7 +116,7 @@ namespace functor {
       }
 
       void update_node(se::Node<FieldType>* node,
-                       const float          voxel_size) {
+                       const float          voxel_dim) {
         const Eigen::Vector3i node_coord = Eigen::Vector3i(unpack_morton(node->code_));
 
 
@@ -124,12 +126,13 @@ namespace functor {
           const Eigen::Vector3i dir = node->side_ / 2 *
               Eigen::Vector3i((i & 1) > 0, (i & 2) > 0, (i & 4) > 0); // TODO: Offset needs to be discussed
           const Eigen::Vector3i child_node_corner_W = node_coord + dir;
-          const Eigen::Vector3f child_node_pos_C = (T_CW_ * (voxel_size * (child_node_corner_W.cast<float>() + node->side_ * offset_)));
+          const Eigen::Vector3f child_node_pos_C = (T_CW_ * (voxel_dim * (child_node_corner_W.cast<float>() + node->side_ * offset_)));
           Eigen::Vector2f pixel;
           if (sensor_.model.project(child_node_pos_C, &pixel) != srl::projection::ProjectionStatus::Successful) {
             continue;
           }
 
+          pixel = pixel + Eigen::Vector2f::Constant(0.5f);
           /* Update the child Node. */
           NodeHandler<FieldType> handler = {node, i};
           funct_(handler, child_node_corner_W, child_node_pos_C, pixel);
@@ -138,13 +141,13 @@ namespace functor {
 
       void apply() {
 
-        const float voxel_size = octree_.dim() / octree_.size();
+        const float voxel_dim = octree_.dim() / octree_.size();
 
         /* Update the leaf Octree nodes (VoxelBlock). */
         build_active_list();
 #pragma omp parallel for
         for (unsigned int i = 0; i < active_list_.size(); ++i) {
-          update_block(active_list_[i], voxel_size);
+          update_block(active_list_[i], voxel_dim);
         }
         active_list_.clear();
 
@@ -152,7 +155,7 @@ namespace functor {
         typename FieldType::template MemoryBufferType<se::Node<FieldType>>& node_buffer = octree_.pool().nodeBuffer();
 #pragma omp parallel for
           for (unsigned int i = 0; i < node_buffer.size(); ++i) {
-            update_node(node_buffer[i], voxel_size);
+            update_node(node_buffer[i], voxel_dim);
          }
       }
 

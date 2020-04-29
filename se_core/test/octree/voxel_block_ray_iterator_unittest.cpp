@@ -58,14 +58,14 @@ class VoxelBlockRayIteratorTest : public ::testing::Test {
       direction_ = Eigen::Vector3f::Ones().normalized();
 
       // Ensure stepsize is big enough to get distinct blocks
-      const float stepsize = 2 * voxel_size_ * se::Octree<TestVoxelT>::blockSide;
+      const float stepsize = 2 * voxel_dim_ * se::Octree<TestVoxelT>::blockSide;
 
       // Allocate voxel blocks hit by the ray defined by origin_ and direction_
       const int num_blocks = 4;
       float t = 0.6f;
       for (int i = 0; i < num_blocks; ++i, t += stepsize) {
         const Eigen::Vector3f point = origin_ + t * direction_;
-        const Eigen::Vector3i voxel = (point / voxel_size_).cast<int>();
+        const Eigen::Vector3i voxel = (point / voxel_dim_).cast<int>();
 
         // Hash to VoxelBlocks
         const se::key_t key = octree_.hash(voxel.x(), voxel.y(), voxel.z());
@@ -77,7 +77,7 @@ class VoxelBlockRayIteratorTest : public ::testing::Test {
     se::Octree<TestVoxelT> octree_;
     const int res_ = 512;
     const float dim_ = 5.f;
-    const float voxel_size_ = dim_ / res_;
+    const float voxel_dim_ = dim_ / res_;
     Eigen::Vector3f origin_;
     Eigen::Vector3f direction_;
     std::vector<se::key_t> alloc_list_;
