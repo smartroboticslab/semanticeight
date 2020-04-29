@@ -47,8 +47,8 @@ namespace se {
 }
 
     inline se::key_t encode(const int x, const int y, const int z, 
-        const int level, const int max_depth) {
-      const int offset = MAX_BITS - max_depth + level - 1;
+        const int level, const int voxel_depth) {
+      const int offset = MAX_BITS - voxel_depth + level - 1;
       return (compute_morton(x, y, z) & MASK[offset] & ~SCALE_MASK) | level;
     }
 
@@ -62,9 +62,9 @@ namespace se {
  */
 inline Eigen::Vector3i face_neighbour(const se::key_t o, 
     const unsigned int face, const unsigned int l, 
-    const unsigned int max_depth) {
+    const unsigned int voxel_depth) {
   Eigen::Vector3i coords = se::keyops::decode(o);
-  const unsigned int side = 1 << (max_depth - l); 
+  const unsigned int side = 1 << (voxel_depth - l);
   coords(0) = coords(0) + ((face == 0) ? -side : (face == 1) ? side : 0);
   coords(1) = coords(1) + ((face == 2) ? -side : (face == 3) ? side : 0);
   coords(2) = coords(2) + ((face == 4) ? -side : (face == 5) ? side : 0);
@@ -75,12 +75,12 @@ inline Eigen::Vector3i face_neighbour(const se::key_t o,
  * \brief Return true if octant is a descendant of ancestor
  * \param octant 
  * \param ancestor 
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
 inline bool descendant(se::key_t octant, se::key_t ancestor, 
-    const int max_depth) {
+    const int voxel_depth) {
   const int level = se::keyops::level(ancestor);
-  const int idx = MAX_BITS - max_depth + level - 1;
+  const int idx = MAX_BITS - voxel_depth + level - 1;
   ancestor = se::keyops::code(ancestor);
   octant = se::keyops::code(octant) & MASK[idx];
   return (ancestor ^ octant) == 0;
@@ -89,11 +89,11 @@ inline bool descendant(se::key_t octant, se::key_t ancestor,
 /*
  * \brief Computes the parent's morton code of a given octant
  * \param octant
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
-inline se::key_t parent(const se::key_t& octant, const int max_depth) {
+inline se::key_t parent(const se::key_t& octant, const int voxel_depth) {
   const int level = se::keyops::level(octant) - 1;
-  const int idx = MAX_BITS - max_depth + level - 1;
+  const int idx = MAX_BITS - voxel_depth + level - 1;
   return (octant & MASK[idx]) | level;
 }
 
@@ -101,11 +101,11 @@ inline se::key_t parent(const se::key_t& octant, const int max_depth) {
  * \brief Computes the octants's id in its local brotherhood
  * \param octant
  * \param level of octant 
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
 inline int child_id(se::key_t octant, const int level, 
-    const int max_depth) {
-  int shift = max_depth - level;
+    const int voxel_depth) {
+  int shift = voxel_depth - level;
   octant = se::keyops::code(octant) >> shift*3;
   int idx = (octant & 0x01) | (octant & 0x02) | (octant & 0x04);
   return idx;
@@ -115,10 +115,10 @@ inline int child_id(se::key_t octant, const int level,
  * \brief Computes the octants's id in its local brotherhood
  * \param octant
  * \param level of octant 
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
-inline int child_id(se::key_t octant, const int max_depth) {
-  int shift = max_depth - se::keyops::level(octant);
+inline int child_id(se::key_t octant, const int voxel_depth) {
+  int shift = voxel_depth - se::keyops::level(octant);
   octant = se::keyops::code(octant) >> shift*3;
   int idx = (octant & 0x01) | (octant & 0x02) | (octant & 0x04);
   return idx;
@@ -128,12 +128,12 @@ inline int child_id(se::key_t octant, const int max_depth) {
  * \brief Computes the octants's corner which is not shared with its siblings
  * \param octant
  * \param level of octant 
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
 inline Eigen::Vector3i far_corner(const se::key_t octant, const int level, 
-    const int max_depth) {
-  const unsigned int side = 1 << (max_depth - level); 
-  const int idx = child_id(octant, level, max_depth);
+    const int voxel_depth) {
+  const unsigned int side = 1 << (voxel_depth - level);
+  const int idx = child_id(octant, level, voxel_depth);
   const Eigen::Vector3i coordinates = se::keyops::decode(octant);
   return Eigen::Vector3i(coordinates(0) + (idx & 1) * side,
                    coordinates(1) + ((idx & 2) >> 1) * side,
@@ -147,34 +147,34 @@ inline Eigen::Vector3i far_corner(const se::key_t octant, const int level,
  * \param result 7-vector containing the neighbours
  * \param octant
  * \param level of octant 
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
 inline void exterior_neighbours(se::key_t result[7], 
-    const se::key_t octant, const int level, const int max_depth) {
+    const se::key_t octant, const int level, const int voxel_depth) {
 
-  const int idx = child_id(octant, level, max_depth);
+  const int idx = child_id(octant, level, voxel_depth);
   Eigen::Vector3i dir = Eigen::Vector3i((idx & 1) ? 1 : -1,
                        (idx & 2) ? 1 : -1,
                        (idx & 4) ? 1 : -1);
-  Eigen::Vector3i base = far_corner(octant, level, max_depth);
-  dir(0) = se::math::in(base(0) + dir(0) , 0, (1 << max_depth) - 1) ? dir(0) : 0;
-  dir(1) = se::math::in(base(1) + dir(1) , 0, (1 << max_depth) - 1) ? dir(1) : 0;
-  dir(2) = se::math::in(base(2) + dir(2) , 0, (1 << max_depth) - 1) ? dir(2) : 0;
+  Eigen::Vector3i base = far_corner(octant, level, voxel_depth);
+  dir(0) = se::math::in(base(0) + dir(0) , 0, (1 << voxel_depth) - 1) ? dir(0) : 0;
+  dir(1) = se::math::in(base(1) + dir(1) , 0, (1 << voxel_depth) - 1) ? dir(1) : 0;
+  dir(2) = se::math::in(base(2) + dir(2) , 0, (1 << voxel_depth) - 1) ? dir(2) : 0;
 
  result[0] = se::keyops::encode(base(0) + dir(0), base(1) + 0, base(2) + 0, 
-     level, max_depth);
+     level, voxel_depth);
  result[1] = se::keyops::encode(base(0) + 0, base(1) + dir(1), base(2) + 0, 
-     level, max_depth); 
+     level, voxel_depth);
  result[2] = se::keyops::encode(base(0) + dir(0), base(1) + dir(1), base(2) + 0, 
-     level, max_depth); 
+     level, voxel_depth);
  result[3] = se::keyops::encode(base(0) + 0, base(1) + 0, base(2) + dir(2), 
-     level, max_depth); 
+     level, voxel_depth);
  result[4] = se::keyops::encode(base(0) + dir(0), base(1) + 0, base(2) + dir(2), 
-     level, max_depth); 
+     level, voxel_depth);
  result[5] = se::keyops::encode(base(0) + 0, base(1) + dir(1), base(2) + dir(2), 
-     level, max_depth); 
+     level, voxel_depth);
  result[6] = se::keyops::encode(base(0) + dir(0), base(1) + dir(1), 
-     base(2) + dir(2), level, max_depth); 
+     base(2) + dir(2), level, voxel_depth);
 }
 
 /*
@@ -183,18 +183,18 @@ inline void exterior_neighbours(se::key_t result[7],
  * neighbouring octant. The neighbours along the x axis come first, followed by
  * neighbours along the y axis and finally along the z axis. All coordinates are 
  * clamped to be in the range between [0, max_size] where max size is given 
- * by pow(2, max_depth).
+ * by pow(2, voxel_depth).
  * \param res 4x6 matrix containing the neighbours
  * \param octant octant coordinates
  * \param level level of the octant
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
 
 static inline void one_neighbourhood(Eigen::Ref<Eigen::Matrix<int, 4, 6>> res, 
-    const Eigen::Vector3i& octant, const int level, const int max_depth) {
+    const Eigen::Vector3i& octant, const int level, const int voxel_depth) {
   const Eigen::Vector3i base = octant;
-  const int size = 1 << max_depth;
-  const int step = 1 << (max_depth - level);
+  const int size = 1 << voxel_depth;
+  const int step = 1 << (voxel_depth - level);
   Eigen::Matrix<int, 4, 6> cross;
   res << 
     -step, step,     0,    0,     0,    0,
@@ -213,16 +213,16 @@ static inline void one_neighbourhood(Eigen::Ref<Eigen::Matrix<int, 4, 6>> res,
  * neighbouring octant. The neighbours along the x axis come first, followed by
  * neighbours along the y axis and finally along the z axis. All coordinates are 
  * clamped to be in the range between [0, max_size] where max size is given 
- * by pow(2, max_depth).
+ * by pow(2, voxel_depth).
  * \param res 4x6 matrix containing the neighbours
  * \param octant octant key
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
 
 static inline void one_neighbourhood(Eigen::Ref<Eigen::Matrix<int, 4, 6>> res, 
-    const se::key_t octant, const int max_depth) {
+    const se::key_t octant, const int voxel_depth) {
   one_neighbourhood(res, se::keyops::decode(octant), se::keyops::level(octant),
-      max_depth);
+      voxel_depth);
 } 
 
 /*
@@ -230,13 +230,13 @@ static inline void one_neighbourhood(Eigen::Ref<Eigen::Matrix<int, 4, 6>> res,
  * including itself.
  * \param result 8-vector containing the neighbours
  * \param octant
- * \param max_depth max depth of the tree on which the octant lives
+ * \param voxel_depth max depth of the tree on which the octant lives
  */
 inline void siblings(se::key_t result[8], 
-    const se::key_t octant, const int max_depth) {
+    const se::key_t octant, const int voxel_depth) {
   const int level = (octant & SCALE_MASK);
-  const int shift = 3*(max_depth - level);
-  const se::key_t p = parent(octant, max_depth) + 1; // set-up next level
+  const int shift = 3*(voxel_depth - level);
+  const se::key_t p = parent(octant, voxel_depth) + 1; // set-up next level
   for(int i = 0; i < 8; ++i) {
     result[i] = p | (i << shift);
   }

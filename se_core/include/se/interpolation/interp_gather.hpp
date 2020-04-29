@@ -309,7 +309,7 @@ namespace se {
      * is set to false.
      * \param stack stack of ancestor nodes of octant
      * \param octant base octant.
-     * \param max_depth maximum depth of the tree.
+     * \param voxel_depth maximum depth of the tree.
      * \param dir direction along which to fetch the neighbou. Only positive
      * search directions are allowed along any axes.
      */
@@ -317,16 +317,16 @@ namespace se {
     static inline std::pair<Precision, Eigen::Vector3i> fetch_neighbour_sample(
         Node<FieldType>* stack[],
         Node<FieldType>* octant,
-        const int        max_depth,
+        const int        voxel_depth,
         const int        dir,
         FieldSelector    select) {
 
       int level = se::keyops::level(octant->code_);
       while (level > 0) {
-        int child_id = se::child_id(stack[level]->code_, max_depth);
+        int child_id = se::child_id(stack[level]->code_, voxel_depth);
         int sibling = child_id ^ dir;
         if ((sibling & dir) == dir) { // if sibling still in octant's family
-          const int side = 1 << (max_depth - level);
+          const int side = 1 << (voxel_depth - level);
           const Eigen::Vector3i coords = se::keyops::decode(stack[level-1]->code_)
               + side * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
           return {select(stack[level-1]->value_[sibling]), coords};
@@ -342,19 +342,19 @@ namespace se {
      * most refined as the starting octant.
      * \param stack stack of ancestor nodes of octant
      * \param octant base octant.
-     * \param max_depth maximum depth of the tree.
+     * \param voxel_depth maximum depth of the tree.
      * \param dir direction along which to fetch the neighbou. Only positive
      * search directions are allowed along any axes.
      */
     template <typename FieldType>
     static inline Node<FieldType>* fetch_neighbour(Node<FieldType>* stack[],
                                                    Node<FieldType>* octant,
-                                                   const int        max_depth,
+                                                   const int        voxel_depth,
                                                    const int        dir) {
 
       int level = se::keyops::level(octant->code_);
       while (level > 0) {
-        int child_id = se::child_id(stack[level]->code_, max_depth);
+        int child_id = se::child_id(stack[level]->code_, voxel_depth);
         int sibling = child_id ^ dir;
         if ((sibling & dir) == dir) { // if sibling still in octant's family
           return stack[level-1]->child(sibling);
@@ -376,10 +376,10 @@ namespace se {
     template <typename T>
     static inline Node<T>* fetch(Node<T>*               stack[],
                                  Node<T>*               root,
-                                 const int              max_depth,
+                                 const int              voxel_depth,
                                  const Eigen::Vector3i& pos) {
 
-      unsigned edge = (1 << (max_depth - se::keyops::level(root->code_))) / 2;
+      unsigned edge = (1 << (voxel_depth - se::keyops::level(root->code_))) / 2;
       constexpr unsigned int blockSide = BLOCK_SIDE;
       Node<T>* n = root;
       int l = 0;

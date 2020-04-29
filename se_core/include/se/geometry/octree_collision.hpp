@@ -118,7 +118,7 @@ collision_status collides_with(const Octree<FieldType>& octree,
     typename se::Node<FieldType>::VoxelData parent_val;
   } stack_entry;
 
-  stack_entry stack[Octree<FieldType>::max_depth*8 + 1];
+  stack_entry stack[Octree<FieldType>::max_voxel_depth * 8 + 1];
   size_t stack_idx = 0;
 
   se::Node<FieldType>* node = octree.root();

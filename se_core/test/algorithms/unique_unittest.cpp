@@ -50,7 +50,7 @@ struct TestVoxelT {
 class UniqueTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
-      oct.init(1 << max_depth_, 10);
+      oct.init(1 << voxel_depth_, 10);
       const Eigen::Vector3i blocks[10] = {
         {56, 12, 12}, {56, 12, 15},
         {128, 128, 128},
@@ -67,15 +67,15 @@ class UniqueTest : public ::testing::Test {
     MortonType keys[10];
     typedef se::Octree<TestVoxelT> OctreeF;
     OctreeF oct;
-    const int max_depth_ = 10;
+    const int voxel_depth_ = 10;
 };
 
 class UniqueMultiscaleTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
 
-      oct.init(1 << max_depth_, 10);
-      const int root_side = pow(2, max_depth_ - 4);
+      oct.init(1 << voxel_depth_, 10);
+      const int root_side = pow(2, voxel_depth_ - 4);
       const Eigen::Vector3i base(64, 0, 64);
       keys.push_back(oct.hash(base.x(), base.y(), base.z(), 4));
       keys.push_back(oct.hash(base.x() + root_side/2, base.y(), base.z(), 5));
@@ -87,7 +87,7 @@ class UniqueMultiscaleTest : public ::testing::Test {
     std::vector<MortonType> keys;
     typedef se::Octree<TestVoxelT> OctreeF;
     OctreeF oct;
-    const int max_depth_ = 10;
+    const int voxel_depth_ = 10;
 };
 
 TEST_F(UniqueTest, FilterDuplicates) {
@@ -98,7 +98,7 @@ TEST_F(UniqueTest, FilterDuplicates) {
 }
 
 TEST_F(UniqueMultiscaleTest, FilterAncestors) {
-  const int last = se::algorithms::filter_ancestors(keys.data(), keys.size(), max_depth_);
+  const int last = se::algorithms::filter_ancestors(keys.data(), keys.size(), voxel_depth_);
   for(int i = 1; i < last; ++i) {
     // std::cout << std::bitset<64>(keys[i]) << std::endl;
     // std::cout << std::bitset<64>(keys[i - 1]) << std::endl << std::endl;

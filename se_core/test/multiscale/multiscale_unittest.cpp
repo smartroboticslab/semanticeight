@@ -49,54 +49,54 @@ struct TestVoxelT {
 class MultiscaleTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
-      oct_.init(512, 5);
+      octree_.init(512, 5);
 
     }
 
   typedef se::Octree<TestVoxelT> OctreeF;
-  OctreeF oct_;
+  OctreeF octree_;
 };
 
 TEST_F(MultiscaleTest, Init) {
-  EXPECT_EQ(oct_.get(137, 138, 130), TestVoxelT::initValue());
+  EXPECT_EQ(octree_.get(137, 138, 130), TestVoxelT::initValue());
 }
 
 TEST_F(MultiscaleTest, PlainAlloc) {
   const Eigen::Vector3i blocks[2] = {{56, 12, 254}, {87, 32, 423}};
   se::key_t alloc_list[2];
   for(int i = 0; i < 2; ++i) {
-    alloc_list[i] = oct_.hash(blocks[i](0), blocks[i](1), blocks[i](2));
+    alloc_list[i] = octree_.hash(blocks[i](0), blocks[i](1), blocks[i](2));
   }
-  oct_.allocate(alloc_list, 2);
+  octree_.allocate(alloc_list, 2);
 
-  oct_.set(56, 12, 254, 3.f);
+  octree_.set(56, 12, 254, 3.f);
 
-  EXPECT_EQ(oct_.get(56, 12, 254), 3.f);
-  EXPECT_EQ(oct_.get(106, 12, 254), TestVoxelT::initValue());
-  EXPECT_NE(oct_.get(106, 12, 254), 3.f);
+  EXPECT_EQ(octree_.get(56, 12, 254), 3.f);
+  EXPECT_EQ(octree_.get(106, 12, 254), TestVoxelT::initValue());
+  EXPECT_NE(octree_.get(106, 12, 254), 3.f);
 }
 
 TEST_F(MultiscaleTest, ScaledAlloc) {
   const Eigen::Vector3i blocks[2] = {{200, 12, 25}, {87, 32, 423}};
   se::key_t alloc_list[2];
   for(int i = 0; i < 2; ++i) {
-    alloc_list[i] = oct_.hash(blocks[i](0), blocks[i](1), blocks[i](2), 5);
+    alloc_list[i] = octree_.hash(blocks[i](0), blocks[i](1), blocks[i](2), 5);
   }
 
-  oct_.allocate(alloc_list, 2);
-  se::Node<TestVoxelT>* n = oct_.fetch_octant(87, 32, 420, 5);
+  octree_.allocate(alloc_list, 2);
+  se::Node<TestVoxelT>* n = octree_.fetch_octant(87, 32, 420, 5);
   ASSERT_TRUE(n != NULL);
   n->value_[0] = 10.f;
-  EXPECT_EQ(oct_.get(87, 32, 420), 10.f);
+  EXPECT_EQ(octree_.get(87, 32, 420), 10.f);
 }
 
 TEST_F(MultiscaleTest, Iterator) {
   const Eigen::Vector3i blocks[1] = {{56, 12, 254}};
   se::key_t alloc_list[1];
-  alloc_list[0] = oct_.hash(blocks[0](0), blocks[0](1), blocks[0](2));
+  alloc_list[0] = octree_.hash(blocks[0](0), blocks[0](1), blocks[0](2));
 
-  oct_.allocate(alloc_list, 1);
-  se::node_iterator<TestVoxelT> it(oct_);
+  octree_.allocate(alloc_list, 1);
+  se::node_iterator<TestVoxelT> it(octree_);
   se::Node<TestVoxelT> * node = it.next();
   for(int i = 512; node != nullptr; node = it.next(), i /= 2){
     const Eigen::Vector3i coords = se::keyops::decode(node->code_);
@@ -112,11 +112,11 @@ TEST_F(MultiscaleTest, ChildrenMaskTest) {
     {128, 128, 136}, {136, 128, 136}, {128, 136, 136}, {136, 136, 136}};
   se::key_t alloc_list[10];
   for(int i = 0; i < 10; ++i) {
-    alloc_list[i] = oct_.hash(blocks[i](0), blocks[i](1), blocks[i](2), 5);
+    alloc_list[i] = octree_.hash(blocks[i](0), blocks[i](1), blocks[i](2), 5);
   }
 
-  oct_.allocate(alloc_list, 10);
-  const se::PagedMemoryBuffer<se::Node<TestVoxelT> >& nodes = oct_.pool().nodeBuffer();
+  octree_.allocate(alloc_list, 10);
+  const se::PagedMemoryBuffer<se::Node<TestVoxelT> >& nodes = octree_.pool().nodeBuffer();
   const size_t num_nodes = nodes.size();
   for(size_t i = 0; i < num_nodes; ++i) {
     se::Node<TestVoxelT>* n = nodes[i];
@@ -134,16 +134,16 @@ TEST_F(MultiscaleTest, OctantAlloc) {
     {128, 128, 136}, {136, 128, 136}, {128, 136, 136}, {136, 136, 136}};
   se::key_t alloc_list[10];
   for(int i = 0; i < 10; ++i) {
-    alloc_list[i] = oct_.hash(blocks[i](0), blocks[i](1), blocks[i](2));
+    alloc_list[i] = octree_.hash(blocks[i](0), blocks[i](1), blocks[i](2));
   }
 
   alloc_list[2] = alloc_list[2] | 3;
   alloc_list[9] = alloc_list[2] | 5;
-  oct_.allocate(alloc_list, 10);
-  se::Node<TestVoxelT> * octant = oct_.fetch_octant(blocks[4](0), blocks[4](1),
+  octree_.allocate(alloc_list, 10);
+  se::Node<TestVoxelT> * octant = octree_.fetch_octant(blocks[4](0), blocks[4](1),
       blocks[4](2), 3);
   ASSERT_TRUE(octant != NULL);
-  octant = oct_.fetch_octant(blocks[9](0), blocks[9](1),
+  octant = octree_.fetch_octant(blocks[9](0), blocks[9](1),
       blocks[9](2), 6);
   ASSERT_TRUE(octant == NULL);
 }
@@ -151,29 +151,27 @@ TEST_F(MultiscaleTest, OctantAlloc) {
 TEST_F(MultiscaleTest, SingleInsert) {
   Eigen::Vector3i vox(32, 208, 44);
   const int side = se::VoxelBlock<TestVoxelT>::side;
-  se::VoxelBlock<TestVoxelT> * n = oct_.insert(vox(0), vox(1), vox(2));
+  se::VoxelBlock<TestVoxelT> * n = octree_.insert(vox(0), vox(1), vox(2));
   Eigen::Vector3i coords = n->coordinates();
   Eigen::Vector3i rounded = side * (vox/side);
   ASSERT_TRUE(coords == rounded);
 }
 
 TEST_F(MultiscaleTest, MultipleInsert) {
-  OctreeF tree;
-  tree.init(1024, 10);
-  const int side = se::VoxelBlock<TestVoxelT>::side;
-  const int max_depth = log2(tree.size());
-  const int leaves_level = max_depth - log2(side);
+  OctreeF octree;
+  octree.init(1024, 10);
+  const int block_depth = octree.blockDepth();
   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with rd()
   std::uniform_int_distribution<> dis(0, 1023);
 
   int num_tested = 0;
-  for(int i = 1, edge = tree.size()/2; i <= leaves_level; ++i, edge = edge/2) {
+  for(int i = 1, side = octree.size() / 2; i <= block_depth; ++i, side = side / 2) {
     for(int j = 0; j < 20; ++j) {
       Eigen::Vector3i vox(dis(gen), dis(gen), dis(gen));
-      se::Node<TestVoxelT> * n = tree.insert(vox(0), vox(1), vox(2), i);
-      se::Node<TestVoxelT> * n1 = tree.fetch_octant(vox(0), vox(1), vox(2), i);
-      Eigen::Vector3i rounded = edge * (vox/edge);
+      se::Node<TestVoxelT> * n = octree.insert(vox(0), vox(1), vox(2), i);
+      se::Node<TestVoxelT> * n1 = octree.fetch_octant(vox(0), vox(1), vox(2), i);
+      Eigen::Vector3i rounded = side * (vox / side);
       Eigen::Vector3i coords = se::keyops::decode(n1->code_);
 
       // Check expected coordinates
@@ -197,11 +195,9 @@ struct TestVoxel2T {
 };
 
 TEST(MultiscaleBlock, ReadWrite) {
-  se::Octree<TestVoxel2T> tree;
-  tree.init(1024, 10);
+  se::Octree<TestVoxel2T> octree;
+  octree.init(1024, 10);
   const int side = se::VoxelBlock<TestVoxel2T>::side;
-  const int max_depth = log2(tree.size());
-  const int leaves_level = max_depth - log2(side);
   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with rd()
   std::uniform_int_distribution<> dis(0, 1023);
@@ -211,7 +207,7 @@ TEST(MultiscaleBlock, ReadWrite) {
   for(int j = 0; j < n; ++j) {
     voxels.push_back(Eigen::Vector3i(dis(gen), dis(gen), dis(gen)));
     const Eigen::Vector3i& curr = voxels.back();
-    auto * n = tree.insert(curr.x(), curr.y(), curr.z());
+    auto * n = octree.insert(curr.x(), curr.y(), curr.z());
     const Eigen::Vector3i& base = n->coordinates();
     for(int z = 0; z < side; ++z) {
       for(int y = 0; y < side; ++y) {
@@ -229,7 +225,7 @@ TEST(MultiscaleBlock, ReadWrite) {
 
   for(int i = 0; i < voxels.size(); ++i) {
     const Eigen::Vector3i& curr = voxels[i];
-    auto * n = tree.fetch(curr.x(), curr.y(), curr.z());
+    auto * n = octree.fetch(curr.x(), curr.y(), curr.z());
     const Eigen::Vector3i& base = n->coordinates();
     for(int z = 0; z < side; ++z) {
       for(int y = 0; y < side; ++y) {

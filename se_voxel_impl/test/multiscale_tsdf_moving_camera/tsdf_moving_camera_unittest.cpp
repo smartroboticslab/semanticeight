@@ -464,7 +464,7 @@ protected:
     size_ = 512;                              // 512 x 512 x 512 voxel^3
     voxel_size_ = 0.005;                      // 5 mm/voxel
     dim_ = size_ * voxel_size_;         // [m^3]
-    oct_.init(size_, dim_);
+    octree_.init(size_, dim_);
     Eigen::Vector2i image_size(640, 480);    // width x height
     Eigen::Matrix4f camera_pose = Eigen::Matrix4f::Identity();
     camera_parameter_ = camera_parameter(0.006, 1.95, image_size, camera_pose);
@@ -474,11 +474,11 @@ protected:
       for(int y = side/2; y < size_; y += side) {
         for(int x = side/2; x < size_; x += side) {
           const Eigen::Vector3i vox(x, y, z);
-          alloc_list.push_back(oct_.hash(vox(0), vox(1), vox(2)));
+          alloc_list.push_back(octree_.hash(vox(0), vox(1), vox(2)));
         }
       }
     }
-    oct_.allocate(alloc_list.data(), alloc_list.size());
+    octree_.allocate(alloc_list.data(), alloc_list.size());
 
     // Generate depth image
     depth_image_ =
@@ -489,7 +489,7 @@ protected:
   camera_parameter camera_parameter_;
 
   typedef se::Octree<MultiresTSDF::VoxelType> OctreeT;
-  OctreeT oct_;
+  OctreeT octree_;
   int size_;
   float voxel_size_;
   float dim_;
@@ -521,16 +521,16 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereTranslation) {
 
     camera_parameter_.setPose(camera_pose);
     generate_depth_image_(camera_parameter_);
-    active_list_ = buildActiveList(oct_, camera_parameter_, voxel_size_);
+    active_list_ = buildActiveList(octree_, camera_parameter_, voxel_size_);
     foreach(voxel_size_, active_list_, camera_parameter_, depth_image_);
     std::stringstream f;
 
     f << "./out/scale_"  + std::to_string(SCALE) + "-sphere-linear_back_move-" + std::to_string(frame) + ".vtk";
 
-    save3DSlice(oct_,
-                Eigen::Vector3i(0, 0, oct_.size()/2),
-                Eigen::Vector3i(oct_.size(), oct_.size(), oct_.size()/2 + 1),
-                [](const auto& val) { return val.x; }, oct_.maxBlockScale(), f.str().c_str());
+    save3DSlice(octree_,
+                Eigen::Vector3i(0, 0, octree_.size()/2),
+                Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size()/2 + 1),
+                [](const auto& val) { return val.x; }, octree_.maxBlockScale(), f.str().c_str());
   }
 
   for (std::vector<obstacle*>::iterator sphere = spheres.begin(); sphere != spheres.end(); ++sphere) {
@@ -570,16 +570,16 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereRotation) {
 
     camera_parameter_.setPose(camera_pose);
     generate_depth_image_(camera_parameter_);
-    active_list_ = buildActiveList(oct_, camera_parameter_, voxel_size_);
+    active_list_ = buildActiveList(octree_, camera_parameter_, voxel_size_);
     foreach(voxel_size_, active_list_, camera_parameter_, depth_image_);
     std::stringstream f;
 
     f << "./out/scale_"  + std::to_string(SCALE) + "-sphere-rotational_move-" + std::to_string(frame) + ".vtk";
 
-    save3DSlice(oct_,
-                Eigen::Vector3i(0, 0, oct_.size()/2),
-                Eigen::Vector3i(oct_.size(), oct_.size(), oct_.size()/2 + 1),
-                [](const auto& val) { return val.x; }, oct_.maxBlockScale(), f.str().c_str());
+    save3DSlice(octree_,
+                Eigen::Vector3i(0, 0, octree_.size()/2),
+                Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size()/2 + 1),
+                [](const auto& val) { return val.x; }, octree_.maxBlockScale(), f.str().c_str());
   }
 
   for (std::vector<obstacle*>::iterator sphere = spheres.begin(); sphere != spheres.end(); ++sphere) {
@@ -611,16 +611,16 @@ TEST_F(MultiscaleTSDFMovingCameraTest, BoxTranslation) {
 
     camera_parameter_.setPose(camera_pose);
     generate_depth_image_(camera_parameter_);
-    active_list_ = buildActiveList(oct_, camera_parameter_, voxel_size_);
+    active_list_ = buildActiveList(octree_, camera_parameter_, voxel_size_);
     foreach(voxel_size_, active_list_, camera_parameter_, depth_image_);
     std::stringstream f;
 
     f << "./out/scale_"  + std::to_string(SCALE) + "-box-linear_back_move-" + std::to_string(frame) + ".vtk";
 
-    save3DSlice(oct_,
-                Eigen::Vector3i(0, 0, oct_.size()/2),
-                Eigen::Vector3i(oct_.size(), oct_.size(), oct_.size()/2 + 1),
-                [](const auto& val) { return val.x; }, oct_.maxBlockScale(), f.str().c_str());
+    save3DSlice(octree_,
+                Eigen::Vector3i(0, 0, octree_.size()/2),
+                Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size()/2 + 1),
+                [](const auto& val) { return val.x; }, octree_.maxBlockScale(), f.str().c_str());
   }
 
   for (std::vector<obstacle*>::iterator box = boxes.begin(); box != boxes.end(); ++box) {
@@ -652,16 +652,16 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereBoxTranslation) {
 
     camera_parameter_.setPose(camera_pose);
     generate_depth_image_(camera_parameter_);
-    active_list_ = buildActiveList(oct_, camera_parameter_, voxel_size_);
+    active_list_ = buildActiveList(octree_, camera_parameter_, voxel_size_);
     foreach(voxel_size_, active_list_, camera_parameter_, depth_image_);
     std::stringstream f;
 
     f << "./out/scale_"  + std::to_string(SCALE) + "-sphere-and-box-linear_back_move-" + std::to_string(frame) + ".vtk";
 
-    save3DSlice(oct_,
-                Eigen::Vector3i(0, 0, oct_.size()/2),
-                Eigen::Vector3i(oct_.size(), oct_.size(), oct_.size()/2 + 1),
-                [](const auto& val) { return val.x; }, oct_.maxBlockScale(), f.str().c_str());
+    save3DSlice(octree_,
+                Eigen::Vector3i(0, 0, octree_.size()/2),
+                Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size()/2 + 1),
+                [](const auto& val) { return val.x; }, octree_.maxBlockScale(), f.str().c_str());
   }
 
   for (std::vector<obstacle*>::iterator obstacle = obstacles.begin(); obstacle != obstacles.end(); ++obstacle) {

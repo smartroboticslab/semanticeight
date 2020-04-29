@@ -86,9 +86,9 @@ public:
   // # of voxels per side in a voxel block
   static constexpr unsigned int blockSide = BLOCK_SIDE;
   // maximum tree depth in bits
-  static constexpr unsigned int max_depth = ((sizeof(key_t)*8)/3);
+  static constexpr unsigned int max_voxel_depth = ((sizeof(key_t)*8)/3);
   // Tree depth at which blocks are found
-  static constexpr unsigned int block_depth = max_depth - math::log2_const(BLOCK_SIDE);
+  static constexpr unsigned int max_block_depth = max_voxel_depth - math::log2_const(BLOCK_SIDE);
 
   static const Eigen::Vector3f _offset;
 
@@ -108,9 +108,9 @@ public:
   inline int size() const { return size_; }
   inline float dim() const { return dim_; }
   inline int numLevels() const { return num_levels_; }
-  inline int maxLevel() const { return max_level_; }
+  inline int voxelDepth() const { return voxel_depth_; }
   inline int maxBlockScale() const { return max_block_scale_; }
-  inline int leavesLevel() const { return leaves_level_; }
+  inline int blockDepth() const { return block_depth_; }
   inline Node<T>* const root() const { return root_; }
 
   /*! \brief Sets voxel value at coordinates (x,y,z), if not present it
@@ -250,12 +250,12 @@ public:
    * \param z z coordinate in interval [0, size]
    */
   key_t hash(const int x, const int y, const int z) {
-    const int scale = max_level_ - math::log2_const(blockSide); // level of blocks
-    return keyops::encode(x, y, z, scale, max_level_);
+    const int scale = voxel_depth_ - math::log2_const(blockSide); // level of blocks
+    return keyops::encode(x, y, z, scale, voxel_depth_);
   }
 
   key_t hash(const int x, const int y, const int z, key_t scale) {
-    return keyops::encode(x, y, z, scale, max_level_);
+    return keyops::encode(x, y, z, scale, voxel_depth_);
   }
 
   /*! \brief allocate a set of voxel blocks via their positional key
@@ -271,7 +271,7 @@ public:
   /*! \brief Counts the number of blocks allocated
    * \return number of voxel blocks allocated
    */
-  int leavesCount();
+  int blockCount();
 
   /*! \brief Counts the number of internal nodes
    * \return number of internal nodes
@@ -288,9 +288,9 @@ private:
   int size_;
   float dim_;
   int num_levels_;
-  int max_level_;
+  int voxel_depth_;
   int max_block_scale_;
-  int leaves_level_;
+  int block_depth_;
   typename T::template MemoryPoolType<T> pool_;
 
   friend class VoxelBlockRayIterator<T>;
@@ -317,7 +317,7 @@ private:
 
   // General helpers
 
-  int leavesCountRecursive(Node<T> *);
+  int blockCountRecursive(Node<T> *);
   int nodeCountRecursive(Node<T> *);
   void getActiveBlockList(Node<T> *, std::vector<VoxelBlock<T> *>& blocklist);
   void getAllocatedBlockList(Node<T> *, std::vector<VoxelBlock<T> *>& blocklist);
@@ -416,7 +416,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
 template <typename T>
 inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
     const int y, const int z, const int scale) const {
-  assert(scale < max_level_);
+  assert(scale < voxel_depth_);
 
   Node<T> * n = root_;
   if(!n) {
@@ -538,10 +538,10 @@ template <typename T>
 void Octree<T>::init(int size, float dim) {
   size_ = size;
   dim_ = dim;
-  max_level_ = log2(size);
-  num_levels_ = max_level_ + 1;
+  voxel_depth_ = log2(size);
+  num_levels_ = voxel_depth_ + 1;
   max_block_scale_ = log2(blockSide);
-  leaves_level_ = max_level_ - max_block_scale_;
+  block_depth_ = voxel_depth_ - max_block_scale_;
   root_ = pool_.root();
   root_->side_ = size;
   reserved_ = 1024;
@@ -594,9 +594,8 @@ Node<T> * Octree<T>::insert(const int x, const int y, const int z,
     const int level) {
 
   // Make sure we have enough space on buffers
-  const int leaves_level = max_level_ - math::log2_const(blockSide);
-  if(level >= leaves_level) {
-    pool_.reserveNodes(leaves_level);
+  if(level >= block_depth_) {
+    pool_.reserveNodes(block_depth_);
     pool_.reserveBlocks(1);
   } else {
     pool_.reserveNodes(level);
@@ -611,8 +610,8 @@ Node<T> * Octree<T>::insert(const int x, const int y, const int z,
     n = root_;
   }
 
-  key_t key = keyops::encode(x, y, z, level, max_level_);
-  const unsigned int shift = MAX_BITS - max_level_ - 1;
+  key_t key = keyops::encode(x, y, z, level, voxel_depth_);
+  const unsigned int shift = MAX_BITS - voxel_depth_ - 1;
 
   unsigned edge = size_ / 2;
   for(int d = 1; edge >= blockSide && d <= level; edge /= 2, ++d){
@@ -649,7 +648,7 @@ Node<T> * Octree<T>::insert(const int x, const int y, const int z,
 
 template <typename T>
 VoxelBlock<T> * Octree<T>::insert(const int x, const int y, const int z) {
-  return static_cast<VoxelBlock<T> * >(insert(x, y, z, max_level_));
+  return static_cast<VoxelBlock<T> * >(insert(x, y, z, voxel_depth_));
 }
 
 template <typename T>
@@ -891,12 +890,12 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& pos, FieldSelector select
 }
 
 template <typename T>
-int Octree<T>::leavesCount(){
+int Octree<T>::blockCount(){
   return pool_.blockBufferSize();
 }
 
 template <typename T>
-int Octree<T>::leavesCountRecursive(Node<T> * n){
+int Octree<T>::blockCountRecursive(Node<T> * n){
 
   if(!n) return 0;
 
@@ -907,7 +906,7 @@ int Octree<T>::leavesCountRecursive(Node<T> * n){
   int sum = 0;
 
   for (int i = 0; i < 8; i++){
-    sum += leavesCountRecursive(n->child(i));
+    sum += blockCountRecursive(n->child(i));
   }
 
   return sum;
@@ -952,15 +951,14 @@ bool Octree<T>::allocate(key_t *keys, int num_elem){
 std::sort(keys, keys+num_elem);
 #endif
 
-  num_elem = algorithms::filter_ancestors(keys, num_elem, max_level_);
+  num_elem = algorithms::filter_ancestors(keys, num_elem, voxel_depth_);
   reserveBuffers(num_elem); // Reserve memory for blocks
 
   int last_elem = 0;
   bool success = false;
 
-  const int leaves_level = max_level_ - log2(blockSide);
-  const unsigned int shift = MAX_BITS - max_level_ - 1;
-  for (int level = 1; level <= leaves_level; level++){
+  const unsigned int shift = MAX_BITS - voxel_depth_ - 1;
+  for (int level = 1; level <= block_depth_; level++){
     const key_t mask = MASK[level + shift] | SCALE_MASK;
     compute_prefix(keys, keys_at_level_, num_elem, mask);
     last_elem = algorithms::unique_multiscale(keys_at_level_, num_elem);
@@ -972,7 +970,6 @@ std::sort(keys, keys+num_elem);
 template <typename T>
 bool Octree<T>::allocate_level(key_t* keys, int num_tasks, int target_level){
 
-  const int leaves_level = max_level_ - log2(blockSide);
   pool_.reserveNodes(num_tasks); // Reserve memory for nodes
 
 #pragma omp parallel for
@@ -984,12 +981,12 @@ bool Octree<T>::allocate_level(key_t* keys, int num_tasks, int target_level){
 
     int edge = size_/2;
     for (int level = 1; level <= target_level; ++level){
-      const int index = child_id(myKey, level, max_level_);
+      const int index = child_id(myKey, level, voxel_depth_);
       Node<T> * parent = *n;
       n = &(*n)->child(index);
 
       if (!(*n)) {
-        if (level == leaves_level) {
+        if (level == block_depth_) {
           *n = pool_.acquireBlock();
           (*n)->parent() = parent;
           (*n)->side_ = edge;

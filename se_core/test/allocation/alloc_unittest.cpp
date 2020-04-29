@@ -44,50 +44,49 @@ struct TestVoxelT {
 
 TEST(AllocationTest, EmptySingleVoxel) {
   typedef se::Octree<TestVoxelT> OctreeF;
-  OctreeF oct;
-  oct.init(256, 5);
+  OctreeF octree;
+  octree.init(256, 5);
   const Eigen::Vector3i vox = {25, 65, 127};
-  const se::key_t code = oct.hash(vox(0), vox(1), vox(2));
+  const se::key_t code = octree.hash(vox(0), vox(1), vox(2));
   se::key_t allocation_list[1] = {code};
-  const TestVoxelT::VoxelData val = oct.get(vox(0), vox(1), vox(2));
+  const TestVoxelT::VoxelData val = octree.get(vox(0), vox(1), vox(2));
   EXPECT_EQ(val, TestVoxelT::empty());
 }
 
 TEST(AllocationTest, SetSingleVoxel) {
   typedef se::Octree<TestVoxelT> OctreeF;
-  OctreeF oct;
-  oct.init(256, 5);
+  OctreeF octree;
+  octree.init(256, 5);
   const Eigen::Vector3i vox = {25, 65, 127};
-  const se::key_t code = oct.hash(vox(0), vox(1), vox(2));
+  const se::key_t code = octree.hash(vox(0), vox(1), vox(2));
   se::key_t allocation_list[1] = {code};
-  oct.allocate(allocation_list, 1);
+  octree.allocate(allocation_list, 1);
 
-  se::VoxelBlock<TestVoxelT> * block = oct.fetch(vox(0), vox(1), vox(2));
+  se::VoxelBlock<TestVoxelT> * block = octree.fetch(vox(0), vox(1), vox(2));
   TestVoxelT::VoxelData written_val = 2.f;
   block->data(vox, written_val);
 
-  const TestVoxelT::VoxelData read_val = oct.get(vox(0), vox(1), vox(2));
+  const TestVoxelT::VoxelData read_val = octree.get(vox(0), vox(1), vox(2));
   EXPECT_EQ(written_val, read_val);
 }
 
 TEST(AllocationTest, FetchOctant) {
   typedef se::Octree<TestVoxelT> OctreeF;
-  OctreeF oct;
-  const int max_level = 8;
+  OctreeF octree;
+  const int voxel_depth = 8;
   const unsigned int block_side = 8;
-  const int leaves_level = max_level - log2(block_side);
-  const unsigned int size = std::pow(2, max_level);
-  oct.init(size, 5);
+  const unsigned int size = std::pow(2, voxel_depth);
+  octree.init(size, 5);
   const Eigen::Vector3i vox = {25, 65, 127};
-  const se::key_t code = oct.hash(vox(0), vox(1), vox(2));
+  const se::key_t code = octree.hash(vox(0), vox(1), vox(2));
   se::key_t allocation_list[1] = {code};
-  oct.allocate(allocation_list, 1);
+  octree.allocate(allocation_list, 1);
 
   const int level = 3; /* 32 voxels per side */
-  se::Node<TestVoxelT> * node = oct.fetch_octant(vox(0), vox(1), vox(2), level);
+  se::Node<TestVoxelT> * node = octree.fetch_octant(vox(0), vox(1), vox(2), level);
   se::key_t fetched_code = node->code_;
 
-  const se::key_t gt_code = oct.hash(vox(0), vox(1), vox(2), level);
+  const se::key_t gt_code = octree.hash(vox(0), vox(1), vox(2), level);
   ASSERT_EQ(fetched_code, gt_code);
 }
 
@@ -112,11 +111,11 @@ TEST(AllocationTest, MortonPrefixMask) {
     keys[i] = code;
   }
 
-  const int max_level = log2(size);
-  const int leaves_level = max_level - log2(block_side);
-  const unsigned int shift = max_bits - max_level;
+  const int voxel_depth = log2(size);
+  const int block_depth = voxel_depth - log2(block_side);
+  const unsigned int shift = max_bits - voxel_depth;
   int edge = size/2;
-  for (int level = 0; level <= leaves_level; level++){
+  for (int level = 0; level <= block_depth; level++){
     const se::key_t mask = MASK[level + shift];
     compute_prefix(keys, tempkeys, num_samples, mask);
     for(int i = 0; i < num_samples; ++i) {
@@ -133,46 +132,46 @@ TEST(AllocationTest, MortonPrefixMask) {
 }
 
 TEST(AllocationTest, ParentInsert) {
-  se::Octree<TestVoxelT> oct;
+  se::Octree<TestVoxelT> octree;
   const unsigned int block_side = 8;
-  const int max_level = 8;
-  const int leaves_level = max_level - log2(block_side);
-  const unsigned int size = std::pow(2, max_level);
-  oct.init(size, 5);
+  const int voxel_depth = 8;
+  const unsigned int size = std::pow(2, voxel_depth);
+  octree.init(size, 5);
+  const int block_depth = octree.blockDepth();
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<int> dis(0, size);
   const Eigen::Vector3i vox = {dis(gen), dis(gen), dis(gen)};
-  oct.insert(vox(0), vox(1), vox(2));
-  se::VoxelBlock<TestVoxelT> * block = oct.fetch(vox(0), vox(1), vox(2));
+  octree.insert(vox(0), vox(1), vox(2));
+  se::VoxelBlock<TestVoxelT> * block = octree.fetch(vox(0), vox(1), vox(2));
   EXPECT_NE(block, nullptr);
   se::Node<TestVoxelT> * parent_node = block->parent();
-  for(int level = leaves_level - 1; level >= 0; level--){
-    se::Node<TestVoxelT> * node = oct.fetch_octant(vox(0), vox(1), vox(2), level);
+  for(int level = block_depth - 1; level >= 0; level--){
+    se::Node<TestVoxelT> * node = octree.fetch_octant(vox(0), vox(1), vox(2), level);
     ASSERT_EQ(parent_node, node);
     parent_node = parent_node->parent();
   }
 }
 
 TEST(AllocationTest, ParentAllocation) {
-  se::Octree<TestVoxelT> oct;
+  se::Octree<TestVoxelT> octree;
   const unsigned int block_side = 8;
-  const int max_level = 8;
-  const int leaves_level = max_level - log2(block_side);
-  const unsigned int size = std::pow(2, max_level);
-  oct.init(size, 5);  std::random_device rd;
+  const int voxel_depth = 8;
+  const unsigned int size = std::pow(2, voxel_depth);
+  octree.init(size, 5);  std::random_device rd;
+  const int block_depth = octree.blockDepth();
   std::mt19937 gen(rd());
   std::uniform_int_distribution<int> dis(0, size);
   const Eigen::Vector3i vox = {dis(gen), dis(gen), dis(gen)};
-  const unsigned code = oct.hash(vox(0), vox(1), vox(2));
+  const unsigned code = octree.hash(vox(0), vox(1), vox(2));
   se::key_t allocation_list[1] = {code};
-  oct.allocate(allocation_list, 1);
+  octree.allocate(allocation_list, 1);
 
-  se::VoxelBlock<TestVoxelT> * block = oct.fetch(vox(0), vox(1), vox(2));
+  se::VoxelBlock<TestVoxelT> * block = octree.fetch(vox(0), vox(1), vox(2));
   EXPECT_NE(block, nullptr);
   se::Node<TestVoxelT> * parent_node = block->parent();
-  for(int level = leaves_level - 1; level >= 0; level--){
-    se::Node<TestVoxelT> * node = oct.fetch_octant(vox(0), vox(1), vox(2), level);
+  for(int level = block_depth - 1; level >= 0; level--){
+    se::Node<TestVoxelT> * node = octree.fetch_octant(vox(0), vox(1), vox(2), level);
     ASSERT_EQ(parent_node, node);
     parent_node = parent_node->parent();
   }

@@ -61,27 +61,27 @@ class OctreeCollisionTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
 
-      oct_.init(256, 5);
+      octree_.init(256, 5);
       const Eigen::Vector3i blocks[1] = {{56, 12, 254}};
       se::key_t alloc_list[1];
-      alloc_list[0] = oct_.hash(blocks[0](0), blocks[0](1), blocks[0](2));
-      oct_.allocate(alloc_list, 1);
+      alloc_list[0] = octree_.hash(blocks[0](0), blocks[0](1), blocks[0](2));
+      octree_.allocate(alloc_list, 1);
 
       auto set_to_ten = [](auto& handler, const Eigen::Vector3i& coords) {
         if((coords.array() >= Eigen::Vector3i(48, 0, 240).array()).all()){
           handler.set(10.f);
         }
       };
-      se::functor::axis_aligned_map(oct_, set_to_ten);
+      se::functor::axis_aligned_map(octree_, set_to_ten);
     }
 
   typedef se::Octree<TestVoxelT> OctreeF;
-  OctreeF oct_;
+  OctreeF octree_;
 };
 
 TEST_F(OctreeCollisionTest, TotallyUnseen) {
 
-  se::node_iterator<TestVoxelT> it(oct_);
+  se::node_iterator<TestVoxelT> it(octree_);
   se::Node<TestVoxelT> * node = it.next();
   for(int i = 256; node != nullptr ; node = it.next(), i /= 2){
     const Eigen::Vector3i coords = se::keyops::decode(node->code_);
@@ -95,7 +95,7 @@ TEST_F(OctreeCollisionTest, TotallyUnseen) {
   const Eigen::Vector3i test_bbox = {23, 0, 100};
   const Eigen::Vector3i width = {2, 2, 2};
 
-  const collision_status collides = collides_with(oct_, test_bbox, width,
+  const collision_status collides = collides_with(octree_, test_bbox, width,
       test_voxel);
   ASSERT_EQ(collides, collision_status::unseen);
 }
@@ -103,7 +103,7 @@ TEST_F(OctreeCollisionTest, TotallyUnseen) {
 TEST_F(OctreeCollisionTest, PartiallyUnseen) {
   const Eigen::Vector3i test_bbox = {47, 0, 239};
   const Eigen::Vector3i width = {6, 6, 6};
-  const collision_status collides = collides_with(oct_, test_bbox, width,
+  const collision_status collides = collides_with(octree_, test_bbox, width,
       test_voxel);
   ASSERT_EQ(collides, collision_status::unseen);
 }
@@ -111,7 +111,7 @@ TEST_F(OctreeCollisionTest, PartiallyUnseen) {
 TEST_F(OctreeCollisionTest, Empty) {
   const Eigen::Vector3i test_bbox = {49, 1, 242};
   const Eigen::Vector3i width = {1, 1, 1};
-  const collision_status collides = collides_with(oct_, test_bbox, width,
+  const collision_status collides = collides_with(octree_, test_bbox, width,
       test_voxel);
   ASSERT_EQ(collides, collision_status::empty);
 }
@@ -123,9 +123,9 @@ TEST_F(OctreeCollisionTest, Collision){
   auto update = [](auto& handler, const Eigen::Vector3i& coords) {
       handler.set(2.f);
   };
-  se::functor::axis_aligned_map(oct_, update);
+  se::functor::axis_aligned_map(octree_, update);
 
-  const collision_status collides = collides_with(oct_, test_bbox, width,
+  const collision_status collides = collides_with(octree_, test_bbox, width,
       test_voxel);
   ASSERT_EQ(collides, collision_status::occupied);
 }
@@ -135,8 +135,8 @@ TEST_F(OctreeCollisionTest, CollisionFreeLeaf){
   const Eigen::Vector3i test_bbox = {61, 13, 253};
   const Eigen::Vector3i width = {2, 2, 2};
 
-  /* Update leaves as occupied node */
-  se::VoxelBlock<TestVoxelT> * block = oct_.fetch(56, 12, 254);
+  /* Update blocks as occupied node */
+  se::VoxelBlock<TestVoxelT> * block = octree_.fetch(56, 12, 254);
   const Eigen::Vector3i blockCoord = block->coordinates();
   int x, y, z, blockSide;
   blockSide = (int) se::VoxelBlock<TestVoxelT>::side;
@@ -155,7 +155,7 @@ TEST_F(OctreeCollisionTest, CollisionFreeLeaf){
     }
   }
 
-  const collision_status collides = collides_with(oct_, test_bbox, width,
+  const collision_status collides = collides_with(octree_, test_bbox, width,
       test_voxel);
   ASSERT_EQ(collides, collision_status::empty);
 }

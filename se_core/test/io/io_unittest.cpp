@@ -134,32 +134,30 @@ TEST(SerialiseUnitTest, WriteReadBlockStruct) {
 }
 
 TEST(SerialiseUnitTest, SerialiseTree) {
-  se::Octree<TestVoxelT> tree;
-  tree.init(1024, 10.25);
-  const int side = se::VoxelBlock<TestVoxelT>::side;
-  const int max_depth = log2(tree.size());
-  const int leaves_level = max_depth - log2(side);
+  se::Octree<TestVoxelT> octree;
+  octree.init(1024, 10.25);
+  const int block_depth = octree.blockDepth();
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with constant
   std::uniform_int_distribution<> dis(0, 1023);
 
   int num_tested = 0;
-  for(int i = 1, edge = tree.size()/2; i <= leaves_level; ++i, edge = edge/2) {
+  for(int i = 1, side = octree.size() / 2; i <= block_depth; ++i, side = side / 2) {
     for(int j = 0; j < 20; ++j) {
       Eigen::Vector3i vox(dis(gen), dis(gen), dis(gen));
-      tree.insert(vox(0), vox(1), vox(2), i);
+      octree.insert(vox(0), vox(1), vox(2), i);
     }
   }
   std::string filename = "octree-test.bin";
-  tree.save(filename);
+  octree.save(filename);
 
-  se::Octree<TestVoxelT> tree_copy;
-  tree_copy.load(filename);
+  se::Octree<TestVoxelT> octree_copy;
+  octree_copy.load(filename);
 
-  ASSERT_EQ(tree.size(), tree_copy.size());
-  ASSERT_EQ(tree.dim(), tree_copy.dim());
+  ASSERT_EQ(octree.size(), octree_copy.size());
+  ASSERT_EQ(octree.dim(), octree_copy.dim());
 
-  auto& node_buffer_base = tree.pool().nodeBuffer();
-  auto& node_buffer_copy = tree_copy.pool().nodeBuffer();
+  auto& node_buffer_base = octree.pool().nodeBuffer();
+  auto& node_buffer_copy = octree_copy.pool().nodeBuffer();
   ASSERT_EQ(node_buffer_base.size(), node_buffer_copy.size());
   for(int i = 0; i < node_buffer_base.size(); ++i) {
     se::Node<TestVoxelT> * n  = node_buffer_base[i];
@@ -168,40 +166,36 @@ TEST(SerialiseUnitTest, SerialiseTree) {
     ASSERT_EQ(n->children_mask_, n1->children_mask_);
   }
 
-  auto& block_buffer_base = tree.pool().blockBuffer();
-  auto& block_buffer_copy = tree_copy.pool().blockBuffer();
+  auto& block_buffer_base = octree.pool().blockBuffer();
+  auto& block_buffer_copy = octree_copy.pool().blockBuffer();
   ASSERT_EQ(block_buffer_base.size(), block_buffer_copy.size());
 }
 
 TEST(SerialiseUnitTest, SerialiseBlock) {
-  se::Octree<TestVoxelT> tree;
-  tree.init(1024, 10);
-  const int side = se::VoxelBlock<TestVoxelT>::side;
-  const int side_cubed = side * side * side;
-  const int max_depth = log2(tree.size());
-  const int leaves_level = max_depth - log2(side);
+  se::Octree<TestVoxelT> octree;
+  octree.init(1024, 10);
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with constant
   std::uniform_int_distribution<> dis(0, 1023);
 
   int num_tested = 0;
   for(int j = 0; j < 20; ++j) {
     Eigen::Vector3i vox(dis(gen), dis(gen), dis(gen));
-    tree.insert(vox(0), vox(1), vox(2), leaves_level);
-    auto voxel_block = tree.fetch(vox(0), vox(1), vox(2));
-    for(int i = 0; i < side_cubed; ++i)
+    octree.insert(vox(0), vox(1), vox(2), octree.blockDepth());
+    auto voxel_block = octree.fetch(vox(0), vox(1), vox(2));
+    for(int i = 0; i < se::VoxelBlock<TestVoxelT>::side_cube; ++i)
       voxel_block->data(i, dis(gen));
   }
 
   std::string filename = "block-test.bin";
-  tree.save(filename);
+  octree.save(filename);
 
-  se::Octree<TestVoxelT> tree_copy;
-  tree_copy.load(filename);
+  se::Octree<TestVoxelT> octree_copy;
+  octree_copy.load(filename);
 
-  auto& block_buffer_base = tree.pool().blockBuffer();
-  auto& block_buffer_copy = tree_copy.pool().blockBuffer();
+  auto& block_buffer_base = octree.pool().blockBuffer();
+  auto& block_buffer_copy = octree_copy.pool().blockBuffer();
   for(int i = 0; i < block_buffer_base.size(); i++) {
-    for(int j = 0; j < side_cubed; j++) {
+    for(int j = 0; j < se::VoxelBlock<TestVoxelT>::side_cube; j++) {
       ASSERT_EQ(block_buffer_base[i]->data(j), block_buffer_copy[i]->data(j));
     }
   }

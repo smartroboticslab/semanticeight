@@ -61,8 +61,7 @@ size_t TSDF::buildAllocationList(
   const float voxel_size = map.dim() / map.size();
   const float inverse_voxel_size = 1.f / voxel_size;
   const int volume_size = map.size();
-  const int max_level = map.maxLevel();
-  const unsigned leaves_level = map.leavesLevel();
+  const unsigned block_depth = map.blockDepth();
   const float band = 2.f * sensor.mu;
 
 
@@ -107,7 +106,7 @@ size_t TSDF::buildAllocationList(
               voxel_W.x(), voxel_W.y(), voxel_W.z());
           if (node_ptr == nullptr) {
             const se::key_t voxel_key = map.hash(voxel_W.x(), voxel_W.y(), voxel_W.z(),
-                leaves_level);
+                block_depth);
             const unsigned int idx = voxel_count++;
             if (idx < reserved) {
               allocation_list[idx] = voxel_key;

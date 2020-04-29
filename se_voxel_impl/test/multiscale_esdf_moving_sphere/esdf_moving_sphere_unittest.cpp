@@ -56,7 +56,7 @@ class MultiscaleESDFMovingSphereTest : public ::testing::Test {
     virtual void SetUp() {
       unsigned size = 256;
       float dim = 5.f;
-      oct_.init(size, dim); // 5 meters
+      octree_.init(size, dim); // 5 meters
 
       center_ = size >> 1;
       radius_ = size >> 2;
@@ -68,16 +68,16 @@ class MultiscaleESDFMovingSphereTest : public ::testing::Test {
             const Eigen::Vector3i vox(x, y, z);
             const float dist = fabs(sphere_dist(vox.cast<float>(), C, radius_));
             if(dist > 20.f && dist < 25.f) {
-              alloc_list.push_back(oct_.hash(vox(0), vox(1), vox(2)));
+              alloc_list.push_back(octree_.hash(vox(0), vox(1), vox(2)));
             }
           }
         }
       }
-      oct_.allocate(alloc_list.data(), alloc_list.size());
+      octree_.allocate(alloc_list.data(), alloc_list.size());
     }
 
   typedef se::Octree<MultiresTSDF::VoxelType> OctreeT;
-  OctreeT oct_;
+  OctreeT octree_;
   int center_;
   int radius_;
   std::vector<se::key_t> alloc_list;
@@ -92,16 +92,16 @@ TEST_F(MultiscaleESDFMovingSphereTest, Fusion) {
   };
 
   for(int i = 0; i < 5; ++i) {
-    se::functor::internal::parallel_for_each(oct_.pool().blockBuffer(), update_op);
+    se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), update_op);
     auto op = [](se::VoxelBlock<MultiresTSDF::VoxelType>* b) { se::multires::propagate_up(b, 0); };
-    se::functor::internal::parallel_for_each(oct_.pool().blockBuffer(), op);
+    se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), op);
 
     {
       std::stringstream f;
       f << "./out/sphere-interp-" << i << ".vtk";
-      save3DSlice(oct_, Eigen::Vector3i(0, oct_.size()/2, 0),
-          Eigen::Vector3i(oct_.size(), oct_.size()/2 + 1, oct_.size()),
-          [](const auto& val) { return val.x; }, oct_.maxBlockScale(), f.str().c_str());
+      save3DSlice(octree_, Eigen::Vector3i(0, octree_.size()/2, 0),
+          Eigen::Vector3i(octree_.size(), octree_.size()/2 + 1, octree_.size()),
+          [](const auto& val) { return val.x; }, octree_.maxBlockScale(), f.str().c_str());
     }
   }
 
@@ -109,18 +109,18 @@ TEST_F(MultiscaleESDFMovingSphereTest, Fusion) {
   center += Eigen::Vector3f::Constant(10.f);
   scale = 2;
   for(int i = 5; i < 10; ++i) {
-    se::functor::internal::parallel_for_each(oct_.pool().blockBuffer(), update_op);
-    auto& oct_ref = oct_;
-    auto op = [&oct_ref, scale](se::VoxelBlock<MultiresTSDF::VoxelType>* b) { se::multires::propagate_down(oct_ref, b, scale, 0); };
-    se::functor::internal::parallel_for_each(oct_.pool().blockBuffer(), op);
+    se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), update_op);
+    auto& octree_ref = octree_;
+    auto op = [&octree_ref, scale](se::VoxelBlock<MultiresTSDF::VoxelType>* b) { se::multires::propagate_down(octree_ref, b, scale, 0); };
+    se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), op);
 
     {
       std::stringstream f;
       f << "./out/sphere-interp-" << i << ".vtk";
-      save3DSlice(oct_, Eigen::Vector3i(0, oct_.size()/2, 0),
-          Eigen::Vector3i(oct_.size(), oct_.size()/2 + 1, oct_.size()),
-          [](const auto& val) { return val.x; }, oct_.maxBlockScale(), f.str().c_str());
+      save3DSlice(octree_, Eigen::Vector3i(0, octree_.size()/2, 0),
+          Eigen::Vector3i(octree_.size(), octree_.size()/2 + 1, octree_.size()),
+          [](const auto& val) { return val.x; }, octree_.maxBlockScale(), f.str().c_str());
     }
   }
-  se::print_octree("./out/test-sphere.ply", oct_);
+  se::print_octree("./out/test-sphere.ply", octree_);
 }

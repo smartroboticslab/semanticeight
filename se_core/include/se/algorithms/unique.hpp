@@ -47,10 +47,10 @@ namespace algorithms {
     }
 
   template <typename KeyT>
-    inline int filter_ancestors(KeyT* keys, int num_keys, const int max_depth) {
+    inline int filter_ancestors(KeyT* keys, int num_keys, const int voxel_depth) {
       int e = 0;
       for (int i = 0; i < num_keys; ++i){
-        if(descendant(keys[i], keys[e], max_depth)){
+        if(descendant(keys[i], keys[e], voxel_depth)){
           keys[e] = keys[i];
         } else { 
           /* end does not advance but previous entry is overwritten */
