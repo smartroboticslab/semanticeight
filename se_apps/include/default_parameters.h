@@ -46,7 +46,7 @@ const std::string default_log_file = "";
 const std::string default_groundtruth_file = "";
 const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
 
-static std::string short_options = "a:qc:d:f:g:G:hi:l:m:k:o:p:r:s:t:v:y:z:FC:M";
+static std::string short_options = "a:bqc:d:f:g:G:hi:l:m:k:o:p:r:s:t:v:y:z:FC:M";
 
 static struct option long_options[] =
 {
