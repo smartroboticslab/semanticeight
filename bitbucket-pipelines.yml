@@ -1,4 +1,4 @@
-image: sotirisp/supereight-testing:latest
+image: sotirisp/supereight-ci:18.04
 
 pipelines:
   default:
