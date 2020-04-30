@@ -303,21 +303,21 @@ public:
 
 private:
 
-  Node<T>* root_;
-  int size_;
-  float dim_;
-  int num_levels_;
-  int voxel_depth_;
-  int max_block_scale_;
-  int block_depth_;
+  Node<T>* root_ = nullptr;
+  int size_ = 0;
+  float dim_ = 0.f;
+  int num_levels_ = 0;
+  int voxel_depth_ = 0;
+  int max_block_scale_ = 0;
+  int block_depth_ = 0;
   typename T::template MemoryPoolType<T> pool_;
 
   friend class VoxelBlockRayIterator<T>;
   friend class node_iterator<T>;
 
   // Allocation specific variables
-  key_t* keys_at_depth_;
-  int reserved_;
+  key_t* keys_at_depth_ = nullptr;
+  int reserved_ = 0;
 
   // Private implementation of cached methods
   VoxelData get(const int x, const int y, const int z, VoxelBlock<T>* cached) const;
