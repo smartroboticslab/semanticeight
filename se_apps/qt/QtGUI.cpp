@@ -82,7 +82,7 @@ extern PowerMonitor *powerMonitor;
 
 // We can pass this to the QT and it will allow us to change features in the DenseSLAMSystem
 static void newDenseSLAMSystem(bool resetPose) {
-  Eigen::Matrix4f init_pose = (*pipeline_pp)->getPose();
+  Eigen::Matrix4f init_T_WC = (*pipeline_pp)->getPose();
 
 	if (*pipeline_pp)
 		delete *pipeline_pp;
@@ -90,7 +90,7 @@ static void newDenseSLAMSystem(bool resetPose) {
 		*pipeline_pp = new DenseSLAMSystem(
 				Eigen::Vector2i(640 / config->compute_size_ratio, 480 / config->compute_size_ratio),
 				config->volume_resolution,
-        config->volume_size, init_pose, config->pyramid, *config);
+        config->volume_size, init_T_WC, config->pyramid, *config);
   }
 	else {
     Eigen::Matrix<float, 6, 1> twist;
@@ -99,13 +99,13 @@ static void newDenseSLAMSystem(bool resetPose) {
 				   config->initial_pos_factor.z() * config->volume_size.x(), 0, 0, 0;
 		trans = Sophus::SE3<float>::exp(twist);
 		rot = Sophus::SE3<float>();
-    Eigen::Vector3f init_pose = config->initial_pos_factor.cwiseProduct(config->volume_size);
+    Eigen::Vector3f init_t_WC = config->initial_pos_factor.cwiseProduct(config->volume_size);
 		*pipeline_pp = new DenseSLAMSystem(
 				Eigen::Vector2i(640 / config->compute_size_ratio,
 						480 / config->compute_size_ratio),
 				config->volume_resolution,
 				config->volume_size,
-        init_pose,
+        init_t_WC,
         config->pyramid, *config);
 	}
 	appWindow->viewers->setBufferSize(640 / config->compute_size_ratio,

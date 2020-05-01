@@ -207,22 +207,22 @@ typedef struct Triangle {
     Eigen::Vector3f a = vertexes[1] - vertexes[0];
     Eigen::Vector3f b = vertexes[2] - vertexes[1];
     Eigen::Vector3f v = a.cross(b);
-    surface_area = v.norm()/2;
+    surface_area = v.norm() / 2;
     return surface_area;
   }
 
-  Eigen::Vector3f * uniform_sample(int num){
+  Eigen::Vector3f* uniform_sample(int num){
 
-    Eigen::Vector3f * points = new Eigen::Vector3f[num];
+    Eigen::Vector3f* points = new Eigen::Vector3f[num];
     for(int i = 0; i < num; ++i){
-      float u = ((float)rand())/(float)RAND_MAX;
-      float v = ((float)rand())/(float)RAND_MAX;
+      float u = ((float)rand()) / (float)RAND_MAX;
+      float v = ((float)rand()) / (float)RAND_MAX;
       if(u + v > 1){
         u = 1 - u;
         v = 1 - v;
       }
       float w = 1 - (u + v);
-      points[i] = u*vertexes[0] + v*vertexes[1] + w*vertexes[2];
+      points[i] = u * vertexes[0] + v * vertexes[1] + w * vertexes[2];
     }
 
     return points;
@@ -232,14 +232,14 @@ typedef struct Triangle {
 
     Eigen::Vector3f * points = new Eigen::Vector3f[num];
     for(int i = 0; i < num; ++i){
-      float u = ((float)rand_r(&seed))/(float)RAND_MAX;
-      float v = ((float)rand_r(&seed))/(float)RAND_MAX;
+      float u = ((float)rand_r(&seed)) / (float)RAND_MAX;
+      float v = ((float)rand_r(&seed)) / (float)RAND_MAX;
       if(u + v > 1){
         u = 1 - u;
         v = 1 - v;
       }
       float w = 1 - (u + v);
-      points[i] = u*vertexes[0] + v*vertexes[1] + w*vertexes[2];
+      points[i] = u * vertexes[0] + v * vertexes[1] + w * vertexes[2];
     }
     return points;
   }
@@ -277,7 +277,7 @@ inline Eigen::Matrix4f getInverseCameraMatrix(const Eigen::Vector4f& k) {
 
 static const float epsilon = 0.0000001;
 
-inline void compareTrackData(std::string str, TrackData* l, TrackData * r,
+inline void compareTrackData(std::string str, TrackData* l, TrackData* r,
 		unsigned int size) {
 	for (unsigned int i = 0; i < size; i++) {
 		if (std::abs(l[i].error - r[i].error) > epsilon) {
@@ -305,7 +305,7 @@ inline void compareFloat(std::string str, float* l, float * r, unsigned int size
 }
 
 template<typename T>
-void writefile(std::string prefix, int idx, T * data, unsigned int size) {
+void writefile(std::string prefix, int idx, T* data, unsigned int size) {
 
 	std::string filename = prefix + NumberToString(idx);
 	FILE* pFile = fopen(filename.c_str(), "wb");
@@ -322,34 +322,34 @@ void writefile(std::string prefix, int idx, T * data, unsigned int size) {
 	fclose(pFile);
 }
 
-inline void writeVtkMesh(const char * filename,
+inline void writeVtkMesh(const char*                  filename,
                          const std::vector<Triangle>& mesh,
-                         const Eigen::Vector3f& init_pose,
-                         const float * point_data = NULL,
-                         const float * cell_data = NULL){
+                         const Eigen::Vector3f&       init_t_WC,
+                         const float*                 point_data = nullptr,
+                         const float*                 cell_data = nullptr){
   std::stringstream points;
   std::stringstream polygons;
   std::stringstream pointdata;
   std::stringstream celldata;
   int point_count = 0;
   int triangle_count = 0;
-  bool hasPointData = point_data != NULL;
-  bool hasCellData = cell_data != NULL;
+  bool hasPointData = point_data != nullptr;
+  bool hasCellData = cell_data != nullptr;
 
   for(unsigned int i = 0; i < mesh.size(); ++i ){
     const Triangle& t = mesh[i];
 
-    points << t.vertexes[0].x() - init_pose.x() << " "
-           << t.vertexes[0].y() - init_pose.y() << " "
-           << t.vertexes[0].z() - init_pose.z() << std::endl;
+    points << t.vertexes[0].x() - init_t_WC.x() << " "
+           << t.vertexes[0].y() - init_t_WC.y() << " "
+           << t.vertexes[0].z() - init_t_WC.z() << std::endl;
 
-    points << t.vertexes[1].x() - init_pose.x() << " "
-           << t.vertexes[1].y() - init_pose.y() << " "
-           << t.vertexes[1].z() - init_pose.z() << std::endl;
+    points << t.vertexes[1].x() - init_t_WC.x() << " "
+           << t.vertexes[1].y() - init_t_WC.y() << " "
+           << t.vertexes[1].z() - init_t_WC.z() << std::endl;
 
-    points << t.vertexes[2].x() - init_pose.x() << " "
-           << t.vertexes[2].y() - init_pose.y() << " "
-           << t.vertexes[2].z() - init_pose.z() << std::endl;
+    points << t.vertexes[2].x() - init_t_WC.x() << " "
+           << t.vertexes[2].y() - init_t_WC.y() << " "
+           << t.vertexes[2].z() - init_t_WC.z() << std::endl;
 
     polygons << "3 " << point_count << " " << point_count+1 <<
       " " << point_count+2 << std::endl;
@@ -396,7 +396,7 @@ inline void writeVtkMesh(const char * filename,
   f.close();
 }
 
-inline void writeObjMesh(const char * filename,
+inline void writeObjMesh(const char* filename,
                          const std::vector<Triangle>& mesh){
   std::stringstream points;
   std::stringstream faces;

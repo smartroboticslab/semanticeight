@@ -53,11 +53,11 @@ static bool print_kernel_timing = false;
 DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
                                  const Eigen::Vector3i& volume_resolution,
                                  const Eigen::Vector3f& volume_dimensions,
-                                 const Eigen::Vector3f& init_pose,
+                                 const Eigen::Vector3f& init_t_WC,
                                  std::vector<int> & pyramid,
                                  const Configuration& config):
       DenseSLAMSystem(input_size, volume_resolution, volume_dimensions,
-          se::math::toMatrix4f(init_pose), pyramid, config) { }
+          se::math::toMatrix4f(init_t_WC), pyramid, config) { }
 
 DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
                                  const Eigen::Vector3i& volume_resolution,
@@ -78,7 +78,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
   rgba_(computation_size_.x(), computation_size_.y())
   {
 
-    this->init_position_M_ = init_T_WC.block<3,1>(0,3);
+    this->init_t_WC_ = init_T_WC.block<3,1>(0,3);
     this->volume_dimension_ = volume_dimensions;
     this->volume_resolution_ = volume_resolution;
     this->mu_ = config.mu;
@@ -335,5 +335,5 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
     };
 
     se::algorithms::marching_cube(*volume_.octree_, select, inside, mesh);
-    writeVtkMesh(filename.c_str(), mesh, this->init_position_M_);
+    writeVtkMesh(filename.c_str(), mesh, this->init_t_WC_);
 }

@@ -46,7 +46,7 @@ static uint32_t* volume_render = nullptr;
 static DepthReader* reader = nullptr;
 static DenseSLAMSystem* pipeline = nullptr;
 
-static Eigen::Vector3f init_position;
+static Eigen::Vector3f init_t_WC;
 static std::ostream* log_stream = &std::cout;
 static std::ofstream log_file_stream;
 
@@ -121,12 +121,12 @@ int main(int argc, char** argv) {
   track_render =  new uint32_t[computation_size.x() * computation_size.y()];
   volume_render = new uint32_t[computation_size.x() * computation_size.y()];
 
-  init_position = config.initial_pos_factor.cwiseProduct(config.volume_size);
+  init_t_WC = config.initial_pos_factor.cwiseProduct(config.volume_size);
   pipeline = new DenseSLAMSystem(
       computation_size,
       Eigen::Vector3i::Constant(config.volume_resolution.x()),
       Eigen::Vector3f::Constant(config.volume_size.x()),
-      init_position,
+      init_t_WC,
       config.pyramid, config);
 
   if (config.log_file != "") {
@@ -237,8 +237,8 @@ int processAll(DepthReader*   reader,
   if (process_frame) {
     Stats.start();
   }
-  Eigen::Matrix4f pose;
-  Eigen::Matrix4f gt_pose;
+  Eigen::Matrix4f T_WC;
+  Eigen::Matrix4f gt_T_WC;
   timings[0] = std::chrono::steady_clock::now();
   if (process_frame) {
 
@@ -247,7 +247,7 @@ int processAll(DepthReader*   reader,
     if (config->groundtruth_file == "") {
       read_ok = reader->readNextDepthFrame(input_rgb, input_depth);
     } else {
-      read_ok = reader->readNextData(input_rgb, input_depth, gt_pose);
+      read_ok = reader->readNextData(input_rgb, input_depth, gt_T_WC);
     }
 
     // Finish processing if the next frame could not be read
@@ -278,11 +278,11 @@ int processAll(DepthReader*   reader,
       }
     } else {
       // Set the pose to the ground truth.
-      pipeline->setPose(gt_pose);
+      pipeline->setPose(gt_T_WC);
       tracked = true;
     }
 
-    pose = pipeline->getPose();
+    T_WC = pipeline->getPose();
 
     timings[3] = std::chrono::steady_clock::now();
 
@@ -315,9 +315,9 @@ int processAll(DepthReader*   reader,
   if (powerMonitor != nullptr && !first_frame)
     powerMonitor->sample();
 
-  float xt = pose(0, 3) - init_position.x();
-  float yt = pose(1, 3) - init_position.y();
-  float zt = pose(2, 3) - init_position.z();
+  float xt = T_WC(0, 3) - init_t_WC.x();
+  float yt = T_WC(1, 3) - init_t_WC.y();
+  float zt = T_WC(2, 3) - init_t_WC.z();
   const Eigen::Vector3f position = pipeline->getPosition();
   storeStats(frame, timings, position, tracked, integrated);
   if (config->no_gui){

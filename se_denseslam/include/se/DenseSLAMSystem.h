@@ -64,13 +64,13 @@ class DenseSLAMSystem {
   private:
     Eigen::Vector2i computation_size_;
     Eigen::Matrix4f T_WC_;
-    Eigen::Matrix4f *render_T_WC_;
+    Eigen::Matrix4f* render_T_WC_;
     Eigen::Vector3f volume_dimension_;
     Eigen::Vector3i volume_resolution_;
     std::vector<int> iterations_;
     bool tracked_;
     bool integrated_;
-    Eigen::Vector3f init_position_M_;
+    Eigen::Vector3f init_t_WC_;
     float mu_;
     bool need_render_ = false;
     Configuration config_;
@@ -109,7 +109,7 @@ class DenseSLAMSystem {
      * reconstructed volume in voxels.
      * \param[in] volume_dimension_ The x, y and z dimensions of the
      * reconstructed volume in meters.
-     * \param[in] init_pose The x, y and z coordinates of the initial camera
+     * \param[in] init_t_WC The x, y and z coordinates of the initial camera
      * position. The camera orientation is assumed to be aligned with the axes.
      * \param[in] pyramid See ::Configuration.pyramid for more details.
      * \param[in] config_ The pipeline options.
@@ -117,7 +117,7 @@ class DenseSLAMSystem {
     DenseSLAMSystem(const Eigen::Vector2i& input_size,
                     const Eigen::Vector3i& volume_resolution_,
                     const Eigen::Vector3f& volume_dimension_,
-                    const Eigen::Vector3f& init_pose,
+                    const Eigen::Vector3f& init_t_WC,
                     std::vector<int> &     pyramid,
                     const Configuration&   config_);
     /**
@@ -321,10 +321,7 @@ class DenseSLAMSystem {
      * \return A vector containing the x, y and z coordinates of the camera.
      */
     Eigen::Vector3f getPosition() {
-      float xt = T_WC_(0, 3) - init_position_M_.x();
-      float yt = T_WC_(1, 3) - init_position_M_.y();
-      float zt = T_WC_(2, 3) - init_position_M_.z();
-      return Eigen::Vector3f(xt, yt, zt);
+      return T_WC_.block<3,1>(0,3) - init_t_WC_;
     }
 
     /**
@@ -332,8 +329,8 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of the camera.
      */
-    Eigen::Vector3f getInitPos(){
-      return init_position_M_;
+    Eigen::Vector3f getInitialPosition(){
+      return init_t_WC_;
     }
 
     /**
@@ -348,14 +345,14 @@ class DenseSLAMSystem {
     /**
      * Set the current camera pose.
      *
-     * @note The value of the DenseSLAMSystem::init_position_M_ member is added
+     * @note The value of the DenseSLAMSystem::init_t_WC member is added
      * to the position encoded in `pose`.
      *
      * \param[in] T_WC The desired camera pose encoded in a 4x4 matrix.
      */
     void setPose(const Eigen::Matrix4f T_WC) {
       T_WC_ = T_WC;
-      T_WC_.block<3,1>(0,3) += init_position_M_;
+      T_WC_.block<3,1>(0,3) += init_t_WC_;
     }
 
     /**
@@ -363,8 +360,8 @@ class DenseSLAMSystem {
      *
      * \param[in] T_WC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setViewPose(Eigen::Matrix4f *T_WC = NULL) {
-      if (T_WC == NULL){
+    void setViewPose(Eigen::Matrix4f *T_WC = nullptr) {
+      if (T_WC == nullptr){
         render_T_WC_ = &T_WC_;
         need_render_ = false;
       }

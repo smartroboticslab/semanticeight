@@ -43,15 +43,15 @@ namespace meshing {
   };
 
   void savePointCloudPly(const std::vector<Triangle>& mesh,
-      const char* filename, const Eigen::Vector3f& init_pose) {
+      const char* filename, const Eigen::Vector3f& init_t_WC) {
     std::stringstream points;
     int num_points = 0;
     for(size_t i = 0; i < mesh.size(); ++i ){
       const Triangle& t = mesh[i];
       for(int j = 0; j < 3; ++j) {
-        points << t.vertexes[j].x() - init_pose.x() << " "
-               << t.vertexes[j].y() - init_pose.y() << " "
-               << t.vertexes[j].z() - init_pose.z() << std::endl;
+        points << t.vertexes[j].x() - init_t_WC.x() << " "
+               << t.vertexes[j].y() - init_t_WC.y() << " "
+               << t.vertexes[j].z() - init_t_WC.z() << std::endl;
         num_points++;
       }
     }

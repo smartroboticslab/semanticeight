@@ -115,12 +115,12 @@ namespace se {
 
   template <typename T>
     void savePointCloudPly(const T* in, const int num_points,
-        const char* filename, const Eigen::Vector3f& init_pose) {
+        const char* filename, const Eigen::Vector3f& init_t_WC) {
       std::stringstream points;
       for(int i = 0; i < num_points; ++i ){
-        points << in[i].x() - init_pose.x()
-          << " " << in[i].y()  - init_pose.y() << " "
-          << in[i].z() - init_pose.z() << std::endl;
+        points << in[i].x() - init_t_WC.x() << " "
+               << in[i].y() - init_t_WC.y() << " "
+               << in[i].z() - init_t_WC.z() << std::endl;
       }
 
       {
