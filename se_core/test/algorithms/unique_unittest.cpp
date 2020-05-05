@@ -39,7 +39,7 @@ typedef unsigned int MortonType;
 struct TestVoxelT {
   typedef float VoxelData;
   static inline VoxelData empty(){ return 0.f; }
-  static inline VoxelData initValue(){ return 1.f; }
+  static inline VoxelData initData(){ return 1.f; }
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -50,8 +50,8 @@ struct TestVoxelT {
 class UniqueTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
-      oct.init(1 << voxel_depth_, 10);
-      const Eigen::Vector3i blocks[10] = {
+      octree.init(1 << voxel_depth_, 10);
+      const Eigen::Vector3i blocks_coord[10] = {
         {56, 12, 12}, {56, 12, 15},
         {128, 128, 128},
         {128, 128, 125}, {128, 128, 127},
@@ -60,13 +60,13 @@ class UniqueTest : public ::testing::Test {
         {136, 128, 136},
         {128, 240, 136}, {128, 241, 136}};
       for(int i = 0; i < 10; ++i) {
-        keys[i] = oct.hash(blocks[i](0), blocks[i](1), blocks[i](2));
+        keys[i] = octree.hash(blocks_coord[i].x(), blocks_coord[i].y(), blocks_coord[i].z());
       }
     }
 
     MortonType keys[10];
     typedef se::Octree<TestVoxelT> OctreeF;
-    OctreeF oct;
+    OctreeF octree;
     const int voxel_depth_ = 10;
 };
 
@@ -74,19 +74,19 @@ class UniqueMultiscaleTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
 
-      oct.init(1 << voxel_depth_, 10);
+      octree.init(1 << voxel_depth_, 10);
       const int root_side = pow(2, voxel_depth_ - 4);
       const Eigen::Vector3i base(64, 0, 64);
-      keys.push_back(oct.hash(base.x(), base.y(), base.z(), 4));
-      keys.push_back(oct.hash(base.x() + root_side/2, base.y(), base.z(), 5));
-      keys.push_back(oct.hash(base.x() + root_side/4, base.y(), base.z(), 5));
-      keys.push_back(oct.hash(128, 24, 80, 5));
+      keys.push_back(octree.hash(base.x(), base.y(), base.z(), 4));
+      keys.push_back(octree.hash(base.x() + root_side/2, base.y(), base.z(), 5));
+      keys.push_back(octree.hash(base.x() + root_side/4, base.y(), base.z(), 5));
+      keys.push_back(octree.hash(128, 24, 80, 5));
       std::sort(keys.begin(), keys.end());
     }
 
     std::vector<MortonType> keys;
     typedef se::Octree<TestVoxelT> OctreeF;
-    OctreeF oct;
+    OctreeF octree;
     const int voxel_depth_ = 10;
 };
 

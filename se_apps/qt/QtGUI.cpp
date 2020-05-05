@@ -82,30 +82,28 @@ extern PowerMonitor *powerMonitor;
 
 // We can pass this to the QT and it will allow us to change features in the DenseSLAMSystem
 static void newDenseSLAMSystem(bool resetPose) {
-  Eigen::Matrix4f init_T_WC = (*pipeline_pp)->getPose();
+  Eigen::Matrix4f T_MW = (*pipeline_pp)->getMapToWorldTransformation();
 
 	if (*pipeline_pp)
 		delete *pipeline_pp;
 	if (!resetPose) {
 		*pipeline_pp = new DenseSLAMSystem(
 				Eigen::Vector2i(640 / config->compute_size_ratio, 480 / config->compute_size_ratio),
-				config->volume_resolution,
-        config->volume_size, init_T_WC, config->pyramid, *config);
-  }
-	else {
+				config->volume_resolution, config->volume_size, T_MW, config->pyramid, *config);
+  } else {
     Eigen::Matrix<float, 6, 1> twist;
-  twist << config->initial_pos_factor.x() * config->volume_size.x(),
-					 config->initial_pos_factor.y() * config->volume_size.x(),
-				   config->initial_pos_factor.z() * config->volume_size.x(), 0, 0, 0;
+  	twist << config->initial_pos_factor.x() * config->volume_size.x(),
+						 config->initial_pos_factor.y() * config->volume_size.x(),
+					   config->initial_pos_factor.z() * config->volume_size.x(), 0, 0, 0;
 		trans = Sophus::SE3<float>::exp(twist);
 		rot = Sophus::SE3<float>();
-    Eigen::Vector3f init_t_WC = config->initial_pos_factor.cwiseProduct(config->volume_size);
+    Eigen::Vector3f t_MW = config->initial_pos_factor.cwiseProduct(config->volume_size);
 		*pipeline_pp = new DenseSLAMSystem(
 				Eigen::Vector2i(640 / config->compute_size_ratio,
 						480 / config->compute_size_ratio),
 				config->volume_resolution,
 				config->volume_size,
-        init_t_WC,
+        t_MW,
         config->pyramid, *config);
 	}
 	appWindow->viewers->setBufferSize(640 / config->compute_size_ratio,
@@ -156,10 +154,10 @@ CameraState setEnableCamera(CameraState state, string inputFile) {
 							(CameraState (*)(CameraState,
 									std::string))&setEnableCamera);
 
-}					else {
-						bool cameraOpen = false;
-						appWindow->setCameraFunction(&cameraOpen, (CameraState (*)(CameraState, std::string))&setEnableCamera);
-					}
+        } else {
+          bool cameraOpen = false;
+          appWindow->setCameraFunction(&cameraOpen, (CameraState (*)(CameraState, std::string))&setEnableCamera);
+        }
 				*reader_pp = reader;
 				if (reader == NULL) {
 					if (inputFile == "") {
@@ -215,11 +213,11 @@ CameraState setEnableCamera(CameraState state, string inputFile) {
 //This function is passed to QT and is called whenever we aren't busy i.e in a constant loop
 void qtIdle(void) {
 	//This will set the view for rendering the model, either to the tracked camera view or the static view
-  Eigen::Matrix4f pose = (rot * trans).matrix();
+	Eigen::Matrix4f T_MV = (rot * trans).matrix();
 	if (usePOV)
-		(*pipeline_pp)->setViewPose(); //current position as found by track
+		(*pipeline_pp)->setViewPoseM(); //current position as found by track
 	else
-		(*pipeline_pp)->setViewPose(&pose);
+		(*pipeline_pp)->setViewPoseM(&T_MV);
 	//If we are are reading a file then get a new frame and process it.
 	if ((*reader_pp) && (*reader_pp)->cameraActive) {
 		int finished = processAll((*reader_pp), true, true, config, reset);
@@ -341,7 +339,7 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 
 			//This sets up the images but is pretty ugly and would be better stashed in DenseSLAMSystem
 
-appWindow	->addButtonChoices("Compute Res",
+  appWindow	->addButtonChoices("Compute Res",
 			{ "640x480", "320x240", "160x120", "80x60" }, { 1, 2, 4, 8 },
 			&(config->compute_size_ratio), continueWithNewDenseSLAMSystem);
 	appWindow->addButtonChoices("Vol. Size", { "4.0mx4.0mx4.0m",

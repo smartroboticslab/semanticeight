@@ -53,8 +53,8 @@ void renderRGBAKernel(uint8_t*                   output_RGBA,
 
 
 void renderDepthKernel(unsigned char*         out,
-                       float*                 depth,
-                       const Eigen::Vector2i& depth_size,
+                       float*                 depth_image,
+                       const Eigen::Vector2i& image_size,
                        const float            near_plane,
                        const float            far_plane) {
 
@@ -63,35 +63,35 @@ void renderDepthKernel(unsigned char*         out,
   const float range_scale = 1.f / (far_plane - near_plane);
 
 #pragma omp parallel for
-  for (int y = 0; y < depth_size.y(); y++) {
-    const int row_offset = y * depth_size.x();
-    for (int x = 0; x < depth_size.x(); x++) {
+  for (int y = 0; y < image_size.y(); y++) {
+    const int row_offset = y * image_size.x();
+    for (int x = 0; x < image_size.x(); x++) {
 
-      const unsigned int pos = row_offset + x;
-      const unsigned int idx = pos * 4;
+      const unsigned int pixel_idx = row_offset + x;
+      const unsigned int rgbw_idx = pixel_idx * 4;
 
-      if (depth[pos] < near_plane) {
-        out[idx + 0] = 255;
-        out[idx + 1] = 255;
-        out[idx + 2] = 255;
-        out[idx + 3] = 255;
-      } else if (depth[pos] > far_plane) {
-        out[idx + 0] = 0;
-        out[idx + 1] = 0;
-        out[idx + 2] = 0;
-        out[idx + 3] = 255;
+      if (depth_image[pixel_idx] < near_plane) {
+        out[rgbw_idx + 0] = 255;
+        out[rgbw_idx + 1] = 255;
+        out[rgbw_idx + 2] = 255;
+        out[rgbw_idx + 3] = 255;
+      } else if (depth_image[pixel_idx] > far_plane) {
+        out[rgbw_idx + 0] = 0;
+        out[rgbw_idx + 1] = 0;
+        out[rgbw_idx + 2] = 0;
+        out[rgbw_idx + 3] = 255;
       } else {
-        const float d = (depth[pos] - near_plane) * range_scale;
+        const float depth_value = (depth_image[pixel_idx] - near_plane) * range_scale;
         unsigned char rgbw[4];
-        gs2rgb(d, rgbw);
-        out[idx + 0] = rgbw[0];
-        out[idx + 1] = rgbw[1];
-        out[idx + 2] = rgbw[2];
-        out[idx + 3] = rgbw[3];
+        gs2rgb(depth_value, rgbw);
+        out[rgbw_idx + 0] = rgbw[0];
+        out[rgbw_idx + 1] = rgbw[1];
+        out[rgbw_idx + 2] = rgbw[2];
+        out[rgbw_idx + 3] = rgbw[3];
       }
     }
   }
-  TOCK("renderDepthKernel", depth_size.x() * depth_size.y());
+  TOCK("renderDepthKernel", image_size.x() * image_size.y());
 }
 
 
@@ -105,50 +105,50 @@ void renderTrackKernel(unsigned char*         out,
 #pragma omp parallel for
   for (int y = 0; y < out_size.y(); y++)
     for (int x = 0; x < out_size.x(); x++) {
-      const int pos = x + out_size.x() * y;
-      const int idx = pos * 4;
-      switch (data[pos].result) {
+      const int pixel_idx = x + out_size.x() * y;
+      const int rgbw_idx = pixel_idx * 4;
+      switch (data[pixel_idx].result) {
         case 1:
-          out[idx + 0] = 128;
-          out[idx + 1] = 128;
-          out[idx + 2] = 128;
-          out[idx + 3] = 255;
+          out[rgbw_idx + 0] = 128;
+          out[rgbw_idx + 1] = 128;
+          out[rgbw_idx + 2] = 128;
+          out[rgbw_idx + 3] = 255;
           break;
         case -1:
-          out[idx + 0] = 0;
-          out[idx + 1] = 0;
-          out[idx + 2] = 0;
-          out[idx + 3] = 255;
+          out[rgbw_idx + 0] = 0;
+          out[rgbw_idx + 1] = 0;
+          out[rgbw_idx + 2] = 0;
+          out[rgbw_idx + 3] = 255;
           break;
         case -2:
-          out[idx + 0] = 255;
-          out[idx + 1] = 0;
-          out[idx + 2] = 0;
-          out[idx + 3] = 255;
+          out[rgbw_idx + 0] = 255;
+          out[rgbw_idx + 1] = 0;
+          out[rgbw_idx + 2] = 0;
+          out[rgbw_idx + 3] = 255;
           break;
         case -3:
-          out[idx + 0] = 0;
-          out[idx + 1] = 255;
-          out[idx + 2] = 0;
-          out[idx + 3] = 255;
+          out[rgbw_idx + 0] = 0;
+          out[rgbw_idx + 1] = 255;
+          out[rgbw_idx + 2] = 0;
+          out[rgbw_idx + 3] = 255;
           break;
         case -4:
-          out[idx + 0] = 0;
-          out[idx + 1] = 0;
-          out[idx + 2] = 255;
-          out[idx + 3] = 255;
+          out[rgbw_idx + 0] = 0;
+          out[rgbw_idx + 1] = 0;
+          out[rgbw_idx + 2] = 255;
+          out[rgbw_idx + 3] = 255;
           break;
         case -5:
-          out[idx + 0] = 255;
-          out[idx + 1] = 255;
-          out[idx + 2] = 0;
-          out[idx + 3] = 255;
+          out[rgbw_idx + 0] = 255;
+          out[rgbw_idx + 1] = 255;
+          out[rgbw_idx + 2] = 0;
+          out[rgbw_idx + 3] = 255;
           break;
         default:
-          out[idx + 0] = 255;
-          out[idx + 1] = 128;
-          out[idx + 2] = 128;
-          out[idx + 3] = 255;
+          out[rgbw_idx + 0] = 255;
+          out[rgbw_idx + 1] = 128;
+          out[rgbw_idx + 2] = 128;
+          out[rgbw_idx + 3] = 255;
           break;
       }
     }
@@ -157,22 +157,20 @@ void renderTrackKernel(unsigned char*         out,
 
 
 
-inline void printNormals(const se::Image<Eigen::Vector3f>& in,
-                         const unsigned int                x_dim,
-                         const unsigned int                y_dim,
+inline void printNormals(const se::Image<Eigen::Vector3f>& normals,
                          const char*                       filename) {
 
-  unsigned char* image = new unsigned char [x_dim * y_dim * 4];
-  for (unsigned int y = 0; y < y_dim; ++y) {
-    for (unsigned int x = 0; x < x_dim; ++x){
-      const Eigen::Vector3f n = in[x + y * x_dim];
-      image[4 * x_dim * y + 4 * x + 0] = (n.x() / 2 + 0.5) * 255;
-      image[4 * x_dim * y + 4 * x + 1] = (n.y() / 2 + 0.5) * 255;
-      image[4 * x_dim * y + 4 * x + 2] = (n.z() / 2 + 0.5) * 255;
-      image[4 * x_dim * y + 4 * x + 3] = 255;
+  unsigned char* image = new unsigned char [normals.width() * normals.height() * 4];
+  for (unsigned int y = 0; y < normals.height(); ++y) {
+    for (unsigned int x = 0; x < normals.width(); ++x){
+      const Eigen::Vector3f n = normals[x + normals.width() * y];
+      image[4 * normals.width() * y + 4 * x + 0] = (n.x() / 2 + 0.5) * 255;
+      image[4 * normals.width() * y + 4 * x + 1] = (n.y() / 2 + 0.5) * 255;
+      image[4 * normals.width() * y + 4 * x + 2] = (n.z() / 2 + 0.5) * 255;
+      image[4 * normals.width() * y + 4 * x + 3] = 255;
     }
   }
   lodepng_encode32_file(std::string(filename).append(".png").c_str(),
-      image, x_dim, y_dim);
+      image, normals.width(), normals.height());
 }
 

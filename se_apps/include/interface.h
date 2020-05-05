@@ -488,7 +488,7 @@ class RawDepthReader: public DepthReader {
     /**
      * Returns a vector with the camera matrix parameters. The `x`, `y`, `z`
      * and `w` elements are the x-axis focal length, y-axis focal length,
-     * x-axis optical center and y-axis optical center.
+     * x-axis optical centre and y-axis optical centre.
      */
     inline Eigen::Vector4f getK() {
       return Eigen::Vector4f(531.15, 531.15, 640 / 2, 480 / 2);

@@ -239,60 +239,71 @@ void reduceKernel(float*                 out,
 
 
 void trackKernel(TrackData*                        output,
-                 const se::Image<Eigen::Vector3f>& in_vertex,
-                 const se::Image<Eigen::Vector3f>& in_normal,
-                 const se::Image<Eigen::Vector3f>& ref_vertex,
-                 const se::Image<Eigen::Vector3f>& ref_normal,
-                 const Eigen::Matrix4f&            T_WC,
+                 const se::Image<Eigen::Vector3f>& input_point_cloud_C,
+                 const se::Image<Eigen::Vector3f>& input_normals_C,
+                 const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
+                 const se::Image<Eigen::Vector3f>& surface_normals_M,
+                 const Eigen::Matrix4f&            T_MC,
                  const SensorImpl&                 sensor,
                  const float                       dist_threshold,
                  const float                       normal_threshold) {
 
   TICK();
-  const Eigen::Vector2i in_size( in_vertex.width(),  in_vertex.height());
-  const Eigen::Vector2i ref_size(ref_vertex.width(), ref_vertex.height());
+  const Eigen::Vector2i in_size( input_point_cloud_C.width(),  input_point_cloud_C.height());
+  const Eigen::Vector2i ref_size(surface_point_cloud_M.width(), surface_point_cloud_M.height());
 
 #pragma omp parallel for
-  for (int pixely = 0; pixely < in_size.y(); pixely++) {
-    for (int pixelx = 0; pixelx < in_size.x(); pixelx++) {
-      const Eigen::Vector2i pixel (pixelx, pixely);
+  for (int y = 0; y < in_size.y(); y++) {
+    for (int x = 0; x < in_size.x(); x++) {
+      const Eigen::Vector2i pixel(x, y);
 
-      TrackData & row = output[pixel.x() + pixel.y() * ref_size.x()];
+      TrackData& row = output[pixel.x() + pixel.y() * ref_size.x()];
 
-      if (in_normal[pixel.x() + pixel.y() * in_size.x()].x() == INVALID) {
+      if (input_normals_C[pixel.x() + pixel.y() * in_size.x()].x() == INVALID) {
         row.result = -1;
         continue;
       }
 
-      const Eigen::Vector3f vertex_W = (T_WC *
-          in_vertex[pixel.x() + pixel.y() * in_size.x()].homogeneous()).head<3>();
+      const Eigen::Vector3f point_M = (T_MC *
+          input_point_cloud_C[pixel.x() + pixel.y() * in_size.x()].homogeneous()).head<3>();
 
-      const Eigen::Vector3f vertex_C = in_vertex[pixel.x() + pixel.y() * in_size.x()];
+      const Eigen::Vector3f point_C = input_point_cloud_C[pixel.x() + pixel.y() * in_size.x()];
+      
       Eigen::Vector2f proj_pixel;
-      if (sensor.model.project(vertex_C, &proj_pixel) != srl::projection::ProjectionStatus::Successful) {
+      if (sensor.model.project(point_C, &proj_pixel) == srl::projection::ProjectionStatus::OutsideImage) {
         row.result = -2;
         continue;
       }
 
+      proj_pixel += Eigen::Vector2f::Constant(0.5f);
+
+      // sensor.model.project(point_C, &proj_pixel);
+      // proj_pixel += Eigen::Vector2f::Constant(0.5f);
+      // if (   proj_pixel.x() < 0.5 || proj_pixel.x() >= ref_size.x() - 1.5
+      //     || proj_pixel.y() < 0.5 || proj_pixel.y() >= ref_size.y() - 1.5) {
+      //   row.result = -2;
+      //   continue;
+      // }
+
       const Eigen::Vector2i ref_pixel = proj_pixel.cast<int>();
       const Eigen::Vector3f reference_normal
-          = ref_normal[ref_pixel.x() + ref_pixel.y() * ref_size.x()];
+          = surface_normals_M[ref_pixel.x() + ref_pixel.y() * ref_size.x()];
 
       if (reference_normal.x() == INVALID) {
         row.result = -3;
         continue;
       }
 
-      const Eigen::Vector3f diff = ref_vertex[ref_pixel.x() + ref_pixel.y() * ref_size.x()]
-          - vertex_W;
-      const Eigen::Vector3f projected_normal = T_WC.topLeftCorner<3, 3>()
-          * in_normal[pixel.x() + pixel.y() * in_size.x()];
+      const Eigen::Vector3f diff = surface_point_cloud_M[ref_pixel.x() + ref_pixel.y() * ref_size.x()]
+          - point_M;
+      const Eigen::Vector3f proj_normal = T_MC.topLeftCorner<3, 3>()
+          * input_normals_C[pixel.x() + pixel.y() * in_size.x()];
 
       if (diff.norm() > dist_threshold) {
         row.result = -4;
         continue;
       }
-      if (projected_normal.dot(reference_normal) < normal_threshold) {
+      if (proj_normal.dot(reference_normal) < normal_threshold) {
         row.result = -5;
         continue;
       }
@@ -302,7 +313,7 @@ void trackKernel(TrackData*                        output,
       row.J[1] = reference_normal.y();
       row.J[2] = reference_normal.z();
 
-      Eigen::Vector3f cross_res = vertex_W.cross(reference_normal);
+      Eigen::Vector3f cross_res = point_M.cross(reference_normal);
       row.J[3] = cross_res.x();
       row.J[4] = cross_res.y();
       row.J[5] = cross_res.z();
@@ -313,7 +324,7 @@ void trackKernel(TrackData*                        output,
 
 
 
-bool updatePoseKernel(Eigen::Matrix4f& T_WC,
+bool updatePoseKernel(Eigen::Matrix4f& T_MC,
                       const float*     reduction_output,
                       float            icp_threshold) {
 
@@ -322,7 +333,7 @@ bool updatePoseKernel(Eigen::Matrix4f& T_WC,
   Eigen::Map<const Eigen::Matrix<float, 8, 32, Eigen::RowMajor> > values(reduction_output);
   Eigen::Matrix<float, 6, 1> x = solve(values.row(0).segment(1, 27));
   Eigen::Matrix4f delta = Sophus::SE3<float>::exp(x).matrix();
-  T_WC = delta * T_WC;
+  T_MC = delta * T_MC;
 
   if (x.norm() < icp_threshold)
     res = true;
@@ -333,8 +344,8 @@ bool updatePoseKernel(Eigen::Matrix4f& T_WC,
 
 
 
-bool checkPoseKernel(Eigen::Matrix4f&       T_WC,
-                     Eigen::Matrix4f&       previous_T_WC,
+bool checkPoseKernel(Eigen::Matrix4f&       T_MC,
+                     Eigen::Matrix4f&       previous_T_MC,
                      const float*           reduction_output,
                      const Eigen::Vector2i& image_size,
                      float                  track_threshold) {
@@ -345,7 +356,7 @@ bool checkPoseKernel(Eigen::Matrix4f&       T_WC,
 
   if ((std::sqrt(values(0, 0) / values(0, 28)) > 2e-2)
       || (values(0, 28) / (image_size.x() * image_size.y()) < track_threshold)) {
-    T_WC = previous_T_WC;
+    T_MC = previous_T_MC;
     return false;
   } else {
     return true;

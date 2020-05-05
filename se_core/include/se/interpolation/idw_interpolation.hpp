@@ -37,14 +37,14 @@ template <typename Precision, typename FieldType,
          template<typename FieldT> class OctreeT,
          class FieldSelector>
 static inline std::pair<Precision, bool>
-    idw_interp(const OctreeT<FieldType>& octree, const Eigen::Vector3f& pos, 
+    idw_interp(const OctreeT<FieldType>& octree, const Eigen::Vector3f& voxel_coord_f,
         FieldSelector select) {
       std::pair<Precision, Eigen::Vector3i> samples[8];
 
       Node<FieldType> * stack[CAST_STACK_DEPTH] = {};
       int voxel_depth = octree.voxelDepth();
       auto base_ptr = se::internal::fetch(stack, octree.root(), voxel_depth,
-          pos.cast<int>());
+          voxel_coord_f.cast<int>());
       std::cout << "base octant: \n" << se::keyops::decode(base_ptr->code_) << std::endl;
 
       for(int i = 1; i < 7; ++i) {

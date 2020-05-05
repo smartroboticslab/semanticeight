@@ -86,15 +86,35 @@ namespace se {
       return (n < 2 ? 0 : 1 + log2_const(n/2));
     }
 
-    static inline Eigen::Matrix4f toMatrix4f(const Eigen::Vector3f& trans) {
-      Eigen::Matrix4f se3_mat;  
-      se3_mat << 1.f ,  0.f ,  0.f , trans.x(), 
-              0.f ,  1.f ,  0.f , trans.y(), 
-              0.f ,  0.f ,  1.f , trans.z(), 
-              0.f ,  0.f ,  0.f ,  1.f;
-      return se3_mat;
+    static inline Eigen::Vector3f toTranslation(const Eigen::Matrix4f& T) {
+      Eigen::Vector3f t = T.block<3,1>(0,3);
+      return t;
     }
 
+    static inline Eigen::Matrix4f toTransformation(const Eigen::Vector3f& t) {
+      Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+      T.block<3,1>(0,3) = t;
+      return T;
+    }
+
+    static inline Eigen::Matrix4f toTransformation(const Eigen::Matrix3f& R, const Eigen::Vector3f& t) {
+      Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+      T.block<3,3>(0,0) = R;
+      T.block<3,1>(0,3) = t;
+      return T;
+    }
+
+    static inline Eigen::Vector3f toInverseTranslation(const Eigen::Matrix4f& T) {
+      Eigen::Vector3f t = -T.block<3,3>(0,0).inverse() * T.block<3,1>(0,3);
+      return t;
+    }
+
+    static inline Eigen::Matrix4f toInverseTransformation(const Eigen::Matrix4f& T) {
+      Eigen::Matrix4f T_inv = Eigen::Matrix4f::Identity();
+      T_inv.block<3,3>(0,0) = T.block<3,3>(0,0).inverse();
+      T_inv.block<3,1>(0,3) = -T.block<3,3>(0,0).inverse() * T.block<3,1>(0,3);
+      return T_inv;
+    }
 
     template <typename T>
       static inline typename std::enable_if<std::is_arithmetic<T>::value, T>::type

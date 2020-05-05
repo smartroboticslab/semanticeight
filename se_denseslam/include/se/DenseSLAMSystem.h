@@ -63,14 +63,15 @@ class DenseSLAMSystem {
 
   private:
     Eigen::Vector2i computation_size_;
-    Eigen::Matrix4f T_WC_;
-    Eigen::Matrix4f* render_T_WC_;
+    Eigen::Matrix4f T_MW_;        // World to camera transformation; Convert in/output to map/world frame
+    Eigen::Matrix4f T_MC_;        // Camera pose in map frame
+    Eigen::Matrix4f* render_T_MC_; // Rendering camera pose in map frame
+    Eigen::Matrix4f init_T_MC_;   // Initial camera pose in map frame
     Eigen::Vector3f volume_dimension_;
     Eigen::Vector3i volume_resolution_;
     std::vector<int> iterations_;
     bool tracked_;
     bool integrated_;
-    Eigen::Vector3f init_t_WC_;
     float mu_;
     bool need_render_ = false;
     Configuration config_;
@@ -80,8 +81,8 @@ class DenseSLAMSystem {
     std::vector<float> gaussian_;
 
     // inter-frame
-    se::Image<Eigen::Vector3f> vertex_;
-    se::Image<Eigen::Vector3f> normal_;
+    se::Image<Eigen::Vector3f> surface_point_cloud_M_;
+    se::Image<Eigen::Vector3f> surface_normals_M_;
 
     std::vector<se::key_t> allocation_list_;
     std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > discrete_vol_ptr_;
@@ -90,13 +91,13 @@ class DenseSLAMSystem {
     // intra-frame
     std::vector<float> reduction_output_;
     std::vector<se::Image<float>  > scaled_depth_;
-    std::vector<se::Image<Eigen::Vector3f> > input_vertex_;
-    std::vector<se::Image<Eigen::Vector3f> > input_normal_;
+    std::vector<se::Image<Eigen::Vector3f> > input_point_cloud_C_;
+    std::vector<se::Image<Eigen::Vector3f> > input_normals_C_;
     se::Image<float> float_depth_;
     se::Image<uint32_t> rgba_;
     std::vector<TrackData>  tracking_result_;
-    Eigen::Matrix4f previous_T_WC_;
-    Eigen::Matrix4f raycast_T_WC_;
+    Eigen::Matrix4f previous_T_MC_;
+    Eigen::Matrix4f raycast_T_MC_;
 
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -109,15 +110,15 @@ class DenseSLAMSystem {
      * reconstructed volume in voxels.
      * \param[in] volume_dimension_ The x, y and z dimensions of the
      * reconstructed volume in meters.
-     * \param[in] init_t_WC The x, y and z coordinates of the initial camera
-     * position. The camera orientation is assumed to be aligned with the axes.
+     * \param[in] t_MW The x, y and z coordinates of the world to map frame translation.
+     * The map frame rotation is assumed to be aligned with the world frame.
      * \param[in] pyramid See ::Configuration.pyramid for more details.
      * \param[in] config_ The pipeline options.
      */
     DenseSLAMSystem(const Eigen::Vector2i& input_size,
                     const Eigen::Vector3i& volume_resolution_,
                     const Eigen::Vector3f& volume_dimension_,
-                    const Eigen::Vector3f& init_t_WC,
+                    const Eigen::Vector3f& t_MW,
                     std::vector<int> &     pyramid,
                     const Configuration&   config_);
     /**
@@ -128,16 +129,20 @@ class DenseSLAMSystem {
      * reconstructed volume in voxels.
      * \param[in] volume_dimension_ The x, y and z dimensions of the
      * reconstructed volume in meters.
-     * \param[in] init_T_WC The initial camera pose encoded in a 4x4 matrix.
+     * \param[in] T_MW The world to map frame transformation encoded in a 4x4 matrix.
      * \param[in] pyramid See ::Configuration.pyramid for more details.
      * \param[in] config_ The pipeline options.
      */
     DenseSLAMSystem(const Eigen::Vector2i& input_size,
                     const Eigen::Vector3i& volume_resolution_,
                     const Eigen::Vector3f& volume_dimension_,
-                    const Eigen::Matrix4f& init_T_WC,
+                    const Eigen::Matrix4f& T_MW,
                     std::vector<int> &     pyramid,
                     const Configuration&   config_);
+
+    ~DenseSLAMSystem() {
+        delete render_T_MC_;
+    }
 
     /**
      * Preprocess a single depth frame and add it to the pipeline.
@@ -198,8 +203,8 @@ class DenseSLAMSystem {
     bool integrate(unsigned frame);
 
     /**
-     * Raycast the map from the current pose to create a point cloud (vertex
-     * map) and respective normal vectors (normal map). The vertex and normal
+     * Raycast the map from the current pose to create a point cloud (point cloud
+     * map) and respective normal vectors (normal map). The point cloud and normal
      * maps are then used to track the next frame in DenseSLAMSystem::tracking.
      * This is the fourth stage of the pipeline.
      *
@@ -226,7 +231,7 @@ class DenseSLAMSystem {
 
     /**
      * Render the current 3D reconstruction. This function performs raycasting
-     * if needed, otherwise it uses the vertex and normal maps created in
+     * if needed, otherwise it uses the point cloud and normal maps created in
      * DenseSLAMSystem::raycasting.
      *
      * \param[out] out A pointer to an array containing the rendered frame.
@@ -316,43 +321,159 @@ class DenseSLAMSystem {
     }
 
     /**
-     * Get the current camera position.
+     * Get the translation of the world frame to the map frame.
      *
-     * \return A vector containing the x, y and z coordinates of the camera.
+     * \return A vector containing the x, y and z coordinates of the translation.
      */
-    Eigen::Vector3f getPosition() {
-      return T_WC_.block<3,1>(0,3) - init_t_WC_;
+    Eigen::Vector3f getWorldToMapTranslation() {
+      return se::math::toTranslation(T_MW_);
     }
 
     /**
-     * Get the initial camera position.
+     * Get the transformation of the world frame to map frame.
      *
-     * \return A vector containing the x, y and z coordinates of the camera.
+     * \return The rotation (3x3 rotation matrix) and translation (3x1 vector) encoded in a 4x4 matrix.
      */
-    Eigen::Vector3f getInitialPosition(){
-      return init_t_WC_;
+    Eigen::Matrix4f getWorldToMapTransformation() {
+      return T_MW_;
     }
 
     /**
-     * Get the current camera pose.
+     * Get the translation of the map frame to world frame.
      *
-     * \return The current camera pose T_WC encoded in a 4x4 matrix.
+     * \return A vector containing the x, y and z coordinates of the translation.
      */
-    Eigen::Matrix4f getPose() {
-      return T_WC_;
+    Eigen::Vector3f getMapToWorldTranslation() {
+      Eigen::Vector3f t_WM = se::math::toInverseTranslation(T_MW_);
+      return t_WM;
     }
 
     /**
-     * Set the current camera pose.
+     * Get the transformation of the map frame to world frame.
      *
-     * @note The value of the DenseSLAMSystem::init_t_WC member is added
-     * to the position encoded in `pose`.
+     * \return The rotation (3x3 rotation matrix) and translation (3x1 vector) encoded in a 4x4 matrix.
+     */
+    Eigen::Matrix4f getMapToWorldTransformation() {
+      Eigen::Matrix4f T_WM = se::math::toInverseTransformation(T_MW_);
+      return T_WM;
+    }
+
+    /**
+     * Get the current camera position in map frame.
+     *
+     * \return A vector containing the x, y and z coordinates t_MC.
+     */
+    Eigen::Vector3f getCameraPositionM() {
+      return se::math::toTranslation(T_MC_);
+    }
+
+    /**
+     * Get the current camera position in world frame.
+     *
+     * \return A vector containing the x, y and z coordinates of t_WC.
+     */
+    Eigen::Vector3f getCameraPositionW() {
+      Eigen::Matrix4f T_WC = se::math::toInverseTransformation(T_MW_) * init_T_MC_;
+      Eigen::Vector3f t_WC = se::math::toTranslation(T_WC);
+      return t_WC;
+    }
+
+    /**
+     * Get the initial camera position in map frame.
+     *
+     * \return A vector containing the x, y and z coordinates of init_t_MC.
+     */
+    Eigen::Vector3f getInitialCameraPositionM(){
+      return se::math::toTranslation(T_MC_);
+    }
+
+    /**
+     * Get the initial camera position in world frame.
+     *
+     * \return A vector containing the x, y and z coordinates of init_t_WC.
+     */
+    Eigen::Vector3f getInitialCameraPositionW(){
+      Eigen::Matrix4f init_T_WC = se::math::toInverseTransformation(T_MW_) * init_T_MC_;
+      Eigen::Vector3f init_t_WC = se::math::toTranslation(init_T_WC);
+      return init_t_WC;
+    }
+
+    /**
+     * Get the current camera pose in map frame.
+     *
+     * \return The current camera pose T_MC encoded in a 4x4 matrix.
+     */
+    Eigen::Matrix4f getCameraPoseM() {
+      return T_MC_;
+    }
+
+    /**
+     * Get the current camera pose in world frame.
+     *
+     * \return The current camera pose T_MC encoded in a 4x4 matrix.
+     */
+    Eigen::Matrix4f getCameraPoseW() {
+      Eigen::Matrix4f T_WC = se::math::toInverseTransformation(T_MW_) * T_MC_;
+      return T_WC;
+    }
+
+    /**
+     * Get the initial camera pose in map frame.
+     *
+     * \return The initial camera pose init_T_MC_ encoded in a 4x4 matrix.
+     */
+    Eigen::Matrix4f getInitialCameraPoseM() {
+      return init_T_MC_;
+    }
+
+    /**
+     * Get the inital camera pose in world frame.
+     *
+     * \return The initial camera pose T_MC encoded in a 4x4 matrix.
+     */
+    Eigen::Matrix4f getInitialCameraPoseW() {
+      Eigen::Matrix4f init_T_WC = se::math::toInverseTransformation(T_MW_) * init_T_MC_;
+      return init_T_WC;
+    }
+
+    /**
+     * Set the current camera pose provided in map frame.
+     *
+     * \param[in] T_MC The desired camera pose encoded in a 4x4 matrix.
+     */
+    void setCameraPoseM(const Eigen::Matrix4f& T_MC) {
+      T_MC_ = T_MC;
+    }
+
+    /**
+     * Set the current camera pose provided in world frame.
+     *
+     * @note T_MW_ is added to the pose to process the information further in map frame.
      *
      * \param[in] T_WC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setPose(const Eigen::Matrix4f T_WC) {
-      T_WC_ = T_WC;
-      T_WC_.block<3,1>(0,3) += init_t_WC_;
+    void setCameraPoseW(const Eigen::Matrix4f& T_WC) {
+      T_MC_ = T_MW_ * T_WC;
+    }
+
+    /**
+     * Set the initial camera pose provided in map frame.
+     *
+     * \param[in] init_T_MC The initial camera pose encoded in a 4x4 matrix.
+     */
+    void setInitialCameraPoseM(const Eigen::Matrix4f& init_T_MC) {
+      init_T_MC_ = init_T_MC;
+    }
+
+    /**
+     * Set the initial camera pose provided in world frame.
+     *
+     * @note T_MW_ is added to the pose to process the information further in map frame.
+     *
+     * \param[in] init_T_WC The initial camera pose encoded in a 4x4 matrix.
+     */
+    void setInitialCameraPoseW(const Eigen::Matrix4f& init_T_WC) {
+      init_T_MC_ = T_MW_ * init_T_WC;
     }
 
     /**
@@ -360,13 +481,13 @@ class DenseSLAMSystem {
      *
      * \param[in] T_WC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setViewPose(Eigen::Matrix4f *T_WC = nullptr) {
-      if (T_WC == nullptr){
-        render_T_WC_ = &T_WC_;
+    void setViewPoseM(Eigen::Matrix4f* render_T_MC = nullptr) {
+      if (render_T_MC == nullptr){
+        render_T_MC_ = &T_MC_;
         need_render_ = false;
       }
       else {
-        render_T_WC_ = T_WC;
+        render_T_MC_ = render_T_MC;
         need_render_ = true;
       }
     }
@@ -375,10 +496,12 @@ class DenseSLAMSystem {
      * Get the camera pose used to render the 3D reconstruction. The default
      * is the current frame's camera pose.
      *
-     * \return The current camera pose T_WC encoded in a 4x4 matrix.
+     * @note The view pose is currently only provided in map frame.
+     *
+     * \return The current rendering camera pose render_T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f *getViewPose() {
-      return (render_T_WC_);
+    Eigen::Matrix4f *getViewPoseM() {
+      return render_T_MC_;
     }
 
     /**

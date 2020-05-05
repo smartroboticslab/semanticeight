@@ -79,58 +79,60 @@ namespace se {
 
 template<typename T>
 void raycastKernel(const Volume<T>&            volume,
-                   se::Image<Eigen::Vector3f>& vertex,
-                   se::Image<Eigen::Vector3f>& normal,
-                   const Eigen::Matrix4f&      T_WC,
+                   se::Image<Eigen::Vector3f>& surface_point_cloud_M,
+                   se::Image<Eigen::Vector3f>& surface_normals_M,
+                   const Eigen::Matrix4f&      T_MC,
                    const SensorImpl&           sensor,
                    const float                 step,
                    const float                 large_step) {
 
   TICK();
 #pragma omp parallel for
-  for (int y = 0; y < vertex.height(); y++) {
+  for (int y = 0; y < surface_point_cloud_M.height(); y++) {
 #pragma omp simd
-    for (int x = 0; x < vertex.width(); x++) {
-      Eigen::Vector4f hit;
+    for (int x = 0; x < surface_point_cloud_M.width(); x++) {
+      Eigen::Vector4f surface_intersection_M;
 
-      const Eigen::Vector2f pixel(x, y);
-      Eigen::Vector3f dir_C;
-      sensor.model.backProject(pixel, &dir_C);
-      const Eigen::Vector3f dir_W = (T_WC.topLeftCorner<3, 3>() * dir_C.normalized()).head(3);
-      const Eigen::Vector3f t_WC = T_WC.topRightCorner<3, 1>();
+      const Eigen::Vector2f pixel_f = Eigen::Vector2f(x, y);
+      const Eigen::Vector2i pixel = pixel_f.cast<int>();
+      Eigen::Vector3f ray_dir_C;
+      sensor.model.backProject(pixel_f, &ray_dir_C);
+      const Eigen::Vector3f ray_dir_M = (T_MC.topLeftCorner<3, 3>() * ray_dir_C.normalized()).head(3);
+      const Eigen::Vector3f t_MC = se::math::toTranslation(T_MC);
 
 //      if (std::is_same<T, MultiresOFusion>::value) {
       if (false) {
-        hit = T::raycast(volume, t_WC, dir_W, sensor.near_plane, sensor.far_plane, 0, 0, 0);
+        surface_intersection_M = T::raycast(volume, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
       } else {
-        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_WC, dir_W, sensor.near_plane, sensor.far_plane);
+        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_MC, ray_dir_M, 
+            sensor.near_plane, sensor.far_plane);
         ray.next();
         const float t_min = ray.tmin(); /* Get distance to the first intersected block */
-        hit = t_min > 0.f
-              ? T::raycast(volume, t_WC, dir_W, t_min, ray.tmax(), sensor.mu, step, large_step)
+        surface_intersection_M = t_min > 0.f
+              ? T::raycast(volume, t_MC, ray_dir_M, t_min, ray.tmax(), sensor.mu, step, large_step)
               : Eigen::Vector4f::Zero();
       }
-      if (hit.w() >= 0.f) {
-        vertex[x + y * vertex.width()] = hit.head<3>();
-        Eigen::Vector3f surface_normal = volume.grad(hit.head<3>(),
-            int(hit.w() + 0.5f),
-            [](const auto& val){ return val.x; });
-        se::internal::scale_image(x, y) = static_cast<int>(hit.w());
+      if (surface_intersection_M.w() >= 0.f) {
+        surface_point_cloud_M[x + y * surface_point_cloud_M.width()] = surface_intersection_M.head<3>();
+        Eigen::Vector3f surface_normal = volume.grad(surface_intersection_M.head<3>(),
+            int(surface_intersection_M.w() + 0.5f),
+            [](const auto& data){ return data.x; });
+        se::internal::scale_image(x, y) = static_cast<int>(surface_intersection_M.w());
         if (surface_normal.norm() == 0.f) {
-          normal[pixel.x() + pixel.y() * normal.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
+          surface_normals_M[pixel.x() + pixel.y() * surface_normals_M.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
         } else {
-          // Invert normals for TSDF representations.
-          normal[pixel.x() + pixel.y() * normal.width()] = T::invert_normals
+          // Invert surface normals for TSDF representations.
+          surface_normals_M[pixel.x() + pixel.y() * surface_normals_M.width()] = T::invert_normals
               ? (-1.f * surface_normal).normalized()
               : surface_normal.normalized();
         }
       } else {
-        vertex[pixel.x() + pixel.y() * vertex.width()] = Eigen::Vector3f::Zero();
-        normal[pixel.x() + pixel.y() * normal.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
+        surface_point_cloud_M[pixel.x() + pixel.y() * surface_point_cloud_M.width()] = Eigen::Vector3f::Zero();
+        surface_normals_M[pixel.x() + pixel.y() * surface_normals_M.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
       }
     }
   }
-  TOCK("raycastKernel", vertex.width() * vertex.height());
+  TOCK("raycastKernel", surface_point_cloud_M.width() * surface_point_cloud_M.height());
 }
 
 
@@ -159,60 +161,72 @@ template <typename T>
 void renderVolumeKernel(const Volume<T>&                  volume,
                         unsigned char*                    out, // RGBW packed
                         const Eigen::Vector2i&            image_size,
-                        const Eigen::Matrix4f&            T_WC,
+                        const Eigen::Matrix4f&            T_MC,
                         const SensorImpl&                 sensor,
                         const float                       step,
                         const float                       large_step,
-                        const Eigen::Vector3f&            light,
-                        const Eigen::Vector3f&            ambient,
-                        bool                              raycast_normals,
-                        const se::Image<Eigen::Vector3f>& vertex,
-                        const se::Image<Eigen::Vector3f>& normal) {
-
+                        const Eigen::Vector3f&            light_M,
+                        const Eigen::Vector3f&            ambient_M,
+                        bool                              do_view_raycast,
+                        const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
+                        const se::Image<Eigen::Vector3f>& surface_normals_M) {
   TICK();
 #pragma omp parallel for
   for (int y = 0; y < image_size.y(); y++) {
+#pragma omp simd
     for (int x = 0; x < image_size.x(); x++) {
-      Eigen::Vector4f hit;
-      Eigen::Vector3f test, surface_normal;
-      const int idx = (x + image_size.x()*y) * 4;
 
-      if (raycast_normals) {
-        const Eigen::Vector2f pixel(x, y);
-        Eigen::Vector3f dir_C;
-        sensor.model.backProject(pixel, &dir_C);
-        const Eigen::Vector3f dir_W = (T_WC.topLeftCorner<3, 3>() * dir_C.normalized()).head(3);
-        const Eigen::Vector3f t_WC = T_WC.topRightCorner<3, 1>();
-//        if (std::is_same<T, MultiresOFusion>::value) {
+      Eigen::Vector4f surface_intersection_M;
+      Eigen::Vector3f surface_point_M, surface_normal_M;
+      const int idx = (x + image_size.x() * y) * 4;
+
+      if (do_view_raycast) {
+        const Eigen::Vector2f pixel_f = Eigen::Vector2f(x, y);
+        const Eigen::Vector2i pixel = pixel_f.cast<int>();
+        Eigen::Vector3f ray_dir_C;
+        sensor.model.backProject(pixel_f, &ray_dir_C);
+        const Eigen::Vector3f ray_dir_M = (T_MC.topLeftCorner<3, 3>() * ray_dir_C.normalized()).head(3);
+        const Eigen::Vector3f t_MC = T_MC.topRightCorner<3, 1>();
+
+  //      if (std::is_same<T, MultiresOFusion>::value) {
         if (false) {
-          hit = T::raycast(volume, t_WC, dir_W, sensor.near_plane, sensor.far_plane, 0, 0, 0);
+          surface_intersection_M = T::raycast(volume, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
         } else {
-          se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_WC, dir_W, sensor.near_plane, sensor.far_plane);
+          se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane);
           ray.next();
           const float t_min = ray.tmin(); /* Get distance to the first intersected block */
-          hit = t_min > 0.f
-                ? T::raycast(volume, t_WC, dir_W, t_min, ray.tmax(), sensor.mu, step, large_step)
+          surface_intersection_M = t_min > 0.f
+                ? T::raycast(volume, t_MC, ray_dir_M, t_min, ray.tmax(), sensor.mu, step, large_step)
                 : Eigen::Vector4f::Zero();
         }
-        if (hit.w() >= 0.f) {
-          test = hit.head<3>();
-          surface_normal = volume.grad(test, [](const auto& val){ return val.x; });
-
-          // Invert normals for TSDF representations.
-          surface_normal = T::invert_normals ? -1.f * surface_normal : surface_normal;
+        if (surface_intersection_M.w() >= 0.f) {
+          surface_point_M = surface_intersection_M.head<3>();
+          surface_normal_M = volume.grad(surface_intersection_M.head<3>(),
+              int(surface_intersection_M.w() + 0.5f),
+              [](const auto& data){ return data.x; });
+          se::internal::scale_image(x, y) = static_cast<int>(surface_intersection_M.w());
+          if (surface_normal_M.norm() == 0.f) {
+            surface_normal_M = Eigen::Vector3f(INVALID, 0.f, 0.f);
+          } else {
+            // Invert normals for TSDF representations.
+            surface_normal_M = T::invert_normals
+                ? (-1.f * surface_normal_M).normalized()
+                : surface_normal_M.normalized();
+          }
         } else {
-          surface_normal = Eigen::Vector3f(INVALID, 0.f, 0.f);
+          surface_point_M = Eigen::Vector3f::Zero();
+          surface_normal_M = Eigen::Vector3f(INVALID, 0.f, 0.f);
         }
       } else {
-        test = vertex[x + image_size.x() * y];
-        surface_normal = normal[x + image_size.x() * y];
+        surface_point_M = surface_point_cloud_M[x + image_size.x() * y];
+        surface_normal_M = surface_normals_M[x + image_size.x() * y];
       }
 
-      if (surface_normal.x() != INVALID && surface_normal.norm() > 0.f) {
-        const Eigen::Vector3f diff = (test - light).normalized();
+      if (surface_normal_M.x() != INVALID && surface_normal_M.norm() > 0.f) {
+        const Eigen::Vector3f diff = (surface_point_M - light_M).normalized();
         const Eigen::Vector3f dir
-            = Eigen::Vector3f::Constant(fmaxf(surface_normal.normalized().dot(diff), 0.f));
-        Eigen::Vector3f col = dir + ambient;
+            = Eigen::Vector3f::Constant(fmaxf(surface_normal_M.normalized().dot(diff), 0.f));
+        Eigen::Vector3f col = dir + ambient_M;
         se::math::clamp(col, Eigen::Vector3f::Zero(), Eigen::Vector3f::Ones());
         col = col.cwiseProduct(se::internal::color_map[se::internal::scale_image(x, y)]);
         out[idx + 0] = col.x();
@@ -232,9 +246,7 @@ void renderVolumeKernel(const Volume<T>&                  volume,
 
 
 
-inline void printNormals(const se::Image<Eigen::Vector3f>& in,
-                         const unsigned int                x_dim,
-                         const unsigned int                y_dim,
+inline void printNormals(const se::Image<Eigen::Vector3f>& normals,
                          const char*                       filename);
 
 
@@ -243,30 +255,30 @@ inline void printNormals(const se::Image<Eigen::Vector3f>& in,
 template <typename T>
 void raycast_full(
     const Volume<T>&                                                         volume,
-    std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f>>& points,
-    const Eigen::Vector3f&                                                   origin,
-    const Eigen::Vector3f&                                                   direction,
+    std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f>>& surface_points_M,
+    const Eigen::Vector3f&                                                   ray_origin_M,
+    const Eigen::Vector3f&                                                   ray_dir_M,
     const float                                                              far_plane,
     const float                                                              step,
     const float                                                              large_step) {
 
   float t = 0;
   float step_size = large_step;
-  float f_t = volume.interp(origin + direction * t, [](const auto& val){ return val.x;}).first;
+  float f_t = volume.interp(ray_origin_M + ray_dir_M * t, [](const auto& data){ return data.x;}).first;
   t += step;
   float f_tt = 1.f;
 
   for (; t < far_plane; t += step_size) {
-    f_tt = volume.interp(origin + direction * t, [](const auto& val){ return val.x;}).first;
+    f_tt = volume.interp(ray_origin_M + ray_dir_M * t, [](const auto& data){ return data.x;}).first;
     if (f_tt < 0.f && f_t > 0.f && std::abs(f_tt - f_t) < 0.5f) {     // got it, jump out of inner loop
-      const auto data_t  = volume.get(origin + direction * (t - step_size));
-      const auto data_tt = volume.get(origin + direction * t);
+      const auto data_t  = volume.get(ray_origin_M + ray_dir_M * (t - step_size));
+      const auto data_tt = volume.get(ray_origin_M + ray_dir_M * t);
       if (f_t == 1.0 || f_tt == 1.0 || data_t.y == 0 || data_tt.y == 0 ) {
         f_t = f_tt;
         continue;
       }
       t = t + step_size * f_tt / (f_t - f_tt);
-      points.push_back((origin + direction * t).homogeneous());
+      surface_points_M.push_back((ray_origin_M + ray_dir_M * t).homogeneous());
     }
     if (f_tt < std::abs(0.8f)) {
       // coming closer, reduce step_size

@@ -120,36 +120,36 @@ TEST(RGBABlending, Blend) {
 class DepthSaveLoad : public ::testing::Test {
   protected:
     virtual void SetUp() {
-      depth_ = new uint16_t[depth_size_pixels_]();
+      depth_image_ = new uint16_t[num_pixels_]();
 
       // Initialize the test image with a patter.
       for (size_t w = 0; w < depth_width_; ++w) {
         for (size_t h = 0; h < depth_height_; ++h) {
           if (w > h) {
-            depth_[w + depth_width_ * h] = UINT16_MAX / 4;
+            depth_image_[w + depth_width_ * h] = UINT16_MAX / 4;
           } else if (w == h) {
-            depth_[w + depth_width_ * h] = UINT16_MAX / 2;
+            depth_image_[w + depth_width_ * h] = UINT16_MAX / 2;
           } else {
-            depth_[w + depth_width_ * h] = UINT16_MAX;
+            depth_image_[w + depth_width_ * h] = UINT16_MAX;
           }
         }
       }
     }
 
-    uint16_t* depth_;
+    uint16_t* depth_image_;
     const size_t depth_width_  = 64;
     const size_t depth_height_ = 64;
-    const size_t depth_size_pixels_ = depth_width_ * depth_height_;
-    const size_t depth_size_bytes_ = sizeof(uint16_t) * depth_size_pixels_;
-    const Eigen::Vector2i depth_size_
-      = Eigen::Vector2i(depth_width_, depth_height_);
+    const size_t num_pixels_ = depth_width_ * depth_height_;
+    const size_t depth_size_bytes_ = sizeof(uint16_t) * num_pixels_;
+    const Eigen::Vector2i image_size_
+        = Eigen::Vector2i(depth_width_, depth_height_);
 };
 
 
 
 TEST_F(DepthSaveLoad, SaveThenLoadPNG) {
   // Save the image.
-  const int save_ok = save_depth_png(depth_, depth_size_, "/tmp/depth.png");
+  const int save_ok = save_depth_png(depth_image_, image_size_, "/tmp/depth.png");
   EXPECT_EQ(save_ok, 0);
 
   // Load the image.
@@ -161,7 +161,7 @@ TEST_F(DepthSaveLoad, SaveThenLoadPNG) {
   // Compare the loaded image with the saved one.
   EXPECT_EQ(depth_in_size.x(), depth_width_);
   EXPECT_EQ(depth_in_size.y(), depth_height_);
-  EXPECT_EQ(memcmp(depth_in, depth_, depth_size_bytes_), 0);
+  EXPECT_EQ(memcmp(depth_in, depth_image_, depth_size_bytes_), 0);
 
   free(depth_in);
 }
@@ -170,7 +170,7 @@ TEST_F(DepthSaveLoad, SaveThenLoadPNG) {
 
 TEST_F(DepthSaveLoad, SaveThenLoadPGM) {
   // Save the image.
-  const int save_ok = save_depth_pgm(depth_, depth_size_, "/tmp/depth.pgm");
+  const int save_ok = save_depth_pgm(depth_image_, image_size_, "/tmp/depth.pgm");
   EXPECT_EQ(save_ok, 0);
 
   // Load the image.
@@ -182,7 +182,7 @@ TEST_F(DepthSaveLoad, SaveThenLoadPGM) {
   // Compare the loaded image with the saved one.
   EXPECT_EQ(depth_in_size.x(), depth_width_);
   EXPECT_EQ(depth_in_size.y(), depth_height_);
-  EXPECT_EQ(memcmp(depth_in, depth_, depth_size_bytes_), 0);
+  EXPECT_EQ(memcmp(depth_in, depth_image_, depth_size_bytes_), 0);
 
   free(depth_in);
 }

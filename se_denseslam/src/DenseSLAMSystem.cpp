@@ -53,16 +53,16 @@ static bool print_kernel_timing = false;
 DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
                                  const Eigen::Vector3i& volume_resolution,
                                  const Eigen::Vector3f& volume_dimensions,
-                                 const Eigen::Vector3f& init_t_WC,
+                                 const Eigen::Vector3f& t_MW,
                                  std::vector<int> & pyramid,
                                  const Configuration& config):
       DenseSLAMSystem(input_size, volume_resolution, volume_dimensions,
-          se::math::toMatrix4f(init_t_WC), pyramid, config) { }
+          se::math::toTransformation(t_MW), pyramid, config) { }
 
 DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
                                  const Eigen::Vector3i& volume_resolution,
                                  const Eigen::Vector3f& volume_dimensions,
-                                 const Eigen::Matrix4f& init_T_WC,
+                                 const Eigen::Matrix4f& T_MW,
                                  std::vector<int> & pyramid,
                                  const Configuration& config) :
   computation_size_(input_size),
@@ -72,26 +72,26 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
         config.camera[0] / config.compute_size_ratio, config.camera[1] / config.compute_size_ratio,
         config.camera[2] / config.compute_size_ratio, config.camera[3] / config.compute_size_ratio,
         Eigen::VectorXf(0), Eigen::VectorXf(0)}),
-  vertex_(computation_size_.x(), computation_size_.y()),
-  normal_(computation_size_.x(), computation_size_.y()),
+  surface_point_cloud_M_(computation_size_.x(), computation_size_.y()),
+  surface_normals_M_(computation_size_.x(), computation_size_.y()),
   float_depth_(computation_size_.x(), computation_size_.y()),
   rgba_(computation_size_.x(), computation_size_.y())
   {
-
-    this->init_t_WC_ = init_T_WC.block<3,1>(0,3);
+    // Initalise poses
+    T_MW_ = T_MW;
+    T_MC_ = T_MW;
+    init_T_MC_ = T_MC_;
+    raycast_T_MC_ = T_MC_;
+    render_T_MC_ =  &T_MC_;
     this->volume_dimension_ = volume_dimensions;
     this->volume_resolution_ = volume_resolution;
     this->mu_ = config.mu;
-    T_WC_ = init_T_WC;
-    raycast_T_WC_ = init_T_WC;
 
     this->iterations_.clear();
     for (std::vector<int>::iterator it = pyramid.begin();
         it != pyramid.end(); it++) {
       this->iterations_.push_back(*it);
     }
-
-    render_T_WC_ = &T_WC_;
 
     if (getenv("KERNEL_TIMINGS"))
       print_kernel_timing = true;
@@ -105,10 +105,10 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
       scaled_depth_.push_back(se::Image<float>(computation_size_.x() / downsample,
             computation_size_.y() / downsample));
 
-      input_vertex_.push_back(se::Image<Eigen::Vector3f>(computation_size_.x() / downsample,
+      input_point_cloud_C_.push_back(se::Image<Eigen::Vector3f>(computation_size_.x() / downsample,
             computation_size_.y() / downsample));
 
-      input_normal_.push_back(se::Image<Eigen::Vector3f>(computation_size_.x() / downsample,
+      input_normals_C_.push_back(se::Image<Eigen::Vector3f>(computation_size_.x() / downsample,
             computation_size_.y() / downsample));
     }
 
@@ -128,6 +128,8 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
     volume_ = Volume<VoxelImpl>(volume_resolution_.x(), volume_dimension_.x(),
         discrete_vol_ptr_.get());
 }
+
+
 
 
 
@@ -171,15 +173,15 @@ bool DenseSLAMSystem::track(float icp_threshold) {
   for (unsigned int i = 0; i < iterations_.size(); ++i) {
     float scaling_factor = 1.f / float(1 << i);
     SensorImpl scaled_sensor(sensor_, scaling_factor);
-    depth2vertexKernel(input_vertex_[i], scaled_depth_[i], scaled_sensor);
+    depthToPointCloudKernel(input_point_cloud_C_[i], scaled_depth_[i], scaled_sensor);
     if(sensor_.left_hand_frame)
-      vertex2normalKernel<true>(input_normal_[i], input_vertex_[i]);
+      pointCloudToNormalKernel<true>(input_normals_C_[i], input_point_cloud_C_[i]);
     else
-      vertex2normalKernel<false>(input_normal_[i], input_vertex_[i]);
+      pointCloudToNormalKernel<false>(input_normals_C_[i], input_point_cloud_C_[i]);
     local_image_size /= 2;
   }
 
-  previous_T_WC_ = T_WC_;
+  previous_T_MC_ = T_MC_;
 
   for (int level = iterations_.size() - 1; level >= 0; --level) {
     Eigen::Vector2i local_image_size(
@@ -187,18 +189,18 @@ bool DenseSLAMSystem::track(float icp_threshold) {
         computation_size_.y() / (int) pow(2, level));
     for (int i = 0; i < iterations_[level]; ++i) {
 
-      trackKernel(tracking_result_.data(), input_vertex_[level], input_normal_[level],
-          vertex_, normal_, T_WC_, sensor_, dist_threshold, normal_threshold);
+      trackKernel(tracking_result_.data(), input_point_cloud_C_[level], input_normals_C_[level],
+                  surface_point_cloud_M_, surface_normals_M_, T_MC_, sensor_, dist_threshold, normal_threshold);
 
       reduceKernel(reduction_output_.data(), tracking_result_.data(), computation_size_,
           local_image_size);
 
-      if (updatePoseKernel(T_WC_, reduction_output_.data(), icp_threshold))
+      if (updatePoseKernel(T_MC_, reduction_output_.data(), icp_threshold))
         break;
 
     }
   }
-  return checkPoseKernel(T_WC_, previous_T_WC_, reduction_output_.data(),
+  return checkPoseKernel(T_MC_, previous_T_MC_, reduction_output_.data(),
       computation_size_, track_threshold);
 }
 
@@ -213,11 +215,11 @@ bool DenseSLAMSystem::integrate(unsigned int frame) {
     * computation_size_.x() * computation_size_.y();
   allocation_list_.reserve(total);
 
-  const Sophus::SE3f& T_CW = Sophus::SE3f(T_WC_).inverse();
+  const Eigen::Matrix4f T_CM = se::math::toInverseTransformation(T_MC_); // TODO:
   const size_t allocated = VoxelImpl::buildAllocationList(
       *volume_.octree_,
       float_depth_,
-      T_WC_,
+      T_MC_,
       sensor_,
       allocation_list_.data(),
       allocation_list_.capacity());
@@ -227,7 +229,7 @@ bool DenseSLAMSystem::integrate(unsigned int frame) {
   VoxelImpl::integrate(
       *volume_.octree_,
       float_depth_,
-      T_CW,
+      T_CM,
       sensor_,
       frame);
   return true;
@@ -237,9 +239,9 @@ bool DenseSLAMSystem::integrate(unsigned int frame) {
 
 bool DenseSLAMSystem::raycast() {
 
-  raycast_T_WC_ = T_WC_;
+  raycast_T_MC_ = T_MC_;
   float step = volume_dimension_.x() / volume_resolution_.x();
-  raycastKernel(volume_, vertex_, normal_, raycast_T_WC_, sensor_, step, step*BLOCK_SIDE);
+  raycastKernel(volume_, surface_point_cloud_M_, surface_normals_M_, raycast_T_MC_, sensor_, step, step * BLOCK_SIDE);
 
   return true;
 }
@@ -253,13 +255,11 @@ void DenseSLAMSystem::dump_volume(std::string ) {
 void DenseSLAMSystem::renderVolume(unsigned char*         output,
                                    const Eigen::Vector2i& output_size) {
 
-  const float step = volume_dimension_.x() / volume_resolution_.x();
-  const float large_step = 0.75 * sensor_.mu;
+  float step = volume_dimension_.x() / volume_resolution_.x();
   renderVolumeKernel(volume_, output, output_size,
-      *(this->render_T_WC_), sensor_, step, large_step,
-      this->render_T_WC_->topRightCorner<3, 1>(), ambient,
-      !(this->render_T_WC_->isApprox(raycast_T_WC_)), vertex_,
-      normal_);
+      *this->render_T_MC_, sensor_, step, step * BLOCK_SIDE,
+      se::math::toTranslation(*this->render_T_MC_), ambient,
+      !(this->render_T_MC_->isApprox(raycast_T_MC_)), surface_point_cloud_M_, surface_normals_M_);
 }
 
 void DenseSLAMSystem::renderTrack(unsigned char* out,
@@ -301,18 +301,18 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
     for(int z = 0; z < side; ++z)
       for(int y = 0; y < side; ++y)
         for(int x = 0; x < side; ++x) {
-          const Eigen::Vector3i vox = base + Eigen::Vector3i(x, y , z);
-          auto curr = block->data(vox, 0);
+          const Eigen::Vector3i voxel_coord = base + Eigen::Vector3i(x, y , z);
+          auto curr = block->data(voxel_coord, 0);
           auto res = this->volume_.octree_->interp_checked(
-              vox.cast<float>() + offset, 0, [](const auto& val) { return val.x; });
+              voxel_coord.cast<float>() + offset, 0, [](const auto& data) { return data.x; });
           if(res.second >= 0) {
             curr.x = res.first;
             curr.y = this->volume_.octree_->interp(
-                vox.cast<float>() + offset, [](const auto& val) { return val.y; }).first;
+                voxel_coord.cast<float>() + offset, [](const auto& data) { return data.y; }).first;
           } else {
             curr.y = 0;
           }
-          block->data(vox, 0, curr);
+          block->data(voxel_coord, 0, curr);
         }
   };
 
@@ -326,14 +326,14 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
     std::cout << "saving triangle mesh to file :" << filename  << std::endl;
 
     std::vector<Triangle> mesh;
-    auto inside = [](const VoxelImpl::VoxelType::VoxelData& val) {
-      return val.x < 0.f;
+    auto inside = [](const VoxelImpl::VoxelType::VoxelData& data) {
+      return data.x < 0.f;
     };
 
-    auto select = [](const VoxelImpl::VoxelType::VoxelData& val) {
-      return val.x;
+    auto select = [](const VoxelImpl::VoxelType::VoxelData& data) {
+      return data.x;
     };
 
     se::algorithms::marching_cube(*volume_.octree_, select, inside, mesh);
-    writeVtkMesh(filename.c_str(), mesh, this->init_t_WC_);
+    writeVtkMesh(filename.c_str(), mesh, se::math::toInverseTransformation(this->T_MW_));
 }

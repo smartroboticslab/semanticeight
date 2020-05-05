@@ -60,33 +60,33 @@ void bilateralFilterKernel(se::Image<float>&         out,
 #pragma omp parallel for
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      const unsigned int pos = x + y * width;
-      if (in[pos] == 0) {
-        out[pos] = 0;
+      const unsigned int pixel_idx = x + y * width;
+      if (in[pixel_idx] == 0) {
+        out[pixel_idx] = 0;
         continue;
       }
 
-      float sum = 0.0f;
-      float t = 0.0f;
+      float factor_count = 0.0f;
+      float filter_value_sum = 0.0f;
 
-      const float center = in[pos];
+      const float centre_value = in[pixel_idx];
 
       for (int i = -radius; i <= radius; ++i) {
         for (int j = -radius; j <= radius; ++j) {
-          const Eigen::Vector2i curr_pos = Eigen::Vector2i(
+          const Eigen::Vector2i pixel_idx_tmp = Eigen::Vector2i(
               se::math::clamp(x + i, 0, width  - 1),
               se::math::clamp(y + j, 0, height - 1));
-          const float curr_pix = in[curr_pos.x() + curr_pos.y() * width];
-          if (curr_pix > 0.f) {
-            const float mod = se::math::sq(curr_pix - center);
+          const float pixel_value_tmp = in[pixel_idx_tmp.x() + pixel_idx_tmp.y() * width];
+          if (pixel_value_tmp > 0.f) {
+            const float mod = se::math::sq(pixel_value_tmp - centre_value);
             const float factor = gaussian[i + radius]
                 * gaussian[j + radius] * expf(-mod / e_d_squared_2);
-            t += factor * curr_pix;
-            sum += factor;
+            filter_value_sum += factor * pixel_value_tmp;
+            factor_count += factor;
           }
         }
       }
-      out[pos] = t / sum;
+      out[pixel_idx] = filter_value_sum / factor_count;
     }
   }
   TOCK("bilateralFilterKernel", width * height);
@@ -94,97 +94,97 @@ void bilateralFilterKernel(se::Image<float>&         out,
 
 
 
-void depth2vertexKernel(se::Image<Eigen::Vector3f>& vertex,
-                        const se::Image<float>&     depth_image,
-                        const SensorImpl&           sensor) {
+void depthToPointCloudKernel(se::Image<Eigen::Vector3f>& point_cloud_C,
+                             const se::Image<float>&     depth_image,
+                             const SensorImpl&           sensor) {
 
   TICK();
 #pragma omp parallel for
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
       if (depth_image[x + y * depth_image.width()] > 0) {
-        const Eigen::Vector2f pixel(x, y);
-        Eigen::Vector3f dir_C;
-        sensor.model.backProject(pixel, &dir_C);
-        vertex[x + y * depth_image.width()] = depth_image[x + y * depth_image.width()] * dir_C;
+        const Eigen::Vector2f pixel_f(x, y);
+        Eigen::Vector3f ray_dir_C;
+        sensor.model.backProject(pixel_f, &ray_dir_C);
+        point_cloud_C[x + y * depth_image.width()] = depth_image[x + y * depth_image.width()] * ray_dir_C;
       } else {
-        vertex[x + y * depth_image.width()] = Eigen::Vector3f::Zero();
+        point_cloud_C[x + y * depth_image.width()] = Eigen::Vector3f::Zero();
       }
     }
   }
-  TOCK("depth2vertexKernel", depth_image.width() * depth_image.height());
+  TOCK("depthToPointCloudKernel", depth_image.width() * depth_image.height());
 }
 
 
 
-void vertex2depthKernel(se::Image<float>&                 depth_image,
-                        const se::Image<Eigen::Vector3f>& vertex,
-                        const Eigen::Matrix4f&            T_CW) {
+void pointCloudToDepthKernel(se::Image<float>&            depth_image,
+                        const se::Image<Eigen::Vector3f>& point_cloud_X,
+                        const Eigen::Matrix4f&            T_CX) {
 
   TICK();
 #pragma omp parallel for
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
-      depth_image(x, y) = (T_CW * vertex(x, y).homogeneous()).z();
+      depth_image(x, y) = (T_CX * point_cloud_X(x, y).homogeneous()).z();
     }
   }
-  TOCK("vertex2depthKernel", depth_image.width() * depth_image.height());
+  TOCK("pointCloudToDepthKernel", depth_image.width() * depth_image.height());
 }
 
 
 
 // Explicit template instantiation
-template void vertex2normalKernel<true>(se::Image<Eigen::Vector3f>&       out,
-                                        const se::Image<Eigen::Vector3f>& in);
-template void vertex2normalKernel<false>(se::Image<Eigen::Vector3f>&       out,
-                                         const se::Image<Eigen::Vector3f>& in);
+template void pointCloudToNormalKernel<true>(se::Image<Eigen::Vector3f>&       normals,
+                                             const se::Image<Eigen::Vector3f>& point_cloud);
+template void pointCloudToNormalKernel<false>(se::Image<Eigen::Vector3f>&       normals,
+                                              const se::Image<Eigen::Vector3f>& point_cloud);
 
 template <bool NegY>
-void vertex2normalKernel(se::Image<Eigen::Vector3f>&       out,
-                         const se::Image<Eigen::Vector3f>& in) {
+void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>&       normals,
+                              const se::Image<Eigen::Vector3f>& point_cloud) {
 
   TICK();
-  const int width = in.width();
-  const int height = in.height();
+  const int width = point_cloud.width();
+  const int height = point_cloud.height();
 #pragma omp parallel for
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      const Eigen::Vector3f center = in[x + width * y];
-      if (center.z() == 0.f) {
-        out[x + y * width].x() = INVALID;
+      const Eigen::Vector3f point = point_cloud[x + width * y];
+      if (point.z() == 0.f) {
+        normals[x + y * width].x() = INVALID;
         continue;
       }
 
-      const Eigen::Vector2i pleft
+      const Eigen::Vector2i p_left
           = Eigen::Vector2i(std::max(int(x) - 1, 0), y);
-      const Eigen::Vector2i pright
+      const Eigen::Vector2i p_right
           = Eigen::Vector2i(std::min(x + 1, (int) width - 1), y);
 
       // Swapped to match the left-handed coordinate system of ICL-NUIM
-      Eigen::Vector2i pup, pdown;
+      Eigen::Vector2i p_up, p_down;
       if (NegY) {
-        pup   = Eigen::Vector2i(x, std::max(int(y) - 1, 0));
-        pdown = Eigen::Vector2i(x, std::min(y + 1, ((int) height) - 1));
+        p_up   = Eigen::Vector2i(x, std::max(int(y) - 1, 0));
+        p_down = Eigen::Vector2i(x, std::min(y + 1, ((int) height) - 1));
       } else {
-        pdown = Eigen::Vector2i(x, std::max(int(y) - 1, 0));
-        pup   = Eigen::Vector2i(x, std::min(y + 1, ((int) height) - 1));
+        p_down = Eigen::Vector2i(x, std::max(int(y) - 1, 0));
+        p_up   = Eigen::Vector2i(x, std::min(y + 1, ((int) height) - 1));
       }
 
-      const Eigen::Vector3f left  = in[pleft.x()  + width * pleft.y()];
-      const Eigen::Vector3f right = in[pright.x() + width * pright.y()];
-      const Eigen::Vector3f up    = in[pup.x()    + width * pup.y()];
-      const Eigen::Vector3f down  = in[pdown.x()  + width * pdown.y()];
+      const Eigen::Vector3f left  = point_cloud[p_left.x()  + width * p_left.y()];
+      const Eigen::Vector3f right = point_cloud[p_right.x() + width * p_right.y()];
+      const Eigen::Vector3f up    = point_cloud[p_up.x()    + width * p_up.y()];
+      const Eigen::Vector3f down  = point_cloud[p_down.x()  + width * p_down.y()];
 
       if (left.z() == 0 || right.z() == 0 || up.z() == 0 || down.z() == 0) {
-        out[x + y * width].x() = INVALID;
+        normals[x + y * width].x() = INVALID;
         continue;
       }
-      const Eigen::Vector3f dxv = right - left;
-      const Eigen::Vector3f dyv = up - down;
-      out[x + y * width] =  dxv.cross(dyv).normalized();
+      const Eigen::Vector3f dv_x = right - left;
+      const Eigen::Vector3f dv_y = up - down;
+      normals[x + y * width] =  dv_x.cross(dv_y).normalized();
     }
   }
-  TOCK("vertex2normalKernel", width * height);
+  TOCK("pointCloudToNormalKernel", width * height);
 }
 
 
@@ -211,19 +211,19 @@ void mm2metersKernel(se::Image<float>&      out,
 #pragma omp parallel for
   for (int y_out = 0; y_out < out.height(); y_out++)
     for (int x_out = 0; x_out < out.width(); x_out++) {
-      size_t n_valid = 0;
-      float pix_mean = 0;
+      size_t valid_count = 0;
+      float pixel_value_sum = 0;
       for (int b = 0; b < ratio; b++)
         for (int a = 0; a < ratio; a++) {
           const int y_in = y_out * ratio + b;
           const int x_in = x_out * ratio + a;
           if (in[x_in + input_size.x() * y_in] == 0)
             continue;
-          pix_mean += in[x_in + input_size.x() * y_in];
-          n_valid++;
+          pixel_value_sum += in[x_in + input_size.x() * y_in];
+          valid_count++;
         }
       out[x_out + out.width() * y_out]
-          = (n_valid > 0) ? pix_mean / (n_valid * 1000.0f) : 0;
+          = (valid_count > 0) ? pixel_value_sum / (valid_count * 1000.0f) : 0;
     }
   TOCK("mm2metersKernel", out.width() * out.height());
 }
@@ -233,7 +233,7 @@ void mm2metersKernel(se::Image<float>&      out,
 void halfSampleRobustImageKernel(se::Image<float>&       out,
                                  const se::Image<float>& in,
                                  const float             e_d,
-                                 const int               r) {
+                                 const int               radius) {
 
   if ((in.width() / out.width() != 2) || ( in.height() / out.height() != 2)) {
     std::cerr << "Invalid ratio." << std::endl;
@@ -244,26 +244,26 @@ void halfSampleRobustImageKernel(se::Image<float>&       out,
 #pragma omp parallel for
   for (int y = 0; y < out.height(); y++) {
     for (int x = 0; x < out.width(); x++) {
-      const Eigen::Vector2i pixel = Eigen::Vector2i(x, y);
-      const Eigen::Vector2i center_pixel = 2 * pixel;
+      const Eigen::Vector2i out_pixel = Eigen::Vector2i(x, y);
+      const Eigen::Vector2i in_pixel = 2 * out_pixel;
 
-      float sum = 0.0f;
-      float t = 0.0f;
-      const float center = in[center_pixel.x() + center_pixel.y() * in.width()];
-      for (int i = -r + 1; i <= r; ++i) {
-        for (int j = -r + 1; j <= r; ++j) {
-          Eigen::Vector2i curr = center_pixel + Eigen::Vector2i(j, i);
-          se::math::clamp(curr,
+      float pixel_count = 0.0f;
+      float pixel_value_sum = 0.0f;
+      const float in_pixel_value = in[in_pixel.x() + in_pixel.y() * in.width()];
+      for (int i = -radius + 1; i <= radius; ++i) {
+        for (int j = -radius + 1; j <= radius; ++j) {
+          Eigen::Vector2i in_pixel_tmp = in_pixel + Eigen::Vector2i(j, i);
+          se::math::clamp(in_pixel_tmp,
               Eigen::Vector2i::Zero(),
               Eigen::Vector2i(2 * out.width() - 1, 2 * out.height() - 1));
-          const float current = in[curr.x() + curr.y() * in.width()];
-          if (fabsf(current - center) < e_d) {
-            sum += 1.0f;
-            t += current;
+          const float in_pixel_value_tmp = in[in_pixel_tmp.x() + in_pixel_tmp.y() * in.width()];
+          if (fabsf(in_pixel_value_tmp - in_pixel_value) < e_d) {
+            pixel_count += 1.0f;
+            pixel_value_sum += in_pixel_value_tmp;
           }
         }
       }
-      out[pixel.x() + pixel.y() * out.width()] = t / sum;
+      out[out_pixel.x() + out_pixel.y() * out.width()] = pixel_value_sum / pixel_count;
     }
   }
   TOCK("halfSampleRobustImageKernel", out.width() * out.height());
@@ -311,8 +311,8 @@ void downsampleImageKernel(const uint8_t*         input_RGB,
       b /= ratio * ratio;
 
       // Combine into a uint32_t by adding an alpha channel with 100% opacity.
-      const uint32_t pixel = to_rgba(r, g, b, 255);
-      output_RGBA[x_out + output_RGBA.width() * y_out] = pixel;
+      const uint32_t rgba = to_rgba(r, g, b, 255);
+      output_RGBA[x_out + output_RGBA.width() * y_out] = rgba;
     }
   }
   TOCK("downsampleImageKernel", output_RGBA.width() * output_RGBA.height());

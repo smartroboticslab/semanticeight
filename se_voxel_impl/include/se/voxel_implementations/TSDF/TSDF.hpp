@@ -54,7 +54,7 @@ struct TSDF {
     };
 
     static inline VoxelData empty()     { return {1.f, -1.f}; }
-    static inline VoxelData initValue() { return {1.f,  0.f}; }
+    static inline VoxelData initData() { return {1.f,  0.f}; }
 
     template <typename T>
     using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -83,7 +83,7 @@ struct TSDF {
   static size_t buildAllocationList(
       se::Octree<TSDF::VoxelType>& map,
       const se::Image<float>&      depth_image,
-      const Eigen::Matrix4f&       T_WC,
+      const Eigen::Matrix4f&       T_MC,
       const SensorImpl&            sensor,
       se::key_t*                   allocation_list,
       size_t                       reserved);
@@ -95,7 +95,7 @@ struct TSDF {
    */
   static void integrate(se::Octree<TSDF::VoxelType>& map,
                         const se::Image<float>&      depth_image,
-                        const Sophus::SE3f&          T_CW,
+                        const Eigen::Matrix4f&       T_CM,
                         const SensorImpl&            sensor,
                         const unsigned               frame);
 
@@ -106,8 +106,8 @@ struct TSDF {
    */
   static Eigen::Vector4f raycast(
       const VolumeTemplate<TSDF, se::Octree>& volume,
-      const Eigen::Vector3f&                  origin,
-      const Eigen::Vector3f&                  direction,
+      const Eigen::Vector3f&                  ray_origin_M,
+      const Eigen::Vector3f&                  ray_dir_M,
       const float                             near_plane,
       const float                             far_plane,
       const float                             mu,

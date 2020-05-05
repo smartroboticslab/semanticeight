@@ -324,44 +324,48 @@ void writefile(std::string prefix, int idx, T* data, unsigned int size) {
 
 inline void writeVtkMesh(const char*                  filename,
                          const std::vector<Triangle>& mesh,
-                         const Eigen::Vector3f&       init_t_WC,
+                         const Eigen::Matrix4f&       T_WM,
                          const float*                 point_data = nullptr,
                          const float*                 cell_data = nullptr){
-  std::stringstream points;
-  std::stringstream polygons;
-  std::stringstream pointdata;
-  std::stringstream celldata;
+  std::stringstream ss_points_W;
+  std::stringstream ss_polygons;
+  std::stringstream ss_point_data;
+  std::stringstream ss_cell_data;
   int point_count = 0;
   int triangle_count = 0;
-  bool hasPointData = point_data != nullptr;
-  bool hasCellData = cell_data != nullptr;
+  bool has_point_data = point_data != nullptr;
+  bool has_cell_data = cell_data != nullptr;
 
   for(unsigned int i = 0; i < mesh.size(); ++i ){
-    const Triangle& t = mesh[i];
+    const Triangle& triangle_M = mesh[i];
 
-    points << t.vertexes[0].x() - init_t_WC.x() << " "
-           << t.vertexes[0].y() - init_t_WC.y() << " "
-           << t.vertexes[0].z() - init_t_WC.z() << std::endl;
+    Eigen::Vector3f vertex_0_W = (T_WM * triangle_M.vertexes[0].homogeneous()).head(3);
+    Eigen::Vector3f vertex_1_W = (T_WM * triangle_M.vertexes[1].homogeneous()).head(3);
+    Eigen::Vector3f vertex_2_W = (T_WM * triangle_M.vertexes[2].homogeneous()).head(3);
 
-    points << t.vertexes[1].x() - init_t_WC.x() << " "
-           << t.vertexes[1].y() - init_t_WC.y() << " "
-           << t.vertexes[1].z() - init_t_WC.z() << std::endl;
+    ss_points_W << vertex_0_W.x() << " "
+                << vertex_0_W.y() << " "
+                << vertex_0_W.z() << std::endl;
 
-    points << t.vertexes[2].x() - init_t_WC.x() << " "
-           << t.vertexes[2].y() - init_t_WC.y() << " "
-           << t.vertexes[2].z() - init_t_WC.z() << std::endl;
+    ss_points_W << vertex_1_W.x() << " "
+                << vertex_1_W.y() << " "
+                << vertex_1_W.z() << std::endl;
 
-    polygons << "3 " << point_count << " " << point_count+1 <<
+    ss_points_W << vertex_2_W.x() << " "
+                << vertex_2_W.y() << " "
+                << vertex_2_W.z() << std::endl;
+
+    ss_polygons << "3 " << point_count << " " << point_count+1 <<
       " " << point_count+2 << std::endl;
 
-    if(hasPointData){
-      pointdata << point_data[i*3] << std::endl;
-      pointdata << point_data[i*3 + 1] << std::endl;
-      pointdata << point_data[i*3 + 2] << std::endl;
+    if(has_point_data){
+      ss_point_data << point_data[i*3] << std::endl;
+      ss_point_data << point_data[i*3 + 1] << std::endl;
+      ss_point_data << point_data[i*3 + 2] << std::endl;
     }
 
-    if(hasCellData){
-      celldata << cell_data[i] << std::endl;
+    if(has_cell_data){
+      ss_cell_data << cell_data[i] << std::endl;
     }
 
     point_count +=3;
@@ -376,41 +380,44 @@ inline void writeVtkMesh(const char*                  filename,
   f << "DATASET POLYDATA" << std::endl;
 
   f << "POINTS " << point_count << " FLOAT" << std::endl;
-  f << points.str();
+  f << ss_points_W.str();
 
   f << "POLYGONS " << triangle_count << " " << triangle_count * 4 << std::endl;
-  f << polygons.str() << std::endl;
-  if(hasPointData){
+  f << ss_polygons.str() << std::endl;
+  if(has_point_data){
     f << "POINT_DATA " << point_count << std::endl;
     f << "SCALARS vertex_scalars float 1" << std::endl;
     f << "LOOKUP_TABLE default" << std::endl;
-    f << pointdata.str();
+    f << ss_point_data.str();
   }
 
-  if(hasCellData){
+  if(has_cell_data){
     f << "CELL_DATA " << triangle_count << std::endl;
     f << "SCALARS cell_scalars float 1" << std::endl;
     f << "LOOKUP_TABLE default" << std::endl;
-    f << celldata.str();
+    f << ss_cell_data.str();
   }
   f.close();
 }
 
 inline void writeObjMesh(const char* filename,
                          const std::vector<Triangle>& mesh){
-  std::stringstream points;
+  std::stringstream points_M;
   std::stringstream faces;
   int point_count = 0;
   int face_count = 0;
 
   for(unsigned int i = 0; i < mesh.size(); i++){
-    const Triangle& t = mesh[i];
-    points << "v " << t.vertexes[0](0) << " " << t.vertexes[0](1)
-           << " "  << t.vertexes[0](2) << std::endl;
-    points << "v " << t.vertexes[1](0) << " " << t.vertexes[1](1)
-           << " "  << t.vertexes[1](2) << std::endl;
-    points << "v " << t.vertexes[2](0) << " " << t.vertexes[2](1)
-           << " "  << t.vertexes[2](2) << std::endl;
+    const Triangle& triangle_M = mesh[i];
+    points_M << "v " << triangle_M.vertexes[0].x() << " "
+                     << triangle_M.vertexes[0].y() << " "
+                     << triangle_M.vertexes[0].z() << std::endl;
+    points_M << "v " << triangle_M.vertexes[1].x() << " "
+                     << triangle_M.vertexes[1].y() << " "
+                     << triangle_M.vertexes[1].z() << std::endl;
+    points_M << "v " << triangle_M.vertexes[2].x() << " "
+                     << triangle_M.vertexes[2].y() << " "
+                     << triangle_M.vertexes[2].z() << std::endl;
 
     faces  << "f " << (face_count*3)+1 << " " << (face_count*3)+2
            << " " << (face_count*3)+3 << std::endl;
@@ -423,7 +430,7 @@ inline void writeObjMesh(const char* filename,
   f << "# OBJ file format with ext .obj" << std::endl;
   f << "# vertex count = " << point_count << std::endl;
   f << "# face count = " << face_count << std::endl;
-  f << points.str();
+  f << points_M.str();
   f << faces.str();
   f.close();
   std::cout << "Written " << face_count << " faces and " << point_count

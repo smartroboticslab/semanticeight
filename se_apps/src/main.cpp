@@ -46,7 +46,7 @@ static uint32_t* volume_render = nullptr;
 static DepthReader* reader = nullptr;
 static DenseSLAMSystem* pipeline = nullptr;
 
-static Eigen::Vector3f init_t_WC;
+static Eigen::Vector3f t_MW;
 static std::ostream* log_stream = &std::cout;
 static std::ofstream log_file_stream;
 
@@ -121,12 +121,12 @@ int main(int argc, char** argv) {
   track_render =  new uint32_t[computation_size.x() * computation_size.y()];
   volume_render = new uint32_t[computation_size.x() * computation_size.y()];
 
-  init_t_WC = config.initial_pos_factor.cwiseProduct(config.volume_size);
+  t_MW = config.initial_pos_factor.cwiseProduct(config.volume_size);
   pipeline = new DenseSLAMSystem(
       computation_size,
       Eigen::Vector3i::Constant(config.volume_resolution.x()),
       Eigen::Vector3f::Constant(config.volume_size.x()),
-      init_t_WC,
+      t_MW,
       config.pyramid, config);
 
   if (config.log_file != "") {
@@ -248,6 +248,9 @@ int processAll(DepthReader*   reader,
       read_ok = reader->readNextDepthFrame(input_rgb, input_depth);
     } else {
       read_ok = reader->readNextData(input_rgb, input_depth, gt_T_WC);
+      if (frame == 0) {
+        pipeline->setInitialCameraPoseW(gt_T_WC);
+      }
     }
 
     // Finish processing if the next frame could not be read
@@ -278,11 +281,9 @@ int processAll(DepthReader*   reader,
       }
     } else {
       // Set the pose to the ground truth.
-      pipeline->setPose(gt_T_WC);
+      pipeline->setCameraPoseW(gt_T_WC);
       tracked = true;
     }
-
-    T_WC = pipeline->getPose();
 
     timings[3] = std::chrono::steady_clock::now();
 
@@ -315,13 +316,11 @@ int processAll(DepthReader*   reader,
   if (powerMonitor != nullptr && !first_frame)
     powerMonitor->sample();
 
-  float xt = T_WC(0, 3) - init_t_WC.x();
-  float yt = T_WC(1, 3) - init_t_WC.y();
-  float zt = T_WC(2, 3) - init_t_WC.z();
-  const Eigen::Vector3f position = pipeline->getPosition();
-  storeStats(frame, timings, position, tracked, integrated);
+  const Eigen::Vector3f t_MC = pipeline->getCameraPositionM();
+  const Eigen::Vector3f t_WC = pipeline->getCameraPositionW();
+  storeStats(frame, timings, t_WC, tracked, integrated);
   if (config->no_gui){
-    *log_stream << reader->getFrameNumber() << "\t" << xt << "\t" << yt << "\t" << zt << "\t" << std::endl;
+    *log_stream << reader->getFrameNumber() << "\t" << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" << std::endl;
   }
 
 #ifdef SE_BENCHMARK_APP
@@ -334,7 +333,7 @@ int processAll(DepthReader*   reader,
     << std::chrono::duration<double>(timings[6] - timings[5]).count() << "\t" // rendering
     << std::chrono::duration<double>(timings[5] - timings[1]).count() << "\t" // computation
     << std::chrono::duration<double>(timings[6] - timings[0]).count() << "\t" // total
-    << xt << "\t" << yt << "\t" << zt << "\t" // position
+    << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" // position
     << tracked << "        \t" << integrated // tracked and integrated flags
     << "\n";
 #endif

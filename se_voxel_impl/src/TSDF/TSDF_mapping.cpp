@@ -54,19 +54,19 @@ struct tsdf_update {
   template <typename DataHandlerT>
   void operator()(DataHandlerT&          handler,
                   const Eigen::Vector3i&,
-                  const Eigen::Vector3f& position_C,
-                  const Eigen::Vector2f& image_point) {
+                  const Eigen::Vector3f& point_C,
+                  const Eigen::Vector2f& pixel_f) {
 
-    const Eigen::Vector2i pixel = image_point.cast<int>();
+    const Eigen::Vector2i pixel = pixel_f.cast<int>();
     const float depth_value = depth_image[pixel.x() + depth_image.width() * pixel.y()];
     // Return on invalid depth measurement
     if (depth_value <= 0.f)
       return;
 
     // Update the TSDF
-    const float diff = (depth_value - position_C.z())
-      * std::sqrt(1 + se::math::sq(position_C.x() / position_C.z())
-      + se::math::sq(position_C.y() / position_C.z()));
+    const float diff = (depth_value - point_C.z())
+      * std::sqrt(1 + se::math::sq(point_C.x() / point_C.z())
+      + se::math::sq(point_C.y() / point_C.z()));
     if (diff > -mu) {
       const float tsdf = fminf(1.f, diff / mu);
       auto data = handler.get();
@@ -82,7 +82,7 @@ struct tsdf_update {
 
 void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
                      const se::Image<float>&      depth_image,
-                     const Sophus::SE3f&          T_CW,
+                     const Eigen::Matrix4f&       T_CM,
                      const SensorImpl&            sensor,
                      const unsigned) {
 
@@ -90,6 +90,6 @@ void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
 
   struct tsdf_update funct(depth_image, sensor.mu);
 
-  se::functor::projective_octree(map, map._offset, T_CW, sensor, image_size, funct);
+  se::functor::projective_octree(map, map._offset, T_CM, sensor, image_size, funct);
 }
 

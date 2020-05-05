@@ -63,25 +63,25 @@ void reduceKernel(float*                 out,
 
 
 void trackKernel(TrackData*                        output,
-                 const se::Image<Eigen::Vector3f>& in_vertex,
-                 const se::Image<Eigen::Vector3f>& in_normal,
-                 const se::Image<Eigen::Vector3f>& ref_vertex,
-                 const se::Image<Eigen::Vector3f>& ref_normal,
-                 const Eigen::Matrix4f&            T_WC,
+                 const se::Image<Eigen::Vector3f>& input_point_cloud_C,
+                 const se::Image<Eigen::Vector3f>& input_normals_C,
+                 const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
+                 const se::Image<Eigen::Vector3f>& surface_normals_M,
+                 const Eigen::Matrix4f&            T_MC,
                  const SensorImpl&                 sensor,
                  const float                       dist_threshold,
                  const float                       normal_threshold);
 
 
 
-bool updatePoseKernel(Eigen::Matrix4f& T_WC,
+bool updatePoseKernel(Eigen::Matrix4f& T_MC,
                       const float*     reduction_output,
                       const float      icp_threshold);
 
 
 
-bool checkPoseKernel(Eigen::Matrix4f&       T_WC,
-                     Eigen::Matrix4f&       previous_T_WC,
+bool checkPoseKernel(Eigen::Matrix4f&       T_MC,
+                     Eigen::Matrix4f&       previous_T_MC,
                      const float*           reduction_output,
                      const Eigen::Vector2i& image_size,
                      const float            track_threshold);

@@ -43,7 +43,7 @@ using namespace se::geometry;
 struct TestVoxelT{
   typedef float VoxelData;
   static inline VoxelData empty(){ return 0.f; }
-  static inline VoxelData initValue(){ return 1.f; }
+  static inline VoxelData initData(){ return 1.f; }
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -51,9 +51,9 @@ struct TestVoxelT{
   using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
 };
 
-collision_status test_voxel(const TestVoxelT::VoxelData & val) {
-  if(val == TestVoxelT::initValue()) return collision_status::unseen;
-  if(val == 10.f) return collision_status::empty;
+collision_status test_voxel(const TestVoxelT::VoxelData& data) {
+  if(data == TestVoxelT::initData()) return collision_status::unseen;
+  if(data == 10.f) return collision_status::empty;
   return collision_status::occupied;
 };
 
@@ -62,13 +62,13 @@ class OctreeCollisionTest : public ::testing::Test {
     virtual void SetUp() {
 
       octree_.init(256, 5);
-      const Eigen::Vector3i blocks[1] = {{56, 12, 254}};
-      se::key_t alloc_list[1];
-      alloc_list[0] = octree_.hash(blocks[0](0), blocks[0](1), blocks[0](2));
-      octree_.allocate(alloc_list, 1);
+      const Eigen::Vector3i blocks_coord[1] = {{56, 12, 254}};
+      se::key_t allocation_list[1];
+      allocation_list[0] = octree_.hash(blocks_coord[0].x(), blocks_coord[0].y(), blocks_coord[0].z());
+      octree_.allocate(allocation_list, 1);
 
-      auto set_to_ten = [](auto& handler, const Eigen::Vector3i& coords) {
-        if((coords.array() >= Eigen::Vector3i(48, 0, 240).array()).all()){
+      auto set_to_ten = [](auto& handler, const Eigen::Vector3i& coord) {
+        if((coord.array() >= Eigen::Vector3i(48, 0, 240).array()).all()){
           handler.set(10.f);
         }
       };
@@ -82,13 +82,13 @@ class OctreeCollisionTest : public ::testing::Test {
 TEST_F(OctreeCollisionTest, TotallyUnseen) {
 
   se::node_iterator<TestVoxelT> it(octree_);
-  se::Node<TestVoxelT> * node = it.next();
+  se::Node<TestVoxelT>* node = it.next();
   for(int i = 256; node != nullptr ; node = it.next(), i /= 2){
-    const Eigen::Vector3i coords = se::keyops::decode(node->code_);
+    const Eigen::Vector3i node_coord = se::keyops::decode(node->code_);
     const int side = node->side_;
-    const se::Octree<TestVoxelT>::VoxelData val = (node->value_[0]);
+    const se::Octree<TestVoxelT>::VoxelData data = (node->data_[0]);
     printf("se::Node's coordinates: (%d, %d, %d), side %d, value %.2f\n",
-        coords(0), coords(1), coords(2), side, val);
+        node_coord.x(), node_coord.y(), node_coord.z(), side, data);
     EXPECT_EQ(side, i);
   }
 
@@ -120,7 +120,7 @@ TEST_F(OctreeCollisionTest, Collision){
   const Eigen::Vector3i test_bbox = {54, 10, 249};
   const Eigen::Vector3i width = {5, 5, 3};
 
-  auto update = [](auto& handler, const Eigen::Vector3i& coords) {
+  auto update = [](auto& handler, const Eigen::Vector3i& coord) {
       handler.set(2.f);
   };
   se::functor::axis_aligned_map(octree_, update);
@@ -135,18 +135,18 @@ TEST_F(OctreeCollisionTest, CollisionFreeLeaf){
   const Eigen::Vector3i test_bbox = {61, 13, 253};
   const Eigen::Vector3i width = {2, 2, 2};
 
-  /* Update blocks as occupied node */
-  se::VoxelBlock<TestVoxelT> * block = octree_.fetch(56, 12, 254);
-  const Eigen::Vector3i blockCoord = block->coordinates();
-  int x, y, z, blockSide;
-  blockSide = (int) se::VoxelBlock<TestVoxelT>::side;
-  int xlast = blockCoord(0) + blockSide;
-  int ylast = blockCoord(1) + blockSide;
-  int zlast = blockCoord(2) + blockSide;
-  for(z = blockCoord(2); z < zlast; ++z){
-    for (y = blockCoord(1); y < ylast; ++y){
-      for (x = blockCoord(0); x < xlast; ++x){
-        if(x < xlast/2 && y < ylast/2 && z < zlast/2)
+  /* Update blocks_coord as occupied node */
+  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(56, 12, 254);
+  const Eigen::Vector3i block_coord = block->coordinates();
+  int x, y, z, block_side;
+  block_side = (int) se::VoxelBlock<TestVoxelT>::side;
+  int xlast = block_coord.x() + block_side;
+  int ylast = block_coord.y() + block_side;
+  int zlast = block_coord.z() + block_side;
+  for(z = block_coord.z(); z < zlast; ++z){
+    for (y = block_coord.y(); y < ylast; ++y){
+      for (x = block_coord.x(); x < xlast; ++x){
+        if(x < xlast / 2 && y < ylast / 2 && z < zlast / 2)
           block->data(Eigen::Vector3i(x, y, z), 2.f);
         else
           block->data(Eigen::Vector3i(x, y, z), 10.f);

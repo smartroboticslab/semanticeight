@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct TestVoxelT {
   typedef float VoxelData;
   static inline VoxelData empty(){ return 0.f; }
-  static inline VoxelData initValue(){ return 1.f; }
+  static inline VoxelData initData(){ return 1.f; }
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -53,7 +53,7 @@ struct OccupancyVoxelT {
     double y;
   };
   static inline VoxelData empty(){ return {0.f, 0.}; }
-  static inline VoxelData initValue(){ return {1.f, 0.}; }
+  static inline VoxelData initData(){ return {1.f, 0.}; }
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -69,7 +69,7 @@ TEST(SerialiseUnitTest, WriteReadNode) {
     octant.code_ = 24;
     octant.side_ = 256;
     for(int i = 0; i < 8; ++i)
-      octant.value_[i] =  5.f;
+      octant.data_[i] =  5.f;
     se::internal::serialise(os, octant);
   }
 
@@ -80,7 +80,7 @@ TEST(SerialiseUnitTest, WriteReadNode) {
     ASSERT_EQ(octant.code_, 24);
     ASSERT_EQ(octant.side_, 256);
     for(int i = 0; i < 8; ++i)
-      ASSERT_EQ(octant.value_[i], 5.f);
+      ASSERT_EQ(octant.data_[i], 5.f);
   }
 }
 
@@ -143,8 +143,8 @@ TEST(SerialiseUnitTest, SerialiseTree) {
   int num_tested = 0;
   for(int i = 1, side = octree.size() / 2; i <= block_depth; ++i, side = side / 2) {
     for(int j = 0; j < 20; ++j) {
-      Eigen::Vector3i vox(dis(gen), dis(gen), dis(gen));
-      octree.insert(vox(0), vox(1), vox(2), i);
+      Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
+      octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
     }
   }
   std::string filename = "octree-test.bin";
@@ -179,11 +179,11 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
 
   int num_tested = 0;
   for(int j = 0; j < 20; ++j) {
-    Eigen::Vector3i vox(dis(gen), dis(gen), dis(gen));
-    octree.insert(vox(0), vox(1), vox(2), octree.blockDepth());
-    auto voxel_block = octree.fetch(vox(0), vox(1), vox(2));
+    Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
+    octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
+    auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
     for(int i = 0; i < se::VoxelBlock<TestVoxelT>::side_cube; ++i)
-      voxel_block->data(i, dis(gen));
+      block->data(i, dis(gen));
   }
 
   std::string filename = "block-test.bin";

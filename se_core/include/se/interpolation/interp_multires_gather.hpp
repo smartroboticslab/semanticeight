@@ -39,7 +39,7 @@ namespace se {
     constexpr int INVALID_SAMPLE = -2;
 
     /*
-     * Interpolation's point gather offsets
+     * Interpolation's value gather offsets
      */
     static const Eigen::Vector3i interp_offsets[8] =
         {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0},
@@ -49,51 +49,51 @@ namespace se {
 
     template <typename FieldType, typename FieldSelector,
               template<typename FieldT> class MapIndex,
-              typename PointT>
+              typename ValueT>
     inline void gather_local(
         const se::VoxelBlock<FieldType>*         block,
         const MapIndex<FieldType>&               fetcher,
         const Eigen::Vector3i&                   base,
         const int                                scale,
         const int                                stride,
-        FieldSelector                            select,
-        PointT                                   points[8]) {
+        FieldSelector                            select_value,
+        ValueT                                   values[8]) {
 
       if (!block) {
-        if (std::is_same<PointT, bool>::value) {
-          Eigen::Vector3i vox = base + stride * interp_offsets[0];
-          PointT value = select(fetcher.get(vox.x(), vox.y(), vox.z()));
-          points[0] = value;
-          points[1] = value;
-          points[2] = value;
-          points[3] = value;
-          points[4] = value;
-          points[5] = value;
-          points[6] = value;
-          points[7] = value;
+        if (std::is_same<ValueT, bool>::value) {
+          Eigen::Vector3i voxel_coord = base + stride * interp_offsets[0];
+          ValueT value = select_value(fetcher.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+          values[0] = value;
+          values[1] = value;
+          values[2] = value;
+          values[3] = value;
+          values[4] = value;
+          values[5] = value;
+          values[6] = value;
+          values[7] = value;
         } else {
-          Eigen::Vector3i vox = base + stride * interp_offsets[0];
-          const auto neighbour = fetcher.get(vox.x(), vox.y(), vox.z());
-          PointT value = neighbour.x_max / neighbour.y;
-          points[0] = value;
-          points[1] = value;
-          points[2] = value;
-          points[3] = value;
-          points[4] = value;
-          points[5] = value;
-          points[6] = value;
-          points[7] = value;
+          Eigen::Vector3i voxel_coord = base + stride * interp_offsets[0];
+          const auto neighbour = fetcher.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+          ValueT value = neighbour.x_max / neighbour.y;
+          values[0] = value;
+          values[1] = value;
+          values[2] = value;
+          values[3] = value;
+          values[4] = value;
+          values[5] = value;
+          values[6] = value;
+          values[7] = value;
         }
         return;
       }
-      points[0] = select(block->data(base + stride*interp_offsets[0], scale));
-      points[1] = select(block->data(base + stride*interp_offsets[1], scale));
-      points[2] = select(block->data(base + stride*interp_offsets[2], scale));
-      points[3] = select(block->data(base + stride*interp_offsets[3], scale));
-      points[4] = select(block->data(base + stride*interp_offsets[4], scale));
-      points[5] = select(block->data(base + stride*interp_offsets[5], scale));
-      points[6] = select(block->data(base + stride*interp_offsets[6], scale));
-      points[7] = select(block->data(base + stride*interp_offsets[7], scale));
+      values[0] = select_value(block->data(base + stride*interp_offsets[0], scale));
+      values[1] = select_value(block->data(base + stride*interp_offsets[1], scale));
+      values[2] = select_value(block->data(base + stride*interp_offsets[2], scale));
+      values[3] = select_value(block->data(base + stride*interp_offsets[3], scale));
+      values[4] = select_value(block->data(base + stride*interp_offsets[4], scale));
+      values[5] = select_value(block->data(base + stride*interp_offsets[5], scale));
+      values[6] = select_value(block->data(base + stride*interp_offsets[6], scale));
+      values[7] = select_value(block->data(base + stride*interp_offsets[7], scale));
       return;
     }
 
@@ -101,39 +101,39 @@ namespace se {
 
     template <typename FieldType, typename FieldSelector,
               template<typename FieldT> class MapIndex,
-              typename PointT>
+              typename ValueT>
     inline void gather_4(const se::VoxelBlock<FieldType>*         block,
                          const MapIndex<FieldType>&               fetcher,
                          const Eigen::Vector3i&                   base,
                          const int                                scale,
                          const int                                stride,
-                         FieldSelector                            select,
+                         FieldSelector                            select_value,
                          const unsigned int                       offsets[4],
-                         PointT                                   points[8]) {
+                         ValueT                                   values[8]) {
 
       if (!block) {
-        if (std::is_same<PointT, bool>::value) {
-          Eigen::Vector3i vox = base + stride*interp_offsets[offsets[0]];
-          PointT value = select(fetcher.get(vox.x(), vox.y(), vox.z()));
-          points[offsets[0]] = value;
-          points[offsets[1]] = value;
-          points[offsets[2]] = value;
-          points[offsets[3]] = value;
+        if (std::is_same<ValueT, bool>::value) {
+          Eigen::Vector3i voxel_coord = base + stride*interp_offsets[offsets[0]];
+          ValueT value = select_value(fetcher.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+          values[offsets[0]] = value;
+          values[offsets[1]] = value;
+          values[offsets[2]] = value;
+          values[offsets[3]] = value;
         } else {
-          Eigen::Vector3i vox = base + stride*interp_offsets[offsets[0]];
-          const auto neighbour = fetcher.get(vox.x(), vox.y(), vox.z());
-          PointT value = neighbour.x_max / neighbour.y;
-          points[offsets[0]] = value;
-          points[offsets[1]] = value;
-          points[offsets[2]] = value;
-          points[offsets[3]] = value;
+          Eigen::Vector3i voxel_coord = base + stride*interp_offsets[offsets[0]];
+          const auto neighbour = fetcher.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+          ValueT value = neighbour.x_max / neighbour.y;
+          values[offsets[0]] = value;
+          values[offsets[1]] = value;
+          values[offsets[2]] = value;
+          values[offsets[3]] = value;
         }
         return;
       }
-      points[offsets[0]] = select(block->data(base + stride*interp_offsets[offsets[0]], scale));
-      points[offsets[1]] = select(block->data(base + stride*interp_offsets[offsets[1]], scale));
-      points[offsets[2]] = select(block->data(base + stride*interp_offsets[offsets[2]], scale));
-      points[offsets[3]] = select(block->data(base + stride*interp_offsets[offsets[3]], scale));
+      values[offsets[0]] = select_value(block->data(base + stride*interp_offsets[offsets[0]], scale));
+      values[offsets[1]] = select_value(block->data(base + stride*interp_offsets[offsets[1]], scale));
+      values[offsets[2]] = select_value(block->data(base + stride*interp_offsets[offsets[2]], scale));
+      values[offsets[3]] = select_value(block->data(base + stride*interp_offsets[offsets[3]], scale));
       return;
     }
 
@@ -141,47 +141,47 @@ namespace se {
 
     template <typename FieldType, typename FieldSelector,
               template<typename FieldT> class MapIndex,
-              typename PointT>
+              typename ValueT>
     inline void gather_2(const se::VoxelBlock<FieldType>*         block,
                          const MapIndex<FieldType>&               fetcher,
                          const Eigen::Vector3i&                   base,
                          const int                                scale,
                          const int                                stride,
-                         FieldSelector                            select,
+                         FieldSelector                            select_value,
                          const unsigned int                       offsets[2],
-                         PointT                                   points[8]) {
+                         ValueT                                   values[8]) {
 
       if (!block) {
-        if (std::is_same<PointT, bool>::value) {
-          Eigen::Vector3i vox = base + stride*interp_offsets[offsets[0]];
-          PointT value = select(fetcher.get(vox.x(), vox.y(), vox.z()));
-          points[offsets[0]] = value;
-          points[offsets[1]] = value;
+        if (std::is_same<ValueT, bool>::value) {
+          Eigen::Vector3i voxel_coord = base + stride*interp_offsets[offsets[0]];
+          ValueT value = select_value(fetcher.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+          values[offsets[0]] = value;
+          values[offsets[1]] = value;
         } else {
-          Eigen::Vector3i vox = base + stride*interp_offsets[offsets[0]];
-          const auto neighbour = fetcher.get(vox.x(), vox.y(), vox.z());
-          PointT value = neighbour.x_max / neighbour.y;
-          points[offsets[0]] = value;
-          points[offsets[1]] = value;
+          Eigen::Vector3i voxel_coord = base + stride*interp_offsets[offsets[0]];
+          const auto neighbour = fetcher.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+          ValueT value = neighbour.x_max / neighbour.y;
+          values[offsets[0]] = value;
+          values[offsets[1]] = value;
         }
         return;
       }
 
-      points[offsets[0]] = select(block->data(base + stride*interp_offsets[offsets[0]], scale));
-      points[offsets[1]] = select(block->data(base + stride*interp_offsets[offsets[1]], scale));
+      values[offsets[0]] = select_value(block->data(base + stride*interp_offsets[offsets[0]], scale));
+      values[offsets[1]] = select_value(block->data(base + stride*interp_offsets[offsets[1]], scale));
       return;
     }
 
     template <typename FieldType,
               template<typename FieldT> class MapIndex,
               class FieldSelector,
-              typename PointT>
-    inline int gather_points(
+              typename ValueT>
+    inline int gather_values(
         const MapIndex<FieldType>&               fetcher,
         const Eigen::Vector3i&                   base,
         const int                                scale,
-        FieldSelector                            select,
-        PointT                                   points[8]) {
+        FieldSelector                            select_value,
+        ValueT                                   values[8]) {
 
       const int stride = 1 << scale;
       unsigned int blockSize = se::VoxelBlock<FieldType>::side;
@@ -196,7 +196,7 @@ namespace se {
             se::VoxelBlock<FieldType> * block = fetcher.fetch(base(0), base(1), base(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_local(block, fetcher, base, scale, stride, select, points);
+            gather_local(block, fetcher, base, scale, stride, select_value, values);
           }
           break;
         case 1: /* z crosses */
@@ -206,12 +206,12 @@ namespace se {
             se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_4(block, fetcher, base, scale, stride, select, offs1, points);
+            gather_4(block, fetcher, base, scale, stride, select_value, offs1, values);
             const Eigen::Vector3i base1 = base + stride * interp_offsets[offs2[0]];
             block = fetcher.fetch(base1(0), base1(1), base1(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_4(block, fetcher, base, scale, stride, select, offs2, points);
+            gather_4(block, fetcher, base, scale, stride, select_value, offs2, values);
           }
           break;
         case 2: /* y crosses */
@@ -219,14 +219,14 @@ namespace se {
             const unsigned int offs1[4] = {0, 1, 4, 5};
             const unsigned int offs2[4] = {2, 3, 6, 7};
             se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
-            gather_4(block, fetcher, base, scale, stride, select, offs1, points);
+            gather_4(block, fetcher, base, scale, stride, select_value, offs1, values);
             if (block && block->current_scale() > scale)
               return block->current_scale();
             const Eigen::Vector3i base1 = base + stride * interp_offsets[offs2[0]];
             block = fetcher.fetch(base1(0), base1(1), base1(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_4(block, fetcher, base, scale, stride, select, offs2, points);
+            gather_4(block, fetcher, base, scale, stride, select_value, offs2, values);
           }
           break;
         case 3: /* y, z cross */
@@ -241,19 +241,19 @@ namespace se {
             se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs1, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs1, values);
             block = fetcher.fetch(base2(0), base2(1), base2(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs2, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs2, values);
             block = fetcher.fetch(base3(0), base3(1), base3(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs3, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs3, values);
             block = fetcher.fetch(base4(0), base4(1), base4(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs4, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs4, values);
           }
           break;
         case 4: /* x crosses */
@@ -263,12 +263,12 @@ namespace se {
             se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_4(block, fetcher, base, scale, stride, select, offs1, points);
+            gather_4(block, fetcher, base, scale, stride, select_value, offs1, values);
             const Eigen::Vector3i base1 = base + stride * interp_offsets[offs2[0]];
             block = fetcher.fetch(base1(0), base1(1), base1(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_4(block, fetcher, base, scale, stride, select, offs2, points);
+            gather_4(block, fetcher, base, scale, stride, select_value, offs2, values);
           }
           break;
         case 5: /* x,z cross */
@@ -283,19 +283,19 @@ namespace se {
             se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs1, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs1, values);
             block = fetcher.fetch(base2(0), base2(1), base2(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs2, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs2, values);
             block = fetcher.fetch(base3(0), base3(1), base3(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs3, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs3, values);
             block = fetcher.fetch(base4(0), base4(1), base4(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs4, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs4, values);
           }
           break;
         case 6: /* x,y cross */
@@ -310,50 +310,50 @@ namespace se {
             se::VoxelBlock<FieldType> * block = fetcher.fetch(base(0), base(1), base(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs1, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs1, values);
             block = fetcher.fetch(base2(0), base2(1), base2(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs2, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs2, values);
             block = fetcher.fetch(base3(0), base3(1), base3(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs3, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs3, values);
             block = fetcher.fetch(base4(0), base4(1), base4(2));
             if (block && block->current_scale() > scale)
               return block->current_scale();
-            gather_2(block, fetcher, base, scale, stride, select, offs4, points);
+            gather_2(block, fetcher, base, scale, stride, select_value, offs4, values);
           }
           break;
 
         case 7:
           {
-            Eigen::Vector3i vox[8];
-            vox[0] = base + stride * interp_offsets[0];
-            vox[1] = base + stride * interp_offsets[1];
-            vox[2] = base + stride * interp_offsets[2];
-            vox[3] = base + stride * interp_offsets[3];
-            vox[4] = base + stride * interp_offsets[4];
-            vox[5] = base + stride * interp_offsets[5];
-            vox[6] = base + stride * interp_offsets[6];
-            vox[7] = base + stride * interp_offsets[7];
+            Eigen::Vector3i voxels_coord[8];
+            voxels_coord[0] = base + stride * interp_offsets[0];
+            voxels_coord[1] = base + stride * interp_offsets[1];
+            voxels_coord[2] = base + stride * interp_offsets[2];
+            voxels_coord[3] = base + stride * interp_offsets[3];
+            voxels_coord[4] = base + stride * interp_offsets[4];
+            voxels_coord[5] = base + stride * interp_offsets[5];
+            voxels_coord[6] = base + stride * interp_offsets[6];
+            voxels_coord[7] = base + stride * interp_offsets[7];
 
             for (int i = 0; i < 8; ++i) {
-              auto block = fetcher.fetch(vox[i].x(), vox[i].y(), vox[i].z());
+              auto block = fetcher.fetch(voxels_coord[i].x(), voxels_coord[i].y(), voxels_coord[i].z());
               if (block && block->current_scale() > scale)
                 return block->current_scale();
 
               if (block) {
-                points[i] = select(block->data(vox[i], scale));
+                values[i] = select_value(block->data(voxels_coord[i], scale));
               } else {
                 if (!block) {
-                  if (std::is_same<PointT, bool>::value) {
-                    PointT value = select(fetcher.get(vox[i].x(), vox[i].y(), vox[i].z()));
-                    points[i] = value;
+                  if (std::is_same<ValueT, bool>::value) {
+                    ValueT value = select_value(fetcher.get(voxels_coord[i].x(), voxels_coord[i].y(), voxels_coord[i].z()));
+                    values[i] = value;
                   } else {
-                    const auto neighbour = fetcher.get(vox[i].x(), vox[i].y(), vox[i].z());
-                    PointT value = neighbour.x_max / neighbour.y;
-                    points[i] = value;
+                    const auto neighbour = fetcher.get(voxels_coord[i].x(), voxels_coord[i].y(), voxels_coord[i].z());
+                    ValueT value = neighbour.x_max / neighbour.y;
+                    values[i] = value;
                   }
                 }
               }
@@ -381,17 +381,17 @@ namespace se {
         Node<FieldType>* octant,
         const int        max_depth,
         const int        dir,
-        FieldSelector    select) {
+        FieldSelector    select_value) {
 
       int level = se::keyops::level(octant->code_);
       while (level > 0) {
-        int child_id = se::child_id(stack[level]->code_, max_depth);
-        int sibling = child_id ^ dir;
+        int child_idx = se::child_idx(stack[level]->code_, max_depth);
+        int sibling = child_idx ^ dir;
         if ((sibling & dir) == dir) { // if sibling still in octant's family
           const int side = 1 << (max_depth - level);
           const Eigen::Vector3i coords = se::keyops::decode(stack[level-1]->code_)
               + side * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
-          return {select(stack[level-1]->value_[sibling]), coords};
+          return {select_value(stack[level-1]->data_[sibling]), coords};
         }
         level--;
       }
@@ -416,8 +416,8 @@ namespace se {
 
       int level = se::keyops::level(octant->code_);
       while (level > 0) {
-        int child_id = se::child_id(stack[level]->code_, max_depth);
-        int sibling = child_id ^ dir;
+        int child_idx = se::child_idx(stack[level]->code_, max_depth);
+        int sibling = child_idx ^ dir;
         if ((sibling & dir) == dir) { // if sibling still in octant's family
           return stack[level-1]->child(sibling);
         }

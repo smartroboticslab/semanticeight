@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct TestVoxelT {
   typedef float VoxelData;
   static inline VoxelData empty(){ return 0.f; }
-  static inline VoxelData initValue(){ return 1.f; }
+  static inline VoxelData initData(){ return 1.f; }
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -58,103 +58,103 @@ class MultiscaleTest : public ::testing::Test {
 };
 
 TEST_F(MultiscaleTest, Init) {
-  EXPECT_EQ(octree_.get(137, 138, 130), TestVoxelT::initValue());
+  EXPECT_EQ(octree_.get(137, 138, 130), TestVoxelT::initData());
 }
 
 TEST_F(MultiscaleTest, PlainAlloc) {
-  const Eigen::Vector3i blocks[2] = {{56, 12, 254}, {87, 32, 423}};
-  se::key_t alloc_list[2];
+  const Eigen::Vector3i blocks_coord[2] = {{56, 12, 254}, {87, 32, 423}};
+  se::key_t allocation_list[2];
   for(int i = 0; i < 2; ++i) {
-    alloc_list[i] = octree_.hash(blocks[i](0), blocks[i](1), blocks[i](2));
+    allocation_list[i] = octree_.hash(blocks_coord[i].x(), blocks_coord[i].y(), blocks_coord[i].z());
   }
-  octree_.allocate(alloc_list, 2);
+  octree_.allocate(allocation_list, 2);
 
   octree_.set(56, 12, 254, 3.f);
 
   EXPECT_EQ(octree_.get(56, 12, 254), 3.f);
-  EXPECT_EQ(octree_.get(106, 12, 254), TestVoxelT::initValue());
+  EXPECT_EQ(octree_.get(106, 12, 254), TestVoxelT::initData());
   EXPECT_NE(octree_.get(106, 12, 254), 3.f);
 }
 
 TEST_F(MultiscaleTest, ScaledAlloc) {
-  const Eigen::Vector3i blocks[2] = {{200, 12, 25}, {87, 32, 423}};
-  se::key_t alloc_list[2];
+  const Eigen::Vector3i blocks_coord[2] = {{200, 12, 25}, {87, 32, 423}};
+  se::key_t allocation_list[2];
   for(int i = 0; i < 2; ++i) {
-    alloc_list[i] = octree_.hash(blocks[i](0), blocks[i](1), blocks[i](2), 5);
+    allocation_list[i] = octree_.hash(blocks_coord[i].x(), blocks_coord[i].y(), blocks_coord[i].z(), 5);
   }
 
-  octree_.allocate(alloc_list, 2);
-  se::Node<TestVoxelT>* n = octree_.fetch_octant(87, 32, 420, 5);
-  ASSERT_TRUE(n != NULL);
-  n->value_[0] = 10.f;
+  octree_.allocate(allocation_list, 2);
+  se::Node<TestVoxelT>* node = octree_.fetch_node(87, 32, 420, 5);
+  ASSERT_TRUE(node != NULL);
+  node->data_[0] = 10.f;
   EXPECT_EQ(octree_.get(87, 32, 420), 10.f);
 }
 
 TEST_F(MultiscaleTest, Iterator) {
-  const Eigen::Vector3i blocks[1] = {{56, 12, 254}};
-  se::key_t alloc_list[1];
-  alloc_list[0] = octree_.hash(blocks[0](0), blocks[0](1), blocks[0](2));
+  const Eigen::Vector3i blocks_coord[1] = {{56, 12, 254}};
+  se::key_t allocation_list[1];
+  allocation_list[0] = octree_.hash(blocks_coord[0].x(), blocks_coord[0].y(), blocks_coord[0].z());
 
-  octree_.allocate(alloc_list, 1);
+  octree_.allocate(allocation_list, 1);
   se::node_iterator<TestVoxelT> it(octree_);
-  se::Node<TestVoxelT> * node = it.next();
+  se::Node<TestVoxelT>* node = it.next();
   for(int i = 512; node != nullptr; node = it.next(), i /= 2){
-    const Eigen::Vector3i coords = se::keyops::decode(node->code_);
+    const Eigen::Vector3i node_coord = se::keyops::decode(node->code_);
     const int side = node->side_;
-    const se::Octree<TestVoxelT>::VoxelData val = node->value_[0];
+    const se::Octree<TestVoxelT>::VoxelData data = node->data_[0];
     EXPECT_EQ(side, i);
   }
 }
 
 TEST_F(MultiscaleTest, ChildrenMaskTest) {
-  const Eigen::Vector3i blocks[10] = {{56, 12, 254}, {87, 32, 423}, {128, 128, 128},
+  const Eigen::Vector3i blocks_coord[10] = {{56, 12, 254}, {87, 32, 423}, {128, 128, 128},
     {136, 128, 128}, {128, 136, 128}, {136, 136, 128},
     {128, 128, 136}, {136, 128, 136}, {128, 136, 136}, {136, 136, 136}};
-  se::key_t alloc_list[10];
+  se::key_t allocation_list[10];
   for(int i = 0; i < 10; ++i) {
-    alloc_list[i] = octree_.hash(blocks[i](0), blocks[i](1), blocks[i](2), 5);
+    allocation_list[i] = octree_.hash(blocks_coord[i].x(), blocks_coord[i].y(), blocks_coord[i].z(), 5);
   }
 
-  octree_.allocate(alloc_list, 10);
-  const se::PagedMemoryBuffer<se::Node<TestVoxelT> >& nodes = octree_.pool().nodeBuffer();
-  const size_t num_nodes = nodes.size();
+  octree_.allocate(allocation_list, 10);
+  const se::PagedMemoryBuffer<se::Node<TestVoxelT> >& nodes_buffer = octree_.pool().nodeBuffer();
+  const size_t num_nodes = nodes_buffer.size();
   for(size_t i = 0; i < num_nodes; ++i) {
-    se::Node<TestVoxelT>* n = nodes[i];
-    for(int c = 0; c < 8; ++c) {
-      if(n->child(c)) {
-        ASSERT_TRUE(n->children_mask_ & (1 << c));
+    se::Node<TestVoxelT>* node = nodes_buffer[i];
+    for(int child_idx = 0; child_idx < 8; ++child_idx) {
+      if(node->child(child_idx)) {
+        ASSERT_TRUE(node->children_mask_ & (1 << child_idx));
       }
     }
   }
 }
 
 TEST_F(MultiscaleTest, OctantAlloc) {
-  const Eigen::Vector3i blocks[10] = {{56, 12, 254}, {87, 32, 423}, {128, 128, 128},
+  const Eigen::Vector3i blocks_coord[10] = {{56, 12, 254}, {87, 32, 423}, {128, 128, 128},
     {136, 128, 128}, {128, 136, 128}, {136, 136, 128},
     {128, 128, 136}, {136, 128, 136}, {128, 136, 136}, {136, 136, 136}};
-  se::key_t alloc_list[10];
+  se::key_t allocation_list[10];
   for(int i = 0; i < 10; ++i) {
-    alloc_list[i] = octree_.hash(blocks[i](0), blocks[i](1), blocks[i](2));
+    allocation_list[i] = octree_.hash(blocks_coord[i].x(), blocks_coord[i].y(), blocks_coord[i].z());
   }
 
-  alloc_list[2] = alloc_list[2] | 3;
-  alloc_list[9] = alloc_list[2] | 5;
-  octree_.allocate(alloc_list, 10);
-  se::Node<TestVoxelT> * octant = octree_.fetch_octant(blocks[4](0), blocks[4](1),
-      blocks[4](2), 3);
-  ASSERT_TRUE(octant != NULL);
-  octant = octree_.fetch_octant(blocks[9](0), blocks[9](1),
-      blocks[9](2), 6);
-  ASSERT_TRUE(octant == NULL);
+  allocation_list[2] = allocation_list[2] | 3;
+  allocation_list[9] = allocation_list[2] | 5;
+  octree_.allocate(allocation_list, 10);
+  se::Node<TestVoxelT>* node = octree_.fetch_node(blocks_coord[4].x(), blocks_coord[4].y(),
+      blocks_coord[4].z(), 3);
+  ASSERT_TRUE(node != nullptr);
+  node = octree_.fetch_node(blocks_coord[9].x(), blocks_coord[9].y(),
+      blocks_coord[9].z(), 6);
+  ASSERT_TRUE(node == nullptr);
 }
 
 TEST_F(MultiscaleTest, SingleInsert) {
-  Eigen::Vector3i vox(32, 208, 44);
+  Eigen::Vector3i voxel_coord(32, 208, 44);
   const int side = se::VoxelBlock<TestVoxelT>::side;
-  se::VoxelBlock<TestVoxelT> * n = octree_.insert(vox(0), vox(1), vox(2));
-  Eigen::Vector3i coords = n->coordinates();
-  Eigen::Vector3i rounded = side * (vox/side);
-  ASSERT_TRUE(coords == rounded);
+  se::VoxelBlock<TestVoxelT>* block = octree_.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+  Eigen::Vector3i block_coord = block->coordinates();
+  Eigen::Vector3i block_coord_rounded = side * (voxel_coord / side);
+  ASSERT_TRUE(block_coord == block_coord_rounded);
 }
 
 TEST_F(MultiscaleTest, MultipleInsert) {
@@ -168,16 +168,16 @@ TEST_F(MultiscaleTest, MultipleInsert) {
   int num_tested = 0;
   for(int i = 1, side = octree.size() / 2; i <= block_depth; ++i, side = side / 2) {
     for(int j = 0; j < 20; ++j) {
-      Eigen::Vector3i vox(dis(gen), dis(gen), dis(gen));
-      se::Node<TestVoxelT> * n = octree.insert(vox(0), vox(1), vox(2), i);
-      se::Node<TestVoxelT> * n1 = octree.fetch_octant(vox(0), vox(1), vox(2), i);
-      Eigen::Vector3i rounded = side * (vox / side);
-      Eigen::Vector3i coords = se::keyops::decode(n1->code_);
+      Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
+      se::Node<TestVoxelT>* inserted_node = octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
+      se::Node<TestVoxelT>* fetched_node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
+      Eigen::Vector3i node_coord = se::keyops::decode(fetched_node->code_);
+      Eigen::Vector3i node_coord_rounded = side * (voxel_coord / side);
 
       // Check expected coordinates
-      ASSERT_TRUE(coords == rounded);
+      ASSERT_TRUE(node_coord == node_coord_rounded);
       // Should not have any children up to this level
-      ASSERT_TRUE(n1->children_mask_ == 0);
+      ASSERT_TRUE(fetched_node->children_mask_ == 0);
       ++num_tested;
     }
   }
@@ -186,7 +186,7 @@ TEST_F(MultiscaleTest, MultipleInsert) {
 struct TestVoxel2T {
   typedef Eigen::Vector3i VoxelData;
   static inline VoxelData empty(){ return Eigen::Vector3i::Zero(); }
-  static inline VoxelData initValue(){ return Eigen::Vector3i::Zero(); }
+  static inline VoxelData initData(){ return Eigen::Vector3i::Zero(); }
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -201,41 +201,41 @@ TEST(MultiscaleBlock, ReadWrite) {
   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with rd()
   std::uniform_int_distribution<> dis(0, 1023);
-  std::vector<Eigen::Vector3i, Eigen::aligned_allocator<Eigen::Vector3i>> voxels;
+  std::vector<Eigen::Vector3i, Eigen::aligned_allocator<Eigen::Vector3i>> voxels_coord;
 
   const int n = 50;
   for(int j = 0; j < n; ++j) {
-    voxels.push_back(Eigen::Vector3i(dis(gen), dis(gen), dis(gen)));
-    const Eigen::Vector3i& curr = voxels.back();
-    auto * n = octree.insert(curr.x(), curr.y(), curr.z());
-    const Eigen::Vector3i& base = n->coordinates();
+    voxels_coord.push_back(Eigen::Vector3i(dis(gen), dis(gen), dis(gen)));
+    const Eigen::Vector3i& voxel_coord = voxels_coord.back();
+    auto* block = octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+    const Eigen::Vector3i& block_coord = block->coordinates();
     for(int z = 0; z < side; ++z) {
       for(int y = 0; y < side; ++y) {
         for(int x = 0; x < side; ++x) {
-          const Eigen::Vector3i pos    = base + Eigen::Vector3i(x, y, z);
-          const Eigen::Vector3i pos_up = (pos/2) * 2;
-          const Eigen::Vector3i pos_up2 = (pos/4) * 4;
-          n->data(pos, pos);
-          n->data(pos, 1, pos_up);
-          n->data(pos, 2, pos_up2);
+          const Eigen::Vector3i voxel_coord_scale_0 = block_coord + Eigen::Vector3i(x, y, z);
+          const Eigen::Vector3i voxel_coord_scale_1 = (voxel_coord_scale_0 / 2) * 2;
+          const Eigen::Vector3i voxel_coord_scale_2 = (voxel_coord_scale_0 / 4) * 4;
+          block->data(voxel_coord_scale_0, voxel_coord_scale_0);
+          block->data(voxel_coord_scale_0, 1, voxel_coord_scale_1);
+          block->data(voxel_coord_scale_0, 2, voxel_coord_scale_2);
         }
       }
     }
   }
 
-  for(int i = 0; i < voxels.size(); ++i) {
-    const Eigen::Vector3i& curr = voxels[i];
-    auto * n = octree.fetch(curr.x(), curr.y(), curr.z());
-    const Eigen::Vector3i& base = n->coordinates();
+  for(int i = 0; i < voxels_coord.size(); ++i) {
+    const Eigen::Vector3i& voxel_coord = voxels_coord[i];
+    auto* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+    const Eigen::Vector3i& block_coord = block->coordinates();
     for(int z = 0; z < side; ++z) {
       for(int y = 0; y < side; ++y) {
         for(int x = 0; x < side; ++x) {
-          const Eigen::Vector3i pos    = base + Eigen::Vector3i(x, y, z);
-          const Eigen::Vector3i pos_up = (pos/2) * 2;
-          const Eigen::Vector3i pos_up2 = (pos/4) * 4;
-          ASSERT_TRUE(n->data(pos).cwiseEqual(pos).all());
-          ASSERT_TRUE(n->data(pos, 1).cwiseEqual(pos_up).all());
-          ASSERT_TRUE(n->data(pos, 2).cwiseEqual(pos_up2).all());
+          const Eigen::Vector3i voxel_coord_scale_0 = block_coord + Eigen::Vector3i(x, y, z);
+          const Eigen::Vector3i voxel_coord_scale_1 = (voxel_coord_scale_0 / 2) * 2;
+          const Eigen::Vector3i voxel_coord_scale_2 = (voxel_coord_scale_0 / 4) * 4;
+          ASSERT_TRUE(block->data(voxel_coord_scale_0).cwiseEqual(voxel_coord_scale_0).all());
+          ASSERT_TRUE(block->data(voxel_coord_scale_0, 1).cwiseEqual(voxel_coord_scale_1).all());
+          ASSERT_TRUE(block->data(voxel_coord_scale_0, 2).cwiseEqual(voxel_coord_scale_2).all());
         }
       }
     }

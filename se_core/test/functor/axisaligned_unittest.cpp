@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct TestVoxelT {
   typedef float VoxelData;
   static inline VoxelData empty(){ return 0.f; }
-  static inline VoxelData initValue(){ return 0.f; }
+  static inline VoxelData initData(){ return 0.f; }
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -51,39 +51,37 @@ class AxisAlignedTest : public ::testing::Test {
       float dim = 5.f;
       octree_.init(size, dim); // 5 meters
 
-      const unsigned center = 2.5f;
-
-      const float voxel_dim = octree_.dim()/octree_.size();
-      const float inverse_voxel_dim = 1.f/voxel_dim;
+      const float voxel_dim = octree_.dim() / octree_.size();
+      const float inverse_voxel_dim = 1.f / voxel_dim;
       const int band = 1 * inverse_voxel_dim;
       const Eigen::Vector3i offset =
-        Eigen::Vector3i::Constant(octree_.size()/2 - band/2);
+        Eigen::Vector3i::Constant(octree_.size() / 2 - band / 2);
       for(int z = 0; z < band; ++z) {
         for(int y = 0; y < band; ++y) {
           for(int x = 0; x < band; ++x) {
-            const Eigen::Vector3i vox =  Eigen::Vector3i(x + offset(0),
+            const Eigen::Vector3i voxel_coord =  Eigen::Vector3i(x + offset.x(),
                 y + offset(1), z + offset(2));
-            alloc_list.push_back(octree_.hash(vox(0), vox(1), vox(2), octree_.blockDepth()));
+            allocation_list.push_back(octree_.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree_.blockDepth()));
           }
         }
       }
-      octree_.allocate(alloc_list.data(), alloc_list.size());
+      octree_.allocate(allocation_list.data(), allocation_list.size());
     }
 
   typedef se::Octree<TestVoxelT> OctreeF;
   OctreeF octree_;
-  std::vector<se::key_t> alloc_list;
+  std::vector<se::key_t> allocation_list;
 };
 
 TEST_F(AxisAlignedTest, Init) {
 
   auto initialise = [](auto& handler, const Eigen::Vector3i&) {
-    handler.set(TestVoxelT::initValue());
+    handler.set(TestVoxelT::initData());
   };
 
   auto test = [](auto& handler, const Eigen::Vector3i&) {
     auto data = handler.get();
-    ASSERT_EQ(data, TestVoxelT::initValue());
+    ASSERT_EQ(data, TestVoxelT::initData());
   };
 
   se::functor::axis_aligned_map(octree_, initialise);
@@ -102,7 +100,7 @@ TEST_F(AxisAlignedTest, BBoxTest) {
   for(int z = 50; z < 200; ++z)
     for(int y = 50; y < 200; ++y)
       for(int x = 50; x < 200; ++x) {
-        auto * block = octree_.fetch(x, y, z);
+        auto* block = octree_.fetch(x, y, z);
         if(block &&
            se::math::in(x, 100, 150) &&
            se::math::in(y, 100, 150) &&
@@ -111,7 +109,7 @@ TEST_F(AxisAlignedTest, BBoxTest) {
         }
         else if(block) {
           ASSERT_EQ(block->data(Eigen::Vector3i(x, y, z)),
-                    TestVoxelT::initValue());
+                    TestVoxelT::initData());
         }
       }
 }

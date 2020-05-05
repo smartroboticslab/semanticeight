@@ -36,14 +36,15 @@
 #include <algorithm>
 
 template <typename T>
-void savePointCloud(const T* in, const int num_points,
-    const char* filename, const Eigen::Vector3f& init_t_WC){
-  std::stringstream points;
+void savePointCloud(const T* points_M, const int num_points,
+    const char* filename, const Eigen::Matrix4f& T_WM){
 
-  for(int i = 0; i < num_points; ++i ){
-    points << in[i].x() - init_t_WC.x() << " "
-           << in[i].y() - init_t_WC.y() << " "
-           << in[i].z() - init_t_WC.z() << std::endl;
+  std::stringstream ss_points_W;
+  for(int i = 0; i < num_points; ++i){
+    Eigen::Vector3f point_W = (T_WM * points_M[i].homogeneous()).head(3);
+    ss_points_W << point_W.x() << " "
+             << point_W.y() << " "
+             << point_W.z() << std::endl;
   }
 
   std::ofstream f;
@@ -54,14 +55,14 @@ void savePointCloud(const T* in, const int num_points,
   f << "DATASET POLYDATA" << std::endl;
 
   f << "POINTS " << num_points << " FLOAT" << std::endl;
-  f << points.str();
+  f << ss_points_W.str();
   f.close();
 }
 
 template <typename OctreeT, typename FieldSelector>
 void save3DSlice(const OctreeT& in, const Eigen::Vector3i& lower,
     const Eigen::Vector3i& upper, FieldSelector select, const int scale, const char* filename){
-  std::stringstream x_coordinates, y_coordinates, z_coordinates, scalars;
+  std::stringstream ss_x_coord, ss_y_coord, ss_z_coord, ss_scalars;
   std::ofstream f;
   f.open(filename);
 
@@ -77,32 +78,32 @@ void save3DSlice(const OctreeT& in, const Eigen::Vector3i& lower,
   f << "DIMENSIONS " << dimX << " " << dimY << " " << dimZ << std::endl;
 
   for(int x = lower.x(); x < upper.x(); x += stride)
-    x_coordinates << x << " ";
+    ss_x_coord << x << " ";
   for(int y = lower.y(); y < upper.y(); y += stride)
-    y_coordinates << y << " ";
+    ss_y_coord << y << " ";
   for(int z = lower.z(); z < upper.z(); z += stride)
-    z_coordinates << z << " ";
+    ss_z_coord << z << " ";
 
   for(int z = lower.z(); z < upper.z(); z += stride)
     for(int y = lower.y(); y < upper.y(); y += stride)
       for(int x = lower.x(); x < upper.x(); x += stride) {
         const auto data = select(in.get_fine(x, y, z, scale));
-        scalars << data  << std::endl;
+        ss_scalars << data  << std::endl;
       }
 
   f << "X_COORDINATES " << dimX << " int " << std::endl;
-  f << x_coordinates.str() << std::endl;
+  f << ss_x_coord.str() << std::endl;
 
   f << "Y_COORDINATES " << dimY << " int " << std::endl;
-  f << y_coordinates.str() << std::endl;
+  f << ss_y_coord.str() << std::endl;
 
   f << "Z_COORDINATES " << dimZ << " int " << std::endl;
-  f << z_coordinates.str() << std::endl;
+  f << ss_z_coord.str() << std::endl;
 
   f << "POINT_DATA " << dimX*dimY*dimZ << std::endl;
   f << "SCALARS scalars float 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
-  f << scalars.str() << std::endl;
+  f << ss_scalars.str() << std::endl;
   f.close();
 }
 #endif

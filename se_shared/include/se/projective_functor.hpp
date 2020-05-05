@@ -49,11 +49,11 @@ namespace functor {
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       projective_functor(OctreeT<FieldType>&    octree,
                          UpdateF                funct,
-                         const Sophus::SE3f&    T_CW,
+                         const Eigen::Matrix4f& T_CM,
                          const SensorImpl       sensor,
                          const Eigen::Vector3f& offset,
                          const Eigen::Vector2i& image_size) :
-        octree_(octree), funct_(funct), T_CW_(T_CW), sensor_(sensor), offset_(offset),
+        octree_(octree), funct_(funct), T_CM_(T_CM), sensor_(sensor), offset_(offset),
         image_size_(image_size) {
       }
 
@@ -69,7 +69,7 @@ namespace functor {
         const float voxel_dim = octree_.dim() / octree_.size();
         auto in_frustum_predicate =
           std::bind(algorithms::in_frustum<se::VoxelBlock<FieldType>>,
-              std::placeholders::_1, voxel_dim, T_CW_.matrix(), sensor_, image_size_);
+              std::placeholders::_1, voxel_dim, T_CM_, sensor_, image_size_);
         auto is_active_predicate = [](const se::VoxelBlock<FieldType>* block) {
           return block->active();
         };
@@ -81,7 +81,7 @@ namespace functor {
 
       void update_block(se::VoxelBlock<FieldType>* block,
                         const float                voxel_dim) {
-        /* Is this the VoxelBlock center? */
+        /* Is this the VoxelBlock centre? */
         const Eigen::Vector3i block_coord = block->coordinates();
         bool is_visible = false;
         block->current_scale(0);
@@ -96,19 +96,20 @@ namespace functor {
           for (unsigned int y = block_coord(1); y < ylast; ++y) {
 #pragma omp simd
             for (unsigned int x = block_coord(0); x < xlast; ++x) {
-              const Eigen::Vector3i voxel_corner_W = Eigen::Vector3i(x, y, z);
-              const Eigen::Vector3f voxel_pos_C = (T_CW_ * (voxel_dim * (voxel_corner_W.cast<float>() + offset_)));
-              Eigen::Vector2f pixel;
-              if (sensor_.model.project(voxel_pos_C, &pixel) != srl::projection::ProjectionStatus::Successful) {
+              const Eigen::Vector3i voxel_coord = Eigen::Vector3i(x, y, z);
+              const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim * (voxel_coord.cast<float>() + offset_)).homogeneous()).head(3);
+
+              Eigen::Vector2f pixel_f;
+              if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
                 continue;
               }
-              pixel += Eigen::Vector2f::Constant(0.5f);        
+              pixel_f += Eigen::Vector2f::Constant(0.5f);
               
               is_visible = true;
 
               /* Update the voxel. */
-              VoxelBlockHandler<FieldType> handler = {block, voxel_corner_W};
-              funct_(handler, voxel_corner_W, voxel_pos_C, pixel);
+              VoxelBlockHandler<FieldType> handler = {block, voxel_coord};
+              funct_(handler, voxel_coord, point_C, pixel_f);
             }
           }
         }
@@ -125,17 +126,17 @@ namespace functor {
         for(int i = 0; i < 8; ++i) {
           const Eigen::Vector3i dir = node->side_ / 2 *
               Eigen::Vector3i((i & 1) > 0, (i & 2) > 0, (i & 4) > 0); // TODO: Offset needs to be discussed
-          const Eigen::Vector3i child_node_corner_W = node_coord + dir;
-          const Eigen::Vector3f child_node_pos_C = (T_CW_ * (voxel_dim * (child_node_corner_W.cast<float>() + node->side_ * offset_)));
-          Eigen::Vector2f pixel;
-          if (sensor_.model.project(child_node_pos_C, &pixel) != srl::projection::ProjectionStatus::Successful) {
+          const Eigen::Vector3i child_coord = node_coord + dir;
+          const Eigen::Vector3f child_point_C = (T_CM_ * (voxel_dim * (child_coord.cast<float>() + node->side_ * offset_)).homogeneous()).head(3);
+          Eigen::Vector2f pixel_f;
+          if (sensor_.model.project(child_point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
             continue;
           }
 
-          pixel = pixel + Eigen::Vector2f::Constant(0.5f);
+          pixel_f = pixel_f + Eigen::Vector2f::Constant(0.5f);
           /* Update the child Node. */
           NodeHandler<FieldType> handler = {node, i};
-          funct_(handler, child_node_corner_W, child_node_pos_C, pixel);
+          funct_(handler, child_coord, child_point_C, pixel_f);
         }
       }
 
@@ -162,8 +163,7 @@ namespace functor {
     private:
       OctreeT<FieldType>& octree_;
       UpdateF funct_;
-      const Sophus::SE3f T_CW_;
-      const Eigen::Matrix4f K_;
+      const Eigen::Matrix4f& T_CM_;
       const SensorImpl sensor_;
       const Eigen::Vector3f offset_;
       const Eigen::Vector2i image_size_;
@@ -176,13 +176,13 @@ namespace functor {
             typename UpdateF>
   void projective_octree(OctreeT<FieldType>&    octree,
                          const Eigen::Vector3f& offset,
-                         const Sophus::SE3f&    T_CW,
+                         const Eigen::Matrix4f& T_CM,
                          const SensorImpl&      sensor,
                          const Eigen::Vector2i& image_size,
                          UpdateF                funct) {
 
     projective_functor<FieldType, OctreeT, UpdateF>
-      it(octree, funct, T_CW, sensor, offset, image_size);
+      it(octree, funct, T_CM, sensor, offset, image_size);
     it.apply();
   }
 }

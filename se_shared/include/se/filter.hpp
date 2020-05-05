@@ -37,8 +37,8 @@ namespace algorithms {
 
   template <typename VoxelBlockType>
     static inline bool in_frustum(const VoxelBlockType*  block,
-                                  const float            voxel_size,
-                                  const Eigen::Matrix4f& T_CW,
+                                  const float            voxel_dim,
+                                  const Eigen::Matrix4f& T_CM,
                                   const SensorImpl&      sensor,
                                   const Eigen::Vector2i& image_size) {
 
@@ -48,12 +48,12 @@ namespace algorithms {
                                        0, 0   , side, side, 0   , 0   , side, side,
                                        0, 0   , 0   , 0   , side, side, side, side,
                                        0, 0   , 0   , 0   , 0   , 0   , 0   , 0   ).finished();
-      const Eigen::Matrix3Xf block_corners_C = (T_CW * Eigen::Vector4f(voxel_size, voxel_size, voxel_size, 1.f).asDiagonal() *
+      const Eigen::Matrix3Xf block_corners_C = (T_CM * Eigen::Vector4f(voxel_dim, voxel_dim, voxel_dim, 1.f).asDiagonal() *
           (corner_offsets.colwise() + block->coordinates().homogeneous()).template cast<float>()).topRows(3);
-      Eigen::Matrix2Xf projected_corners(2, 8);
-      std::vector<srl::projection::ProjectionStatus> projection_stati;
-      sensor.model.projectBatch(block_corners_C, &projected_corners, &projection_stati);
-      return std::all_of(projection_stati.begin(), projection_stati.end(),
+      Eigen::Matrix2Xf proj_corner_pixels_f(2, 8);
+      std::vector<srl::projection::ProjectionStatus> proj_corner_stati;
+      sensor.model.projectBatch(block_corners_C, &proj_corner_pixels_f, &proj_corner_stati);
+      return std::all_of(proj_corner_stati.begin(), proj_corner_stati.end(),
           [](const auto it){ return it == srl::projection::ProjectionStatus::Successful; });
     }
 

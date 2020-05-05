@@ -57,15 +57,15 @@ void bilateralFilterKernel(se::Image<float>&         out,
 
 
 
-void depth2vertexKernel(se::Image<Eigen::Vector3f>& vertex,
-                        const se::Image<float>&     depth_image,
-                        const SensorImpl&           sensor);
+void depthToPointCloudKernel(se::Image<Eigen::Vector3f>& point_cloud_C,
+                             const se::Image<float>&     depth_image,
+                             const SensorImpl&           sensor);
 
 
 
-void vertex2depthKernel(se::Image<float>&                 depth_image,
-                        const se::Image<Eigen::Vector3f>& vertex,
-                        const Eigen::Matrix4f&            T_CW);
+void pointCloudToDepthKernel(se::Image<float>&                 depth_image,
+                             const se::Image<Eigen::Vector3f>& point_cloud_X,
+                             const Eigen::Matrix4f&            T_CX);
 
 
 
@@ -74,7 +74,7 @@ void vertex2depthKernel(se::Image<float>&                 depth_image,
  * left-handed coordinate system (the y focal length will be negative).
  */
 template <bool NegY>
-void vertex2normalKernel(se::Image<Eigen::Vector3f>&       out,
+void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>&       out,
                          const se::Image<Eigen::Vector3f>& in);
 
 
