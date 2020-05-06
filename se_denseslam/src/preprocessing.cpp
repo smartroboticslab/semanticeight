@@ -73,10 +73,10 @@ void bilateralFilterKernel(se::Image<float>&         out,
 
       for (int i = -radius; i <= radius; ++i) {
         for (int j = -radius; j <= radius; ++j) {
-          const Eigen::Vector2i pixel_idx_tmp = Eigen::Vector2i(
+          const Eigen::Vector2i pixel_tmp = Eigen::Vector2i(
               se::math::clamp(x + i, 0, width  - 1),
               se::math::clamp(y + j, 0, height - 1));
-          const float pixel_value_tmp = in[pixel_idx_tmp.x() + pixel_idx_tmp.y() * width];
+          const float pixel_value_tmp = in[pixel_tmp.x() + pixel_tmp.y() * width];
           if (pixel_value_tmp > 0.f) {
             const float mod = se::math::sq(pixel_value_tmp - centre_value);
             const float factor = gaussian[i + radius]
