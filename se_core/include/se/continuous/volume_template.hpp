@@ -52,10 +52,10 @@ class VolumeTemplate {
     typedef typename VoxelImpl::VoxelType::VoxelData VoxelData;
 
     VolumeTemplate(){};
-    VolumeTemplate(unsigned int r, float d, DiscreteOctreeT<VoxelType>* octree) :
+    VolumeTemplate(unsigned int size, float dim, DiscreteOctreeT<VoxelType>* octree) :
       octree_(octree) {
-        size_ = r;
-        dim_ = d;
+        size_ = size;
+        dim_ = dim;
       };
 
     inline Eigen::Vector3f voxelToPoint(const Eigen::Vector3i& voxel_coord) const {

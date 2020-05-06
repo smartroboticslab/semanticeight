@@ -41,7 +41,7 @@ static inline std::pair<Precision, bool>
         FieldSelector select) {
       std::pair<Precision, Eigen::Vector3i> samples[8];
 
-      Node<FieldType> * stack[CAST_STACK_DEPTH] = {};
+      Node<FieldType>* stack[CAST_STACK_DEPTH] = {};
       int voxel_depth = octree.voxelDepth();
       auto base_ptr = se::internal::fetch(stack, octree.root(), voxel_depth,
           voxel_coord_f.cast<int>());

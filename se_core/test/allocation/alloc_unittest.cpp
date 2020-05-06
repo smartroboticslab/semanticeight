@@ -82,11 +82,11 @@ TEST(AllocationTest, FetchOctant) {
   se::key_t allocation_list[1] = {code};
   octree.allocate(allocation_list, 1);
 
-  const int level = 3; /* 32 voxels per side */
-  se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), level);
+  const int depth = 3; /* 32 voxels per side */
+  se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
   se::key_t fetched_code = node->code_;
 
-  const se::key_t gt_code = octree.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), level);
+  const se::key_t gt_code = octree.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
   ASSERT_EQ(fetched_code, gt_code);
 }
 
@@ -115,8 +115,8 @@ TEST(AllocationTest, MortonPrefixMask) {
   const int block_depth = voxel_depth - log2(block_size);
   const unsigned int shift = max_bits - voxel_depth;
   int node_size = map_size / 2;
-  for (int level = 0; level <= block_depth; level++){
-    const se::key_t mask = MASK[level + shift];
+  for (int depth = 0; depth <= block_depth; depth++){
+    const se::key_t mask = MASK[depth + shift];
     compute_prefix(keys, tempkeys, num_samples, mask);
     for(int i = 0; i < num_samples; ++i) {
       const Eigen::Vector3i masked_voxel_coord = unpack_morton(tempkeys[i]);
@@ -125,7 +125,7 @@ TEST(AllocationTest, MortonPrefixMask) {
       ASSERT_EQ(masked_voxel_coord.z() % node_size, 0);
       const Eigen::Vector3i voxel_coord = voxels_coord[i];
       // printf("voxel_coord: %d, %d, %d\n", voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-      // printf("masked level %d: %d, %d, %d\n", level, masked_voxel_coord.x(), masked_voxel_coord.y(), masked_voxel_coord.z() );
+      // printf("masked depth %d: %d, %d, %d\n", depth, masked_voxel_coord.x(), masked_voxel_coord.y(), masked_voxel_coord.z() );
     }
     node_size = node_size / 2;
   }
@@ -146,8 +146,8 @@ TEST(AllocationTest, ParentInsert) {
   se::VoxelBlock<TestVoxelT>* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   EXPECT_NE(block, nullptr);
   se::Node<TestVoxelT>* parent = block->parent();
-  for(int level = block_depth - 1; level >= 0; level--){
-    se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), level);
+  for(int depth = block_depth - 1; depth >= 0; depth--){
+    se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
     ASSERT_EQ(parent, node);
     parent = parent->parent();
   }
@@ -170,8 +170,8 @@ TEST(AllocationTest, ParentAllocation) {
   se::VoxelBlock<TestVoxelT>* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   EXPECT_NE(block, nullptr);
   se::Node<TestVoxelT>* parent = block->parent();
-  for(int level = block_depth - 1; level >= 0; level--){
-    se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), level);
+  for(int depth = block_depth - 1; depth >= 0; depth--){
+    se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
     ASSERT_EQ(parent, node);
     parent = parent->parent();
   }

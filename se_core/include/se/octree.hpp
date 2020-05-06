@@ -163,22 +163,22 @@ public:
    */
   VoxelBlock<T>* fetch(const int x, const int y, const int z) const;
 
-  /*! \brief Fetch the node (x,y,z) at level
+  /*! \brief Fetch the node (x,y,z) at depth
    * \param x x coordinate in interval [0, size]
    * \param y y coordinate in interval [0, size]
    * \param z z coordinate in interval [0, size]
-   * \param level level to be searched
+   * \param depth depth to be searched
    */
   Node<T>* fetch_node(const int x, const int y, const int z,
-      const int level) const;
+      const int depth) const;
 
   /*! \brief Insert the octant at (x,y,z). Not thread safe.
    * \param x x coordinate in interval [0, size]
    * \param y y coordinate in interval [0, size]
    * \param z z coordinate in interval [0, size]
-   * \param level target insertion level
+   * \param depth target insertion depth
    */
-  Node<T>* insert(const int x, const int y, const int z, const int level);
+  Node<T>* insert(const int x, const int y, const int z, const int depth);
 
   /*! \brief Insert the block (x,y,z) at maximum resolution. Not thread safe.
    * \param x x coordinate in interval [0, size]
@@ -235,11 +235,11 @@ public:
 
   /*! \brief Get the list of allocated block. If the active switch is set to
    * true then only the visible blocks are retrieved.
-   * \param blocklist output vector of allocated blocks
+   * \param block_list output vector of allocated blocks
    * \param active boolean switch. Set to true to retrieve visible, allocated
    * blocks, false to retrieve all allocated blocks.
    */
-  void getBlockList(std::vector<VoxelBlock<T> *>& blocklist, bool active);
+  void getBlockList(std::vector<VoxelBlock<T> *>& block_list, bool active);
   typename T::template MemoryPoolType<T>& pool() { return pool_; };
   const typename T::template MemoryPoolType<T>& pool() const { return pool_; };
 
@@ -250,7 +250,7 @@ public:
    * \param z z coordinate in interval [0, size]
    */
   key_t hash(const int x, const int y, const int z) {
-    const int scale = voxel_depth_ - math::log2_const(block_size); // level of blocks
+    const int scale = voxel_depth_ - math::log2_const(block_size);
     return keyops::encode(x, y, z, scale, voxel_depth_);
   }
 
@@ -297,7 +297,7 @@ private:
   friend class node_iterator<T>;
 
   // Allocation specific variables
-  key_t* keys_at_level_;
+  key_t* keys_at_depth_;
   int reserved_;
 
   // Private implementation of cached methods
@@ -309,9 +309,9 @@ private:
   VoxelData get(const Eigen::Vector3f& voxel_coord_f, int& scale,
       VoxelBlock<T>* cached) const;
 
-  // Parallel allocation of a given tree level for a set of input keys.
-  // Pre: levels above target_level must have been already allocated
-  bool allocate_level(key_t * keys, int num_tasks, int target_level);
+  // Parallel allocation of a given tree depth for a set of input keys.
+  // Pre: depth above target_depth must have been already allocated
+  bool allocate_depth(key_t * keys, int num_tasks, int target_depth);
 
   void reserveBuffers(const int n);
 
@@ -547,8 +547,8 @@ void Octree<T>::init(int size, float dim) {
   root_ = pool_.root();
   root_->size_ = size;
   reserved_ = 1024;
-  keys_at_level_ = new key_t[reserved_];
-  std::memset(keys_at_level_, 0, reserved_);
+  keys_at_depth_ = new key_t[reserved_];
+  std::memset(keys_at_depth_, 0, reserved_);
 }
 
 template <typename T>
@@ -573,7 +573,7 @@ inline VoxelBlock<T>* Octree<T>::fetch(const int x, const int y,
 
 template <typename T>
 inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
-   const int z, const int level) const {
+   const int z, const int depth) const {
 
   Node<T>* node = root_;
   if(!node) {
@@ -582,7 +582,7 @@ inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
 
   // Get the block.
   unsigned node_size = size_ / 2;
-  for(int d = 1; node_size >= block_size && d <= level; node_size /= 2, ++d){
+  for(int d = 1; node_size >= block_size && d <= depth; node_size /= 2, ++d){
     node = node->child((x & node_size) > 0u, (y & node_size) > 0u, (z & node_size) > 0u);
     if(!node){
       return NULL;
@@ -593,14 +593,14 @@ inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
 
 template <typename T>
 Node<T>* Octree<T>::insert(const int x, const int y, const int z,
-    const int level) {
+    const int depth) {
 
   // Make sure we have enough space on buffers
-  if(level >= block_depth_) {
+  if(depth >= block_depth_) {
     pool_.reserveNodes(block_depth_);
     pool_.reserveBlocks(1);
   } else {
-    pool_.reserveNodes(level);
+    pool_.reserveNodes(depth);
   }
 
   Node<T>* node = root_;
@@ -612,11 +612,11 @@ Node<T>* Octree<T>::insert(const int x, const int y, const int z,
     node = root_;
   }
 
-  key_t key = keyops::encode(x, y, z, level, voxel_depth_);
+  key_t key = keyops::encode(x, y, z, depth, voxel_depth_);
   const unsigned int shift = MAX_BITS - voxel_depth_ - 1;
 
   unsigned node_size = size_ / 2;
-  for(int d = 1; node_size >= block_size && d <= level; node_size /= 2, ++d){
+  for(int d = 1; node_size >= block_size && d <= depth; node_size /= 2, ++d){
     const int child_idx = ((x & node_size) > 0) +  2 * ((y & node_size) > 0)
       +  4 * ((z & node_size) > 0);
 
@@ -937,8 +937,8 @@ void Octree<T>::reserveBuffers(const int num_blocks){
 
   if(num_blocks > reserved_){
     // std::cout << "Reserving " << n << " entries in allocation buffers" << std::endl;
-    delete[] keys_at_level_;
-    keys_at_level_ = new key_t[num_blocks];
+    delete[] keys_at_depth_;
+    keys_at_depth_ = new key_t[num_blocks];
     reserved_ = num_blocks;
   }
   pool_.reserveBlocks(num_blocks);
@@ -960,17 +960,17 @@ std::sort(keys, keys + num_elem);
   bool success = false;
 
   const unsigned int shift = MAX_BITS - voxel_depth_ - 1;
-  for (int level = 1; level <= block_depth_; level++){
-    const key_t mask = MASK[level + shift] | SCALE_MASK;
-    compute_prefix(keys, keys_at_level_, num_elem, mask);
-    last_elem = algorithms::unique_multiscale(keys_at_level_, num_elem);
-    success = allocate_level(keys_at_level_, last_elem, level);
+  for (int depth = 1; depth <= block_depth_; depth++){
+    const key_t mask = MASK[depth + shift] | SCALE_MASK;
+    compute_prefix(keys, keys_at_depth_, num_elem, mask);
+    last_elem = algorithms::unique_multiscale(keys_at_depth_, num_elem);
+    success = allocate_depth(keys_at_depth_, last_elem, depth);
   }
   return success;
 }
 
 template <typename T>
-bool Octree<T>::allocate_level(key_t* octant_keys, int num_tasks, int target_level){
+bool Octree<T>::allocate_depth(key_t* octant_keys, int num_tasks, int target_depth){
 
   pool_.reserveNodes(num_tasks); // Reserve memory for nodes
 
@@ -978,28 +978,28 @@ bool Octree<T>::allocate_level(key_t* octant_keys, int num_tasks, int target_lev
   for (int i = 0; i < num_tasks; i++){
     Node<T>** node = &root_;
     const key_t octant_key = keyops::code(octant_keys[i]);
-    const int octant_level = keyops::level(octant_keys[i]);
-    if (octant_level < target_level) continue;
+    const int octant_depth = keyops::depth(octant_keys[i]);
+    if (octant_depth < target_depth) continue;
 
     int octant_size = size_ / 2;
-    for (int level = 1; level <= target_level; ++level){
-      const int child_idx = se::child_idx(octant_key, level, voxel_depth_);
+    for (int depth = 1; depth <= target_depth; ++depth){
+      const int child_idx = se::child_idx(octant_key, depth, voxel_depth_);
       Node<T>* parent = *node;
       node = &(*node)->child(child_idx);
 
       if (!(*node)) {
-        if (level == block_depth_) {
+        if (depth == block_depth_) {
           *node = pool_.acquireBlock();
           (*node)->parent() = parent;
           (*node)->size_ = octant_size;
           static_cast<VoxelBlock<T> *>(*node)->coordinates(Eigen::Vector3i(unpack_morton(octant_key)));
           static_cast<VoxelBlock<T> *>(*node)->active(true);
-          static_cast<VoxelBlock<T> *>(*node)->code_ = octant_key | level;
+          static_cast<VoxelBlock<T> *>(*node)->code_ = octant_key | depth;
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         } else {
           *node = pool_.acquireNode();
           (*node)->parent() = parent;
-          (*node)->code_ = octant_key | level;
+          (*node)->code_ = octant_key | depth;
           (*node)->size_ = octant_size;
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         }
@@ -1089,7 +1089,7 @@ void Octree<T>::load(const std::string& filename) {
     Node<T> node;
     internal::deserialise(node, is);
     Eigen::Vector3i coords = keyops::decode(node.code_);
-    Node<T>* node_ptr = insert(coords(0), coords(1), coords(2), keyops::level(node.code_));
+    Node<T>* node_ptr = insert(coords(0), coords(1), coords(2), keyops::depth(node.code_));
     node_ptr->timestamp(node.timestamp());
     std::memcpy(node_ptr->data_, node.data_, 8 * sizeof(VoxelData));
   }
@@ -1102,7 +1102,7 @@ void Octree<T>::load(const std::string& filename) {
     internal::deserialise(block, is);
     Eigen::Vector3i coords = block.coordinates();
     VoxelBlock<T>* block_ptr =
-      static_cast<VoxelBlock<T> *>(insert(coords(0), coords(1), coords(2), keyops::level(block.code_)));
+      static_cast<VoxelBlock<T> *>(insert(coords(0), coords(1), coords(2), keyops::depth(block.code_)));
     block_ptr->min_scale(block.min_scale());
     block_ptr->current_scale(block.current_scale());
     std::memcpy(block_ptr->getBlockRawPtr(), block.getBlockRawPtr(), (block_size_cube + 64 + 8 + 1) * sizeof(*(block.getBlockRawPtr())));

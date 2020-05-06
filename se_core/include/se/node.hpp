@@ -127,8 +127,8 @@ class VoxelBlock: public Node<T> {
     VoxelData data(const Eigen::Vector3i& voxel_coord) const;
     void data(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
 
-    VoxelData data(const Eigen::Vector3i& voxel_coord, const int level) const;
-    void data(const Eigen::Vector3i& voxel_coord, const int level, const VoxelData& voxel_data);
+    VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const;
+    void data(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
 
     VoxelData data(const int voxel_idx) const;
     void data(const int voxel_idx, const VoxelData& voxel_data);
@@ -176,18 +176,18 @@ VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord) const {
 
 template <typename T>
 inline typename VoxelBlock<T>::VoxelData
-VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord, const int level) const {
+VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord, const int scale) const {
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
   int scale_offset = 0;
-  int l = 0;
+  int scale_tmp = 0;
   int num_voxels = size_cube;
-  while(l < level) {
+  while(scale_tmp < scale) {
     scale_offset += num_voxels;
     num_voxels /= 8;
-    ++l;
+    ++scale_tmp;
   }
-  const int local_size = size / (1 << level);
-  voxel_offset = voxel_offset / (1 << level);
+  const int local_size = size / (1 << scale);
+  voxel_offset = voxel_offset / (1 << scale);
   return voxel_block_[scale_offset + voxel_offset.x() +
                                      voxel_offset.y() * local_size +
                                      voxel_offset.z() * se::math::sq(local_size)];
@@ -201,20 +201,20 @@ inline void VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord,
 }
 
 template <typename T>
-inline void VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord, const int level,
+inline void VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord, const int scale,
                                 const VoxelData& voxel_data){
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
   int scale_offset = 0;
-  int l = 0;
+  int scale_tmp = 0;
   int num_voxels = size_cube;
-  while(l < level) {
+  while(scale_tmp < scale) {
     scale_offset += num_voxels;
     num_voxels /= 8;
-    ++l;
+    ++scale_tmp;
   }
 
-  const int size_at_scale = size / (1 << level);
-  voxel_offset = voxel_offset / (1 << level);
+  const int size_at_scale = size / (1 << scale);
+  voxel_offset = voxel_offset / (1 << scale);
   voxel_block_[scale_offset + voxel_offset.x() +
                               voxel_offset.y() * size_at_scale +
                               voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;

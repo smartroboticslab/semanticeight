@@ -66,7 +66,7 @@ namespace algorithms {
       for (int i = 0; i < num_keys; ++i){
         if(se::keyops::code(keys[i]) != se::keyops::code(keys[e])){
           keys[++e] = keys[i];
-        } else if(se::keyops::level(keys[i]) > se::keyops::level(keys[e])) { 
+        } else if(se::keyops::depth(keys[i]) > se::keyops::depth(keys[e])) {
           /* end does not advance but previous entry is overwritten */
           keys[e] = keys[i];
         }

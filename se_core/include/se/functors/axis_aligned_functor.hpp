@@ -60,9 +60,9 @@ namespace se {
           Eigen::Vector3i start = block_coord.cwiseMax(min_);
           Eigen::Vector3i last = (block_coord + block_size).cwiseMin(max_);
 
-          for(z = start(2); z < last(2); ++z) {
-            for (y = start(1); y < last(1); ++y) {
-              for (x = start(0); x < last(0); ++x) {
+          for(z = start.z(); z < last.z(); ++z) {
+            for (y = start.y(); y < last.y(); ++y) {
+              for (x = start.x(); x < last.x(); ++x) {
                 Eigen::Vector3i voxel_coord = Eigen::Vector3i(x, y, z);
                 VoxelBlockHandler<FieldType> handler = {block, voxel_coord};
                 function_(handler, voxel_coord);

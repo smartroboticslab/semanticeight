@@ -383,17 +383,17 @@ namespace se {
         const int        dir,
         FieldSelector    select_value) {
 
-      int level = se::keyops::level(octant->code_);
-      while (level > 0) {
-        int child_idx = se::child_idx(stack[level]->code_, max_depth);
+      int depth = se::keyops::depth(octant->code_);
+      while (depth > 0) {
+        int child_idx = se::child_idx(stack[depth]->code_, max_depth);
         int sibling = child_idx ^ dir;
         if ((sibling & dir) == dir) { // if sibling still in octant's family
-          const int child_size = 1 << (max_depth - level);
-          const Eigen::Vector3i coords = se::keyops::decode(stack[level-1]->code_)
+          const int child_size = 1 << (max_depth - depth);
+          const Eigen::Vector3i coords = se::keyops::decode(stack[depth-1]->code_)
               + child_size * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
-          return {select_value(stack[level-1]->data_[sibling]), coords};
+          return {select_value(stack[depth - 1]->data_[sibling]), coords};
         }
-        level--;
+        depth--;
       }
       return {Precision(), Eigen::Vector3i::Constant(INVALID_SAMPLE)};
     }
@@ -414,14 +414,14 @@ namespace se {
                                                    const int        max_depth,
                                                    const int        dir) {
 
-      int level = se::keyops::level(octant->code_);
-      while (level > 0) {
-        int child_idx = se::child_idx(stack[level]->code_, max_depth);
+      int depth = se::keyops::depth(octant->code_);
+      while (depth > 0) {
+        int child_idx = se::child_idx(stack[depth]->code_, max_depth);
         int sibling = child_idx ^ dir;
         if ((sibling & dir) == dir) { // if sibling still in octant's family
-          return stack[level-1]->child(sibling);
+          return stack[depth - 1]->child(sibling);
         }
-        level--;
+        depth--;
       }
       return nullptr;
     }
@@ -441,22 +441,22 @@ namespace se {
                                  const int              max_depth,
                                  const Eigen::Vector3i& pos) {
 
-      unsigned node_size = (1 << (max_depth - se::keyops::level(root->code_))) / 2;
+      unsigned node_size = (1 << (max_depth - se::keyops::depth(root->code_))) / 2;
       constexpr unsigned int block_size = BLOCK_SIZE;
-      Node<T>* n = root;
-      int l = 0;
-      for (; node_size >= block_size; ++l, node_size = node_size >> 1) {
-        stack[l] = n;
-        auto next = n->child(
+      Node<T>* node = root;
+      int d = 0;
+      for (; node_size >= block_size; ++d, node_size = node_size >> 1) {
+        stack[d] = node;
+        auto next = node->child(
             (pos.x() & node_size) > 0u,
             (pos.y() & node_size) > 0u,
             (pos.z() & node_size) > 0u);
         if (!next)
           break;
-        n = next;
+        node = next;
       }
-      stack[l] = n;
-      return n;
+      stack[d] = node;
+      return node;
     }
   } // end namespace internal_multires
 } // end namespace se

@@ -176,7 +176,7 @@ TEST_F(MultiscaleTest, MultipleInsert) {
 
       // Check expected coordinates
       ASSERT_TRUE(node_coord == node_coord_rounded);
-      // Should not have any children up to this level
+      // Should not have any children up to this depth
       ASSERT_TRUE(fetched_node->children_mask_ == 0);
       ++num_tested;
     }

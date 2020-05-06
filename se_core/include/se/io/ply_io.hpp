@@ -55,7 +55,7 @@ namespace se {
       int faces_count  = 0;
       while(node) {
         const Eigen::Vector3i node_coord = se::keyops::decode(node->code_);
-        const int node_size = 1 << (voxel_depth - se::keyops::level(node->code_));
+        const int node_size = 1 << (voxel_depth - se::keyops::depth(node->code_));
 
         Eigen::Vector3f node_corners[8];
         node_corners[0] =  node_coord.cast<float>();

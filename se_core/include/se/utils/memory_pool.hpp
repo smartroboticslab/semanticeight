@@ -64,10 +64,10 @@ namespace se {
     se::Node<T>*       acquireNode(typename T::VoxelData init_data = T::initData())  { nodes_updated_ = false; return new se::Node<T>(init_data); };
     se::VoxelBlock<T>* acquireBlock(typename T::VoxelData init_data = T::initData()) { blocks_updated_ = false; return new se::VoxelBlock<T>(init_data); };
 
-    void deleteNode(se::Node<T>* node, size_t max_level) {
+    void deleteNode(se::Node<T>* node, size_t max_depth) {
       nodes_updated_ = false;
       const unsigned int child_idx = se::child_idx(node->code_,
-                                           se::keyops::level(node->code_), max_level);
+                                           se::keyops::depth(node->code_), max_depth);
       node->parent()->child(child_idx) = nullptr;
       node->parent()->children_mask_ = node->parent()->children_mask_ & ~(1 << child_idx);
 
@@ -90,10 +90,10 @@ namespace se {
       }
     }
 
-    void deleteBlock(se::VoxelBlock<T>* block, size_t max_level) {
+    void deleteBlock(se::VoxelBlock<T>* block, size_t max_depth) {
       blocks_updated_ = false;
       const unsigned int child_idx = se::child_idx(block->code_,
-                                           se::keyops::level(block->code_), max_level);
+                                           se::keyops::depth(block->code_), max_depth);
       block->parent()->child(child_idx) = NULL;
       block->parent()->children_mask_ = block->parent()->children_mask_ & ~(1 << child_idx);
       delete(block);
