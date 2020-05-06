@@ -78,12 +78,12 @@ collision_status collides_with(const se::VoxelBlock<FieldType>* block,
   const Eigen::Vector3i block_coord = block->coordinates();
   int x, y, z, blockSide;
   blockSide = (int) se::VoxelBlock<FieldType>::side;
-  int xlast = block_coord.x() + blockSide;
-  int ylast = block_coord.y() + blockSide;
-  int zlast = block_coord.z() + blockSide;
-  for(z = block_coord.z(); z < zlast; ++z){
-    for (y = block_coord.y(); y < ylast; ++y){
-      for (x = block_coord.x(); x < xlast; ++x){
+  int x_last = block_coord.x() + blockSide;
+  int y_last = block_coord.y() + blockSide;
+  int z_last = block_coord.z() + blockSide;
+  for(z = block_coord.z(); z < z_last; ++z){
+    for (y = block_coord.y(); y < y_last; ++y){
+      for (x = block_coord.x(); x < x_last; ++x){
 
         typename se::VoxelBlock<FieldType>::VoxelData data;
         const Eigen::Vector3i voxel_coord{x, y, z};

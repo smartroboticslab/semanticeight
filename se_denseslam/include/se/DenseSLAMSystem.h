@@ -67,8 +67,8 @@ class DenseSLAMSystem {
     Eigen::Matrix4f T_MC_;        // Camera pose in map frame
     Eigen::Matrix4f* render_T_MC_; // Rendering camera pose in map frame
     Eigen::Matrix4f init_T_MC_;   // Initial camera pose in map frame
-    Eigen::Vector3f volume_dimension_;
-    Eigen::Vector3i volume_resolution_;
+    Eigen::Vector3f map_dim_;
+    Eigen::Vector3i map_size_;
     std::vector<int> iterations_;
     bool tracked_;
     bool integrated_;
@@ -84,7 +84,7 @@ class DenseSLAMSystem {
     se::Image<Eigen::Vector3f> surface_normals_M_;
 
     std::vector<se::key_t> allocation_list_;
-    std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > discrete_vol_ptr_;
+    std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > map_;
     Volume<VoxelImpl> volume_;
 
     // intra-frame
@@ -105,9 +105,9 @@ class DenseSLAMSystem {
      * Constructor using the initial camera position.
      *
      * \param[in] input_res The size (width and height) of the input frames.
-     * \param[in] volume_resolution_ The x, y and z resolution of the
+     * \param[in] map_size_ The x, y and z resolution of the
      * reconstructed volume in voxels.
-     * \param[in] volume_dimension_ The x, y and z dimensions of the
+     * \param[in] map_dim_ The x, y and z dimensions of the
      * reconstructed volume in meters.
      * \param[in] t_MW The x, y and z coordinates of the world to map frame translation.
      * The map frame rotation is assumed to be aligned with the world frame.
@@ -115,8 +115,8 @@ class DenseSLAMSystem {
      * \param[in] config_ The pipeline options.
      */
     DenseSLAMSystem(const Eigen::Vector2i& image_res,
-                    const Eigen::Vector3i& volume_resolution_,
-                    const Eigen::Vector3f& volume_dimension_,
+                    const Eigen::Vector3i& map_size_,
+                    const Eigen::Vector3f& map_dim_,
                     const Eigen::Vector3f& t_MW,
                     std::vector<int> &     pyramid,
                     const Configuration&   config_);
@@ -124,17 +124,17 @@ class DenseSLAMSystem {
      * Constructor using the initial camera position.
      *
      * \param[in] input_res The size (width and height) of the input frames.
-     * \param[in] volume_resolution_ The x, y and z resolution of the
+     * \param[in] map_size_ The x, y and z resolution of the
      * reconstructed volume in voxels.
-     * \param[in] volume_dimension_ The x, y and z dimensions of the
+     * \param[in] map_dim_ The x, y and z dimensions of the
      * reconstructed volume in meters.
      * \param[in] T_MW The world to map frame transformation encoded in a 4x4 matrix.
      * \param[in] pyramid See ::Configuration.pyramid for more details.
      * \param[in] config_ The pipeline options.
      */
     DenseSLAMSystem(const Eigen::Vector2i& image_res,
-                    const Eigen::Vector3i& volume_resolution_,
-                    const Eigen::Vector3f& volume_dimension_,
+                    const Eigen::Vector3i& map_size_,
+                    const Eigen::Vector3f& map_dim_,
                     const Eigen::Matrix4f& T_MW,
                     std::vector<int> &     pyramid,
                     const Configuration&   config_);
@@ -301,8 +301,8 @@ class DenseSLAMSystem {
     /*
      * TODO Document this.
      */
-    void getMap(std::shared_ptr<se::Octree<VoxelImpl::VoxelType> >& out) {
-      out = discrete_vol_ptr_;
+    void getMap(std::shared_ptr<se::Octree<VoxelImpl::VoxelType> >& map) {
+      map = map_;
     }
 
     /*
@@ -508,17 +508,17 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z dimensions of the volume.
      */
-    Eigen::Vector3f getModelDimensions() {
-      return (volume_dimension_);
+    Eigen::Vector3f getMapDimension() {
+      return (map_dim_);
     }
 
     /**
-     * Get the resolution of the reconstructed volume in voxels.
+     * Get the size of the reconstructed volume in voxels.
      *
      * \return A vector containing the x, y and z resolution of the volume.
      */
-    Eigen::Vector3i getModelResolution() {
-      return (volume_resolution_);
+    Eigen::Vector3i getMapSize() {
+      return (map_size_);
     }
 
     /**

@@ -88,14 +88,14 @@ namespace functor {
 
         /* Iterate over each voxel in the VoxelBlock. */
         const unsigned int block_side = se::VoxelBlock<FieldType>::side;
-        const unsigned int xlast = block_coord(0) + block_side;
-        const unsigned int ylast = block_coord(1) + block_side;
-        const unsigned int zlast = block_coord(2) + block_side;
+        const unsigned int x_last = block_coord.x() + block_side;
+        const unsigned int y_last = block_coord.y() + block_side;
+        const unsigned int z_last = block_coord.z() + block_side;
 
-        for (unsigned int z = block_coord(2); z < zlast; ++z) {
-          for (unsigned int y = block_coord(1); y < ylast; ++y) {
+        for (unsigned int z = block_coord.z(); z < z_last; ++z) {
+          for (unsigned int y = block_coord.y(); y < y_last; ++y) {
 #pragma omp simd
-            for (unsigned int x = block_coord(0); x < xlast; ++x) {
+            for (unsigned int x = block_coord.x(); x < x_last; ++x) {
               const Eigen::Vector3i voxel_coord = Eigen::Vector3i(x, y, z);
               const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim * (voxel_coord.cast<float>() + offset_)).homogeneous()).head(3);
 
@@ -123,9 +123,9 @@ namespace functor {
 
         /* Iterate over the Node children. */
 #pragma omp simd
-        for(int i = 0; i < 8; ++i) {
+        for(int child_idx = 0; child_idx < 8; ++child_idx) {
           const Eigen::Vector3i dir = node->side_ / 2 *
-              Eigen::Vector3i((i & 1) > 0, (i & 2) > 0, (i & 4) > 0); // TODO: Offset needs to be discussed
+              Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0); // TODO: Offset needs to be discussed
           const Eigen::Vector3i child_coord = node_coord + dir;
           const Eigen::Vector3f child_point_C = (T_CM_ * (voxel_dim * (child_coord.cast<float>() + node->side_ * offset_)).homogeneous()).head(3);
           Eigen::Vector2f pixel_f;
@@ -135,7 +135,7 @@ namespace functor {
 
           pixel_f = pixel_f + Eigen::Vector2f::Constant(0.5f);
           /* Update the child Node. */
-          NodeHandler<FieldType> handler = {node, i};
+          NodeHandler<FieldType> handler = {node, child_idx};
           funct_(handler, child_coord, child_point_C, pixel_f);
         }
       }

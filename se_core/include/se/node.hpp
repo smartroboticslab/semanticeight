@@ -59,10 +59,10 @@ public:
     side_ = 0;
     children_mask_ = 0;
     timestamp_ = 0;
-    for (unsigned int i = 0; i < 8; i++) {
-      data_[i]     = init_data;
-      parent_ptr_ = NULL;
-      child_ptr_[i] = NULL;
+    for (unsigned int child_idx = 0; child_idx < 8; child_idx++) {
+      data_[child_idx]      = init_data;
+      parent_ptr_           = nullptr;
+      child_ptr_[child_idx] = nullptr;
     }
   }
 
@@ -114,8 +114,8 @@ class VoxelBlock: public Node<T> {
       coordinates_ = Eigen::Vector3i::Constant(0);
       current_scale_ = 0;
       min_scale_ = -1;
-      for (unsigned int i = 0; i < num_voxels; i++) {
-        voxel_block_[i] = init_data;
+      for (unsigned int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
+        voxel_block_[voxel_idx] = init_data;
       }
     }
 
@@ -130,8 +130,8 @@ class VoxelBlock: public Node<T> {
     VoxelData data(const Eigen::Vector3i& voxel_coord, const int level) const;
     void data(const Eigen::Vector3i& voxel_coord, const int level, const VoxelData& voxel_data);
 
-    VoxelData data(const int i) const;
-    void data(const int i, const VoxelData& voxel_data);
+    VoxelData data(const int voxel_idx) const;
+    void data(const int voxel_idx, const VoxelData& voxel_data);
 
     int current_scale() { return current_scale_; }
     void current_scale(const int s) { current_scale_ = s; }

@@ -121,11 +121,11 @@ int main(int argc, char** argv) {
   track_render =  new uint32_t[image_res.x() * image_res.y()];
   volume_render = new uint32_t[image_res.x() * image_res.y()];
 
-  t_MW = config.t_MW_factor.cwiseProduct(config.volume_size);
+  t_MW = config.t_MW_factor.cwiseProduct(config.map_dim);
   pipeline = new DenseSLAMSystem(
       image_res,
-      Eigen::Vector3i::Constant(config.volume_resolution.x()),
-      Eigen::Vector3f::Constant(config.volume_size.x()),
+      Eigen::Vector3i::Constant(config.map_size.x()),
+      Eigen::Vector3f::Constant(config.map_dim.x()),
       t_MW,
       config.pyramid, config);
 

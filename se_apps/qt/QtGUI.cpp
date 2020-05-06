@@ -89,20 +89,20 @@ static void newDenseSLAMSystem(bool resetPose) {
 	if (!resetPose) {
 		*pipeline_pp = new DenseSLAMSystem(
 				Eigen::Vector2i(640 / config->image_resolution_ratio, 480 / config->image_resolution_ratio),
-				config->volume_resolution, config->volume_size, T_MW, config->pyramid, *config);
+				config->map_size, config->map_dim, T_MW, config->pyramid, *config);
   } else {
     Eigen::Matrix<float, 6, 1> twist;
-  	twist << config->t_MW_factor.x() * config->volume_size.x(),
-						 config->t_MW_factor.y() * config->volume_size.x(),
-					   config->t_MW_factor.z() * config->volume_size.x(), 0, 0, 0;
+  	twist << config->t_MW_factor.x() * config->map_dim.x(),
+						 config->t_MW_factor.y() * config->map_dim.x(),
+					   config->t_MW_factor.z() * config->map_dim.x(), 0, 0, 0;
 		trans = Sophus::SE3<float>::exp(twist);
 		rot = Sophus::SE3<float>();
-    Eigen::Vector3f t_MW = config->t_MW_factor.cwiseProduct(config->volume_size);
+    Eigen::Vector3f t_MW = config->t_MW_factor.cwiseProduct(config->map_dim);
 		*pipeline_pp = new DenseSLAMSystem(
 				Eigen::Vector2i(640 / config->image_resolution_ratio,
 						480 / config->image_resolution_ratio),
-				config->volume_resolution,
-				config->volume_size,
+				config->map_size,
+				config->map_dim,
         t_MW,
         config->pyramid, *config);
 	}
@@ -296,9 +296,9 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 	config = _config;
 	reader_pp = _depthReader;
   Eigen::Matrix<float, 6, 1> twist;
-  twist << config->t_MW_factor.x() * config->volume_size.x(),
-					 config->t_MW_factor.y() * config->volume_size.x(),
-				   config->t_MW_factor.z() * config->volume_size.x(), 0, 0, 0;
+  twist << config->t_MW_factor.x() * config->map_dim.x(),
+					 config->t_MW_factor.y() * config->map_dim.x(),
+				   config->t_MW_factor.z() * config->map_dim.x(), 0, 0, 0;
 	trans = Sophus::SE3<float>::exp(twist);
 	QApplication a(argc, argv);
 
@@ -344,10 +344,10 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 			&(config->image_resolution_ratio), continueWithNewDenseSLAMSystem);
 	appWindow->addButtonChoices("Vol. Size", { "4.0mx4.0mx4.0m",
 			"2.0mx2.0mx2.0m", "1.0mx1.0mx1.0m" }, { 4.0, 2.0, 1.0 },
-			(float *) (&(config->volume_size.x())), continueWithNewDenseSLAMSystem);
+			(float *) (&(config->map_dim.x())), continueWithNewDenseSLAMSystem);
 	appWindow->addButtonChoices("Vol. Res", { "1024x1024x1024", "512x512x512",
 			"256x256x256", "128x128x128", "64x64x64", "32x32x32" }, { 1024, 512,
-			256, 128, 64, 32 }, (int *) &(config->volume_resolution.x()),
+			256, 128, 64, 32 }, (int *) &(config->map_size.x()),
 			continueWithNewDenseSLAMSystem);
 
 	appWindow->addButtonChoices("ICP threshold", { "1e-4", "1e-5", "1e-6" }, {

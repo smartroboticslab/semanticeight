@@ -34,8 +34,8 @@ const int default_image_resolution_ratio = 1;
 const int default_integration_rate = 2;
 const int default_rendering_rate = 4;
 const int default_tracking_rate = 1;
-const Eigen::Vector3i default_volume_resolution(256, 256, 256);
-const Eigen::Vector3f default_volume_size(2.f, 2.f, 2.f);
+const Eigen::Vector3i default_map_size(256, 256, 256);
+const Eigen::Vector3f default_map_dim(2.f, 2.f, 2.f);
 const Eigen::Vector3f default_t_MW_factor(0.5f, 0.5f, 0.0f);
 const bool default_no_gui = false;
 const bool default_render_volume_fullsize = false;
@@ -62,9 +62,9 @@ static struct option long_options[] =
   {"init-pose",          required_argument, 0, 'p'},
   {"no-gui",             no_argument,       0, 'q'},
   {"integration-rate",   required_argument, 0, 'r'},
-  {"volume-size",        required_argument, 0, 's'},
+  {"map-dim",            required_argument, 0, 's'},
   {"tracking-rate",      required_argument, 0, 't'},
-  {"volume-resolution",  required_argument, 0, 'v'},
+  {"map-size",           required_argument, 0, 'v'},
   {"pyramid-levels",     required_argument, 0, 'y'},
   {"rendering-rate",     required_argument, 0, 'z'},
   {"voxel-block-size",   required_argument, 0, 'B'},
@@ -89,9 +89,9 @@ void print_arguments() {
   std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "     " << std::endl;
   std::cerr << "-q  (--no-gui)                            : default is to display gui"<<std::endl;
   std::cerr << "-r  (--integration-rate)                  : default is " << default_integration_rate << "     " << std::endl;
-  std::cerr << "-s  (--volume-size)                       : default is " << default_volume_size.x() << "," << default_volume_size.y() << "," << default_volume_size.z() << "      " << std::endl;
+  std::cerr << "-s  (--map-dim)                           : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "      " << std::endl;
   std::cerr << "-t  (--tracking-rate)                     : default is " << default_tracking_rate << "     " << std::endl;
-  std::cerr << "-v  (--volume-resolution)                 : default is " << default_volume_resolution.x() << "," << default_volume_resolution.y() << "," << default_volume_resolution.z() << "    " << std::endl;
+  std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "    " << std::endl;
   std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4     " << std::endl;
   std::cerr << "-z  (--rendering-rate)                    : default is " << default_rendering_rate << std::endl;
   std::cerr << "-g  (--ground-truth) <filename>           : Ground truth file" << std::endl;
@@ -184,8 +184,8 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
   config.integration_rate = default_integration_rate;
   config.tracking_rate = default_tracking_rate;
   config.rendering_rate = default_rendering_rate;
-  config.volume_resolution = default_volume_resolution;
-  config.volume_size = default_volume_size;
+  config.map_size = default_map_size;
+  config.map_dim = default_map_dim;
   config.t_MW_factor = default_t_MW_factor;
 
   config.dump_volume_file = default_dump_volume_file;
@@ -342,11 +342,11 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
         }
         break;
       case 's':    //   -s  (--map-size)
-        config.volume_size = atof3(optarg);
-        if ((config.volume_size.x() <= 0) || (config.volume_size.y() <= 0)
-            || (config.volume_size.z() <= 0)) {
+        config.map_dim = atof3(optarg);
+        if ((config.map_dim.x() <= 0) || (config.map_dim.y() <= 0)
+            || (config.map_dim.z() <= 0)) {
           std::cerr
-            << "ERROR: --volume-size (-s) all dimensions must > 0 (was "
+            << "ERROR: --map-dim (-s) all dimensions must > 0 (was "
             << optarg << ")\n";
           flagErr++;
         }
@@ -357,13 +357,13 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
       case 'z':    //   -z  (--rendering-rate)
         config.rendering_rate = atof(optarg);
         break;
-      case 'v':    //   -v  (--volumetric-size)
-        config.volume_resolution = atoi3(optarg);
-        if ((config.volume_resolution.x() <= 0)
-            || (config.volume_resolution.y() <= 0)
-            || (config.volume_resolution.z() <= 0)) {
+      case 'v':    //   -v  (--map-size)
+        config.map_size = atoi3(optarg);
+        if ((config.map_size.x() <= 0)
+            || (config.map_size.y() <= 0)
+            || (config.map_size.z() <= 0)) {
           std::cerr
-            << "ERROR: --volume-size (-s) all dimensions must > 0 (was "
+            << "ERROR: --map-size (-s) all dimensions must > 0 (was "
             << optarg << ")\n";
           flagErr++;
         }

@@ -68,11 +68,11 @@ namespace se {
       nodes_updated_ = false;
       const unsigned int child_idx = se::child_idx(node->code_,
                                            se::keyops::level(node->code_), max_level);
-      node->parent()->child(child_idx) = NULL;
+      node->parent()->child(child_idx) = nullptr;
       node->parent()->children_mask_ = node->parent()->children_mask_ & ~(1 << child_idx);
 
-      for (int i = 0; i < 8; i++)
-        deleteNodeRecurse(node->child(i));
+      for (int child_idx = 0; child_idx < 8; child_idx++)
+        deleteNodeRecurse(node->child(child_idx));
       delete(node);
     }
 
@@ -83,8 +83,8 @@ namespace se {
       if (node->isBlock()) {
         deleteBlockRecurse(dynamic_cast<se::VoxelBlock<T>*>(node));
       } else {
-        for (int i = 0; i < 8; i++) {
-          deleteNodeRecurse(node->child(i));
+        for (int child_idx = 0; child_idx < 8; child_idx++) {
+          deleteNodeRecurse(node->child(child_idx));
         }
         delete(node);
       }
@@ -159,14 +159,14 @@ namespace se {
 
     void addNodeRecurse(se::Node<T>* node) {
       node_buffer_.push_back(node);
-      for (int i = 0; i < 8; i++) {
-        if (node->child(i)) {
-          if (node->child(i)->isBlock()) {
+      for (int child_idx = 0; child_idx < 8; child_idx++) {
+        if (node->child(child_idx)) {
+          if (node->child(child_idx)->isBlock()) {
             if (!blocks_updated_) {
-              block_buffer_.push_back(static_cast<VoxelBlock<T>*>(node->child(i)));
+              block_buffer_.push_back(static_cast<VoxelBlock<T>*>(node->child(child_idx)));
             }
           } else {
-            addNodeRecurse(node->child(i));
+            addNodeRecurse(node->child(child_idx));
           }
         }
       }

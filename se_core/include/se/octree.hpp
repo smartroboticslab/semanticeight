@@ -895,18 +895,18 @@ int Octree<T>::blockCount(){
 }
 
 template <typename T>
-int Octree<T>::blockCountRecursive(Node<T> * n){
+int Octree<T>::blockCountRecursive(Node<T>* node){
 
-  if(!n) return 0;
+  if(!node) return 0;
 
-  if(n->isBlock()){
+  if(node->isBlock()){
     return 1;
   }
 
   int sum = 0;
 
-  for (int i = 0; i < 8; i++){
-    sum += blockCountRecursive(n->child(i));
+  for (int child_idx = 0; child_idx < 8; child_idx++){
+    sum += blockCountRecursive(node->child(child_idx));
   }
 
   return sum;
@@ -918,37 +918,37 @@ int Octree<T>::nodeCount(){
 }
 
 template <typename T>
-int Octree<T>::nodeCountRecursive(Node<T> * node){
+int Octree<T>::nodeCountRecursive(Node<T>* node){
   if (!node) {
     return 0;
   }
 
-  int n = 1;
-  for (int i = 0; i < 8; ++i) {
-    n += (n ? nodeCountRecursive((node)->child(i)) : 0);
+  int node_count = 1;
+  for (int child_idx = 0; child_idx < 8; ++child_idx) {
+    node_count += (node_count ? nodeCountRecursive((node)->child(child_idx)) : 0);
   }
-  return n;
+  return node_count;
 }
 
 template <typename T>
-void Octree<T>::reserveBuffers(const int n){
+void Octree<T>::reserveBuffers(const int num_blocks){
 
-  if(n > reserved_){
+  if(num_blocks > reserved_){
     // std::cout << "Reserving " << n << " entries in allocation buffers" << std::endl;
     delete[] keys_at_level_;
-    keys_at_level_ = new key_t[n];
-    reserved_ = n;
+    keys_at_level_ = new key_t[num_blocks];
+    reserved_ = num_blocks;
   }
-  pool_.reserveBlocks(n);
+  pool_.reserveBlocks(num_blocks);
 }
 
 template <typename T>
-bool Octree<T>::allocate(key_t *keys, int num_elem){
+bool Octree<T>::allocate(key_t* keys, int num_elem){
 
 #if defined(_OPENMP) && !defined(__clang__)
   __gnu_parallel::sort(keys, keys+num_elem);
 #else
-std::sort(keys, keys+num_elem);
+std::sort(keys, keys + num_elem);
 #endif
 
   num_elem = algorithms::filter_ancestors(keys, num_elem, voxel_depth_);
@@ -968,20 +968,20 @@ std::sort(keys, keys+num_elem);
 }
 
 template <typename T>
-bool Octree<T>::allocate_level(key_t* keys, int num_tasks, int target_level){
+bool Octree<T>::allocate_level(key_t* octant_keys, int num_tasks, int target_level){
 
   pool_.reserveNodes(num_tasks); // Reserve memory for nodes
 
 #pragma omp parallel for
   for (int i = 0; i < num_tasks; i++){
     Node<T>** node = &root_;
-    const key_t myKey = keyops::code(keys[i]);
-    const int myLevel = keyops::level(keys[i]);
-    if (myLevel < target_level) continue;
+    const key_t octant_key = keyops::code(octant_keys[i]);
+    const int octant_level = keyops::level(octant_keys[i]);
+    if (octant_level < target_level) continue;
 
     int edge = size_ / 2;
     for (int level = 1; level <= target_level; ++level){
-      const int child_idx = se::child_idx(myKey, level, voxel_depth_);
+      const int child_idx = se::child_idx(octant_key, level, voxel_depth_);
       Node<T>* parent = *node;
       node = &(*node)->child(child_idx);
 
@@ -990,14 +990,14 @@ bool Octree<T>::allocate_level(key_t* keys, int num_tasks, int target_level){
           *node = pool_.acquireBlock();
           (*node)->parent() = parent;
           (*node)->side_ = edge;
-          static_cast<VoxelBlock<T> *>(*node)->coordinates(Eigen::Vector3i(unpack_morton(myKey)));
+          static_cast<VoxelBlock<T> *>(*node)->coordinates(Eigen::Vector3i(unpack_morton(octant_key)));
           static_cast<VoxelBlock<T> *>(*node)->active(true);
-          static_cast<VoxelBlock<T> *>(*node)->code_ = myKey | level;
+          static_cast<VoxelBlock<T> *>(*node)->code_ = octant_key | level;
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         } else {
           *node = pool_.acquireNode();
           (*node)->parent() = parent;
-          (*node)->code_ = myKey | level;
+          (*node)->code_ = octant_key | level;
           (*node)->side_ = edge;
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         }

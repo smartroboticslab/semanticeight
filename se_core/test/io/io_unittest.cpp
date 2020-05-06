@@ -65,22 +65,22 @@ TEST(SerialiseUnitTest, WriteReadNode) {
   std::string filename = "test.bin";
   {
     std::ofstream os (filename, std::ios::binary);
-    se::Node<TestVoxelT> octant;
-    octant.code_ = 24;
-    octant.side_ = 256;
-    for(int i = 0; i < 8; ++i)
-      octant.data_[i] =  5.f;
-    se::internal::serialise(os, octant);
+    se::Node<TestVoxelT> node;
+    node.code_ = 24;
+    node.side_ = 256;
+    for(int child_idx = 0; child_idx < 8; ++child_idx)
+      node.data_[child_idx] =  5.f;
+    se::internal::serialise(os, node);
   }
 
   {
     std::ifstream is(filename, std::ios::binary);
-    se::Node<TestVoxelT> octant;
-    se::internal::deserialise(octant, is);
-    ASSERT_EQ(octant.code_, 24);
-    ASSERT_EQ(octant.side_, 256);
-    for(int i = 0; i < 8; ++i)
-      ASSERT_EQ(octant.data_[i], 5.f);
+    se::Node<TestVoxelT> node;
+    se::internal::deserialise(node, is);
+    ASSERT_EQ(node.code_, 24);
+    ASSERT_EQ(node.side_, 256);
+    for(int child_idx = 0; child_idx < 8; ++child_idx)
+      ASSERT_EQ(node.data_[child_idx], 5.f);
   }
 }
 
@@ -88,22 +88,22 @@ TEST(SerialiseUnitTest, WriteReadBlock) {
   std::string filename = "test.bin";
   {
     std::ofstream os (filename, std::ios::binary);
-    se::VoxelBlock<TestVoxelT> octant;
-    octant.code_ = 24;
-    octant.coordinates(Eigen::Vector3i(40, 48, 52));
-    for(int i = 0; i < 512; ++i)
-      octant.data(i, 5.f);
-    se::internal::serialise(os, octant);
+    se::VoxelBlock<TestVoxelT> block;
+    block.code_ = 24;
+    block.coordinates(Eigen::Vector3i(40, 48, 52));
+    for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
+      block.data(voxel_idx, 5.f);
+    se::internal::serialise(os, block);
   }
 
   {
     std::ifstream is(filename, std::ios::binary);
-    se::VoxelBlock<TestVoxelT> octant;
-    se::internal::deserialise(octant, is);
-    ASSERT_EQ(octant.code_, 24);
-    ASSERT_TRUE(octant.coordinates() == Eigen::Vector3i(40, 48, 52));
-    for(int i = 0; i < 512; ++i)
-      ASSERT_EQ(octant.data(i), 5.f);
+    se::VoxelBlock<TestVoxelT> block;
+    se::internal::deserialise(block, is);
+    ASSERT_EQ(block.code_, 24);
+    ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
+    for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
+      ASSERT_EQ(block.data(voxel_idx), 5.f);
   }
 }
 
@@ -111,22 +111,22 @@ TEST(SerialiseUnitTest, WriteReadBlockStruct) {
   std::string filename = "test.bin";
   {
     std::ofstream os (filename, std::ios::binary);
-    se::VoxelBlock<OccupancyVoxelT> octant;
-    octant.code_ = 24;
-    octant.coordinates(Eigen::Vector3i(40, 48, 52));
-    for(int i = 0; i < 512; ++i)
-      octant.data(i, {5.f, 2.});
-    se::internal::serialise(os, octant);
+    se::VoxelBlock<OccupancyVoxelT> block;
+    block.code_ = 24;
+    block.coordinates(Eigen::Vector3i(40, 48, 52));
+    for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
+      block.data(voxel_idx, {5.f, 2.});
+    se::internal::serialise(os, block);
   }
 
   {
     std::ifstream is(filename, std::ios::binary);
-    se::VoxelBlock<OccupancyVoxelT> octant;
-    se::internal::deserialise(octant, is);
-    ASSERT_EQ(octant.code_, 24);
-    ASSERT_TRUE(octant.coordinates() == Eigen::Vector3i(40, 48, 52));
-    for(int i = 0; i < 512; ++i) {
-      auto data = octant.data(i);
+    se::VoxelBlock<OccupancyVoxelT> block;
+    se::internal::deserialise(block, is);
+    ASSERT_EQ(block.code_, 24);
+    ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
+    for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx) {
+      auto data = block.data(voxel_idx);
       ASSERT_EQ(data.x, 5.f);
       ASSERT_EQ(data.y, 2.);
     }
@@ -160,10 +160,10 @@ TEST(SerialiseUnitTest, SerialiseTree) {
   auto& node_buffer_copy = octree_copy.pool().nodeBuffer();
   ASSERT_EQ(node_buffer_base.size(), node_buffer_copy.size());
   for(int i = 0; i < node_buffer_base.size(); ++i) {
-    se::Node<TestVoxelT> * n  = node_buffer_base[i];
-    se::Node<TestVoxelT> * n1 = node_buffer_copy[i];
-    ASSERT_EQ(n->code_, n1->code_);
-    ASSERT_EQ(n->children_mask_, n1->children_mask_);
+    se::Node<TestVoxelT> * node_base  = node_buffer_base[i];
+    se::Node<TestVoxelT> * node_copy = node_buffer_copy[i];
+    ASSERT_EQ(node_base->code_, node_copy->code_);
+    ASSERT_EQ(node_base->children_mask_, node_copy->children_mask_);
   }
 
   auto& block_buffer_base = octree.pool().blockBuffer();
@@ -182,8 +182,8 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
     auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-    for(int i = 0; i < se::VoxelBlock<TestVoxelT>::side_cube; ++i)
-      block->data(i, dis(gen));
+    for(int voxel_idx = 0; voxel_idx < se::VoxelBlock<TestVoxelT>::side_cube; ++voxel_idx)
+      block->data(voxel_idx, dis(gen));
   }
 
   std::string filename = "block-test.bin";
@@ -195,8 +195,8 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
   auto& block_buffer_base = octree.pool().blockBuffer();
   auto& block_buffer_copy = octree_copy.pool().blockBuffer();
   for(int i = 0; i < block_buffer_base.size(); i++) {
-    for(int j = 0; j < se::VoxelBlock<TestVoxelT>::side_cube; j++) {
-      ASSERT_EQ(block_buffer_base[i]->data(j), block_buffer_copy[i]->data(j));
+    for(int voxel_idx = 0; voxel_idx < se::VoxelBlock<TestVoxelT>::side_cube; voxel_idx++) {
+      ASSERT_EQ(block_buffer_base[i]->data(voxel_idx), block_buffer_copy[i]->data(voxel_idx));
     }
   }
 

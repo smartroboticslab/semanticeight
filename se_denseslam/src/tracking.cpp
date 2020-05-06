@@ -70,13 +70,13 @@ static inline Eigen::Matrix<float, 6, 1> solve(
 
 
 
-void new_reduce(int                    block_index,
+void new_reduce(int                    block_idx,
                 float*                 output_data,
                 const Eigen::Vector2i& output_res,
                 TrackData*             J_data,
                 const Eigen::Vector2i& J_res) {
 
-  float* sums = output_data + block_index * 32;
+  float* sums = output_data + block_idx * 32;
 
   for (unsigned int i = 0; i < 32; ++i)
     sums[i] = 0;
@@ -119,7 +119,7 @@ void new_reduce(int                    block_index,
   sums31 = 0.0f;
 
 #pragma omp parallel for reduction(+:sums0,sums1,sums2,sums3,sums4,sums5,sums6,sums7,sums8,sums9,sums10,sums11,sums12,sums13,sums14,sums15,sums16,sums17,sums18,sums19,sums20,sums21,sums22,sums23,sums24,sums25,sums26,sums27,sums28,sums29,sums30,sums31)
-  for (int y = block_index; y < output_res.y(); y += 8) {
+  for (int y = block_idx; y < output_res.y(); y += 8) {
     for (int x = 0; x < output_res.x(); x++) {
 
       const TrackData & row = J_data[(x + y * J_res.x())]; // ...
@@ -225,8 +225,8 @@ void reduceKernel(float*                 output_data,
 #ifdef OLDREDUCE
 #pragma omp parallel for
 #endif
-  for (int block_index = 0; block_index < 8; block_index++) {
-    new_reduce(block_index, output_data, output_res, J_data, J_res);
+  for (int block_idx = 0; block_idx < 8; block_idx++) {
+    new_reduce(block_idx, output_data, output_res, J_data, J_res);
   }
 
   Eigen::Map<Eigen::Matrix<float, 8, 32, Eigen::RowMajor> > values(output_data);

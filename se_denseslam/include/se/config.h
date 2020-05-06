@@ -78,16 +78,16 @@ struct Configuration {
   int rendering_rate;
 
   /**
-   * The x, y and z resolution of the reconstructed volume in voxels.
+   * The x, y and z size of the reconstructed map in voxels.
    * <br>\em Default: (256, 256, 256)
    */
-  Eigen::Vector3i volume_resolution;
+  Eigen::Vector3i map_size;
 
   /**
-   * The x, y and z dimensions of the reconstructed volume in meters.
+   * The x, y and z dimensions of the reconstructed map in meters.
    * <br>\em Default: (2, 2, 2)
    */
-  Eigen::Vector3f volume_size;
+  Eigen::Vector3f map_dim;
 
   /**
    * The position of the first pose inside the volume. The coordinates are
@@ -229,43 +229,43 @@ struct Configuration {
 
 
 static std::ostream& operator<<(std::ostream& out, const Configuration& config) {
-  out << "Input file:              " << config.input_file << "\n";
-  out << "Volume extent:           " << config.volume_size.x() << "x"
-                                     << config.volume_size.y() << "x"
-                                     << config.volume_size.z() << " meters\n";
-  out << "Volume size:             " << config.volume_resolution.x() << "x"
-                                     << config.volume_resolution.y() << "x"
-                                     << config.volume_resolution.z() << " voxels\n";
-  out << "Initial position factor: " << config.t_MW_factor.x() << " "
-                                     << config.t_MW_factor.y() << " "
-                                     << config.t_MW_factor.z() << "\n";
-  out << "Image resolution ratio:      " << config.image_resolution_ratio << "\n";
-  out << "Camera parameters:       " << config.camera.x() << " "
-                                     << config.camera.y() << " "
-                                     << config.camera.z() << " "
-                                     << config.camera.w() << "\n";
-  out << "Left hand frame:         " << config.left_hand_frame << "\n";
-  out << "Mu:                      " << config.mu << "\n";
-  out << "Filter depth:            " << (config.bilateral_filter
+  out << "Input file:                      " << config.input_file << "\n";
+  out << "Map dim:                         " << config.map_dim.x() << "x"
+                                             << config.map_dim.y() << "x"
+                                             << config.map_dim.z() << " meters\n";
+  out << "Map size:                        " << config.map_size.x() << "x"
+                                             << config.map_size.y() << "x"
+                                             << config.map_size.z() << " voxels\n";
+  out << "World to map translation factor: " << config.t_MW_factor.x() << " "
+                                             << config.t_MW_factor.y() << " "
+                                             << config.t_MW_factor.z() << "\n";
+  out << "Image resolution ratio:          " << config.image_resolution_ratio << "\n";
+  out << "Camera parameters:               " << config.camera.x() << " "
+                                             << config.camera.y() << " "
+                                             << config.camera.z() << " "
+                                             << config.camera.w() << "\n";
+  out << "Left hand frame:                 " << config.left_hand_frame << "\n";
+  out << "Mu:                              " << config.mu << "\n";
+  out << "Filter depth:                    " << (config.bilateral_filter
                                         ? "true" : "false") << "\n";
-  out << "Tracking rate:           " << config.tracking_rate << "\n";
-  out << "Integration rate:        " << config.integration_rate << "\n";
-  out << "Rendering rate:          " << config.rendering_rate << "\n";
-  out << "ICP pyramid levels:     ";
+  out << "Tracking rate:                   " << config.tracking_rate << "\n";
+  out << "Integration rate:                " << config.integration_rate << "\n";
+  out << "Rendering rate:                  " << config.rendering_rate << "\n";
+  out << "ICP pyramid levels:              ";
   for (const auto& level : config.pyramid) {
     out << " " << level;
   }
   out << "\n";
-  out << "ICP threshold:           " << config.icp_threshold << "\n";
-  out << "Ground truth file:       " << config.groundtruth_file << "\n";
-  out << "Ground truth T_BC:\n"      << config.T_BC << "\n";
-  out << "Output mesh file:        " << config.dump_volume_file << "\n";
-  out << "Log file:                " << config.log_file << "\n";
-  out << "Hide GUI:                " << (config.no_gui
+  out << "ICP threshold:                   " << config.icp_threshold << "\n";
+  out << "Ground truth file:               " << config.groundtruth_file << "\n";
+  out << "Ground truth T_BC:\n"              << config.T_BC << "\n";
+  out << "Output mesh file:                " << config.dump_volume_file << "\n";
+  out << "Log file:                        " << config.log_file << "\n";
+  out << "Hide GUI:                        " << (config.no_gui
                                         ? "true" : "false") << "\n";
-  out << "Blocking read:           " << (config.blocking_read
+  out << "Blocking read:                   " << (config.blocking_read
                                         ? "true" : "false") << "\n";
-  out << "FPS:                     " << config.fps << "\n";
+  out << "FPS:                             " << config.fps << "\n";
   return out;
 }
 

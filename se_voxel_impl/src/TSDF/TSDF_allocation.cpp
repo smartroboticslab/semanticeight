@@ -59,7 +59,7 @@ size_t TSDF::buildAllocationList(
   const Eigen::Vector2i depth_image_res(depth_image.width(), depth_image.height());
   const float voxel_dim = map.dim() / map.size();
   const float inverse_voxel_dim = 1.f / voxel_dim;
-  const int volume_size = map.size();
+  const int map_size = map.size();
   const unsigned block_depth = map.blockDepth();
   const float band = 2.f * sensor.mu;
 
@@ -95,9 +95,9 @@ size_t TSDF::buildAllocationList(
       for (int i = 0; i < num_steps; i++) {
 
         const Eigen::Vector3i voxel_coord = (ray_pos_M * inverse_voxel_dim).cast<int>();
-        if (   (voxel_coord.x() < volume_size)
-            && (voxel_coord.y() < volume_size)
-            && (voxel_coord.z() < volume_size)
+        if (   (voxel_coord.x() < map_size)
+            && (voxel_coord.y() < map_size)
+            && (voxel_coord.z() < map_size)
             && (voxel_coord.x() >= 0)
             && (voxel_coord.y() >= 0)
             && (voxel_coord.z() >= 0)) {

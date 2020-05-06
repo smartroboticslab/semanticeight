@@ -140,13 +140,13 @@ TEST_F(OctreeCollisionTest, CollisionFreeLeaf){
   const Eigen::Vector3i block_coord = block->coordinates();
   int x, y, z, block_side;
   block_side = (int) se::VoxelBlock<TestVoxelT>::side;
-  int xlast = block_coord.x() + block_side;
-  int ylast = block_coord.y() + block_side;
-  int zlast = block_coord.z() + block_side;
-  for(z = block_coord.z(); z < zlast; ++z){
-    for (y = block_coord.y(); y < ylast; ++y){
-      for (x = block_coord.x(); x < xlast; ++x){
-        if(x < xlast / 2 && y < ylast / 2 && z < zlast / 2)
+  int x_last = block_coord.x() + block_side;
+  int y_last = block_coord.y() + block_side;
+  int z_last = block_coord.z() + block_side;
+  for(z = block_coord.z(); z < z_last; ++z){
+    for (y = block_coord.y(); y < y_last; ++y){
+      for (x = block_coord.x(); x < x_last; ++x){
+        if(x < x_last / 2 && y < y_last / 2 && z < z_last / 2)
           block->data(Eigen::Vector3i(x, y, z), 2.f);
         else
           block->data(Eigen::Vector3i(x, y, z), 10.f);
