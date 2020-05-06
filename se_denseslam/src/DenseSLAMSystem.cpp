@@ -85,7 +85,6 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& input_size,
     render_T_MC_ =  &T_MC_;
     this->volume_dimension_ = volume_dimensions;
     this->volume_resolution_ = volume_resolution;
-    this->mu_ = config.mu;
 
     this->iterations_.clear();
     for (std::vector<int>::iterator it = pyramid.begin();

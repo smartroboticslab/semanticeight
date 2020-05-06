@@ -72,7 +72,6 @@ class DenseSLAMSystem {
     std::vector<int> iterations_;
     bool tracked_;
     bool integrated_;
-    float mu_;
     bool need_render_ = false;
     Configuration config_;
     SensorImpl sensor_;
