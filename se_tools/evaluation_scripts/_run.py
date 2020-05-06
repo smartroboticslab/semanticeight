@@ -250,7 +250,7 @@ class KinectFusion(SLAMAlgorithm):
 
         self.fps = 0
 
-        self.compute_size_ratio = 2
+        self.image_resolution_ratio = 2
         self.icp_threshold = math.pow(10, -5)
         self.mu = 0.1
         self.init_pose = '0.5,0.5,0'
@@ -295,7 +295,7 @@ class KinectFusion(SLAMAlgorithm):
 
     def _generate_run_command(self, camera_calib_path, dataset_path, results_path):
         args = []
-        args.extend(['--compute-size-ratio', str(self.compute_size_ratio)])
+        args.extend(['--image-resolution-ratio', str(self.image_resolution_ratio)])
         args.extend(['--fps', str(self.fps)])
         args.extend(['--block-read', str(self.blocking)])
         args.extend(['--input-file', dataset_path])
@@ -324,7 +324,7 @@ class KinectFusion(SLAMAlgorithm):
         return [self.bin_path + 'se-denseslam-' + self.impl + '-main'] + (args)
 
     def _store_variables(self, res):
-        res['compute-size-ratio'] = str(self.compute_size_ratio)
+        res['compute-size-ratio'] = str(self.image_resolution_ratio)
         res['fps'] = str(self.fps)
         res['block-read'] = str(self.blocking)
         res['icp-threshold'] = str(self.icp_threshold)

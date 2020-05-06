@@ -56,7 +56,7 @@ struct Configuration {
    * before processing. Valid values are 1, 2, 4 and 8.
    * <br>\em Default: 1
    */
-  int compute_size_ratio;
+  int image_resolution_ratio;
 
   /**
    * Perform tracking on a frame every tracking_rate frames.
@@ -239,7 +239,7 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "Initial position factor: " << config.t_MW_factor.x() << " "
                                      << config.t_MW_factor.y() << " "
                                      << config.t_MW_factor.z() << "\n";
-  out << "Compute size ratio:      " << config.compute_size_ratio << "\n";
+  out << "Image resolution ratio:      " << config.image_resolution_ratio << "\n";
   out << "Camera parameters:       " << config.camera.x() << " "
                                      << config.camera.y() << " "
                                      << config.camera.z() << " "

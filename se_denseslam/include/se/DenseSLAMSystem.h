@@ -62,7 +62,7 @@ using Volume = VolumeTemplate<T, se::Octree>;
 class DenseSLAMSystem {
 
   private:
-    Eigen::Vector2i computation_size_;
+    Eigen::Vector2i image_res_;
     Eigen::Matrix4f T_MW_;        // World to camera transformation; Convert in/output to map/world frame
     Eigen::Matrix4f T_MC_;        // Camera pose in map frame
     Eigen::Matrix4f* render_T_MC_; // Rendering camera pose in map frame
@@ -89,11 +89,11 @@ class DenseSLAMSystem {
 
     // intra-frame
     std::vector<float> reduction_output_;
-    std::vector<se::Image<float>  > scaled_depth_;
+    std::vector<se::Image<float>  > scaled_depth_image_;
     std::vector<se::Image<Eigen::Vector3f> > input_point_cloud_C_;
     std::vector<se::Image<Eigen::Vector3f> > input_normals_C_;
-    se::Image<float> float_depth_;
-    se::Image<uint32_t> rgba_;
+    se::Image<float> depth_image_;
+    se::Image<uint32_t> rgba_image_;
     std::vector<TrackData>  tracking_result_;
     Eigen::Matrix4f previous_T_MC_;
     Eigen::Matrix4f raycast_T_MC_;
@@ -104,7 +104,7 @@ class DenseSLAMSystem {
     /**
      * Constructor using the initial camera position.
      *
-     * \param[in] input_size The size (width and height) of the input frames.
+     * \param[in] input_res The size (width and height) of the input frames.
      * \param[in] volume_resolution_ The x, y and z resolution of the
      * reconstructed volume in voxels.
      * \param[in] volume_dimension_ The x, y and z dimensions of the
@@ -114,7 +114,7 @@ class DenseSLAMSystem {
      * \param[in] pyramid See ::Configuration.pyramid for more details.
      * \param[in] config_ The pipeline options.
      */
-    DenseSLAMSystem(const Eigen::Vector2i& input_size,
+    DenseSLAMSystem(const Eigen::Vector2i& image_res,
                     const Eigen::Vector3i& volume_resolution_,
                     const Eigen::Vector3f& volume_dimension_,
                     const Eigen::Vector3f& t_MW,
@@ -123,7 +123,7 @@ class DenseSLAMSystem {
     /**
      * Constructor using the initial camera position.
      *
-     * \param[in] input_size The size (width and height) of the input frames.
+     * \param[in] input_res The size (width and height) of the input frames.
      * \param[in] volume_resolution_ The x, y and z resolution of the
      * reconstructed volume in voxels.
      * \param[in] volume_dimension_ The x, y and z dimensions of the
@@ -132,7 +132,7 @@ class DenseSLAMSystem {
      * \param[in] pyramid See ::Configuration.pyramid for more details.
      * \param[in] config_ The pipeline options.
      */
-    DenseSLAMSystem(const Eigen::Vector2i& input_size,
+    DenseSLAMSystem(const Eigen::Vector2i& image_res,
                     const Eigen::Vector3i& volume_resolution_,
                     const Eigen::Vector3f& volume_dimension_,
                     const Eigen::Matrix4f& T_MW,
@@ -149,15 +149,15 @@ class DenseSLAMSystem {
      *
      * \param[in] input_depth Pointer to the depth frame data. Each pixel is
      * represented by a single uint16_t.
-     * \param[in] input_size Size of the depth frame in pixels (width and
+     * \param[in] input_res Size of the depth frame in pixels (width and
      * height).
      * \param[in] filter_depth Whether to filter the depth frame using a
      * bilateral filter to reduce the measurement noise.
      * \return true (does not fail).
      */
-    bool preprocessDepth(const uint16_t*        input_depth,
-                         const Eigen::Vector2i& input_size,
-                         const bool             filter_depth);
+    bool preprocessDepth(const uint16_t*        input_depth_image_data,
+                         const Eigen::Vector2i& input_depth_image_res,
+                         const bool             filter_depth_image);
 
     /**
      * Preprocess an RGB frame and add it to the pipeline.
@@ -165,14 +165,14 @@ class DenseSLAMSystem {
      *
      * \param[in] input_RGB Pointer to the RGB frame data, 3 channels, 8 bits
      * per channel.
-     * \param[in] input_size Size of the depth and RGB frames in pixels (width
+     * \param[in] input_res Size of the depth and RGB frames in pixels (width
      * and height).
      * \param[in] filter_depth Whether to filter the depth frame using a
      * bilateral filter to reduce the measurement noise.
      * \return true (does not fail).
      */
-    bool preprocessColor(const uint8_t*         input_RGB,
-                         const Eigen::Vector2i& input_size);
+    bool preprocessColor(const uint8_t*         input_RGB_image_data,
+                         const Eigen::Vector2i& input_RGB_image_res);
 
     /**
      * Update the camera pose. Create a 3D reconstruction from the current
@@ -233,14 +233,14 @@ class DenseSLAMSystem {
      * if needed, otherwise it uses the point cloud and normal maps created in
      * DenseSLAMSystem::raycasting.
      *
-     * \param[out] out A pointer to an array containing the rendered frame.
+     * \param[out] output_image_data A pointer to an array containing the rendered frame.
      * The array must be allocated before calling this function. The storage
      * layout is rgbwrgbwrgbw.
-     * \param[in] output_size The dimensions of the output array (width and
+     * \param[in] output_image_res The dimensions of the output array (width and
      * height in pixels).
      */
-    void renderVolume(unsigned char*         output,
-                      const Eigen::Vector2i& output_size);
+    void renderVolume(unsigned char*         output_image_data,
+                      const Eigen::Vector2i& output_image_res);
 
     /**
      * Render the output of the tracking algorithm. The meaning of the colors is as follows:
@@ -254,16 +254,16 @@ class DenseSLAMSystem {
      * | yellow | Wrong normal. |
      * | orange | Tracking not performed. |
      *
-     * \param[out] out A pointer to an array containing the rendered frame.
+     * \param[out] output_image_data A pointer to an array containing the rendered frame.
      * The array must be allocated before calling this function. The x, y and
      * z members of each element of the array contain the R, G and B values of
      * the image respectively. The w member of each element of the array is
      * always 0 and is used for padding.
-     * \param[in] output_size The dimensions of the output array (width and
+     * \param[in] output_res The dimensions of the output array (width and
      * height in pixels).
      */
-    void renderTrack(unsigned char*         out,
-                     const Eigen::Vector2i& output_size);
+    void renderTrack(unsigned char*         output_image_data,
+                     const Eigen::Vector2i& output_image_res);
 
     /**
      * Render the current depth frame. The frame is rendered before
@@ -271,28 +271,28 @@ class DenseSLAMSystem {
      * ::farPlane. Regions closer to the camera than ::nearPlane appear white
      * and regions further than ::farPlane appear black.
      *
-     * \param[out] out A pointer to an array containing the rendered frame.
+     * \param[out] output_image_data A pointer to an array containing the rendered frame.
      * The array must be allocated before calling this function. The x, y and
      * z members of each element of the array contain the R, G and B values of
      * the image respectively. The w member of each element of the array is
      * always 0 and is used for padding.
-     * \param[in] output_size The dimensions of the output array (width and
+     * \param[in] output_image_res The dimensions of the output array (width and
      * height in pixels).
      */
-    void renderDepth(unsigned char*         out,
-                     const Eigen::Vector2i& output_size);
+    void renderDepth(unsigned char*         output_image_data,
+                     const Eigen::Vector2i& output_image_res);
 
     /**
      * Render the RGB frame currently in the pipeline.
      *
-     * \param[out] output_RGBA Pointer to an array containing the rendered
+     * \param[out] output_RGBA_image_data Pointer to an array containing the rendered
      * frame, 4 channels, 8 bits per channel. The array must be allocated
      * before calling this function.
-     * \param[in] output_size The dimensions of the output image (width and
+     * \param[in] output_RGBA_image_res The dimensions of the output image (width and
      * height in pixels).
      */
-    void renderRGBA(uint8_t*               output_RGBA,
-                    const Eigen::Vector2i& output_size);
+    void renderRGBA(uint8_t*               output_RGBA_image_data,
+                    const Eigen::Vector2i& output_RGBA_image_res);
 
     //
     // Getters
@@ -527,8 +527,8 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the frame width and height.
      */
-    Eigen::Vector2i getComputationResolution() {
-      return (computation_size_);
+    Eigen::Vector2i getImageResolution() {
+      return (image_res_);
     }
 };
 

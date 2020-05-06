@@ -11,18 +11,18 @@
 
 
 
-int save_depth_png(const uint16_t*        depth_image,
-                   const Eigen::Vector2i& image_size,
+int save_depth_png(const uint16_t*        depth_image_data,
+                   const Eigen::Vector2i& depth_image_res,
                    const std::string&     filename) {
 
   // Allocate a new image buffer to use for changing the image data from little
   // endian (used in x86 and ARM CPUs) to big endian order (used in PNG).
-  const size_t num_pixels = image_size.x() * image_size.y();
+  const size_t num_pixels = depth_image_res.x() * depth_image_res.y();
   uint16_t* depth_big_endian = new uint16_t[num_pixels];
 #pragma omp parallel for
   for (size_t i = 0; i < num_pixels; ++i) {
     // Swap the byte order.
-    const uint16_t depth_value = depth_image[i];
+    const uint16_t depth_value = depth_image_data[i];
     const uint16_t low_byte = depth_value & 0x00FF;
     const uint16_t high_byte = (depth_value & 0xFF00) >> 8;
     depth_big_endian[i] = low_byte << 8 | high_byte;
@@ -32,8 +32,8 @@ int save_depth_png(const uint16_t*        depth_image,
   const unsigned ret = lodepng_encode_file(
       filename.c_str(),
       reinterpret_cast<const unsigned char*>(depth_big_endian),
-      image_size.x(),
-      image_size.y(),
+      depth_image_res.x(),
+      depth_image_res.y(),
       LCT_GREY,
       16);
 
@@ -43,29 +43,29 @@ int save_depth_png(const uint16_t*        depth_image,
 
 
 
-int load_depth_png(uint16_t**         depth_image,
-                   Eigen::Vector2i&   image_size,
+int load_depth_png(uint16_t**         depth_image_data,
+                   Eigen::Vector2i&   depth_image_res,
                    const std::string& filename) {
 
   // Load the image.
   const unsigned ret = lodepng_decode_file(
-      reinterpret_cast<unsigned char**>(depth_image),
-      reinterpret_cast<unsigned int*>(&(image_size.x())),
-      reinterpret_cast<unsigned int*>(&(image_size.y())),
+      reinterpret_cast<unsigned char**>(depth_image_data),
+      reinterpret_cast<unsigned int*>(&(depth_image_res.x())),
+      reinterpret_cast<unsigned int*>(&(depth_image_res.y())),
       filename.c_str(),
       LCT_GREY,
       16);
 
   // Change the image data from little endian (used in x86 and ARM CPUs) to big
   // endian order (used in PNG).
-  const size_t num_pixels = image_size.x() * image_size.y();
+  const size_t num_pixels = depth_image_res.x() * depth_image_res.y();
 #pragma omp parallel for
   for (size_t i = 0; i < num_pixels; ++i) {
     // Swap the byte order.
-    const uint16_t depth_value = (*depth_image)[i];
+    const uint16_t depth_value = (*depth_image_data)[i];
     const uint16_t low_byte = depth_value & 0x00FF;
     const uint16_t high_byte = (depth_value & 0xFF00) >> 8;
-    (*depth_image)[i] = low_byte << 8 | high_byte;
+    (*depth_image_data)[i] = low_byte << 8 | high_byte;
   }
 
   return ret;
@@ -73,8 +73,8 @@ int load_depth_png(uint16_t**         depth_image,
 
 
 
-int save_depth_pgm(const uint16_t*        depth_image,
-                   const Eigen::Vector2i& image_size,
+int save_depth_pgm(const uint16_t*        depth_image_data,
+                   const Eigen::Vector2i& depth_image_res,
                    const std::string&     filename) {
 
   // Open the file for writing.
@@ -86,16 +86,16 @@ int save_depth_pgm(const uint16_t*        depth_image,
 
   // Write the PGM header.
   file << "P2\n";
-  file << image_size.x() << " " << image_size.y() << "\n";
+  file << depth_image_res.x() << " " << depth_image_res.y() << "\n";
   file << UINT16_MAX << "\n";
 
   // Write the image data.
-  for (int y = 0; y < image_size.y(); y++) {
-    for (int x = 0; x < image_size.x(); x++) {
-      const int pixel_idx = x + y * image_size.x();
-      file << depth_image[pixel_idx];
+  for (int y = 0; y < depth_image_res.y(); y++) {
+    for (int x = 0; x < depth_image_res.x(); x++) {
+      const int pixel_idx = x + y * depth_image_res.x();
+      file << depth_image_data[pixel_idx];
       // Do not add a whitespace after the last element of a row.
-      if (x < image_size.x() - 1) {
+      if (x < depth_image_res.x() - 1) {
         file << " ";
       }
     }
@@ -110,8 +110,8 @@ int save_depth_pgm(const uint16_t*        depth_image,
 
 
 
-int load_depth_pgm(uint16_t**         depth_image,
-                   Eigen::Vector2i&   image_size,
+int load_depth_pgm(uint16_t**         depth_image_data,
+                   Eigen::Vector2i&   depth_image_res,
                    const std::string& filename) {
 
   // Open the file for reading.
@@ -130,9 +130,9 @@ int load_depth_pgm(uint16_t**         depth_image,
   }
 
   // Read the image size and allocate memory for the image.
-  file >> image_size.x() >> image_size.y();
-  const size_t num_pixels = image_size.x() * image_size.y();
-  *depth_image = static_cast<uint16_t*>(malloc(num_pixels  * sizeof(uint16_t)));
+  file >> depth_image_res.x() >> depth_image_res.y();
+  const size_t num_pixels = depth_image_res.x() * depth_image_res.y();
+  *depth_image_data = static_cast<uint16_t*>(malloc(num_pixels  * sizeof(uint16_t)));
 
   // Read the maximum pixel value.
   size_t max_value;
@@ -146,7 +146,7 @@ int load_depth_pgm(uint16_t**         depth_image,
   // Read the image data. Do not perform any scaling since in our cases the
   // pixel values represent distances.
   for (size_t pixel_idx = 0; pixel_idx < num_pixels; ++pixel_idx) {
-    file >> (*depth_image)[pixel_idx];
+    file >> (*depth_image_data)[pixel_idx];
   }
 
   file.close();

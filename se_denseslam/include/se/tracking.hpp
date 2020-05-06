@@ -48,21 +48,21 @@
 
 
 void new_reduce(const int              block_index,
-                float*                 out,
-                TrackData*             J,
-                const Eigen::Vector2i& J_size,
-                const Eigen::Vector2i& size);
+                float*                 output_data,
+                const Eigen::Vector2i& output_res,
+                TrackData*             J_data,
+                const Eigen::Vector2i& J_res);
 
 
 
-void reduceKernel(float*                 out,
-                  TrackData*             J,
-                  const Eigen::Vector2i& J_size,
-                  const Eigen::Vector2i& size);
+void reduceKernel(float*                 output_data,
+                  const Eigen::Vector2i& output_res,
+                  TrackData*             J_data,
+                  const Eigen::Vector2i& J_res);
 
 
 
-void trackKernel(TrackData*                        output,
+void trackKernel(TrackData*                        output_data,
                  const se::Image<Eigen::Vector3f>& input_point_cloud_C,
                  const se::Image<Eigen::Vector3f>& input_normals_C,
                  const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
@@ -82,8 +82,8 @@ bool updatePoseKernel(Eigen::Matrix4f& T_MC,
 
 bool checkPoseKernel(Eigen::Matrix4f&       T_MC,
                      Eigen::Matrix4f&       previous_T_MC,
-                     const float*           reduction_output,
-                     const Eigen::Vector2i& image_size,
+                     const float*           reduction_output_data,
+                     const Eigen::Vector2i& reduction_output_res,
                      const float            track_threshold);
 
 #endif

@@ -88,7 +88,7 @@ static void newDenseSLAMSystem(bool resetPose) {
 		delete *pipeline_pp;
 	if (!resetPose) {
 		*pipeline_pp = new DenseSLAMSystem(
-				Eigen::Vector2i(640 / config->compute_size_ratio, 480 / config->compute_size_ratio),
+				Eigen::Vector2i(640 / config->image_resolution_ratio, 480 / config->image_resolution_ratio),
 				config->volume_resolution, config->volume_size, T_MW, config->pyramid, *config);
   } else {
     Eigen::Matrix<float, 6, 1> twist;
@@ -99,15 +99,15 @@ static void newDenseSLAMSystem(bool resetPose) {
 		rot = Sophus::SE3<float>();
     Eigen::Vector3f t_MW = config->t_MW_factor.cwiseProduct(config->volume_size);
 		*pipeline_pp = new DenseSLAMSystem(
-				Eigen::Vector2i(640 / config->compute_size_ratio,
-						480 / config->compute_size_ratio),
+				Eigen::Vector2i(640 / config->image_resolution_ratio,
+						480 / config->image_resolution_ratio),
 				config->volume_resolution,
 				config->volume_size,
         t_MW,
         config->pyramid, *config);
 	}
-	appWindow->viewers->setBufferSize(640 / config->compute_size_ratio,
-			480 / config->compute_size_ratio);
+	appWindow->viewers->setBufferSize(640 / config->image_resolution_ratio,
+			480 / config->image_resolution_ratio);
 	reset = true;
 }
 static void continueWithNewDenseSLAMSystem() {
@@ -341,7 +341,7 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 
   appWindow	->addButtonChoices("Compute Res",
 			{ "640x480", "320x240", "160x120", "80x60" }, { 1, 2, 4, 8 },
-			&(config->compute_size_ratio), continueWithNewDenseSLAMSystem);
+			&(config->image_resolution_ratio), continueWithNewDenseSLAMSystem);
 	appWindow->addButtonChoices("Vol. Size", { "4.0mx4.0mx4.0m",
 			"2.0mx2.0mx2.0m", "1.0mx1.0mx1.0m" }, { 4.0, 2.0, 1.0 },
 			(float *) (&(config->volume_size.x())), continueWithNewDenseSLAMSystem);
@@ -357,15 +357,15 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 			0.18, 0.36 }, (float *) &(config->mu), continueWithNewDenseSLAMSystem);
 
 	int cwidth = (
-			((*reader_pp) == NULL) ? 640 : ((*reader_pp)->getinputSize()).x)
-			/ config->compute_size_ratio;
+			((*reader_pp) == NULL) ? 640 : ((*reader_pp)->getInputImageResolution()).x)
+			/ config->image_resolution_ratio;
 	int cheight = (
-			((*reader_pp) == NULL) ? 480 : ((*reader_pp)->getinputSize()).y)
-			/ config->compute_size_ratio;
+			((*reader_pp) == NULL) ? 480 : ((*reader_pp)->getInputImageResolution()).y)
+			/ config->image_resolution_ratio;
 	int width =
-			(((*reader_pp) == NULL) ? 640 : ((*reader_pp)->getinputSize()).x);
+			(((*reader_pp) == NULL) ? 640 : ((*reader_pp)->getInputImageResolution()).x);
 	int height = (
-			((*reader_pp) == NULL) ? 480 : ((*reader_pp)->getinputSize()).y);
+			((*reader_pp) == NULL) ? 480 : ((*reader_pp)->getInputImageResolution()).y);
 
 	FImage rgbImage = { cwidth, cheight, GL_RGBA, GL_UNSIGNED_BYTE, RGBARender };
 	FImage depthImage =

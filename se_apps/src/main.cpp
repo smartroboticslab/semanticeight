@@ -37,8 +37,8 @@
 
 PerfStats Stats;
 PowerMonitor* powerMonitor = nullptr;
-static uint16_t* input_depth = nullptr;
-static uchar3* input_rgb = nullptr;
+static uint16_t* input_depth_image_data = nullptr;
+static uchar3* input_rgb_image_data = nullptr;
 static uint32_t* rgba_render = nullptr;
 static uint32_t* depth_render = nullptr;
 static uint32_t* track_render = nullptr;
@@ -104,26 +104,26 @@ int main(int argc, char** argv) {
   // ========= READER INITIALIZATION  =========
   reader = createReader(&config);
 
-  //  =========  BASIC PARAMETERS  (input size / computation size )  =========
-  Eigen::Vector2i input_size = (reader != nullptr)
-      ? Eigen::Vector2i(reader->getinputSize().x, reader->getinputSize().y)
+  //  =========  BASIC PARAMETERS  (input image size / image size )  =========
+  Eigen::Vector2i input_image_res = (reader != nullptr)
+      ? Eigen::Vector2i(reader->getInputImageResolution().x, reader->getInputImageResolution().y)
       : Eigen::Vector2i(640, 480);
-  const Eigen::Vector2i computation_size
-      = input_size / config.compute_size_ratio;
+  const Eigen::Vector2i image_res
+      = input_image_res / config.image_resolution_ratio;
 
   //  =========  BASIC BUFFERS  (input / output )  =========
 
   // Construction Scene reader and input buffer
-  input_depth =   new uint16_t[input_size.x() * input_size.y()];
-  input_rgb =     new   uchar3[input_size.x() * input_size.y()];
-  rgba_render =   new uint32_t[computation_size.x() * computation_size.y()];
-  depth_render =  new uint32_t[computation_size.x() * computation_size.y()];
-  track_render =  new uint32_t[computation_size.x() * computation_size.y()];
-  volume_render = new uint32_t[computation_size.x() * computation_size.y()];
+  input_depth_image_data =   new uint16_t[input_image_res.x() * input_image_res.y()];
+  input_rgb_image_data =     new   uchar3[input_image_res.x() * input_image_res.y()];
+  rgba_render =   new uint32_t[image_res.x() * image_res.y()];
+  depth_render =  new uint32_t[image_res.x() * image_res.y()];
+  track_render =  new uint32_t[image_res.x() * image_res.y()];
+  volume_render = new uint32_t[image_res.x() * image_res.y()];
 
   t_MW = config.t_MW_factor.cwiseProduct(config.volume_size);
   pipeline = new DenseSLAMSystem(
-      computation_size,
+      image_res,
       Eigen::Vector3i::Constant(config.volume_resolution.x()),
       Eigen::Vector3f::Constant(config.volume_size.x()),
       t_MW,
@@ -157,10 +157,10 @@ int main(int argc, char** argv) {
     }
     while (processAll(reader, true, true, &config, false) == 0) {
 #ifndef SE_BENCHMARK_APP
-      drawthem(rgba_render,   computation_size,
-               depth_render,  computation_size,
-               track_render,  computation_size,
-               volume_render, computation_size);
+      drawthem(rgba_render,   image_res,
+               depth_render,  image_res,
+               track_render,  image_res,
+               volume_render, image_res);
 #endif
     }
 #endif
@@ -206,8 +206,8 @@ int main(int argc, char** argv) {
   //  =========  FREE BASIC BUFFERS  =========
 
   delete pipeline;
-  delete input_depth;
-  delete input_rgb;
+  delete input_depth_image_data;
+  delete input_rgb_image_data;
   delete rgba_render;
   delete depth_render;
   delete track_render;
@@ -226,8 +226,8 @@ int processAll(DepthReader*   reader,
   bool integrated = false;
   std::chrono::time_point<std::chrono::steady_clock> timings[7];
   int frame = 0;
-  const Eigen::Vector2i input_size = (reader != nullptr)
-      ? Eigen::Vector2i(reader->getinputSize().x, reader->getinputSize().y)
+  const Eigen::Vector2i input_image_res = (reader != nullptr)
+      ? Eigen::Vector2i(reader->getInputImageResolution().x, reader->getInputImageResolution().y)
       : Eigen::Vector2i(640, 480);
 
   if (reset) {
@@ -245,9 +245,9 @@ int processAll(DepthReader*   reader,
     // Read frames and ground truth data if set
     bool read_ok;
     if (config->groundtruth_file == "") {
-      read_ok = reader->readNextDepthFrame(input_rgb, input_depth);
+      read_ok = reader->readNextDepthFrame(input_rgb_image_data, input_depth_image_data);
     } else {
-      read_ok = reader->readNextData(input_rgb, input_depth, gt_T_WC);
+      read_ok = reader->readNextData(input_rgb_image_data, input_depth_image_data, gt_T_WC);
       if (frame == 0) {
         pipeline->setInitialCameraPoseW(gt_T_WC);
       }
@@ -266,9 +266,9 @@ int processAll(DepthReader*   reader,
 
     timings[1] = std::chrono::steady_clock::now();
 
-    pipeline->preprocessDepth(input_depth, input_size,
+    pipeline->preprocessDepth(input_depth_image_data, input_image_res,
         config->bilateral_filter);
-    pipeline->preprocessColor((uint8_t*) input_rgb, input_size);
+    pipeline->preprocessColor((uint8_t*) input_rgb_image_data, input_image_res);
 
     timings[2] = std::chrono::steady_clock::now();
 
@@ -304,11 +304,11 @@ int processAll(DepthReader*   reader,
     timings[5] = std::chrono::steady_clock::now();
   }
   if (render_images) {
-    pipeline->renderRGBA((uint8_t*) rgba_render, pipeline->getComputationResolution());
-    pipeline->renderDepth((unsigned char*)depth_render, pipeline->getComputationResolution());
-    pipeline->renderTrack((unsigned char*)track_render, pipeline->getComputationResolution());
+    pipeline->renderRGBA((uint8_t*) rgba_render, pipeline->getImageResolution());
+    pipeline->renderDepth((unsigned char*)depth_render, pipeline->getImageResolution());
+    pipeline->renderTrack((unsigned char*)track_render, pipeline->getImageResolution());
     if (frame % config->rendering_rate == 0) {
-      pipeline->renderVolume((unsigned char*)volume_render, pipeline->getComputationResolution());
+      pipeline->renderVolume((unsigned char*)volume_render, pipeline->getImageResolution());
     }
     timings[6] = std::chrono::steady_clock::now();
   }

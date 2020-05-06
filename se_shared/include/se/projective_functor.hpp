@@ -52,9 +52,9 @@ namespace functor {
                          const Eigen::Matrix4f& T_CM,
                          const SensorImpl       sensor,
                          const Eigen::Vector3f& offset,
-                         const Eigen::Vector2i& image_size) :
+                         const Eigen::Vector2i& image_res) :
         octree_(octree), funct_(funct), T_CM_(T_CM), sensor_(sensor), offset_(offset),
-        image_size_(image_size) {
+        image_res_(image_res) {
       }
 
       /*! \brief Get all the blocks that are active or inside the camera
@@ -166,7 +166,7 @@ namespace functor {
       const Eigen::Matrix4f& T_CM_;
       const SensorImpl sensor_;
       const Eigen::Vector3f offset_;
-      const Eigen::Vector2i image_size_;
+      const Eigen::Vector2i image_res_;
       std::vector<se::VoxelBlock<FieldType>*> active_list_;
   };
 
@@ -178,11 +178,11 @@ namespace functor {
                          const Eigen::Vector3f& offset,
                          const Eigen::Matrix4f& T_CM,
                          const SensorImpl&      sensor,
-                         const Eigen::Vector2i& image_size,
+                         const Eigen::Vector2i& image_res,
                          UpdateF                funct) {
 
     projective_functor<FieldType, OctreeT, UpdateF>
-      it(octree, funct, T_CM, sensor, offset, image_size);
+      it(octree, funct, T_CM, sensor, offset, image_res);
     it.apply();
   }
 }

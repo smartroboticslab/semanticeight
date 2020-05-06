@@ -200,12 +200,12 @@ static inline uint32_t blend(const uint32_t rgba_1,
  * Save a depth image with depth values in millimeters to a PNG.
  *
  * \param[in] depth Pointer to the 16-bit image data.
- * \param[in] depth_size Size of the depth image in pixels (width and height).
+ * \param[in] depth_res Size of the depth image in pixels (width and height).
  * \param[in] filename The name of the PNG file to create.
  * \return 0 on success, nonzero on error.
  */
 int save_depth_png(const uint16_t*        depth,
-                   const Eigen::Vector2i& depth_size,
+                   const Eigen::Vector2i& depth_res,
                    const std::string&     filename);
 
 
@@ -214,7 +214,7 @@ int save_depth_png(const uint16_t*        depth,
  * Load a PNG depth image into a buffer with depth values in millimeters.
  *
  * \param[in] depth Pointer to the loaded 16-bit image data.
- * \param[in] depth_size Size of the depth image in pixels (width and height).
+ * \param[in] depth_res Size of the depth image in pixels (width and height).
  * \param[in] filename The name of the PNG file to load.
  * \return 0 on success, nonzero on error.
  *
@@ -223,7 +223,7 @@ int save_depth_png(const uint16_t*        depth,
  * sizeof(uint16_t) bytes are allocated.
  */
 int load_depth_png(uint16_t**         depth,
-                   Eigen::Vector2i&   depth_size,
+                   Eigen::Vector2i&   depth_res,
                    const std::string& filename);
 
 
@@ -235,12 +235,12 @@ int load_depth_png(uint16_t**         depth,
  * https://en.wikipedia.org/wiki/Netpbm_format
  *
  * \param[in] depth Pointer to the 16-bit image data.
- * \param[in] depth_size Size of the depth image in pixels (width and height).
+ * \param[in] depth_res Size of the depth image in pixels (width and height).
  * \param[in] filename The name of the PGM file to create.
  * \return 0 on success, nonzero on error.
  */
 int save_depth_pgm(const uint16_t*        depth,
-                   const Eigen::Vector2i& depth_size,
+                   const Eigen::Vector2i& depth_res,
                    const std::string&     filename);
 
 
@@ -249,7 +249,7 @@ int save_depth_pgm(const uint16_t*        depth,
  * Load a P2 PGM depth image into a buffer with depth values in millimeters.
  *
  * \param[in] depth Pointer to the loaded 16-bit image data.
- * \param[in] depth_size Size of the depth image in pixels (width and height).
+ * \param[in] depth_res Size of the depth image in pixels (width and height).
  * \param[in] filename The name of the PGM file to load.
  * \return 0 on success, nonzero on error.
  *
@@ -258,7 +258,7 @@ int save_depth_pgm(const uint16_t*        depth,
  * sizeof(uint16_t) bytes are allocated.
  */
 int load_depth_pgm(uint16_t**         depth,
-                   Eigen::Vector2i&   depth_size,
+                   Eigen::Vector2i&   depth_res,
                    const std::string& filename);
 
 

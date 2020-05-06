@@ -137,30 +137,30 @@ void raycastKernel(const Volume<T>&            volume,
 
 
 
-void renderRGBAKernel(uint8_t*                   output_RGBA,
-                      const Eigen::Vector2i&     output_size,
-                      const se::Image<uint32_t>& input_RGBA);
+void renderRGBAKernel(uint8_t*                   output_RGBA_image_data,
+                      const Eigen::Vector2i&     output_RGBA_image_res,
+                      const se::Image<uint32_t>& input_RGBA_image);
 
 
 
-void renderDepthKernel(unsigned char*         out,
-                       float*                 depth,
-                       const Eigen::Vector2i& depth_size,
+void renderDepthKernel(unsigned char*         depth_RGBW_image_data,
+                       float*                 depth_image_data,
+                       const Eigen::Vector2i& depth_RGBW_image_res,
                        const float            near_plane,
                        const float            far_plane);
 
 
 
-void renderTrackKernel(unsigned char*         out,
-                       const TrackData*       data,
-                       const Eigen::Vector2i& out_size);
+void renderTrackKernel(unsigned char*         tracking_RGBW_image_data,
+                       const TrackData*       tracking_result_data,
+                       const Eigen::Vector2i& tracking_RGBW_image_res);
 
 
 
 template <typename T>
 void renderVolumeKernel(const Volume<T>&                  volume,
-                        unsigned char*                    out, // RGBW packed
-                        const Eigen::Vector2i&            image_size,
+                        unsigned char*                    volume_RGBW_image_data, // RGBW packed
+                        const Eigen::Vector2i&            volume_RGBW_image_res,
                         const Eigen::Matrix4f&            T_MC,
                         const SensorImpl&                 sensor,
                         const float                       step,
@@ -172,13 +172,13 @@ void renderVolumeKernel(const Volume<T>&                  volume,
                         const se::Image<Eigen::Vector3f>& surface_normals_M) {
   TICK();
 #pragma omp parallel for
-  for (int y = 0; y < image_size.y(); y++) {
+  for (int y = 0; y < volume_RGBW_image_res.y(); y++) {
 #pragma omp simd
-    for (int x = 0; x < image_size.x(); x++) {
+    for (int x = 0; x < volume_RGBW_image_res.x(); x++) {
 
       Eigen::Vector4f surface_intersection_M;
       Eigen::Vector3f surface_point_M, surface_normal_M;
-      const int idx = (x + image_size.x() * y) * 4;
+      const int idx = (x + volume_RGBW_image_res.x() * y) * 4;
 
       if (do_view_raycast) {
         const Eigen::Vector2f pixel_f = Eigen::Vector2f(x, y);
@@ -218,8 +218,8 @@ void renderVolumeKernel(const Volume<T>&                  volume,
           surface_normal_M = Eigen::Vector3f(INVALID, 0.f, 0.f);
         }
       } else {
-        surface_point_M = surface_point_cloud_M[x + image_size.x() * y];
-        surface_normal_M = surface_normals_M[x + image_size.x() * y];
+        surface_point_M = surface_point_cloud_M[x + volume_RGBW_image_res.x() * y];
+        surface_normal_M = surface_normals_M[x + volume_RGBW_image_res.x() * y];
       }
 
       if (surface_normal_M.x() != INVALID && surface_normal_M.norm() > 0.f) {
@@ -229,19 +229,19 @@ void renderVolumeKernel(const Volume<T>&                  volume,
         Eigen::Vector3f col = dir + ambient_M;
         se::math::clamp(col, Eigen::Vector3f::Zero(), Eigen::Vector3f::Ones());
         col = col.cwiseProduct(se::internal::color_map[se::internal::scale_image(x, y)]);
-        out[idx + 0] = col.x();
-        out[idx + 1] = col.y();
-        out[idx + 2] = col.z();
-        out[idx + 3] = 255;
+        volume_RGBW_image_data[idx + 0] = col.x();
+        volume_RGBW_image_data[idx + 1] = col.y();
+        volume_RGBW_image_data[idx + 2] = col.z();
+        volume_RGBW_image_data[idx + 3] = 255;
       } else {
-        out[idx + 0] = 0;
-        out[idx + 1] = 0;
-        out[idx + 2] = 0;
-        out[idx + 3] = 255;
+        volume_RGBW_image_data[idx + 0] = 0;
+        volume_RGBW_image_data[idx + 1] = 0;
+        volume_RGBW_image_data[idx + 2] = 0;
+        volume_RGBW_image_data[idx + 3] = 255;
       }
     }
   }
-  TOCK("renderVolumeKernel", image_size.x() * image_size.y());
+  TOCK("renderVolumeKernel", volume_RGBW_image_res.x() * volume_RGBW_image_res.y());
 }
 
 

@@ -71,12 +71,12 @@ static inline Eigen::Matrix<float, 6, 1> solve(
 
 
 void new_reduce(int                    block_index,
-                float*                 out,
-                TrackData*             J,
-                const Eigen::Vector2i& J_size,
-                const Eigen::Vector2i& size) {
+                float*                 output_data,
+                const Eigen::Vector2i& output_res,
+                TrackData*             J_data,
+                const Eigen::Vector2i& J_res) {
 
-  float* sums = out + block_index * 32;
+  float* sums = output_data + block_index * 32;
 
   for (unsigned int i = 0; i < 32; ++i)
     sums[i] = 0;
@@ -119,10 +119,10 @@ void new_reduce(int                    block_index,
   sums31 = 0.0f;
 
 #pragma omp parallel for reduction(+:sums0,sums1,sums2,sums3,sums4,sums5,sums6,sums7,sums8,sums9,sums10,sums11,sums12,sums13,sums14,sums15,sums16,sums17,sums18,sums19,sums20,sums21,sums22,sums23,sums24,sums25,sums26,sums27,sums28,sums29,sums30,sums31)
-  for (int y = block_index; y < size.y(); y += 8) {
-    for (int x = 0; x < size.x(); x++) {
+  for (int y = block_index; y < output_res.y(); y += 8) {
+    for (int x = 0; x < output_res.x(); x++) {
 
-      const TrackData & row = J[(x + y * J_size.x())]; // ...
+      const TrackData & row = J_data[(x + y * J_res.x())]; // ...
       if (row.result < 1) {
         // accesses sums[28..31]
         /*(sums+28)[1]*/sums29 += row.result == -4 ? 1 : 0;
@@ -216,20 +216,20 @@ void new_reduce(int                    block_index,
 
 
 
-void reduceKernel(float*                 out,
-                  TrackData*             J,
-                  const Eigen::Vector2i& J_size,
-                  const Eigen::Vector2i& size) {
+void reduceKernel(float*                 output_data,
+                  const Eigen::Vector2i& output_res,
+                  TrackData*             J_data,
+                  const Eigen::Vector2i& J_res) {
 
   TICK();
 #ifdef OLDREDUCE
 #pragma omp parallel for
 #endif
   for (int block_index = 0; block_index < 8; block_index++) {
-    new_reduce(block_index, out, J, J_size, size);
+    new_reduce(block_index, output_data, output_res, J_data, J_res);
   }
 
-  Eigen::Map<Eigen::Matrix<float, 8, 32, Eigen::RowMajor> > values(out);
+  Eigen::Map<Eigen::Matrix<float, 8, 32, Eigen::RowMajor> > values(output_data);
   for (int j = 1; j < 8; ++j) {
     values.row(0) += values.row(j);
   }
@@ -238,7 +238,7 @@ void reduceKernel(float*                 out,
 
 
 
-void trackKernel(TrackData*                        output,
+void trackKernel(TrackData*                        output_data,
                  const se::Image<Eigen::Vector3f>& input_point_cloud_C,
                  const se::Image<Eigen::Vector3f>& input_normals_C,
                  const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
@@ -249,25 +249,25 @@ void trackKernel(TrackData*                        output,
                  const float                       normal_threshold) {
 
   TICK();
-  const Eigen::Vector2i in_size( input_point_cloud_C.width(),  input_point_cloud_C.height());
-  const Eigen::Vector2i ref_size(surface_point_cloud_M.width(), surface_point_cloud_M.height());
+  const Eigen::Vector2i input_res( input_point_cloud_C.width(),  input_point_cloud_C.height());
+  const Eigen::Vector2i ref_res(surface_point_cloud_M.width(), surface_point_cloud_M.height());
 
 #pragma omp parallel for
-  for (int y = 0; y < in_size.y(); y++) {
-    for (int x = 0; x < in_size.x(); x++) {
+  for (int y = 0; y < input_res.y(); y++) {
+    for (int x = 0; x < input_res.x(); x++) {
       const Eigen::Vector2i pixel(x, y);
 
-      TrackData& row = output[pixel.x() + pixel.y() * ref_size.x()];
+      TrackData& row = output_data[pixel.x() + pixel.y() * ref_res.x()];
 
-      if (input_normals_C[pixel.x() + pixel.y() * in_size.x()].x() == INVALID) {
+      if (input_normals_C[pixel.x() + pixel.y() * input_res.x()].x() == INVALID) {
         row.result = -1;
         continue;
       }
 
       const Eigen::Vector3f point_M = (T_MC *
-          input_point_cloud_C[pixel.x() + pixel.y() * in_size.x()].homogeneous()).head<3>();
+          input_point_cloud_C[pixel.x() + pixel.y() * input_res.x()].homogeneous()).head<3>();
 
-      const Eigen::Vector3f point_C = input_point_cloud_C[pixel.x() + pixel.y() * in_size.x()];
+      const Eigen::Vector3f point_C = input_point_cloud_C[pixel.x() + pixel.y() * input_res.x()];
       
       Eigen::Vector2f proj_pixel;
       if (sensor.model.project(point_C, &proj_pixel) == srl::projection::ProjectionStatus::OutsideImage) {
@@ -279,25 +279,25 @@ void trackKernel(TrackData*                        output,
 
       // sensor.model.project(point_C, &proj_pixel);
       // proj_pixel += Eigen::Vector2f::Constant(0.5f);
-      // if (   proj_pixel.x() < 0.5 || proj_pixel.x() >= ref_size.x() - 1.5
-      //     || proj_pixel.y() < 0.5 || proj_pixel.y() >= ref_size.y() - 1.5) {
+      // if (   proj_pixel.x() < 0.5 || proj_pixel.x() >= ref_res.x() - 1.5
+      //     || proj_pixel.y() < 0.5 || proj_pixel.y() >= ref_res.y() - 1.5) {
       //   row.result = -2;
       //   continue;
       // }
 
       const Eigen::Vector2i ref_pixel = proj_pixel.cast<int>();
       const Eigen::Vector3f reference_normal
-          = surface_normals_M[ref_pixel.x() + ref_pixel.y() * ref_size.x()];
+          = surface_normals_M[ref_pixel.x() + ref_pixel.y() * ref_res.x()];
 
       if (reference_normal.x() == INVALID) {
         row.result = -3;
         continue;
       }
 
-      const Eigen::Vector3f diff = surface_point_cloud_M[ref_pixel.x() + ref_pixel.y() * ref_size.x()]
+      const Eigen::Vector3f diff = surface_point_cloud_M[ref_pixel.x() + ref_pixel.y() * ref_res.x()]
           - point_M;
       const Eigen::Vector3f proj_normal = T_MC.topLeftCorner<3, 3>()
-          * input_normals_C[pixel.x() + pixel.y() * in_size.x()];
+          * input_normals_C[pixel.x() + pixel.y() * input_res.x()];
 
       if (diff.norm() > dist_threshold) {
         row.result = -4;
@@ -319,18 +319,18 @@ void trackKernel(TrackData*                        output,
       row.J[5] = cross_res.z();
     }
   }
-  TOCK("trackKernel", in_size.x() * in_size.y());
+  TOCK("trackKernel", input_res.x() * input_res.y());
 }
 
 
 
 bool updatePoseKernel(Eigen::Matrix4f& T_MC,
-                      const float*     reduction_output,
+                      const float*     reduction_output_data,
                       float            icp_threshold) {
 
   bool res = false;
   TICK();
-  Eigen::Map<const Eigen::Matrix<float, 8, 32, Eigen::RowMajor> > values(reduction_output);
+  Eigen::Map<const Eigen::Matrix<float, 8, 32, Eigen::RowMajor> > values(reduction_output_data);
   Eigen::Matrix<float, 6, 1> x = solve(values.row(0).segment(1, 27));
   Eigen::Matrix4f delta = Sophus::SE3<float>::exp(x).matrix();
   T_MC = delta * T_MC;
@@ -346,16 +346,16 @@ bool updatePoseKernel(Eigen::Matrix4f& T_MC,
 
 bool checkPoseKernel(Eigen::Matrix4f&       T_MC,
                      Eigen::Matrix4f&       previous_T_MC,
-                     const float*           reduction_output,
-                     const Eigen::Vector2i& image_size,
+                     const float*           reduction_output_data,
+                     const Eigen::Vector2i& reduction_output_res,
                      float                  track_threshold) {
 
   // Check the tracking result, and go back to the previous camera position if necessary
 
-  const Eigen::Matrix<float, 8, 32, Eigen::RowMajor> values(reduction_output);
+  const Eigen::Matrix<float, 8, 32, Eigen::RowMajor> values(reduction_output_data);
 
   if ((std::sqrt(values(0, 0) / values(0, 28)) > 2e-2)
-      || (values(0, 28) / (image_size.x() * image_size.y()) < track_threshold)) {
+      || (values(0, 28) / (reduction_output_res.x() * reduction_output_res.y()) < track_threshold)) {
     T_MC = previous_T_MC;
     return false;
   } else {
