@@ -169,9 +169,9 @@ template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord) const {
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
-  return voxel_block_[voxel_offset(0) + 
-                      voxel_offset(1) * size +
-                      voxel_offset(2) * size_sq];
+  return voxel_block_[voxel_offset.x() +
+                      voxel_offset.y() * size +
+                      voxel_offset.z() * size_sq];
 }
 
 template <typename T>

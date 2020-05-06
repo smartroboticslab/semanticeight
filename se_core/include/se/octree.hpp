@@ -90,7 +90,7 @@ public:
   // Tree depth at which blocks are found
   static constexpr unsigned int max_block_depth = max_voxel_depth - math::log2_const(BLOCK_SIZE);
 
-  static const Eigen::Vector3f _offset;
+  static const Eigen::Vector3f offset_;
 
 
   Octree(){
@@ -678,7 +678,7 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
   Eigen::Vector3f factor;
   while (iter < 3) {
     const int stride = 1 << scale;
-    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - _offset;
+    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - offset_;
     factor = math::fracf(scaled_voxel_coord_f);
     const Eigen::Vector3i base = stride * scaled_voxel_coord_f.cast<int>();
     const Eigen::Vector3i lower = base.cwiseMax(Eigen::Vector3i::Zero());
@@ -733,7 +733,7 @@ std::pair<float, int> Octree<T>::interp_checked(
   Eigen::Vector3f factor;
   while (iter < 3) {
     const int stride = 1 << scale;
-    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - _offset;
+    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - offset_;
     factor =  math::fracf(scaled_voxel_coord_f);
     const Eigen::Vector3i base = stride * scaled_voxel_coord_f.cast<int>();
     const Eigen::Vector3i lower = base.cwiseMax(Eigen::Vector3i::Zero());
@@ -785,7 +785,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
   Eigen::Vector3f gradient = Eigen::Vector3f::Constant(0);
   while(iter < 3) {
     const int stride = 1 << scale;
-    const Eigen::Vector3f scaled_voxel_coord_f = 1.f/stride * voxel_coord_f - _offset;
+    const Eigen::Vector3f scaled_voxel_coord_f = 1.f/stride * voxel_coord_f - offset_;
     factor =  math::fracf(scaled_voxel_coord_f);
     const Eigen::Vector3i base = stride * scaled_voxel_coord_f.cast<int>();
     Eigen::Vector3i lower_lower = (base - stride * Eigen::Vector3i::Constant(1)).cwiseMax(Eigen::Vector3i::Constant(0));
@@ -1110,6 +1110,6 @@ void Octree<T>::load(const std::string& filename) {
 }
 }
 template <typename FieldType>
-const Eigen::Vector3f se::Octree<FieldType>::_offset =
+const Eigen::Vector3f se::Octree<FieldType>::offset_ =
   Eigen::Vector3f::Constant(SAMPLE_POINT_POSITION);
 #endif // OCTREE_H

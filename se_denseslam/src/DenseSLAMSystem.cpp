@@ -292,7 +292,7 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
 
   auto interp_down = [this](auto block) {
     if(block->min_scale() == 0) return;
-    const Eigen::Vector3f& offset = this->volume_.octree_->_offset;
+    const Eigen::Vector3f& offset = this->volume_.octree_->offset_;
     const Eigen::Vector3i block_coord = block->coordinates();
     const int block_size = block->size;
     for(int z = 0; z < block_size; ++z)
