@@ -696,17 +696,17 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
   }
 
   // Interpolate the value based on the fractional part.
-  return {(((voxel_values[0] * (1 - factor(0))
-          + voxel_values[1] * factor(0)) * (1 - factor(1))
-          + (voxel_values[2] * (1 - factor(0))
-          + voxel_values[3] * factor(0)) * factor(1))
-          * (1 - factor(2))
-          + ((voxel_values[4] * (1 - factor(0))
-          + voxel_values[5] * factor(0))
-          * (1 - factor(1))
-          + (voxel_values[6] * (1 - factor(0))
-          + voxel_values[7] * factor(0))
-          * factor(1)) * factor(2)), scale};
+  return {(((voxel_values[0] * (1 - factor.x())
+          + voxel_values[1] * factor.x()) * (1 - factor.y())
+          + (voxel_values[2] * (1 - factor.x())
+          + voxel_values[3] * factor.x()) * factor.y())
+          * (1 - factor.z())
+          + ((voxel_values[4] * (1 - factor.x())
+          + voxel_values[5] * factor.x())
+          * (1 - factor.y())
+          + (voxel_values[6] * (1 - factor.x())
+          + voxel_values[7] * factor.x())
+          * factor.y()) * factor.z()), scale};
 }
 
 
@@ -758,17 +758,17 @@ std::pair<float, int> Octree<T>::interp_checked(
     }
   }
 
-  return {(((voxel_values[0] * (1 - factor(0))
-          + voxel_values[1] * factor(0)) * (1 - factor(1))
-          + (voxel_values[2] * (1 - factor(0))
-          + voxel_values[3] * factor(0)) * factor(1))
-          * (1 - factor(2))
-          + ((voxel_values[4] * (1 - factor(0))
-          + voxel_values[5] * factor(0))
-          * (1 - factor(1))
-          + (voxel_values[6] * (1 - factor(0))
-          + voxel_values[7] * factor(0))
-          * factor(1)) * factor(2)), scale};
+  return {(((voxel_values[0] * (1 - factor.x())
+          + voxel_values[1] * factor.x()) * (1 - factor.y())
+          + (voxel_values[2] * (1 - factor.x())
+          + voxel_values[3] * factor.x()) * factor.y())
+          * (1 - factor.z())
+          + ((voxel_values[4] * (1 - factor.x())
+          + voxel_values[5] * factor.x())
+          * (1 - factor.y())
+          + (voxel_values[6] * (1 - factor.x())
+          + voxel_values[7] * factor.x())
+          * factor.y()) * factor.z()), scale};
 }
 
 
@@ -1034,8 +1034,8 @@ void Octree<T>::getActiveBlockList(Node<T>* node,
       continue;
     }
 
-    for(int i = 0; i < 8; ++i){
-      if(node_tmp->child(i)) node_queue.push(node_tmp->child(i));
+    for(int child_idx = 0; child_idx < 8; ++child_idx){
+      if(node_tmp->child(child_idx)) node_queue.push(node_tmp->child(child_idx));
     }
   }
 }
@@ -1088,8 +1088,8 @@ void Octree<T>::load(const std::string& filename) {
   for(size_t i = 0; i < num_nodes; ++i) {
     Node<T> node;
     internal::deserialise(node, is);
-    Eigen::Vector3i coords = keyops::decode(node.code_);
-    Node<T>* node_ptr = insert(coords(0), coords(1), coords(2), keyops::depth(node.code_));
+    Eigen::Vector3i node_coord = keyops::decode(node.code_);
+    Node<T>* node_ptr = insert(node_coord.x(), node_coord.y(), node_coord.z(), keyops::depth(node.code_));
     node_ptr->timestamp(node.timestamp());
     std::memcpy(node_ptr->data_, node.data_, 8 * sizeof(VoxelData));
   }
@@ -1100,9 +1100,9 @@ void Octree<T>::load(const std::string& filename) {
   for(size_t i = 0; i < num_blocks; ++i) {
     VoxelBlock<T> block;
     internal::deserialise(block, is);
-    Eigen::Vector3i coords = block.coordinates();
+    Eigen::Vector3i block_coord = block.coordinates();
     VoxelBlock<T>* block_ptr =
-      static_cast<VoxelBlock<T> *>(insert(coords(0), coords(1), coords(2), keyops::depth(block.code_)));
+      static_cast<VoxelBlock<T> *>(insert(block_coord.x(), block_coord.y(), block_coord.z(), keyops::depth(block.code_)));
     block_ptr->min_scale(block.min_scale());
     block_ptr->current_scale(block.current_scale());
     std::memcpy(block_ptr->getBlockRawPtr(), block.getBlockRawPtr(), (block_size_cube + 64 + 8 + 1) * sizeof(*(block.getBlockRawPtr())));

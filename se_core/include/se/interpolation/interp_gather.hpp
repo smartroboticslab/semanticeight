@@ -143,7 +143,7 @@ namespace se {
       switch(crossmask) {
         case 0: /* all local */
           {
-            se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
+            se::VoxelBlock<FieldType>* block = fetcher.fetch(base.x(), base.y(), base.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_local(block, base, scale, stride, select_value, values);
@@ -153,12 +153,12 @@ namespace se {
           {
             const unsigned int offs1[4] = {0, 1, 2, 3};
             const unsigned int offs2[4] = {4, 5, 6, 7};
-            se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
+            se::VoxelBlock<FieldType>* block = fetcher.fetch(base.x(), base.y(), base.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_4(block, base, scale, stride, select_value, offs1, values);
             const Eigen::Vector3i base1 = base + stride * interp_offsets[offs2[0]];
-            block = fetcher.fetch(base1(0), base1(1), base1(2));
+            block = fetcher.fetch(base1.x(), base1.y(), base1.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_4(block, base, scale, stride, select_value, offs2, values);
@@ -168,12 +168,12 @@ namespace se {
           {
             const unsigned int offs1[4] = {0, 1, 4, 5};
             const unsigned int offs2[4] = {2, 3, 6, 7};
-            se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
+            se::VoxelBlock<FieldType>* block = fetcher.fetch(base.x(), base.y(), base.z());
             gather_4(block, base, scale, stride, select_value, offs1, values);
             if (block && block->current_scale() > scale)
               return block->current_scale();
             const Eigen::Vector3i base1 = base + stride * interp_offsets[offs2[0]];
-            block = fetcher.fetch(base1(0), base1(1), base1(2));
+            block = fetcher.fetch(base1.x(), base1.y(), base1.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_4(block, base, scale, stride, select_value, offs2, values);
@@ -188,19 +188,19 @@ namespace se {
             const Eigen::Vector3i base2 = base + stride * interp_offsets[offs2[0]];
             const Eigen::Vector3i base3 = base + stride * interp_offsets[offs3[0]];
             const Eigen::Vector3i base4 = base + stride * interp_offsets[offs4[0]];
-            se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
+            se::VoxelBlock<FieldType>* block = fetcher.fetch(base.x(), base.y(), base.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs1, values);
-            block = fetcher.fetch(base2(0), base2(1), base2(2));
+            block = fetcher.fetch(base2.x(), base2.y(), base2.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs2, values);
-            block = fetcher.fetch(base3(0), base3(1), base3(2));
+            block = fetcher.fetch(base3.x(), base3.y(), base3.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs3, values);
-            block = fetcher.fetch(base4(0), base4(1), base4(2));
+            block = fetcher.fetch(base4.x(), base4.y(), base4.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs4, values);
@@ -210,12 +210,12 @@ namespace se {
           {
             const unsigned int offs1[4] = {0, 2, 4, 6};
             const unsigned int offs2[4] = {1, 3, 5, 7};
-            se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
+            se::VoxelBlock<FieldType>* block = fetcher.fetch(base.x(), base.y(), base.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_4(block, base, scale, stride, select_value, offs1, values);
             const Eigen::Vector3i base1 = base + stride * interp_offsets[offs2[0]];
-            block = fetcher.fetch(base1(0), base1(1), base1(2));
+            block = fetcher.fetch(base1.x(), base1.y(), base1.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_4(block, base, scale, stride, select_value, offs2, values);
@@ -230,19 +230,19 @@ namespace se {
             const Eigen::Vector3i base2 = base + stride * interp_offsets[offs2[0]];
             const Eigen::Vector3i base3 = base + stride * interp_offsets[offs3[0]];
             const Eigen::Vector3i base4 = base + stride * interp_offsets[offs4[0]];
-            se::VoxelBlock<FieldType>* block = fetcher.fetch(base(0), base(1), base(2));
+            se::VoxelBlock<FieldType>* block = fetcher.fetch(base.x(), base.y(), base.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs1, values);
-            block = fetcher.fetch(base2(0), base2(1), base2(2));
+            block = fetcher.fetch(base2.x(), base2.y(), base2.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs2, values);
-            block = fetcher.fetch(base3(0), base3(1), base3(2));
+            block = fetcher.fetch(base3.x(), base3.y(), base3.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs3, values);
-            block = fetcher.fetch(base4(0), base4(1), base4(2));
+            block = fetcher.fetch(base4.x(), base4.y(), base4.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs4, values);
@@ -257,19 +257,19 @@ namespace se {
             const Eigen::Vector3i base2 = base + stride * interp_offsets[offs2[0]];
             const Eigen::Vector3i base3 = base + stride * interp_offsets[offs3[0]];
             const Eigen::Vector3i base4 = base + stride * interp_offsets[offs4[0]];
-            se::VoxelBlock<FieldType> * block = fetcher.fetch(base(0), base(1), base(2));
+            se::VoxelBlock<FieldType> * block = fetcher.fetch(base.x(), base.y(), base.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs1, values);
-            block = fetcher.fetch(base2(0), base2(1), base2(2));
+            block = fetcher.fetch(base2.x(), base2.y(), base2.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs2, values);
-            block = fetcher.fetch(base3(0), base3(1), base3(2));
+            block = fetcher.fetch(base3.x(), base3.y(), base3.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs3, values);
-            block = fetcher.fetch(base4(0), base4(1), base4(2));
+            block = fetcher.fetch(base4.x(), base4.y(), base4.z());
             if (block && block->current_scale() > scale)
               return block->current_scale();
             gather_2(block, base, scale, stride, select_value, offs4, values);
