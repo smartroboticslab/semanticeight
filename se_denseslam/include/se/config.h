@@ -96,7 +96,7 @@ struct Configuration {
    * and y axes and at the beginning of the z axis.
    * <br>\em Default: (0.5, 0.5, 0)
    */
-  Eigen::Vector3f initial_pos_factor;
+  Eigen::Vector3f t_MW_factor;
 
   /**
    * The number of pyramid levels and ICP iterations for the depth images. The
@@ -236,9 +236,9 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "Volume size:             " << config.volume_resolution.x() << "x"
                                      << config.volume_resolution.y() << "x"
                                      << config.volume_resolution.z() << " voxels\n";
-  out << "Initial position factor: " << config.initial_pos_factor.x() << " "
-                                     << config.initial_pos_factor.y() << " "
-                                     << config.initial_pos_factor.z() << "\n";
+  out << "Initial position factor: " << config.t_MW_factor.x() << " "
+                                     << config.t_MW_factor.y() << " "
+                                     << config.t_MW_factor.z() << "\n";
   out << "Compute size ratio:      " << config.compute_size_ratio << "\n";
   out << "Camera parameters:       " << config.camera.x() << " "
                                      << config.camera.y() << " "

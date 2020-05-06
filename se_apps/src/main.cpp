@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
   track_render =  new uint32_t[computation_size.x() * computation_size.y()];
   volume_render = new uint32_t[computation_size.x() * computation_size.y()];
 
-  t_MW = config.initial_pos_factor.cwiseProduct(config.volume_size);
+  t_MW = config.t_MW_factor.cwiseProduct(config.volume_size);
   pipeline = new DenseSLAMSystem(
       computation_size,
       Eigen::Vector3i::Constant(config.volume_resolution.x()),

@@ -98,23 +98,23 @@ DepthReader *createReader(Configuration *config, std::string filename) {
             continue;
           }
 
-          if (key == "initial-position") {
+          if (key == "world-to-map-translation-factor") {
             std::vector<std::string> dims = split_string(value, ',');
             if (dims.size() == 3) {
-              config->initial_pos_factor.x() = ::atof(
+              config->t_MW_factor.x() = ::atof(
                   dims[0].c_str());
-              config->initial_pos_factor.y() = ::atof(
+              config->t_MW_factor.y() = ::atof(
                   dims[1].c_str());
-              config->initial_pos_factor.z() = ::atof(
+              config->t_MW_factor.z() = ::atof(
                   dims[2].c_str());
-              std::cout << "initial-position: "
-                << config->initial_pos_factor.x() << ", "
-                << config->initial_pos_factor.y() << ", "
-                << config->initial_pos_factor.z()
+              std::cout << "world-to-map-translation-factor: "
+                << config->t_MW_factor.x() << ", "
+                << config->t_MW_factor.y() << ", "
+                << config->t_MW_factor.z()
                 << std::endl;
             } else {
               std::cerr
-                << "ERROR: initial-position  specified with incorrect data. (was "
+                << "ERROR: world-to-map-translation-factor  specified with incorrect data. (was "
                 << value << ") Should be \"x, y, z\""
                 << std::endl;
             }

@@ -36,7 +36,7 @@ const int default_rendering_rate = 4;
 const int default_tracking_rate = 1;
 const Eigen::Vector3i default_volume_resolution(256, 256, 256);
 const Eigen::Vector3f default_volume_size(2.f, 2.f, 2.f);
-const Eigen::Vector3f default_initial_pos_factor(0.5f, 0.5f, 0.0f);
+const Eigen::Vector3f default_t_MW_factor(0.5f, 0.5f, 0.0f);
 const bool default_no_gui = false;
 const bool default_render_volume_fullsize = false;
 const bool default_bilateral_filter = false;
@@ -86,7 +86,7 @@ void print_arguments() {
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << std::endl;
   std::cerr << "-o  (--log-file) <filename>               : default is stdout               " << std::endl;
   std::cerr << "-m  (--mu)                                : default is " << default_mu << "               " << std::endl;
-  std::cerr << "-p  (--init-pose)                         : default is " << default_initial_pos_factor.x() << "," << default_initial_pos_factor.y() << "," << default_initial_pos_factor.z() << "     " << std::endl;
+  std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "     " << std::endl;
   std::cerr << "-q  (--no-gui)                            : default is to display gui"<<std::endl;
   std::cerr << "-r  (--integration-rate)                  : default is " << default_integration_rate << "     " << std::endl;
   std::cerr << "-s  (--volume-size)                       : default is " << default_volume_size.x() << "," << default_volume_size.y() << "," << default_volume_size.z() << "      " << std::endl;
@@ -186,7 +186,7 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
   config.rendering_rate = default_rendering_rate;
   config.volume_resolution = default_volume_resolution;
   config.volume_size = default_volume_size;
-  config.initial_pos_factor = default_initial_pos_factor;
+  config.t_MW_factor = default_t_MW_factor;
 
   config.dump_volume_file = default_dump_volume_file;
   config.input_file = default_input_file;
@@ -327,7 +327,7 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
         config.mu = atof(optarg);
         break;
       case 'p':    //   -p  (--init-pose)
-        config.initial_pos_factor = atof3(optarg);
+        config.t_MW_factor = atof3(optarg);
         break;
       case 'q':
         config.no_gui = true;

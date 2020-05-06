@@ -92,12 +92,12 @@ static void newDenseSLAMSystem(bool resetPose) {
 				config->volume_resolution, config->volume_size, T_MW, config->pyramid, *config);
   } else {
     Eigen::Matrix<float, 6, 1> twist;
-  	twist << config->initial_pos_factor.x() * config->volume_size.x(),
-						 config->initial_pos_factor.y() * config->volume_size.x(),
-					   config->initial_pos_factor.z() * config->volume_size.x(), 0, 0, 0;
+  	twist << config->t_MW_factor.x() * config->volume_size.x(),
+						 config->t_MW_factor.y() * config->volume_size.x(),
+					   config->t_MW_factor.z() * config->volume_size.x(), 0, 0, 0;
 		trans = Sophus::SE3<float>::exp(twist);
 		rot = Sophus::SE3<float>();
-    Eigen::Vector3f t_MW = config->initial_pos_factor.cwiseProduct(config->volume_size);
+    Eigen::Vector3f t_MW = config->t_MW_factor.cwiseProduct(config->volume_size);
 		*pipeline_pp = new DenseSLAMSystem(
 				Eigen::Vector2i(640 / config->compute_size_ratio,
 						480 / config->compute_size_ratio),
@@ -122,7 +122,7 @@ static void continueWithNewDenseSLAMSystem() {
 //reader==NULL   - we don't even have a camera attached
 //in the reader this is stored as 2 bool cameraOpen (i.e !CAMERA_CLOSED) cameraActive = CAMERA_RUNNING
 CameraState setEnableCamera(CameraState state, string inputFile) {
-	//float3 init_poseFactors = default_initial_pos_factor; /* FIXME */
+	//float3 init_poseFactors = default_t_MW_factor; /* FIXME */
 	DepthReader *reader = *reader_pp;
 	bool isLive = (state == CAMERA_LIVE) ? true : false;
 
@@ -296,9 +296,9 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 	config = _config;
 	reader_pp = _depthReader;
   Eigen::Matrix<float, 6, 1> twist;
-  twist << config->initial_pos_factor.x() * config->volume_size.x(),
-					 config->initial_pos_factor.y() * config->volume_size.x(),
-				   config->initial_pos_factor.z() * config->volume_size.x(), 0, 0, 0;
+  twist << config->t_MW_factor.x() * config->volume_size.x(),
+					 config->t_MW_factor.y() * config->volume_size.x(),
+				   config->t_MW_factor.z() * config->volume_size.x(), 0, 0, 0;
 	trans = Sophus::SE3<float>::exp(twist);
 	QApplication a(argc, argv);
 
