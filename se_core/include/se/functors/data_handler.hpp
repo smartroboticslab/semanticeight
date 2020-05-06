@@ -59,7 +59,7 @@ namespace se {
           /*!
            * \param[in] ptr Pointer to the VoxelBlock.
            * \param[in] v Coordinates of the voxel to get/set the data of. The
-           * elements of v must be in the in the interval [0, BLOCK_SIDE-1].
+           * elements of v must be in the in the interval [0, BLOCK_SIZE-1].
            */
           VoxelBlockHandler(se::VoxelBlock<FieldType>* block, Eigen::Vector3i voxel_coord) :
             block_(block), voxel_coord_(voxel_coord) {}

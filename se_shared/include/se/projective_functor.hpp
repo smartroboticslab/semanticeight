@@ -87,10 +87,10 @@ namespace functor {
         block->current_scale(0);
 
         /* Iterate over each voxel in the VoxelBlock. */
-        const unsigned int block_side = se::VoxelBlock<FieldType>::side;
-        const unsigned int x_last = block_coord.x() + block_side;
-        const unsigned int y_last = block_coord.y() + block_side;
-        const unsigned int z_last = block_coord.z() + block_side;
+        const unsigned int block_size = se::VoxelBlock<FieldType>::size;
+        const unsigned int x_last = block_coord.x() + block_size;
+        const unsigned int y_last = block_coord.y() + block_size;
+        const unsigned int z_last = block_coord.z() + block_size;
 
         for (unsigned int z = block_coord.z(); z < z_last; ++z) {
           for (unsigned int y = block_coord.y(); y < y_last; ++y) {
@@ -124,10 +124,10 @@ namespace functor {
         /* Iterate over the Node children. */
 #pragma omp simd
         for(int child_idx = 0; child_idx < 8; ++child_idx) {
-          const Eigen::Vector3i dir = node->side_ / 2 *
+          const Eigen::Vector3i dir = node->size_ / 2 *
               Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0); // TODO: Offset needs to be discussed
           const Eigen::Vector3i child_coord = node_coord + dir;
-          const Eigen::Vector3f child_point_C = (T_CM_ * (voxel_dim * (child_coord.cast<float>() + node->side_ * offset_)).homogeneous()).head(3);
+          const Eigen::Vector3f child_point_C = (T_CM_ * (voxel_dim * (child_coord.cast<float>() + node->size_ * offset_)).homogeneous()).head(3);
           Eigen::Vector2f pixel_f;
           if (sensor_.model.project(child_point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
             continue;

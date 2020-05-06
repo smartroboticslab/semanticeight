@@ -163,12 +163,12 @@ TEST_F(NeighborGatherTest, GetFaceNeighborsVolumeCorner) {
 TEST_F(NeighborGatherTest, GetFaceNeighborsCornerUnallocated) {
   // Safe version.
   std::array<TestVoxelT::VoxelData, 6> neighbor_data_safe
-      = octree_.get_face_neighbors<true>(octree_.blockSide - 1,
-      octree_.blockSide - 1, octree_.blockSide - 1);
+      = octree_.get_face_neighbors<true>(octree_.block_size - 1,
+      octree_.block_size - 1, octree_.block_size - 1);
   // Unsafe version.
   std::array<TestVoxelT::VoxelData, 6> neighbor_data_unsafe
-      = octree_.get_face_neighbors<false>(octree_.blockSide - 1,
-      octree_.blockSide - 1, octree_.blockSide - 1);
+      = octree_.get_face_neighbors<false>(octree_.block_size - 1,
+      octree_.block_size - 1, octree_.block_size - 1);
 
   // Voxel -z (0, 0, -1), allocated.
   EXPECT_EQ(neighbor_data_safe[0], TestVoxelT::initData());

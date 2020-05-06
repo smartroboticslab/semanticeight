@@ -100,9 +100,9 @@ TEST_F(MultiscaleTest, Iterator) {
   se::Node<TestVoxelT>* node = it.next();
   for(int i = 512; node != nullptr; node = it.next(), i /= 2){
     const Eigen::Vector3i node_coord = se::keyops::decode(node->code_);
-    const int side = node->side_;
+    const int node_size = node->size_;
     const se::Octree<TestVoxelT>::VoxelData data = node->data_[0];
-    EXPECT_EQ(side, i);
+    EXPECT_EQ(node_size, i);
   }
 }
 
@@ -150,10 +150,10 @@ TEST_F(MultiscaleTest, OctantAlloc) {
 
 TEST_F(MultiscaleTest, SingleInsert) {
   Eigen::Vector3i voxel_coord(32, 208, 44);
-  const int side = se::VoxelBlock<TestVoxelT>::side;
+  const int block_size = se::VoxelBlock<TestVoxelT>::size;
   se::VoxelBlock<TestVoxelT>* block = octree_.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   Eigen::Vector3i block_coord = block->coordinates();
-  Eigen::Vector3i block_coord_rounded = side * (voxel_coord / side);
+  Eigen::Vector3i block_coord_rounded = block_size * (voxel_coord / block_size);
   ASSERT_TRUE(block_coord == block_coord_rounded);
 }
 
@@ -166,13 +166,13 @@ TEST_F(MultiscaleTest, MultipleInsert) {
   std::uniform_int_distribution<> dis(0, 1023);
 
   int num_tested = 0;
-  for(int i = 1, side = octree.size() / 2; i <= block_depth; ++i, side = side / 2) {
+  for(int i = 1, node_size = octree.size() / 2; i <= block_depth; ++i, node_size = node_size / 2) {
     for(int j = 0; j < 20; ++j) {
       Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
       se::Node<TestVoxelT>* inserted_node = octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
       se::Node<TestVoxelT>* fetched_node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
       Eigen::Vector3i node_coord = se::keyops::decode(fetched_node->code_);
-      Eigen::Vector3i node_coord_rounded = side * (voxel_coord / side);
+      Eigen::Vector3i node_coord_rounded = node_size * (voxel_coord / node_size);
 
       // Check expected coordinates
       ASSERT_TRUE(node_coord == node_coord_rounded);
@@ -197,7 +197,7 @@ struct TestVoxel2T {
 TEST(MultiscaleBlock, ReadWrite) {
   se::Octree<TestVoxel2T> octree;
   octree.init(1024, 10);
-  const int side = se::VoxelBlock<TestVoxel2T>::side;
+  const int block_size = se::VoxelBlock<TestVoxel2T>::size;
   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with rd()
   std::uniform_int_distribution<> dis(0, 1023);
@@ -209,9 +209,9 @@ TEST(MultiscaleBlock, ReadWrite) {
     const Eigen::Vector3i& voxel_coord = voxels_coord.back();
     auto* block = octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
     const Eigen::Vector3i& block_coord = block->coordinates();
-    for(int z = 0; z < side; ++z) {
-      for(int y = 0; y < side; ++y) {
-        for(int x = 0; x < side; ++x) {
+    for(int z = 0; z < block_size; ++z) {
+      for(int y = 0; y < block_size; ++y) {
+        for(int x = 0; x < block_size; ++x) {
           const Eigen::Vector3i voxel_coord_scale_0 = block_coord + Eigen::Vector3i(x, y, z);
           const Eigen::Vector3i voxel_coord_scale_1 = (voxel_coord_scale_0 / 2) * 2;
           const Eigen::Vector3i voxel_coord_scale_2 = (voxel_coord_scale_0 / 4) * 4;
@@ -227,9 +227,9 @@ TEST(MultiscaleBlock, ReadWrite) {
     const Eigen::Vector3i& voxel_coord = voxels_coord[i];
     auto* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
     const Eigen::Vector3i& block_coord = block->coordinates();
-    for(int z = 0; z < side; ++z) {
-      for(int y = 0; y < side; ++y) {
-        for(int x = 0; x < side; ++x) {
+    for(int z = 0; z < block_size; ++z) {
+      for(int y = 0; y < block_size; ++y) {
+        for(int x = 0; x < block_size; ++x) {
           const Eigen::Vector3i voxel_coord_scale_0 = block_coord + Eigen::Vector3i(x, y, z);
           const Eigen::Vector3i voxel_coord_scale_1 = (voxel_coord_scale_0 / 2) * 2;
           const Eigen::Vector3i voxel_coord_scale_2 = (voxel_coord_scale_0 / 4) * 4;

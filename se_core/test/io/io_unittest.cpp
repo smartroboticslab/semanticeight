@@ -67,7 +67,7 @@ TEST(SerialiseUnitTest, WriteReadNode) {
     std::ofstream os (filename, std::ios::binary);
     se::Node<TestVoxelT> node;
     node.code_ = 24;
-    node.side_ = 256;
+    node.size_ = 256;
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       node.data_[child_idx] =  5.f;
     se::internal::serialise(os, node);
@@ -78,7 +78,7 @@ TEST(SerialiseUnitTest, WriteReadNode) {
     se::Node<TestVoxelT> node;
     se::internal::deserialise(node, is);
     ASSERT_EQ(node.code_, 24);
-    ASSERT_EQ(node.side_, 256);
+    ASSERT_EQ(node.size_, 256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       ASSERT_EQ(node.data_[child_idx], 5.f);
   }
@@ -141,7 +141,7 @@ TEST(SerialiseUnitTest, SerialiseTree) {
   std::uniform_int_distribution<> dis(0, 1023);
 
   int num_tested = 0;
-  for(int i = 1, side = octree.size() / 2; i <= block_depth; ++i, side = side / 2) {
+  for(int i = 1, size = octree.size() / 2; i <= block_depth; ++i, size = size / 2) {
     for(int j = 0; j < 20; ++j) {
       Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
       octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
@@ -182,7 +182,7 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
     auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-    for(int voxel_idx = 0; voxel_idx < se::VoxelBlock<TestVoxelT>::side_cube; ++voxel_idx)
+    for(int voxel_idx = 0; voxel_idx < se::VoxelBlock<TestVoxelT>::size_cube; ++voxel_idx)
       block->data(voxel_idx, dis(gen));
   }
 
@@ -195,7 +195,7 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
   auto& block_buffer_base = octree.pool().blockBuffer();
   auto& block_buffer_copy = octree_copy.pool().blockBuffer();
   for(int i = 0; i < block_buffer_base.size(); i++) {
-    for(int voxel_idx = 0; voxel_idx < se::VoxelBlock<TestVoxelT>::side_cube; voxel_idx++) {
+    for(int voxel_idx = 0; voxel_idx < se::VoxelBlock<TestVoxelT>::size_cube; voxel_idx++) {
       ASSERT_EQ(block_buffer_base[i]->data(voxel_idx), block_buffer_copy[i]->data(voxel_idx));
     }
   }

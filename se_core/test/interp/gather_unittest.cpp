@@ -79,7 +79,7 @@ TEST_F(GatherTest, GatherLocal) {
 
 TEST_F(GatherTest, ZCrosses) {
   TestVoxelT::VoxelData points[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::side;
+  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
   const Eigen::Vector3i base = {132, 128, 135};
   unsigned int crossmask = ((base.x() % block_size) == block_size - 1 << 2) |
                            ((base.y() % block_size) == block_size - 1 << 1) |
@@ -95,7 +95,7 @@ TEST_F(GatherTest, ZCrosses) {
 
 TEST_F(GatherTest, YCrosses) {
   TestVoxelT::VoxelData points[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::side;
+  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
   const Eigen::Vector3i base = {132, 135, 132};
   unsigned int crossmask = ((base.x() % block_size == block_size - 1) << 2) |
                            ((base.y() % block_size == block_size - 1) << 1) |
@@ -111,7 +111,7 @@ TEST_F(GatherTest, YCrosses) {
 
 TEST_F(GatherTest, XCrosses) {
   TestVoxelT::VoxelData points[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::side;
+  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
   const Eigen::Vector3i base = {135, 132, 132};
   unsigned int crossmask = ((base.x() % block_size == block_size - 1) << 2) |
                            ((base.y() % block_size == block_size - 1) << 1) |
@@ -127,7 +127,7 @@ TEST_F(GatherTest, XCrosses) {
 
 TEST_F(GatherTest, YZCross) {
   TestVoxelT::VoxelData points[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::side;
+  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
   const Eigen::Vector3i base = {129, 135, 135};
   unsigned int crossmask = ((base.x() % block_size == block_size - 1) << 2) |
                            ((base.y() % block_size == block_size - 1) << 1) |
@@ -143,7 +143,7 @@ TEST_F(GatherTest, YZCross) {
 
 TEST_F(GatherTest, XZCross) {
   TestVoxelT::VoxelData points[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::side;
+  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
   const Eigen::Vector3i base = {135, 131, 135};
   unsigned int crossmask = ((base.x() % block_size == block_size - 1) << 2) |
                            ((base.y() % block_size == block_size - 1) << 1) |
@@ -159,7 +159,7 @@ TEST_F(GatherTest, XZCross) {
 
 TEST_F(GatherTest, XYCross) {
   TestVoxelT::VoxelData points[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::side;
+  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
   const Eigen::Vector3i base = {135, 135, 138};
   unsigned int crossmask = ((base.x() % block_size == block_size - 1) << 2) |
                            ((base.y() % block_size == block_size - 1) << 1) |
@@ -175,7 +175,7 @@ TEST_F(GatherTest, XYCross) {
 
 TEST_F(GatherTest, AllCross) {
   TestVoxelT::VoxelData points[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::side;
+  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
   const Eigen::Vector3i base = {135, 135, 135};
   unsigned int crossmask = ((base.x() % block_size == block_size - 1) << 2) |
                            ((base.y() % block_size == block_size - 1) << 1) |

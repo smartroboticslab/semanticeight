@@ -184,11 +184,11 @@ namespace se {
         ValueT                                   values[8]) {
 
       const int stride = 1 << scale;
-      unsigned int blockSize = se::VoxelBlock<FieldType>::side;
+      unsigned int block_size = se::VoxelBlock<FieldType>::size;
       unsigned int crossmask
-          = (((base.x() & (blockSize - 1)) == blockSize - stride) << 2)
-          | (((base.y() & (blockSize - 1)) == blockSize - stride) << 1)
-          |  ((base.z() & (blockSize - 1)) == blockSize - stride);
+          = (((base.x() & (block_size - 1)) == block_size - stride) << 2)
+          | (((base.y() & (block_size - 1)) == block_size - stride) << 1)
+          |  ((base.z() & (block_size - 1)) == block_size - stride);
 
       switch(crossmask) {
         case 0: /* all local */
@@ -388,9 +388,9 @@ namespace se {
         int child_idx = se::child_idx(stack[level]->code_, max_depth);
         int sibling = child_idx ^ dir;
         if ((sibling & dir) == dir) { // if sibling still in octant's family
-          const int side = 1 << (max_depth - level);
+          const int child_size = 1 << (max_depth - level);
           const Eigen::Vector3i coords = se::keyops::decode(stack[level-1]->code_)
-              + side * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
+              + child_size * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
           return {select_value(stack[level-1]->data_[sibling]), coords};
         }
         level--;
@@ -430,7 +430,7 @@ namespace se {
 
     /*! \brief Fetch the finest octant containing (x,y,z) starting from root node.
      * It is required that pos is contained withing the root node, i.e. pos is
-     * within the interval [root.pos, root.pos + root.side].
+     * within the interval [root.pos, root.pos + root.size].
      * \param stack stack of traversed nodes
      * \param root Root node from where the search starts.
      * \param pos integer position of searched octant
@@ -441,16 +441,16 @@ namespace se {
                                  const int              max_depth,
                                  const Eigen::Vector3i& pos) {
 
-      unsigned edge = (1 << (max_depth - se::keyops::level(root->code_))) / 2;
-      constexpr unsigned int blockSide = BLOCK_SIDE;
+      unsigned node_size = (1 << (max_depth - se::keyops::level(root->code_))) / 2;
+      constexpr unsigned int block_size = BLOCK_SIZE;
       Node<T>* n = root;
       int l = 0;
-      for (; edge >= blockSide; ++l, edge = edge >> 1) {
+      for (; node_size >= block_size; ++l, node_size = node_size >> 1) {
         stack[l] = n;
         auto next = n->child(
-            (pos.x() & edge) > 0u,
-            (pos.y() & edge) > 0u,
-            (pos.z() & edge) > 0u);
+            (pos.x() & node_size) > 0u,
+            (pos.y() & node_size) > 0u,
+            (pos.z() & node_size) > 0u);
         if (!next)
           break;
         n = next;

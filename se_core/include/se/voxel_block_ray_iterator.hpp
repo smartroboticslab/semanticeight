@@ -51,7 +51,7 @@ class se::VoxelBlockRayIterator {
       child_ = nullptr;
       scale_exp2_ = 0.5f;
       scale_ = CAST_STACK_DEPTH - 1;
-      min_scale_ = CAST_STACK_DEPTH - log2(octree_.size_ / Octree<T>::blockSide);
+      min_scale_ = CAST_STACK_DEPTH - log2(octree_.size_ / Octree<T>::block_size);
       state_ = INIT;
 
       for(int i = 0 ; i < CAST_STACK_DEPTH; ++i) {

@@ -64,10 +64,10 @@ inline Eigen::Vector3i face_neighbour(const se::key_t octant_key,
     const unsigned int face, const unsigned int l, 
     const unsigned int voxel_depth) {
   Eigen::Vector3i octant_coord = se::keyops::decode(octant_key);
-  const unsigned int side = 1 << (voxel_depth - l);
-  octant_coord.x() = octant_coord.x() + ((face == 0) ? -side : (face == 1) ? side : 0);
-  octant_coord.y() = octant_coord.y() + ((face == 2) ? -side : (face == 3) ? side : 0);
-  octant_coord.z() = octant_coord.z() + ((face == 4) ? -side : (face == 5) ? side : 0);
+  const unsigned int octant_size = 1 << (voxel_depth - l);
+  octant_coord.x() = octant_coord.x() + ((face == 0) ? -octant_size : (face == 1) ? octant_size : 0);
+  octant_coord.y() = octant_coord.y() + ((face == 2) ? -octant_size : (face == 3) ? octant_size : 0);
+  octant_coord.z() = octant_coord.z() + ((face == 4) ? -octant_size : (face == 5) ? octant_size : 0);
   return {octant_coord.x(), octant_coord.y(), octant_coord.z()};
 }
 
@@ -132,12 +132,12 @@ inline int child_idx(se::key_t octant_key, const int voxel_depth) {
  */
 inline Eigen::Vector3i far_corner(const se::key_t octant_key, const int level,
     const int voxel_depth) {
-  const unsigned int side = 1 << (voxel_depth - level);
+  const unsigned int octant_size = 1 << (voxel_depth - level);
   const int child_idx = se::child_idx(octant_key, level, voxel_depth);
   const Eigen::Vector3i octant_coord = se::keyops::decode(octant_key);
-  return Eigen::Vector3i(octant_coord.x() + ( child_idx & 1)       * side,
-                         octant_coord.y() + ((child_idx & 2) >> 1) * side,
-                         octant_coord.z() + ((child_idx & 4) >> 2) * side);
+  return Eigen::Vector3i(octant_coord.x() + ( child_idx & 1)       * octant_size,
+                         octant_coord.y() + ((child_idx & 2) >> 1) * octant_size,
+                         octant_coord.z() + ((child_idx & 4) >> 2) * octant_size);
 }
 
 /*

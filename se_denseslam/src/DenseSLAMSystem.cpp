@@ -206,7 +206,7 @@ bool DenseSLAMSystem::integrate(unsigned int frame) {
 
   const float voxel_dim = volume_.dim() / volume_.size();
   const int num_blocks_per_pixel = volume_.size()
-    / ((se::VoxelBlock<VoxelImpl::VoxelType>::side));
+    / ((se::VoxelBlock<VoxelImpl::VoxelType>::size));
   const size_t num_blocks_total = num_blocks_per_pixel
     * image_res_.x() * image_res_.y();
   allocation_list_.reserve(num_blocks_total);
@@ -237,7 +237,7 @@ bool DenseSLAMSystem::raycast() {
 
   raycast_T_MC_ = T_MC_;
   float step = map_dim_.x() / map_size_.x();
-  raycastKernel(volume_, surface_point_cloud_M_, surface_normals_M_, raycast_T_MC_, sensor_, step, step * BLOCK_SIDE);
+  raycastKernel(volume_, surface_point_cloud_M_, surface_normals_M_, raycast_T_MC_, sensor_, step, step * BLOCK_SIZE);
 
   return true;
 }
@@ -253,7 +253,7 @@ void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBW_image_data
 
   float step = map_dim_.x() / map_size_.x();
   renderVolumeKernel(volume_, volume_RGBW_image_data, volume_RGBW_image_res,
-      *this->render_T_MC_, sensor_, step, step * BLOCK_SIDE,
+      *this->render_T_MC_, sensor_, step, step * BLOCK_SIZE,
       se::math::toTranslation(*this->render_T_MC_), ambient,
       !(this->render_T_MC_->isApprox(raycast_T_MC_)), surface_point_cloud_M_, surface_normals_M_);
 }
@@ -294,10 +294,10 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
     if(block->min_scale() == 0) return;
     const Eigen::Vector3f& offset = this->volume_.octree_->_offset;
     const Eigen::Vector3i block_coord = block->coordinates();
-    const int side = block->side;
-    for(int z = 0; z < side; ++z)
-      for(int y = 0; y < side; ++y)
-        for(int x = 0; x < side; ++x) {
+    const int block_size = block->size;
+    for(int z = 0; z < block_size; ++z)
+      for(int y = 0; y < block_size; ++y)
+        for(int x = 0; x < block_size; ++x) {
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y , z);
           auto voxel_data = block->data(voxel_coord, 0);
           auto res = this->volume_.octree_->interp_checked(

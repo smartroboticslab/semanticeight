@@ -74,7 +74,7 @@ TEST(AllocationTest, FetchOctant) {
   typedef se::Octree<TestVoxelT> OctreeF;
   OctreeF octree;
   const int voxel_depth = 8;
-  const unsigned int block_side = 8;
+  const unsigned int block_size = 8;
   const unsigned int size = std::pow(2, voxel_depth);
   octree.init(size, 5);
   const Eigen::Vector3i voxel_coord = {25, 65, 127};
@@ -93,11 +93,11 @@ TEST(AllocationTest, FetchOctant) {
 TEST(AllocationTest, MortonPrefixMask) {
 
   const unsigned int max_bits = 21;
-  const unsigned int block_side = 8;
-  const unsigned int size = std::pow(2, max_bits);
+  const unsigned int block_size = 8;
+  const unsigned int map_size = std::pow(2, max_bits);
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<int> dis(0, size);
+  std::uniform_int_distribution<int> dis(0, map_size);
 
   constexpr int num_samples = 10;
   se::key_t keys[num_samples];
@@ -111,36 +111,36 @@ TEST(AllocationTest, MortonPrefixMask) {
     keys[i] = code;
   }
 
-  const int voxel_depth = log2(size);
-  const int block_depth = voxel_depth - log2(block_side);
+  const int voxel_depth = log2(map_size);
+  const int block_depth = voxel_depth - log2(block_size);
   const unsigned int shift = max_bits - voxel_depth;
-  int edge = size/2;
+  int node_size = map_size / 2;
   for (int level = 0; level <= block_depth; level++){
     const se::key_t mask = MASK[level + shift];
     compute_prefix(keys, tempkeys, num_samples, mask);
     for(int i = 0; i < num_samples; ++i) {
       const Eigen::Vector3i masked_voxel_coord = unpack_morton(tempkeys[i]);
-      ASSERT_EQ(masked_voxel_coord.x() % edge, 0);
-      ASSERT_EQ(masked_voxel_coord.y() % edge, 0);
-      ASSERT_EQ(masked_voxel_coord.z() % edge, 0);
+      ASSERT_EQ(masked_voxel_coord.x() % node_size, 0);
+      ASSERT_EQ(masked_voxel_coord.y() % node_size, 0);
+      ASSERT_EQ(masked_voxel_coord.z() % node_size, 0);
       const Eigen::Vector3i voxel_coord = voxels_coord[i];
       // printf("voxel_coord: %d, %d, %d\n", voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
       // printf("masked level %d: %d, %d, %d\n", level, masked_voxel_coord.x(), masked_voxel_coord.y(), masked_voxel_coord.z() );
     }
-    edge = edge / 2;
+    node_size = node_size / 2;
   }
 }
 
 TEST(AllocationTest, ParentInsert) {
   se::Octree<TestVoxelT> octree;
-  const unsigned int block_side = 8;
+  const unsigned int block_size = 8;
   const int voxel_depth = 8;
-  const unsigned int size = std::pow(2, voxel_depth);
-  octree.init(size, 5);
+  const unsigned int map_size = std::pow(2, voxel_depth);
+  octree.init(map_size, 5);
   const int block_depth = octree.blockDepth();
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<int> dis(0, size);
+  std::uniform_int_distribution<int> dis(0, map_size);
   const Eigen::Vector3i voxel_coord = {dis(gen), dis(gen), dis(gen)};
   octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   se::VoxelBlock<TestVoxelT>* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
@@ -155,13 +155,13 @@ TEST(AllocationTest, ParentInsert) {
 
 TEST(AllocationTest, ParentAllocation) {
   se::Octree<TestVoxelT> octree;
-  const unsigned int block_side = 8;
+  const unsigned int block_size = 8;
   const int voxel_depth = 8;
-  const unsigned int size = std::pow(2, voxel_depth);
-  octree.init(size, 5);  std::random_device rd;
+  const unsigned int map_size = std::pow(2, voxel_depth);
+  octree.init(map_size, 5);  std::random_device rd;
   const int block_depth = octree.blockDepth();
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<int> dis(0, size);
+  std::uniform_int_distribution<int> dis(0, map_size);
   const Eigen::Vector3i voxel_coord = {dis(gen), dis(gen), dis(gen)};
   const unsigned code = octree.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   se::key_t allocation_list[1] = {code};

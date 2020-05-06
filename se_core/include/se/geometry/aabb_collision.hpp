@@ -33,43 +33,43 @@
 
 namespace se {
 namespace geometry {
-  inline int axis_overlap(int a, const int a_edge, 
-       int b, const int b_edge) {
+  inline int axis_overlap(int a, const int a_size, 
+       int b, const int b_size) {
     /* Half plane intersection test */
-    a = a + (a_edge/2);
-    b = b + (b_edge/2);
-    return (std::abs(b - a) > (a_edge + b_edge)/2) ? 0 : 1;
+    a = a + (a_size / 2);
+    b = b + (b_size / 2);
+    return (std::abs(b - a) > (a_size + b_size) / 2) ? 0 : 1;
   }
 
-  inline int axis_overlap(float a, const float a_edge, 
-       float b, const float b_edge) {
+  inline int axis_overlap(float a, const float a_size, 
+       float b, const float b_size) {
     /* Half plane intersection test */
-    a = a + (a_edge/2);
-    b = b + (b_edge/2);
-    return (std::fabs(b - a) > (a_edge + b_edge)/2) ? 0 : 1;
+    a = a + (a_size / 2);
+    b = b + (b_size / 2);
+    return (std::fabs(b - a) > (a_size + b_size) / 2) ? 0 : 1;
   }
 
-  inline int axis_contained(float a, const float a_edge, 
-       float b, const float b_edge) {
+  inline int axis_contained(float a, const float a_size, 
+       float b, const float b_size) {
     /* Segment a includes segment b */
-    return (a < b) && ((a + a_edge) > (b + b_edge)); 
+    return (a < b) && ((a + a_size) > (b + b_size)); 
   }
 
 
-  inline int aabb_aabb_collision(const Eigen::Vector3i a, const Eigen::Vector3i a_edge, 
-      const Eigen::Vector3i b, const Eigen::Vector3i b_edge){
+  inline int aabb_aabb_collision(const Eigen::Vector3i a, const Eigen::Vector3i a_size, 
+      const Eigen::Vector3i b, const Eigen::Vector3i b_size){
 
-    return axis_overlap(a(0), a_edge(0), b(0), b_edge(0)) && 
-           axis_overlap(a(1), a_edge(1), b(1), b_edge(1)) && 
-           axis_overlap(a(2), a_edge(2), b(2), b_edge(2));
+    return axis_overlap(a.x(), a_size.x(), b.x(), b_size.x()) && 
+           axis_overlap(a.y(), a_size.y(), b.y(), b_size.y()) && 
+           axis_overlap(a.z(), a_size.z(), b.z(), b_size.z());
   }
 
-  inline int aabb_aabb_inclusion(const Eigen::Vector3i a, const Eigen::Vector3i a_edge, 
-      const Eigen::Vector3i b, const Eigen::Vector3i b_edge){
+  inline int aabb_aabb_inclusion(const Eigen::Vector3i a, const Eigen::Vector3i a_size, 
+      const Eigen::Vector3i b, const Eigen::Vector3i b_size){
     /* Box a contains box b */
-    return axis_contained(a(0), a_edge(0), b(0), b_edge(0)) && 
-           axis_contained(a(1), a_edge(1), b(1), b_edge(1)) && 
-           axis_contained(a(2), a_edge(2), b(2), b_edge(2));
+    return axis_contained(a.x(), a_size.x(), b.x(), b_size.x()) && 
+           axis_contained(a.y(), a_size.y(), b.y(), b_size.y()) && 
+           axis_contained(a.z(), a_size.z(), b.z(), b_size.z());
   }
 }
 }

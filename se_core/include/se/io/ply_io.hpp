@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace se {
   template <typename T>
   /*! \brief Write the octree structure to file in ply format.
-   * Aggregated voxel blocks are written as a single octant of size block_side^3.
+   * Aggregated voxel blocks are written as a single octant of size block_size^3.
    * \param filename output filename
    * \param octree octree map
    */
@@ -55,17 +55,17 @@ namespace se {
       int faces_count  = 0;
       while(node) {
         const Eigen::Vector3i node_coord = se::keyops::decode(node->code_);
-        const int side = 1 << (voxel_depth - se::keyops::level(node->code_));
+        const int node_size = 1 << (voxel_depth - se::keyops::level(node->code_));
 
         Eigen::Vector3f node_corners[8];
         node_corners[0] =  node_coord.cast<float>();
-        node_corners[1] = (node_coord + Eigen::Vector3i(side, 0, 0)).cast<float>();
-        node_corners[2] = (node_coord + Eigen::Vector3i(0, side, 0)).cast<float>();
-        node_corners[3] = (node_coord + Eigen::Vector3i(side, side, 0)).cast<float>();
-        node_corners[4] = (node_coord + Eigen::Vector3i(0, 0, side)).cast<float>();
-        node_corners[5] = (node_coord + Eigen::Vector3i(side, 0, side)).cast<float>();
-        node_corners[6] = (node_coord + Eigen::Vector3i(0, side, side)).cast<float>();
-        node_corners[7] = (node_coord + Eigen::Vector3i(side, side, side)).cast<float>();
+        node_corners[1] = (node_coord + Eigen::Vector3i(node_size, 0, 0)).cast<float>();
+        node_corners[2] = (node_coord + Eigen::Vector3i(0, node_size, 0)).cast<float>();
+        node_corners[3] = (node_coord + Eigen::Vector3i(node_size, node_size, 0)).cast<float>();
+        node_corners[4] = (node_coord + Eigen::Vector3i(0, 0, node_size)).cast<float>();
+        node_corners[5] = (node_coord + Eigen::Vector3i(node_size, 0, node_size)).cast<float>();
+        node_corners[6] = (node_coord + Eigen::Vector3i(0, node_size, node_size)).cast<float>();
+        node_corners[7] = (node_coord + Eigen::Vector3i(node_size, node_size, node_size)).cast<float>();
 
         for(int i = 0; i < 8; ++i) {
           ss_nodes_corners << node_corners[i].x() << " "

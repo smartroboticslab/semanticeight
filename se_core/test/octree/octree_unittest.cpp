@@ -53,11 +53,11 @@ TEST(Octree, OctantFaceNeighbours) {
   const unsigned int block_depth = 5;
   const se::key_t octant_key =
     se::keyops::encode(octant_coord.x(), octant_coord.y(), octant_coord.z(), block_depth, voxel_depth);
-  const unsigned int side = 8;
+  const unsigned int size = 8;
   const Eigen::Vector3i faces[6] = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0},
     {0, 0, -1}, {0, 0, 1}};
   for(int i = 0; i < 6; ++i) {
-    const Eigen::Vector3i neighbour_coord = octant_coord + side * faces[i];
+    const Eigen::Vector3i neighbour_coord = octant_coord + size * faces[i];
     const Eigen::Vector3i computed_neighbour_coord = se::face_neighbour(octant_key, i, block_depth, voxel_depth);
     ASSERT_EQ(neighbour_coord.x(), computed_neighbour_coord.x());
     ASSERT_EQ(neighbour_coord.y(), computed_neighbour_coord.y());
@@ -171,7 +171,7 @@ TEST(Octree, FarCorner) {
 TEST(Octree, InnerOctantExteriorNeighbours) {
   const int voxel_depth = 5;
   const int level = 2;
-  const int side = 1 << (voxel_depth - level);
+  const int size = 1 << (voxel_depth - level);
   const se::key_t octant_key = se::keyops::encode(16, 16, 16, level, voxel_depth);
   se::key_t neighbour_keys[7];
   se::exterior_neighbours(neighbour_keys, octant_key, level, voxel_depth);
@@ -214,7 +214,6 @@ TEST(Octree, EdgeOctantExteriorNeighbours) {
 
 TEST(Octree, OctantSiblings) {
   const int voxel_depth = 5;
-  const unsigned size = std::pow(2, 5);
   const int level = 2;
   const se::key_t octant_key = se::keyops::encode(16, 16, 16, level, voxel_depth);
   se::key_t sibling_keys[8];
@@ -236,7 +235,7 @@ TEST(Octree, OctantSiblings) {
 TEST(Octree, OctantOneNeighbours) {
   const int voxel_depth = 8;
   const int level = 5;
-  const unsigned size = std::pow(2, voxel_depth);
+  const unsigned map_size = std::pow(2, voxel_depth);
   Eigen::Matrix<int, 4, 6> N;
   Eigen::Vector3i voxel_coord;
 
@@ -245,15 +244,15 @@ TEST(Octree, OctantOneNeighbours) {
   voxel_coord << 127, 56, 3;
   se::one_neighbourhood(N, se::keyops::encode(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(),
         level, voxel_depth), voxel_depth);
-  ASSERT_TRUE((N.array() >= 0).all() && (N.array() < size).all());
+  ASSERT_TRUE((N.array() >= 0).all() && (N.array() < map_size).all());
 
 
   // At edge cube
   //
-  voxel_coord << size-1, 56, 3;
+  voxel_coord << map_size-1, 56, 3;
   se::one_neighbourhood(N, se::keyops::encode(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(),
         level, voxel_depth), voxel_depth);
-  ASSERT_TRUE((N.array() >= 0).all() && (N.array() < size).all());
+  ASSERT_TRUE((N.array() >= 0).all() && (N.array() < map_size).all());
 }
 
 TEST(Octree, BalanceTree) {

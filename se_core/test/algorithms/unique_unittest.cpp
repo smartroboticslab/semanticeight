@@ -75,11 +75,11 @@ class UniqueMultiscaleTest : public ::testing::Test {
     virtual void SetUp() {
 
       octree.init(1 << voxel_depth_, 10);
-      const int root_side = pow(2, voxel_depth_ - 4);
+      const int root_size = pow(2, voxel_depth_ - 4);
       const Eigen::Vector3i base(64, 0, 64);
       keys.push_back(octree.hash(base.x(), base.y(), base.z(), 4));
-      keys.push_back(octree.hash(base.x() + root_side/2, base.y(), base.z(), 5));
-      keys.push_back(octree.hash(base.x() + root_side/4, base.y(), base.z(), 5));
+      keys.push_back(octree.hash(base.x() + root_size / 2, base.y(), base.z(), 5));
+      keys.push_back(octree.hash(base.x() + root_size / 4, base.y(), base.z(), 5));
       keys.push_back(octree.hash(128, 24, 80, 5));
       std::sort(keys.begin(), keys.end());
     }
@@ -110,7 +110,7 @@ TEST_F(UniqueMultiscaleTest, FilterAncestors) {
 TEST_F(UniqueMultiscaleTest, FilterDuplicatesTillLevel) {
   /*
    * 0x1FFu extracts the last 9 bits of a morton number,
-   * corresponding to the edge of a voxel block: 3*log2(se::VoxelBlock<T>::side)
+   * corresponding to the size of a voxel block: 3*log2(se::VoxelBlock<T>::size)
    */
   const int last = se::algorithms::unique_multiscale(keys.data(), keys.size());
   for(int i = 1; i < last; ++i) {

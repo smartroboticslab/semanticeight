@@ -41,11 +41,11 @@ namespace algorithms {
                                   const Eigen::Matrix4f& T_CM,
                                   const SensorImpl&      sensor) {
 
-      const int side = VoxelBlockType::side;
+      const int block_size = VoxelBlockType::size;
       const static Eigen::Matrix<int, 4, 8> corner_offsets =
-        (Eigen::Matrix<int, 4, 8>() << 0, side, 0   , side, 0   , side, 0   , side,
-                                       0, 0   , side, side, 0   , 0   , side, side,
-                                       0, 0   , 0   , 0   , side, side, side, side,
+        (Eigen::Matrix<int, 4, 8>() << 0, block_size, 0   , block_size, 0   , block_size, 0   , block_size,
+                                       0, 0   , block_size, block_size, 0   , 0   , block_size, block_size,
+                                       0, 0   , 0   , 0   , block_size, block_size, block_size, block_size,
                                        0, 0   , 0   , 0   , 0   , 0   , 0   , 0   ).finished();
       const Eigen::Matrix3Xf block_corners_C = (T_CM * Eigen::Vector4f(voxel_dim, voxel_dim, voxel_dim, 1.f).asDiagonal() *
           (corner_offsets.colwise() + block->coordinates().homogeneous()).template cast<float>()).topRows(3);

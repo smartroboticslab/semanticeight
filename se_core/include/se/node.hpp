@@ -49,14 +49,14 @@ public:
 
   VoxelData data_[8];
   key_t code_;
-  unsigned int side_;
+  unsigned int size_;
   unsigned char children_mask_;
   unsigned int timestamp_;
   bool active_;
 
   Node(typename T::VoxelData init_data = T::initData()) {
     code_ = 0;
-    side_ = 0;
+    size_ = 0;
     children_mask_ = 0;
     timestamp_ = 0;
     for (unsigned int child_idx = 0; child_idx < 8; child_idx++) {
@@ -106,9 +106,9 @@ class VoxelBlock: public Node<T> {
   public:
     typedef typename T::VoxelData VoxelData;
 
-    static constexpr unsigned int side = BLOCK_SIDE;
-    static constexpr unsigned int side_sq = side * side;
-    static constexpr unsigned int side_cube = side * side * side;
+    static constexpr unsigned int size = BLOCK_SIZE;
+    static constexpr unsigned int size_sq = size * size;
+    static constexpr unsigned int size_cube = size * size * size;
 
     VoxelBlock(typename T::VoxelData init_data = T::initData()) {
       coordinates_ = Eigen::Vector3i::Constant(0);
@@ -140,7 +140,7 @@ class VoxelBlock: public Node<T> {
     void min_scale(const int s) { min_scale_ = s; }
 
     VoxelData* getBlockRawPtr(){ return voxel_block_; }
-    static constexpr int size(){ return sizeof(VoxelBlock<T>); }
+    static constexpr int data_size(){ return sizeof(VoxelBlock<T>); }
 
   private:
     VoxelBlock(const VoxelBlock&) = delete;
@@ -149,13 +149,13 @@ class VoxelBlock: public Node<T> {
     int min_scale_;
 
     static constexpr size_t compute_num_voxels() {
-      size_t size = 0;
-      unsigned int s = side;
-      while(s >= 1) {
-        size += s * s * s;
-        s = s >> 1;
+      size_t voxel_count = 0;
+      unsigned int size_at_scale = size;
+      while(size_at_scale >= 1) {
+        voxel_count += size_at_scale * size_at_scale * size_at_scale;
+        size_at_scale = size_at_scale >> 1;
       }
-      return size;
+      return voxel_count;
     }
     static constexpr size_t num_voxels = compute_num_voxels();
     VoxelData voxel_block_[num_voxels]; // Brick of data.
@@ -170,8 +170,8 @@ inline typename VoxelBlock<T>::VoxelData
 VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord) const {
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
   return voxel_block_[voxel_offset(0) + 
-                      voxel_offset(1) * side +
-                      voxel_offset(2) * side_sq];
+                      voxel_offset(1) * size +
+                      voxel_offset(2) * size_sq];
 }
 
 template <typename T>
@@ -180,13 +180,13 @@ VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord, const int level) const {
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
   int scale_offset = 0;
   int l = 0;
-  int num_voxels = side_cube;
+  int num_voxels = size_cube;
   while(l < level) {
     scale_offset += num_voxels;
     num_voxels /= 8;
     ++l;
   }
-  const int local_size = side / (1 << level);
+  const int local_size = size / (1 << level);
   voxel_offset = voxel_offset / (1 << level);
   return voxel_block_[scale_offset + voxel_offset.x() +
                                      voxel_offset.y() * local_size +
@@ -197,7 +197,7 @@ template <typename T>
 inline void VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord,
                                 const VoxelData& voxel_data){
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
-  voxel_block_[voxel_offset.x() + voxel_offset.y() * side + voxel_offset.z() * side_sq] = voxel_data;
+  voxel_block_[voxel_offset.x() + voxel_offset.y() * size + voxel_offset.z() * size_sq] = voxel_data;
 }
 
 template <typename T>
@@ -206,18 +206,18 @@ inline void VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord, const int le
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
   int scale_offset = 0;
   int l = 0;
-  int num_voxels = side_cube;
+  int num_voxels = size_cube;
   while(l < level) {
     scale_offset += num_voxels;
     num_voxels /= 8;
     ++l;
   }
 
-  const int local_size = side / (1 << level);
+  const int size_at_scale = size / (1 << level);
   voxel_offset = voxel_offset / (1 << level);
   voxel_block_[scale_offset + voxel_offset.x() +
-                              voxel_offset.y() * local_size +
-                              voxel_offset.z() * se::math::sq(local_size)] = voxel_data;
+                              voxel_offset.y() * size_at_scale +
+                              voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
 }
 
 template <typename T>

@@ -58,7 +58,7 @@ class VoxelBlockRayIteratorTest : public ::testing::Test {
       ray_dir_M_ = Eigen::Vector3f::Ones().normalized();
 
       // Ensure stepsize is big enough to get distinct blocks
-      const float stepsize = 2 * voxel_dim_ * se::Octree<TestVoxelT>::blockSide;
+      const float stepsize = 2 * voxel_dim_ * se::Octree<TestVoxelT>::block_size;
 
       // Allocate voxel blocks hit by the ray defined by ray_origin_M_ and ray_dir_M_
       const int num_blocks = 4;

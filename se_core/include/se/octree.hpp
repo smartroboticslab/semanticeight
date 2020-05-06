@@ -84,11 +84,11 @@ public:
 
   // Compile-time constant expressions
   // # of voxels per side in a voxel block
-  static constexpr unsigned int blockSide = BLOCK_SIDE;
+  static constexpr unsigned int block_size = BLOCK_SIZE;
   // maximum tree depth in bits
   static constexpr unsigned int max_voxel_depth = ((sizeof(key_t) * 8) / 3);
   // Tree depth at which blocks are found
-  static constexpr unsigned int max_block_depth = max_voxel_depth - math::log2_const(BLOCK_SIDE);
+  static constexpr unsigned int max_block_depth = max_voxel_depth - math::log2_const(BLOCK_SIZE);
 
   static const Eigen::Vector3f _offset;
 
@@ -250,7 +250,7 @@ public:
    * \param z z coordinate in interval [0, size]
    */
   key_t hash(const int x, const int y, const int z) {
-    const int scale = voxel_depth_ - math::log2_const(blockSide); // level of blocks
+    const int scale = voxel_depth_ - math::log2_const(block_size); // level of blocks
     return keyops::encode(x, y, z, scale, voxel_depth_);
   }
 
@@ -341,7 +341,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point
 
   if(cached != NULL){
     Eigen::Vector3i lower = cached->coordinates();
-    Eigen::Vector3i upper = lower + Eigen::Vector3i::Constant(blockSide-1);
+    Eigen::Vector3i upper = lower + Eigen::Vector3i::Constant(block_size-1);
     const int contained =
       ((voxel_coord.array() >= lower.array()) * (voxel_coord.array() <= upper.array())).all();
     if(contained){
@@ -356,9 +356,11 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point
 
   // Get the block.
 
-  unsigned edge = size_ >> 1;
-  for(; edge >= blockSide; edge = edge >> 1){
-    node = node->child((voxel_coord.x() & edge) > 0, (voxel_coord.y() & edge) > 0, (voxel_coord.z() & edge) > 0);
+  unsigned node_size = size_ >> 1;
+  for(; node_size >= block_size; node_size = node_size >> 1){
+    node = node->child((voxel_coord.x() & node_size) > 0,
+                       (voxel_coord.y() & node_size) > 0,
+                       (voxel_coord.z() & node_size) > 0);
     if(!node){
     return T::empty();
     }
@@ -379,9 +381,9 @@ inline void  Octree<T>::set(const int x,
     return;
   }
 
-  unsigned edge = size_ >> 1;
-  for(; edge >= blockSide; edge = edge >> 1){
-    Node<T>* node_tmp = node->child((x & edge) > 0, (y & edge) > 0, (z & edge) > 0);
+  unsigned node_size = size_ >> 1;
+  for(; node_size >= block_size; node_size = node_size >> 1){
+    Node<T>* node_tmp = node->child((x & node_size) > 0, (y & node_size) > 0, (z & node_size) > 0);
     if(!node_tmp){
       return;
     }
@@ -400,9 +402,9 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
     return T::initData();
   }
 
-  unsigned edge = size_ >> 1;
-  for(; edge >= blockSide; edge = edge >> 1){
-    const int child_idx = ((x & edge) > 0) +  2 * ((y & edge) > 0) +  4*((z & edge) > 0);
+  unsigned node_size = size_ >> 1;
+  for(; node_size >= block_size; node_size = node_size >> 1){
+    const int child_idx = ((x & node_size) > 0) +  2 * ((y & node_size) > 0) +  4*((z & node_size) > 0);
     Node<T>* node_tmp = node->child(child_idx);
     if(!node_tmp){
       return node->data_[child_idx];
@@ -424,11 +426,11 @@ inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
   }
 
 
-  const unsigned min_edge = std::max((1 << scale), (int) blockSide);
-  unsigned edge = size_ >> 1;
+  const unsigned min_node_size = std::max((1 << scale), (int) block_size);
+  unsigned node_size = size_ >> 1;
   int child_idx;
-  for(; edge >= min_edge; edge = edge >> 1) {
-    child_idx  = ((x & edge) > 0) + 2 * ((y & edge) > 0) + 4*((z & edge) > 0);
+  for(; node_size >= min_node_size; node_size = node_size >> 1) {
+    child_idx  = ((x & node_size) > 0) + 2 * ((y & node_size) > 0) + 4*((z & node_size) > 0);
     Node<T>* node_tmp = node->child(child_idx);
     if(!node_tmp){
       auto& value = node->data_[child_idx];
@@ -437,7 +439,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
     node = node_tmp;
   }
 
-  if(min_edge == blockSide) {
+  if(min_node_size == block_size) {
     auto block = static_cast<VoxelBlock<T> *>(node);
     return block->data(Eigen::Vector3i(x, y, z), std::max(scale, block->current_scale()));
   } else {
@@ -463,10 +465,10 @@ inline std::array<typename Octree<T>::VoxelData, 6> Octree<T>::get_face_neighbor
       if(    (neighbor_x >= 0) and (neighbor_x < size())
          and (neighbor_y >= 0) and (neighbor_y < size())
          and (neighbor_z >= 0) and (neighbor_z < size())) {
-        // The neighbor voxel is inside the volume, get its value.
+        // The neighbor voxel is inside the map, get its value.
         neighbor_data[i] = get_fine(neighbor_x, neighbor_y, neighbor_z);
       } else {
-        // The neighbor voxel is outside the volume, set the value to empty.
+        // The neighbor voxel is outside the map, set the value to empty.
         neighbor_data[i] = T::empty();
       }
     } else {
@@ -491,7 +493,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
   if(cached != NULL){
     const Eigen::Vector3i voxel_coord = Eigen::Vector3i(x, y, z);
     const Eigen::Vector3i lower = cached->coordinates();
-    const Eigen::Vector3i upper = lower + Eigen::Vector3i::Constant(blockSide - 1);
+    const Eigen::Vector3i upper = lower + Eigen::Vector3i::Constant(block_size - 1);
     const int contained =
       ((voxel_coord.array() >= lower.array()) && (voxel_coord.array() <= upper.array())).all();
     if(contained){
@@ -505,9 +507,9 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
     return T::initData();
   }
 
-  unsigned edge = size_ >> 1;
-  for(; edge >= blockSide; edge = edge >> 1){
-    node = node->child((x & edge) > 0, (y & edge) > 0, (z & edge) > 0);
+  unsigned node_size = size_ >> 1;
+  for(; node_size >= block_size; node_size = node_size >> 1){
+    node = node->child((x & node_size) > 0, (y & node_size) > 0, (z & node_size) > 0);
     if(!node){
       return T::initData();
     }
@@ -540,10 +542,10 @@ void Octree<T>::init(int size, float dim) {
   dim_ = dim;
   voxel_depth_ = log2(size);
   num_levels_ = voxel_depth_ + 1;
-  max_block_scale_ = log2(blockSide);
+  max_block_scale_ = log2(block_size);
   block_depth_ = voxel_depth_ - max_block_scale_;
   root_ = pool_.root();
-  root_->side_ = size;
+  root_->size_ = size;
   reserved_ = 1024;
   keys_at_level_ = new key_t[reserved_];
   std::memset(keys_at_level_, 0, reserved_);
@@ -559,9 +561,9 @@ inline VoxelBlock<T>* Octree<T>::fetch(const int x, const int y,
   }
 
   // Get the block.
-  unsigned edge = size_ / 2;
-  for(; edge >= blockSide; edge /= 2){
-    node = node->child((x & edge) > 0u, (y & edge) > 0u, (z & edge) > 0u);
+  unsigned node_size = size_ / 2;
+  for(; node_size >= block_size; node_size /= 2){
+    node = node->child((x & node_size) > 0u, (y & node_size) > 0u, (z & node_size) > 0u);
     if(!node){
       return NULL;
     }
@@ -579,9 +581,9 @@ inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
   }
 
   // Get the block.
-  unsigned edge = size_ / 2;
-  for(int d = 1; edge >= blockSide && d <= level; edge /= 2, ++d){
-    node = node->child((x & edge) > 0u, (y & edge) > 0u, (z & edge) > 0u);
+  unsigned node_size = size_ / 2;
+  for(int d = 1; node_size >= block_size && d <= level; node_size /= 2, ++d){
+    node = node->child((x & node_size) > 0u, (y & node_size) > 0u, (z & node_size) > 0u);
     if(!node){
       return NULL;
     }
@@ -606,23 +608,23 @@ Node<T>* Octree<T>::insert(const int x, const int y, const int z,
   if(!node) {
     root_ = pool_.root();
     root_->code_ = 0;
-    root_->side_ = size_;
+    root_->size_ = size_;
     node = root_;
   }
 
   key_t key = keyops::encode(x, y, z, level, voxel_depth_);
   const unsigned int shift = MAX_BITS - voxel_depth_ - 1;
 
-  unsigned edge = size_ / 2;
-  for(int d = 1; edge >= blockSide && d <= level; edge /= 2, ++d){
-    const int child_idx = ((x & edge) > 0) +  2 * ((y & edge) > 0)
-      +  4 * ((z & edge) > 0);
+  unsigned node_size = size_ / 2;
+  for(int d = 1; node_size >= block_size && d <= level; node_size /= 2, ++d){
+    const int child_idx = ((x & node_size) > 0) +  2 * ((y & node_size) > 0)
+      +  4 * ((z & node_size) > 0);
 
     // std::cout << "Level: " << d << std::endl;
     Node<T>* node_tmp = node->child(child_idx);
     if(!node_tmp){
       const key_t prefix = keyops::code(key) & MASK[d + shift];
-      if(edge == blockSide) {
+      if(node_size == block_size) {
         node_tmp = pool_.acquireBlock();
         node_tmp->parent() = node;
         static_cast<VoxelBlock<T> *>(node_tmp)->coordinates(
@@ -634,7 +636,7 @@ Node<T>* Octree<T>::insert(const int x, const int y, const int z,
         node_tmp = pool_.acquireNode();
         node_tmp->parent() = node;
         node_tmp->code_ = prefix | d;
-        node_tmp->side_ = edge;
+        node_tmp->size_ = node_size;
         node->children_mask_ = node->children_mask_ | (1 << child_idx);
         // std::cout << "coords: "
         //   << keyops::decode(keyops::code(node_tmp->code_)) << std::endl;
@@ -979,7 +981,7 @@ bool Octree<T>::allocate_level(key_t* octant_keys, int num_tasks, int target_lev
     const int octant_level = keyops::level(octant_keys[i]);
     if (octant_level < target_level) continue;
 
-    int edge = size_ / 2;
+    int octant_size = size_ / 2;
     for (int level = 1; level <= target_level; ++level){
       const int child_idx = se::child_idx(octant_key, level, voxel_depth_);
       Node<T>* parent = *node;
@@ -989,7 +991,7 @@ bool Octree<T>::allocate_level(key_t* octant_keys, int num_tasks, int target_lev
         if (level == block_depth_) {
           *node = pool_.acquireBlock();
           (*node)->parent() = parent;
-          (*node)->side_ = edge;
+          (*node)->size_ = octant_size;
           static_cast<VoxelBlock<T> *>(*node)->coordinates(Eigen::Vector3i(unpack_morton(octant_key)));
           static_cast<VoxelBlock<T> *>(*node)->active(true);
           static_cast<VoxelBlock<T> *>(*node)->code_ = octant_key | level;
@@ -998,11 +1000,11 @@ bool Octree<T>::allocate_level(key_t* octant_keys, int num_tasks, int target_lev
           *node = pool_.acquireNode();
           (*node)->parent() = parent;
           (*node)->code_ = octant_key | level;
-          (*node)->side_ = edge;
+          (*node)->size_ = octant_size;
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         }
       }
-      edge /= 2;
+      octant_size /= 2;
     }
   }
   return true;
@@ -1072,7 +1074,7 @@ void Octree<T>::load(const std::string& filename) {
   std::ifstream is (filename, std::ios::binary);
   int size;
   float dim;
-  const int side_cube = se::VoxelBlock<T>::side_cube;
+  const int block_size_cube = se::VoxelBlock<T>::size_cube;
 
   is.read(reinterpret_cast<char *>(&size), sizeof(size));
   is.read(reinterpret_cast<char *>(&dim), sizeof(dim));
@@ -1103,7 +1105,7 @@ void Octree<T>::load(const std::string& filename) {
       static_cast<VoxelBlock<T> *>(insert(coords(0), coords(1), coords(2), keyops::level(block.code_)));
     block_ptr->min_scale(block.min_scale());
     block_ptr->current_scale(block.current_scale());
-    std::memcpy(block_ptr->getBlockRawPtr(), block.getBlockRawPtr(), (side_cube + 64 + 8 + 1) * sizeof(*(block.getBlockRawPtr())));
+    std::memcpy(block_ptr->getBlockRawPtr(), block.getBlockRawPtr(), (block_size_cube + 64 + 8 + 1) * sizeof(*(block.getBlockRawPtr())));
   }
 }
 }

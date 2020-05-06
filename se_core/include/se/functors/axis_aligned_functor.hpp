@@ -56,9 +56,9 @@ namespace se {
         void update_block(se::VoxelBlock<FieldType> * block) {
           Eigen::Vector3i block_coord = block->coordinates();
           unsigned int y, z, x;
-          Eigen::Vector3i block_side = Eigen::Vector3i::Constant(se::VoxelBlock<FieldType>::side);
+          Eigen::Vector3i block_size = Eigen::Vector3i::Constant(se::VoxelBlock<FieldType>::size);
           Eigen::Vector3i start = block_coord.cwiseMax(min_);
-          Eigen::Vector3i last = (block_coord + block_side).cwiseMin(max_);
+          Eigen::Vector3i last = (block_coord + block_size).cwiseMin(max_);
 
           for(z = start(2); z < last(2); ++z) {
             for (y = start(1); y < last(1); ++y) {
@@ -76,7 +76,7 @@ namespace se {
 #pragma omp simd
           for(int child_idx = 0; child_idx < 8; ++child_idx) {
             const Eigen::Vector3i dir =  Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0);
-            const Eigen::Vector3i child_coord = node_coord + (dir * (node->side_ / 2));
+            const Eigen::Vector3i child_coord = node_coord + (dir * (node->size_ / 2));
             if(!(se::math::in(child_coord.x(), min_.x(), max_.x()) &&
                  se::math::in(child_coord.y(), min_.y(), max_.y()) &&
                  se::math::in(child_coord.z(), min_.z(), max_.z()))) continue;

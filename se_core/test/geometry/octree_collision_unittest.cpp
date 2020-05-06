@@ -85,64 +85,64 @@ TEST_F(OctreeCollisionTest, TotallyUnseen) {
   se::Node<TestVoxelT>* node = it.next();
   for(int i = 256; node != nullptr ; node = it.next(), i /= 2){
     const Eigen::Vector3i node_coord = se::keyops::decode(node->code_);
-    const int side = node->side_;
+    const int node_size = node->size_;
     const se::Octree<TestVoxelT>::VoxelData data = (node->data_[0]);
-    printf("se::Node's coordinates: (%d, %d, %d), side %d, value %.2f\n",
-        node_coord.x(), node_coord.y(), node_coord.z(), side, data);
-    EXPECT_EQ(side, i);
+    printf("se::Node's coordinates: (%d, %d, %d), size %d, value %.2f\n",
+        node_coord.x(), node_coord.y(), node_coord.z(), node_size, data);
+    EXPECT_EQ(node_size, i);
   }
 
-  const Eigen::Vector3i test_bbox = {23, 0, 100};
-  const Eigen::Vector3i width = {2, 2, 2};
+  const Eigen::Vector3i bbox_coord = {23, 0, 100};
+  const Eigen::Vector3i bbox_size = {2, 2, 2};
 
-  const collision_status collides = collides_with(octree_, test_bbox, width,
+  const collision_status collides = collides_with(octree_, bbox_coord, bbox_size,
       test_voxel);
   ASSERT_EQ(collides, collision_status::unseen);
 }
 
 TEST_F(OctreeCollisionTest, PartiallyUnseen) {
-  const Eigen::Vector3i test_bbox = {47, 0, 239};
-  const Eigen::Vector3i width = {6, 6, 6};
-  const collision_status collides = collides_with(octree_, test_bbox, width,
+  const Eigen::Vector3i bbox_coord = {47, 0, 239};
+  const Eigen::Vector3i bbox_size = {6, 6, 6};
+  const collision_status collides = collides_with(octree_, bbox_coord, bbox_size,
       test_voxel);
   ASSERT_EQ(collides, collision_status::unseen);
 }
 
 TEST_F(OctreeCollisionTest, Empty) {
-  const Eigen::Vector3i test_bbox = {49, 1, 242};
-  const Eigen::Vector3i width = {1, 1, 1};
-  const collision_status collides = collides_with(octree_, test_bbox, width,
+  const Eigen::Vector3i bbox_coord = {49, 1, 242};
+  const Eigen::Vector3i bbox_size = {1, 1, 1};
+  const collision_status collides = collides_with(octree_, bbox_coord, bbox_size,
       test_voxel);
   ASSERT_EQ(collides, collision_status::empty);
 }
 
 TEST_F(OctreeCollisionTest, Collision){
-  const Eigen::Vector3i test_bbox = {54, 10, 249};
-  const Eigen::Vector3i width = {5, 5, 3};
+  const Eigen::Vector3i bbox_coord = {54, 10, 249};
+  const Eigen::Vector3i bbox_size = {5, 5, 3};
 
   auto update = [](auto& handler, const Eigen::Vector3i& coord) {
       handler.set(2.f);
   };
   se::functor::axis_aligned_map(octree_, update);
 
-  const collision_status collides = collides_with(octree_, test_bbox, width,
+  const collision_status collides = collides_with(octree_, bbox_coord, bbox_size,
       test_voxel);
   ASSERT_EQ(collides, collision_status::occupied);
 }
 
 TEST_F(OctreeCollisionTest, CollisionFreeLeaf){
   // Allocated block: {56, 8, 248};
-  const Eigen::Vector3i test_bbox = {61, 13, 253};
-  const Eigen::Vector3i width = {2, 2, 2};
+  const Eigen::Vector3i bbox_coord = {61, 13, 253};
+  const Eigen::Vector3i bbox_size = {2, 2, 2};
 
   /* Update blocks_coord as occupied node */
   se::VoxelBlock<TestVoxelT>* block = octree_.fetch(56, 12, 254);
   const Eigen::Vector3i block_coord = block->coordinates();
-  int x, y, z, block_side;
-  block_side = (int) se::VoxelBlock<TestVoxelT>::side;
-  int x_last = block_coord.x() + block_side;
-  int y_last = block_coord.y() + block_side;
-  int z_last = block_coord.z() + block_side;
+  int x, y, z, block_size;
+  block_size = (int) se::VoxelBlock<TestVoxelT>::size;
+  int x_last = block_coord.x() + block_size;
+  int y_last = block_coord.y() + block_size;
+  int z_last = block_coord.z() + block_size;
   for(z = block_coord.z(); z < z_last; ++z){
     for (y = block_coord.y(); y < y_last; ++y){
       for (x = block_coord.x(); x < x_last; ++x){
@@ -155,7 +155,7 @@ TEST_F(OctreeCollisionTest, CollisionFreeLeaf){
     }
   }
 
-  const collision_status collides = collides_with(octree_, test_bbox, width,
+  const collision_status collides = collides_with(octree_, bbox_coord, bbox_size,
       test_voxel);
   ASSERT_EQ(collides, collision_status::empty);
 }
