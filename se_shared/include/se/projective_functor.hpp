@@ -69,7 +69,7 @@ namespace functor {
         const float voxel_dim = octree_.dim() / octree_.size();
         auto in_frustum_predicate =
           std::bind(algorithms::in_frustum<se::VoxelBlock<FieldType>>,
-              std::placeholders::_1, voxel_dim, T_CM_, sensor_, image_size_);
+              std::placeholders::_1, voxel_dim, T_CM_, sensor_);
         auto is_active_predicate = [](const se::VoxelBlock<FieldType>* block) {
           return block->active();
         };

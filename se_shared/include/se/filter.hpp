@@ -39,8 +39,7 @@ namespace algorithms {
     static inline bool in_frustum(const VoxelBlockType*  block,
                                   const float            voxel_dim,
                                   const Eigen::Matrix4f& T_CM,
-                                  const SensorImpl&      sensor,
-                                  const Eigen::Vector2i& image_size) {
+                                  const SensorImpl&      sensor) {
 
       const int side = VoxelBlockType::side;
       const static Eigen::Matrix<int, 4, 8> corner_offsets =
