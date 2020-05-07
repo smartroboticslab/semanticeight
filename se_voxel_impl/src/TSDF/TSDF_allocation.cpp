@@ -120,7 +120,6 @@ size_t TSDF::buildAllocationList(
       }
     }
   }
-  const size_t written = voxel_count;
-  return written >= reserved ? reserved : written;
+  return (size_t) voxel_count >= reserved ? reserved : (size_t) voxel_count;
 }
 
