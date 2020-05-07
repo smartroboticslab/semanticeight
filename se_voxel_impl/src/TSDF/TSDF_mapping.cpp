@@ -64,11 +64,11 @@ struct tsdf_update {
       return;
 
     // Update the TSDF
-    const float diff = (depth_value - point_C.z())
+    const float point_dist = (depth_value - point_C.z())
       * std::sqrt(1 + se::math::sq(point_C.x() / point_C.z())
       + se::math::sq(point_C.y() / point_C.z()));
-    if (diff > -mu) {
-      const float tsdf = fminf(1.f, diff / mu);
+    if (point_dist > -mu) {
+      const float tsdf = fminf(1.f, point_dist / mu);
       auto data = handler.get();
       data.x = (data.y * data.x + tsdf) / (data.y + 1.f);
       data.x = se::math::clamp(data.x, -1.f, 1.f);

@@ -28,6 +28,6 @@ include_directories(
 add_definitions(-DSE_SENSOR_IMPLEMENTATION=PinholeCamera)
 
 # Build the tests.
-add_subdirectory(multiscale_esdf_moving_sphere)
-add_subdirectory(multiscale_tsdf_moving_camera)
+add_subdirectory(multires_esdf_moving_sphere)
+add_subdirectory(multires_tsdf_moving_camera)
 

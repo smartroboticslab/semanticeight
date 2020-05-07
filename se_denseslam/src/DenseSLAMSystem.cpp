@@ -281,14 +281,14 @@ void DenseSLAMSystem::renderRGBA(uint8_t*               output_RGBA_image_data,
 
 void DenseSLAMSystem::dump_mesh(const std::string filename){
 
-//  se::functor::internal::parallel_for_each(volume_.octree_->pool().blockBuffer(),
-//      [](auto block) {
-//        if(std::is_same<VoxelImpl, MultiresTSDF>::value) {
-//          block->current_scale(block->min_scale());
-//        } else {
-//          block->current_scale(0);
-//        }
-//      });
+  se::functor::internal::parallel_for_each(volume_.octree_->pool().blockBuffer(),
+      [](auto block) {
+        if(std::is_same<VoxelImpl, MultiresTSDF>::value) {
+          block->current_scale(block->min_scale());
+        } else {
+          block->current_scale(0);
+        }
+      });
 
   auto interp_down = [this](auto block) {
     if(block->min_scale() == 0) return;

@@ -101,9 +101,9 @@ size_t TSDF::buildAllocationList(
             && (voxel_coord.x() >= 0)
             && (voxel_coord.y() >= 0)
             && (voxel_coord.z() >= 0)) {
-          se::VoxelBlock<TSDF::VoxelType> * node_ptr = map.fetch(
+          se::VoxelBlock<TSDF::VoxelType>* block = map.fetch(
               voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-          if (node_ptr == nullptr) {
+          if (block == nullptr) {
             const se::key_t voxel_key = map.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(),
                 block_depth);
             const unsigned int idx = voxel_count++;
@@ -113,7 +113,7 @@ size_t TSDF::buildAllocationList(
               break;
             }
           } else {
-            node_ptr->active(true);
+            block->active(true);
           }
         }
         ray_pos_M += step;

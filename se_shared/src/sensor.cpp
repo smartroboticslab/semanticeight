@@ -15,7 +15,7 @@ const srl::projection::NoDistortion _distortion;
 
 se::PinholeCamera::PinholeCamera(const SensorConfig& c)
     : model(c.width, c.height, c.fx, c.fy, c.cx, c.cy, _distortion),
-      left_hand_frame(c.left_hand_frame), near_plane(c.near_plane), far_plane(c.far_plane), mu(c.mu) {
+      left_hand_frame(c.left_hand_frame), near_plane(c.near_plane), far_plane(c.far_plane), mu(c.mu), scaled_pixel(1 / c.fx) {
   assert(c.width  > 0);
   assert(c.height > 0);
   assert(c.near_plane >= 0.f);
@@ -32,6 +32,30 @@ se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
             pc.model.focalLengthU() * sf, pc.model.focalLengthV() * sf,
             pc.model.imageCenterU() * sf, pc.model.imageCenterV() * sf, _distortion),
             left_hand_frame(pc.left_hand_frame), near_plane(pc.near_plane), far_plane(pc.far_plane), mu(pc.mu) {
+}
+
+/**
+ * \brief Computes the scale corresponding to the back-projected pixel size
+ * in voxel space
+ * \param[in] depth distance from the camera to the voxel block centre
+ * \param[out] scale scale from which propagate up voxel values
+ */
+int se::PinholeCamera::computeIntegrationScale(const float distance, const float voxel_dim) const {
+  const float pv_ration = distance * scaled_pixel / voxel_dim;
+
+  int scale = 0;
+  if (pv_ration < 1.5)
+    scale = 0;
+  else if (pv_ration < 3)
+    scale = 1;
+  else if (pv_ration < 6)
+    scale = 2;
+  else
+    scale = 3;
+
+//      int scale = std::min(std::max(0, int(log2(pix_size / voxel_dim + 0.5f))),
+//                           max_scale);
+  return scale;
 }
 
 

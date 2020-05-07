@@ -41,12 +41,14 @@ namespace se {
     PinholeCamera(const SensorConfig& c);
     PinholeCamera(const PinholeCamera& pinhole_camera,
                   const float          scaling_factor);
+    int computeIntegrationScale(const float distance, const float voxel_dim) const;
 
     srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
     bool  left_hand_frame;
     float near_plane;
     float far_plane;
     float mu;
+    float scaled_pixel;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
@@ -57,6 +59,7 @@ namespace se {
     OusterLidar(const SensorConfig& c);
     OusterLidar(const OusterLidar& ouster_lidar,
                 const float        scaling_factor);
+    const int computeIntegrationScale(const float, const float) const {return 0;};
 
     srl::projection::OusterLidar model;
     bool  left_hand_frame;
