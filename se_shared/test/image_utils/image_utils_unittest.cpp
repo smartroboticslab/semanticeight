@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <memory>
 
 #include <Eigen/Dense>
 
@@ -39,11 +40,8 @@
 
 
 
-class RGBAConversion : public ::testing::Test {
+class RGBAPixelConversion : public ::testing::Test {
   protected:
-    virtual void SetUp() {
-    }
-
     static constexpr size_t num_values_ = 4;
     // Individual channels.
     const uint8_t  array_r_[num_values_] = {0x00, 0x01, 0xFB, 0xFF};
@@ -67,7 +65,7 @@ class RGBAConversion : public ::testing::Test {
 
 
 
-TEST_F(RGBAConversion, Pack) {
+TEST_F(RGBAPixelConversion, Pack) {
   for (size_t i = 0; i < num_values_; ++i) {
     const uint32_t rgba
         = se::pack_rgba(array_r_[i], array_g_[i], array_b_[i], array_a_[i]);
@@ -83,7 +81,7 @@ TEST_F(RGBAConversion, Pack) {
 
 
 
-TEST_F(RGBAConversion, Unpack) {
+TEST_F(RGBAPixelConversion, Unpack) {
   for (size_t i = 0; i < num_values_; ++i) {
     const uint8_t r = se::r_from_rgba(array_rgba_[i]);
     const uint8_t g = se::g_from_rgba(array_rgba_[i]);
@@ -122,7 +120,7 @@ class DepthSaveLoad : public ::testing::Test {
     virtual void SetUp() {
       depth_image_data_ = new uint16_t[num_pixels_]();
 
-      // Initialize the test image with a patter.
+      // Initialize the test image with a pattern.
       for (size_t x = 0; x < depth_image_width_; ++x) {
         for (size_t y = 0; y < depth_image_height_; ++y) {
           if (x > y) {
@@ -185,5 +183,50 @@ TEST_F(DepthSaveLoad, SaveThenLoadPGM) {
   EXPECT_EQ(memcmp(loaded_depth_image_data, depth_image_data_, depth_size_bytes_), 0);
 
   free(loaded_depth_image_data);
+}
+
+
+
+class RGBAImageConversion : public ::testing::Test {
+  protected:
+    virtual void SetUp() {
+      rgb_ = std::unique_ptr<uint8_t>(new uint8_t[3 * num_pixels_]());
+      rgba_ = std::unique_ptr<uint32_t>(new uint32_t[num_pixels_]());
+
+      // Initialize the test images with a pattern.
+      for (size_t p = 0; p < num_pixels_; ++p) {
+        const uint8_t r = 0;
+        const uint8_t g = 0;
+        const uint8_t b = 0;
+        rgb_.get()[3*p + 0] = r;
+        rgb_.get()[3*p + 1] = g;
+        rgb_.get()[3*p + 2] = b;
+        rgba_.get()[p] = se::pack_rgba(r, g, b, 0xFF);
+      }
+    }
+
+    std::unique_ptr<uint8_t> rgb_;
+    std::unique_ptr<uint32_t> rgba_;
+    const size_t width_  = 64;
+    const size_t height_ = 64;
+    const size_t num_pixels_ = width_ * height_;
+    const size_t rgb_size_bytes_ = 3 * sizeof(uint8_t) * num_pixels_;
+    const size_t rgba_size_bytes_ = sizeof(uint32_t) * num_pixels_;
+};
+
+
+
+TEST_F(RGBAImageConversion, RGBToRGBA) {
+  std::unique_ptr<uint32_t> rgba (new uint32_t[num_pixels_]());
+  se::rgb_to_rgba(rgb_.get(), rgba.get(), num_pixels_);
+  EXPECT_EQ(memcmp(rgba.get(), rgba_.get(), rgba_size_bytes_), 0);
+}
+
+
+
+TEST_F(RGBAImageConversion, RGBAToRGB) {
+  std::unique_ptr<uint8_t> rgb (new uint8_t[3 * num_pixels_]());
+  se::rgba_to_rgb(rgba_.get(), rgb.get(), num_pixels_);
+  EXPECT_EQ(memcmp(rgb.get(), rgb_.get(), rgb_size_bytes_), 0);
 }
 
