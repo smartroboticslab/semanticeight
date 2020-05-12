@@ -70,13 +70,13 @@ class RGBAConversion : public ::testing::Test {
 TEST_F(RGBAConversion, Pack) {
   for (size_t i = 0; i < num_values_; ++i) {
     const uint32_t rgba
-        = se::to_rgba(array_r_[i], array_g_[i], array_b_[i], array_a_[i]);
+        = se::pack_rgba(array_r_[i], array_g_[i], array_b_[i], array_a_[i]);
     EXPECT_EQ(rgba, array_rgba_[i]);
 
-    const uint32_t rgba_4i = se::to_rgba(array_4i_[i]);
+    const uint32_t rgba_4i = se::pack_rgba(array_4i_[i]);
     EXPECT_EQ(rgba_4i, array_rgba_[i]);
 
-    const uint32_t rgba_4f = se::to_rgba(array_4f_[i]);
+    const uint32_t rgba_4f = se::pack_rgba(array_4f_[i]);
     EXPECT_EQ(rgba_4f, array_rgba_[i]);
   }
 }

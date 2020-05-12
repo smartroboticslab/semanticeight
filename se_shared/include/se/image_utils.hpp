@@ -29,10 +29,10 @@ namespace se {
    * \param[in] a The value of the alpha channel.
    * \return The 32-bit unsigned integer RGBA value.
    */
-  static inline uint32_t to_rgba(const uint8_t r,
-                                 const uint8_t g,
-                                 const uint8_t b,
-                                 const uint8_t a) {
+  static inline uint32_t pack_rgba(const uint8_t r,
+                                   const uint8_t g,
+                                   const uint8_t b,
+                                   const uint8_t a) {
 
     return (a << 24) + (b << 16) + (g <<  8) +  r;
   }
@@ -48,7 +48,7 @@ namespace se {
    * \param[in] color The input color as an Eigen Vector.
    * \return The 32-bit unsigned integer RGBA value.
    */
-  static inline uint32_t to_rgba(const Eigen::Vector4f& color) {
+  static inline uint32_t pack_rgba(const Eigen::Vector4f& color) {
 
     return (static_cast<uint8_t>(color.w() * 255) << 24)
          + (static_cast<uint8_t>(color.z() * 255) << 16)
@@ -67,7 +67,7 @@ namespace se {
    * \param[in] color The input color as an Eigen Vector.
    * \return The 32-bit unsigned integer RGBA value.
    */
-  static inline uint32_t to_rgba(const Eigen::Vector3f& color) {
+  static inline uint32_t pack_rgba(const Eigen::Vector3f& color) {
 
     return (                                 0xFF << 24)
          + (static_cast<uint8_t>(color.z() * 255) << 16)
@@ -86,7 +86,7 @@ namespace se {
    * \param[in] color The input color as an Eigen Vector.
    * \return The 32-bit unsigned integer RGBA value.
    */
-  static inline uint32_t to_rgba(const Eigen::Vector4i& color) {
+  static inline uint32_t pack_rgba(const Eigen::Vector4i& color) {
 
     return (color.w() << 24)
          + (color.z() << 16)
@@ -106,7 +106,7 @@ namespace se {
    * \param[in] color The input color as an Eigen Vector.
    * \return The 32-bit unsigned integer RGBA value.
    */
-  static inline uint32_t to_rgba(const Eigen::Vector3i& color) {
+  static inline uint32_t pack_rgba(const Eigen::Vector3i& color) {
 
     return (     0xFF << 24)
          + (color.z() << 16)
@@ -192,7 +192,7 @@ namespace se {
     const uint8_t a = static_cast<uint8_t>(
         round(alpha * a_from_rgba(rgba_1) + (1 - alpha) * a_from_rgba(rgba_2)));
 
-    return to_rgba(r, g, b, a);
+    return pack_rgba(r, g, b, a);
   }
 
 
