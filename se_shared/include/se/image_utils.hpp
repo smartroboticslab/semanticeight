@@ -261,6 +261,10 @@ int load_depth_pgm(uint16_t**         depth_image_data,
                    Eigen::Vector2i&   depth_image_res,
                    const std::string& filename);
 
+static inline Eigen::Vector2i round_pixel(const Eigen::Vector2f& pixel_f) {
+  return (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();
+}
+
 
 #endif
 

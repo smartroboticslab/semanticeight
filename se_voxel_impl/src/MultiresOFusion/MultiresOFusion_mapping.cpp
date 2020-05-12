@@ -34,6 +34,7 @@
 #include <set>
 #include <se/utils/math_utils.h>
 #include <Eigen/Core>
+#include "se/image_utils.hpp"
 
 struct AllocateAndUpdateRecurse {
 
@@ -379,7 +380,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                   block->data(voxel_coord, scale, voxel_data);
                   continue;
                 }
-                const Eigen::Vector2i pixel = (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();
+                const Eigen::Vector2i pixel = round_pixel(pixel_f);
                 const float depth_value = depth_image_[pixel.x() + depth_image_.width() * pixel.y()];
                 if (depth_value <=  0) continue;
 
@@ -423,7 +424,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
             block->data(voxel_coord, scale, voxel_data);
             continue;
           }
-          const Eigen::Vector2i pixel = (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();
+          const Eigen::Vector2i pixel = round_pixel(pixel_f);
           const float depth_value = depth_image_[pixel.x() + depth_image_.width() * pixel.y()];
           if (depth_value <=  0) continue;
 
@@ -479,7 +480,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
           if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
             continue;
           }
-          const Eigen::Vector2i pixel = (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();
+          const Eigen::Vector2i pixel = round_pixel(pixel_f);
           const float depth_value = depth_image_[pixel.x() + depth_image_.width() * pixel.y()];
           if (depth_value <=  0) continue;
           auto voxel_data = block->data(voxel_coord, scale);

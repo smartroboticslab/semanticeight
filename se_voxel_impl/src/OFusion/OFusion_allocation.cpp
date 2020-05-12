@@ -91,15 +91,16 @@ size_t OFusion::buildAllocationList(
 #pragma omp parallel for
   for (unsigned int y = 0; y < depth_image_res.y(); ++y) {
     for (unsigned int x = 0; x < depth_image_res.x(); ++x) {
-      if (depth_image[x + y * depth_image_res.x()] == 0) {
+      Eigen::Vector2i pixel(x, y);
+      if (depth_image[pixel.x() + pixel.y() * depth_image_res.x()] == 0) {
         continue;
       }
       int depth = voxel_depth;
       float step_size = voxel_dim;
-      const float depth_value = depth_image[x + y * depth_image_res.x()];
+      const float depth_value = depth_image[pixel.x() + pixel.y() * depth_image_res.x()];
 
       Eigen::Vector3f ray_dir_C;
-      const Eigen::Vector2f pixel_f(x + 0.5f,y + 0.5f);
+      const Eigen::Vector2f pixel_f = pixel.cast<float>();
       sensor.model.backProject(pixel_f, &ray_dir_C);
       const Eigen::Vector3f surface_vertex_M = (T_MC * (depth_value * ray_dir_C).homogeneous()).head<3>();
 

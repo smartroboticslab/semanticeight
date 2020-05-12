@@ -103,8 +103,7 @@ namespace functor {
               if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
                 continue;
               }
-              pixel_f += Eigen::Vector2f::Constant(0.5f);
-              
+
               is_visible = true;
 
               /* Update the voxel. */
@@ -133,7 +132,6 @@ namespace functor {
             continue;
           }
 
-          pixel_f = pixel_f + Eigen::Vector2f::Constant(0.5f);
           /* Update the child Node. */
           NodeHandler<FieldType> handler = {node, child_idx};
           funct_(handler, child_coord, child_point_C, pixel_f);

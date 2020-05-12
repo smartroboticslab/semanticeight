@@ -103,13 +103,14 @@ void depthToPointCloudKernel(se::Image<Eigen::Vector3f>& point_cloud_C,
 #pragma omp parallel for
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
-      if (depth_image[x + y * depth_image.width()] > 0) {
-        const Eigen::Vector2f pixel_f(x, y);
+      Eigen::Vector2i pixel(x, y);
+      if (depth_image[pixel.x() + pixel.y() * depth_image.width()] > 0) {
+        const Eigen::Vector2f pixel_f = pixel.cast<float>();
         Eigen::Vector3f ray_dir_C;
         sensor.model.backProject(pixel_f, &ray_dir_C);
-        point_cloud_C[x + y * depth_image.width()] = depth_image[x + y * depth_image.width()] * ray_dir_C;
+        point_cloud_C[pixel.x() + pixel.y() * depth_image.width()] = depth_image[x + y * depth_image.width()] * ray_dir_C;
       } else {
-        point_cloud_C[x + y * depth_image.width()] = Eigen::Vector3f::Zero();
+        point_cloud_C[pixel.x() + pixel.y() * depth_image.width()] = Eigen::Vector3f::Zero();
       }
     }
   }

@@ -34,6 +34,7 @@
 #include "se/node.hpp"
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
+#include "se/image_utils.hpp"
 #include "se/filter.hpp"
 #include "se/functors/for_each.hpp"
 
@@ -289,7 +290,7 @@ namespace se {
                     block->data(voxel_coord, scale, voxel_data);
                     continue;
                   }
-                  const Eigen::Vector2i pixel = (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();
+                  const Eigen::Vector2i pixel = round_pixel(pixel_f);
                 
                   is_visible = true;
 
@@ -387,7 +388,7 @@ namespace se {
               if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
                 continue;
               }
-              const Eigen::Vector2i pixel = (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();
+              const Eigen::Vector2i pixel = round_pixel(pixel_f);
 
               is_visible = true;
               // const Eigen::Vector2i pixel = (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();

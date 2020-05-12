@@ -93,11 +93,11 @@ void raycastKernel(const Volume<T>&            volume,
     for (int x = 0; x < surface_point_cloud_M.width(); x++) {
       Eigen::Vector4f surface_intersection_M;
 
-      const Eigen::Vector2f pixel_f = Eigen::Vector2f(x, y);
-      const Eigen::Vector2i pixel = pixel_f.cast<int>();
+      const Eigen::Vector2i pixel(x, y);
+      const Eigen::Vector2f pixel_f = pixel.cast<float>();
       Eigen::Vector3f ray_dir_C;
       sensor.model.backProject(pixel_f, &ray_dir_C);
-      const Eigen::Vector3f ray_dir_M = (T_MC.topLeftCorner<3, 3>() * ray_dir_C.normalized()).head(3);
+      const Eigen::Vector3f ray_dir_M = (se::math::toRotation(T_MC) * ray_dir_C.normalized()).head(3);
       const Eigen::Vector3f t_MC = se::math::toTranslation(T_MC);
 
       if (std::is_same<T, MultiresOFusion>::value) {
@@ -180,8 +180,8 @@ void renderVolumeKernel(const Volume<T>&                  volume,
       const int idx = (x + volume_RGBW_image_res.x() * y) * 4;
 
       if (do_view_raycast) {
-        const Eigen::Vector2f pixel_f = Eigen::Vector2f(x, y);
-        const Eigen::Vector2i pixel = pixel_f.cast<int>();
+        const Eigen::Vector2i pixel(x, y);
+        const Eigen::Vector2f pixel_f = pixel.cast<float>();
         Eigen::Vector3f ray_dir_C;
         sensor.model.backProject(pixel_f, &ray_dir_C);
         const Eigen::Vector3f ray_dir_M = (T_MC.topLeftCorner<3, 3>() * ray_dir_C.normalized()).head(3);

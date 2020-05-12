@@ -36,6 +36,7 @@
 #include "se/node.hpp"
 #include "se/projective_functor.hpp"
 #include "se/image/image.hpp"
+#include "se/image_utils.hpp"
 #include "OFusion_bspline_lookup.cc"
 
 
@@ -132,7 +133,7 @@ struct bfusion_update {
                   const Eigen::Vector3f& point_C,
                   const Eigen::Vector2f& pixel_f) {
 
-    const Eigen::Vector2i pixel = pixel_f.cast <int> ();
+    const Eigen::Vector2i pixel = round_pixel(pixel_f);
     const float depth_value = depth_image[pixel.x() + depth_image.width() * pixel.y()];
     // Return on invalid depth measurement.
     if (depth_value <= 0.f)

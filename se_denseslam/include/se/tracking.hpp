@@ -42,6 +42,7 @@
 #include "se/perfstats.h"
 #include "se/commons.h"
 #include "se/image/image.hpp"
+#include "se/image_utils.hpp"
 #include "se/sensor_implementation.hpp"
 
 

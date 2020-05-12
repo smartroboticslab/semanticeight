@@ -264,59 +264,47 @@ void trackKernel(TrackData*                        output_data,
         continue;
       }
 
-      const Eigen::Vector3f point_M = (T_MC *
-          input_point_cloud_C[pixel.x() + pixel.y() * input_res.x()].homogeneous()).head<3>();
-
       const Eigen::Vector3f point_C = input_point_cloud_C[pixel.x() + pixel.y() * input_res.x()];
-      
-      Eigen::Vector2f proj_pixel;
-      if (sensor.model.project(point_C, &proj_pixel) == srl::projection::ProjectionStatus::OutsideImage) {
+      const Eigen::Vector3f point_M = (T_MC * point_C.homogeneous()).head<3>();
+
+      Eigen::Vector2f ref_pixel_f;
+      if (sensor.model.project(point_C, &ref_pixel_f) == srl::projection::ProjectionStatus::OutsideImage) {
         row.result = -2;
         continue;
       }
 
-      proj_pixel += Eigen::Vector2f::Constant(0.5f);
-
-      // sensor.model.project(point_C, &proj_pixel);
-      // proj_pixel += Eigen::Vector2f::Constant(0.5f);
-      // if (   proj_pixel.x() < 0.5 || proj_pixel.x() >= ref_res.x() - 1.5
-      //     || proj_pixel.y() < 0.5 || proj_pixel.y() >= ref_res.y() - 1.5) {
-      //   row.result = -2;
-      //   continue;
-      // }
-
-      const Eigen::Vector2i ref_pixel = proj_pixel.cast<int>();
-      const Eigen::Vector3f reference_normal
+      const Eigen::Vector2i ref_pixel = round_pixel(ref_pixel_f);
+      const Eigen::Vector3f ref_normal_M
           = surface_normals_M[ref_pixel.x() + ref_pixel.y() * ref_res.x()];
 
-      if (reference_normal.x() == INVALID) {
+      if (ref_normal_M.x() == INVALID) {
         row.result = -3;
         continue;
       }
 
       const Eigen::Vector3f diff = surface_point_cloud_M[ref_pixel.x() + ref_pixel.y() * ref_res.x()]
           - point_M;
-      const Eigen::Vector3f proj_normal = T_MC.topLeftCorner<3, 3>()
+      const Eigen::Vector3f input_normal_M = T_MC.topLeftCorner<3, 3>()
           * input_normals_C[pixel.x() + pixel.y() * input_res.x()];
 
       if (diff.norm() > dist_threshold) {
         row.result = -4;
         continue;
       }
-      if (proj_normal.dot(reference_normal) < normal_threshold) {
+      if (input_normal_M.dot(ref_normal_M) < normal_threshold) {
         row.result = -5;
         continue;
       }
       row.result = 1;
-      row.error = reference_normal.dot(diff);
-      row.J[0] = reference_normal.x();
-      row.J[1] = reference_normal.y();
-      row.J[2] = reference_normal.z();
+      row.error = ref_normal_M.dot(diff);
+      row.J[0] = ref_normal_M.x();
+      row.J[1] = ref_normal_M.y();
+      row.J[2] = ref_normal_M.z();
 
-      Eigen::Vector3f cross_res = point_M.cross(reference_normal);
-      row.J[3] = cross_res.x();
-      row.J[4] = cross_res.y();
-      row.J[5] = cross_res.z();
+      Eigen::Vector3f cross_prod = point_M.cross(ref_normal_M);
+      row.J[3] = cross_prod.x();
+      row.J[4] = cross_prod.y();
+      row.J[5] = cross_prod.z();
     }
   }
   TOCK("trackKernel", input_res.x() * input_res.y());
