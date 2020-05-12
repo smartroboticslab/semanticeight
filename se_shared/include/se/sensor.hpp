@@ -41,7 +41,7 @@ namespace se {
     PinholeCamera(const SensorConfig& c);
     PinholeCamera(const PinholeCamera& pinhole_camera,
                   const float          scaling_factor);
-    int computeIntegrationScale(const float distance, const float voxel_dim) const;
+    int computeIntegrationScale(const float dist, const float voxel_dim) const;
 
     srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
     bool  left_hand_frame;

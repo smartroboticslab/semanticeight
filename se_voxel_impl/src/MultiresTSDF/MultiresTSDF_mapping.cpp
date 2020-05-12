@@ -363,7 +363,7 @@ namespace se {
             block_sample_offset)).homogeneous()).head(3).z();
         const int last_scale = block->current_scale();
         const int scale = std::max(std::min(sensor.computeIntegrationScale(block_diff, voxel_dim),
-        se::math::log2_const(block_size >> 1)), last_scale - 1);
+        map.maxBlockScale()), last_scale - 1);
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
         if (last_scale > scale) {
           propagateUpdate(block, scale, map, depth_image, T_CM, sensor,

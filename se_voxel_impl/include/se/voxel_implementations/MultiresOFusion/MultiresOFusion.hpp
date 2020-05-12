@@ -35,8 +35,8 @@
 #include <se/continuous/volume_template.hpp>
 #include <se/image/image.hpp>
 #include <se/voxel_implementations/MultiresOFusion/kernel_image.hpp>
+#include "se/sensor_implementation.hpp"
 
-#include <sophus/se3.hpp>
 #include <chrono>
 #include <ctime>
 
@@ -68,11 +68,11 @@ struct MultiresOFusion {
       bool   observed;      // All children have been observed at least once
 
       // Any other data stored in each voxel go here. Make sure to also update
-      // empty() and initValue() to initialize all data members.
+      // empty() and initData() to initialize all data members.
     };
 
     static inline VoxelData empty()     { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
-    static inline VoxelData initValue() { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
+    static inline VoxelData initData() { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
 
     template <typename T>
     using MemoryPoolType = se::MemoryPool<T>;
@@ -112,14 +112,12 @@ struct MultiresOFusion {
    * camera pose.
    */
   static size_t buildAllocationList(
-      se::key_t*                            allocation_list,
-      size_t                                reserved,
       se::Octree<MultiresOFusion::VoxelType>& map,
-      const Eigen::Matrix4f&                T_wc,
-      const Eigen::Matrix4f&                K,
-      const float*                          depth_image,
-      const Eigen::Vector2i&                image_size,
-      const float                           mu);
+      const se::Image<float>&                 depth_image,
+      const Eigen::Matrix4f&                  T_MC,
+      const SensorImpl&                       sensor,
+      se::key_t*                              allocation_list,
+      size_t                                  reserved);
 
   /**
    * Integrate a depth image into the map.
@@ -127,18 +125,17 @@ struct MultiresOFusion {
    * \warning The function signature must not be changed.
    */
   static void integrate(se::Octree<MultiresOFusion::VoxelType>& map,
-                               const Sophus::SE3f&            T_cw,
-                               const Eigen::Matrix4f&         K,
-                               const se::Image<float>&        depth,
-                               const float                    mu,
-                               const unsigned                 frame);
+                        const se::Image<float>&                 depth_image,
+                        const Eigen::Matrix4f&                  T_CM,
+                        const SensorImpl&                       sensor,
+                        const unsigned                          frame);
 
   static Eigen::Vector4f raycast(
       const VolumeTemplate<MultiresOFusion, se::Octree>& volume,
-      const Eigen::Vector3f&                           origin,
-      const Eigen::Vector3f&                           direction,
-      float                                            tnear,
-      float                                            tfar,
+      const Eigen::Vector3f&                             ray_origin_M,
+      const Eigen::Vector3f&                             ray_dir_M,
+      float                                              near_plane,
+      float                                              far_plane,
       float,
       float,
       float);

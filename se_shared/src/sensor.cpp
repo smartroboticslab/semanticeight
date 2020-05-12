@@ -40,8 +40,8 @@ se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
  * \param[in] depth distance from the camera to the voxel block centre
  * \param[out] scale scale from which propagate up voxel values
  */
-int se::PinholeCamera::computeIntegrationScale(const float distance, const float voxel_dim) const {
-  const float pv_ration = distance * scaled_pixel / voxel_dim;
+int se::PinholeCamera::computeIntegrationScale(const float dist, const float voxel_dim) const {
+  const float pv_ration = dist * scaled_pixel / voxel_dim;
 
   int scale = 0;
   if (pv_ration < 1.5)

@@ -89,7 +89,7 @@ public:
   inline static void updateBlock(float          pos_z,
                                  float          depth_sample,
                                  float          mu,
-                                 float          voxel_size,
+                                 float          voxel_dim,
                                  MultiresOFusion::VoxelType::VoxelData& field,
                                  const unsigned frame,
                                  const int      scale,

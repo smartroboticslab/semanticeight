@@ -100,8 +100,7 @@ void raycastKernel(const Volume<T>&            volume,
       const Eigen::Vector3f ray_dir_M = (T_MC.topLeftCorner<3, 3>() * ray_dir_C.normalized()).head(3);
       const Eigen::Vector3f t_MC = se::math::toTranslation(T_MC);
 
-//      if (std::is_same<T, MultiresOFusion>::value) {
-      if (false) {
+      if (std::is_same<T, MultiresOFusion>::value) {
         surface_intersection_M = T::raycast(volume, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
       } else {
         se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_MC, ray_dir_M, 
@@ -188,8 +187,7 @@ void renderVolumeKernel(const Volume<T>&                  volume,
         const Eigen::Vector3f ray_dir_M = (T_MC.topLeftCorner<3, 3>() * ray_dir_C.normalized()).head(3);
         const Eigen::Vector3f t_MC = T_MC.topRightCorner<3, 1>();
 
-  //      if (std::is_same<T, MultiresOFusion>::value) {
-        if (false) {
+        if (std::is_same<T, MultiresOFusion>::value) {
           surface_intersection_M = T::raycast(volume, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
         } else {
           se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane);

@@ -47,11 +47,11 @@ namespace algorithms {
                                        0, 0   , block_size, block_size, 0   , 0   , block_size, block_size,
                                        0, 0   , 0   , 0   , block_size, block_size, block_size, block_size,
                                        0, 0   , 0   , 0   , 0   , 0   , 0   , 0   ).finished();
-      const Eigen::Matrix3Xf block_corners_C = (T_CM * Eigen::Vector4f(voxel_dim, voxel_dim, voxel_dim, 1.f).asDiagonal() *
+      const Eigen::Matrix3Xf block_corner_points_C = (T_CM * Eigen::Vector4f(voxel_dim, voxel_dim, voxel_dim, 1.f).asDiagonal() *
           (corner_offsets.colwise() + block->coordinates().homogeneous()).template cast<float>()).topRows(3);
       Eigen::Matrix2Xf proj_corner_pixels_f(2, 8);
       std::vector<srl::projection::ProjectionStatus> proj_corner_stati;
-      sensor.model.projectBatch(block_corners_C, &proj_corner_pixels_f, &proj_corner_stati);
+      sensor.model.projectBatch(block_corner_points_C, &proj_corner_pixels_f, &proj_corner_stati);
       return std::all_of(proj_corner_stati.begin(), proj_corner_stati.end(),
           [](const auto it){ return it == srl::projection::ProjectionStatus::Successful; });
     }

@@ -73,7 +73,7 @@ public:
    * @param pos_z         Depth of the voxel to be updated
    * @param depth_sample  Depth measurement that the voxel projects to
    * @param sigma         Uncertainty
-   * @param voxel_size    Size of the voxel
+   * @param voxel_dim     Dimension of the voxel
    * @param field         Voxel content
    * @param frame         Current frame of integration
    * @param scale         Scale at which to update the voxel
@@ -82,12 +82,12 @@ public:
   inline static void updateBlock(float          pos_z,
                                  float          depth_sample,
                                  float          sigma,
-                                 float          voxel_size,
+                                 float          voxel_dim,
                                  MultiresOFusion::VoxelType::VoxelData& field,
                                  const unsigned frame,
                                  const int      scale,
                                  const float    proj_scale = 1) {
-    Derived::updateBlock(pos_z, depth_sample, sigma, voxel_size, field, frame, scale, proj_scale);
+    Derived::updateBlock(pos_z, depth_sample, sigma, voxel_dim, field, frame, scale, proj_scale);
   }
 
 
