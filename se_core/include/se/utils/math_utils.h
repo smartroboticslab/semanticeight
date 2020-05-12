@@ -91,6 +91,11 @@ namespace se {
       return t;
     }
 
+    static inline Eigen::Matrix3f toRotation(const Eigen::Matrix4f& T) {
+      Eigen::Matrix3f R = T.block<3,3>(0,0);
+      return R;
+    }
+
     static inline Eigen::Matrix4f toTransformation(const Eigen::Vector3f& t) {
       Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
       T.block<3,1>(0,3) = t;
@@ -105,8 +110,13 @@ namespace se {
     }
 
     static inline Eigen::Vector3f toInverseTranslation(const Eigen::Matrix4f& T) {
-      Eigen::Vector3f t = -T.block<3,3>(0,0).inverse() * T.block<3,1>(0,3);
-      return t;
+      Eigen::Vector3f t_inv = -T.block<3,3>(0,0).inverse() * T.block<3,1>(0,3);
+      return t_inv;
+    }
+
+    static inline Eigen::Matrix3f toInverseRotation(const Eigen::Matrix4f& T) {
+      Eigen::Matrix3f R_inv = (T.block<3,3>(0,0)).inverse();
+      return R_inv;
     }
 
     static inline Eigen::Matrix4f toInverseTransformation(const Eigen::Matrix4f& T) {
