@@ -317,8 +317,8 @@ void downsampleImageKernel(const uint8_t*         input_RGB_image_data,
       b /= ratio * ratio;
 
       // Combine into a uint32_t by adding an alpha channel with 100% opacity.
-      const uint32_t rgba = to_rgba(r, g, b, 255);
-      output_RGBA_image[x_out + output_RGBA_image.width() * y_out] = rgba;
+      const uint32_t rgba = se::to_rgba(r, g, b, 255);
+      output_RGBA_image(x_out, y_out) = rgba;
     }
   }
   TOCK("downsampleImageKernel", output_RGBA_image.width() * output_RGBA_image.height());

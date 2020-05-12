@@ -228,14 +228,14 @@ namespace se {
                   }
 
                   const Eigen::Vector3f point_C = (T_CM * (voxel_dim * voxel_sample_coord_f).homogeneous()).head(3);
-                  
+
                   Eigen::Vector2f pixel_f;
                   if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
                     block->data(voxel_coord, voxel_scale, voxel_data);
                     continue;
                   }
-                  const Eigen::Vector2i pixel = round_pixel(pixel_f);
-                
+                  const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+
                   is_visible = true;
 
                   const float depth_value = depth_image(pixel.x(), pixel.y());
@@ -328,12 +328,12 @@ namespace se {
               const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y, z);
               const Eigen::Vector3f point_C = (T_CM * (voxel_dim *
                   (voxel_coord.cast<float>() + voxel_sample_offset)).homogeneous()).head(3);
-              
+
               Eigen::Vector2f pixel_f;
               if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
                 continue;
               }
-              const Eigen::Vector2i pixel = round_pixel(pixel_f);
+              const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
 
               is_visible = true;
 

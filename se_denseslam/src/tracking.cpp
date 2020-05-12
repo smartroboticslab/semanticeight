@@ -275,7 +275,7 @@ void trackKernel(TrackData*                        output_data,
         continue;
       }
 
-      const Eigen::Vector2i ref_pixel = round_pixel(ref_pixel_f);
+      const Eigen::Vector2i ref_pixel = se::round_pixel(ref_pixel_f);
       const Eigen::Vector3f ref_normal_M
           = surface_normals_M[ref_pixel.x() + ref_pixel.y() * ref_res.x()];
 

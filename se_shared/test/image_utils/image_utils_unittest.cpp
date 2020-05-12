@@ -70,13 +70,13 @@ class RGBAConversion : public ::testing::Test {
 TEST_F(RGBAConversion, Pack) {
   for (size_t i = 0; i < num_values_; ++i) {
     const uint32_t rgba
-        = to_rgba(array_r_[i], array_g_[i], array_b_[i], array_a_[i]);
+        = se::to_rgba(array_r_[i], array_g_[i], array_b_[i], array_a_[i]);
     EXPECT_EQ(rgba, array_rgba_[i]);
 
-    const uint32_t rgba_4i = to_rgba(array_4i_[i]);
+    const uint32_t rgba_4i = se::to_rgba(array_4i_[i]);
     EXPECT_EQ(rgba_4i, array_rgba_[i]);
 
-    const uint32_t rgba_4f = to_rgba(array_4f_[i]);
+    const uint32_t rgba_4f = se::to_rgba(array_4f_[i]);
     EXPECT_EQ(rgba_4f, array_rgba_[i]);
   }
 }
@@ -85,10 +85,10 @@ TEST_F(RGBAConversion, Pack) {
 
 TEST_F(RGBAConversion, Unpack) {
   for (size_t i = 0; i < num_values_; ++i) {
-    const uint8_t r = r_from_rgba(array_rgba_[i]);
-    const uint8_t g = g_from_rgba(array_rgba_[i]);
-    const uint8_t b = b_from_rgba(array_rgba_[i]);
-    const uint8_t a = a_from_rgba(array_rgba_[i]);
+    const uint8_t r = se::r_from_rgba(array_rgba_[i]);
+    const uint8_t g = se::g_from_rgba(array_rgba_[i]);
+    const uint8_t b = se::b_from_rgba(array_rgba_[i]);
+    const uint8_t a = se::a_from_rgba(array_rgba_[i]);
     EXPECT_EQ(r, array_r_[i]);
     EXPECT_EQ(g, array_g_[i]);
     EXPECT_EQ(b, array_b_[i]);
@@ -108,7 +108,7 @@ TEST(RGBABlending, Blend) {
   const float factor[num_values]    = {0.f, 0.5f, 1.f};
 
   for (size_t i = 0; i < num_values; ++i) {
-    const uint32_t blended = blend(colors_a[i], colors_b[i], factor[i]);
+    const uint32_t blended = se::blend(colors_a[i], colors_b[i], factor[i]);
     EXPECT_EQ(blended, colors_c[i]);
   }
 }
@@ -149,13 +149,13 @@ class DepthSaveLoad : public ::testing::Test {
 
 TEST_F(DepthSaveLoad, SaveThenLoadPNG) {
   // Save the image.
-  const int save_ok = save_depth_png(depth_image_data_, depth_image_res_, "/tmp/depth.png");
+  const int save_ok = se::save_depth_png(depth_image_data_, depth_image_res_, "/tmp/depth.png");
   EXPECT_EQ(save_ok, 0);
 
   // Load the image.
   uint16_t* loaded_depth_image_data;
   Eigen::Vector2i loaded_depth_image_res (0, 0);
-  const int load_ok = load_depth_png(&loaded_depth_image_data, loaded_depth_image_res, "/tmp/depth.png");
+  const int load_ok = se::load_depth_png(&loaded_depth_image_data, loaded_depth_image_res, "/tmp/depth.png");
   EXPECT_EQ(load_ok, 0);
 
   // Compare the loaded image with the saved one.
@@ -170,13 +170,13 @@ TEST_F(DepthSaveLoad, SaveThenLoadPNG) {
 
 TEST_F(DepthSaveLoad, SaveThenLoadPGM) {
   // Save the image.
-  const int save_ok = save_depth_pgm(depth_image_data_, depth_image_res_, "/tmp/depth.pgm");
+  const int save_ok = se::save_depth_pgm(depth_image_data_, depth_image_res_, "/tmp/depth.pgm");
   EXPECT_EQ(save_ok, 0);
 
   // Load the image.
   uint16_t* loaded_depth_image_data;
   Eigen::Vector2i loaded_depth_image_res (0, 0);
-  const int load_ok = load_depth_pgm(&loaded_depth_image_data, loaded_depth_image_res, "/tmp/depth.pgm");
+  const int load_ok = se::load_depth_pgm(&loaded_depth_image_data, loaded_depth_image_res, "/tmp/depth.pgm");
   EXPECT_EQ(load_ok, 0);
 
   // Compare the loaded image with the saved one.
