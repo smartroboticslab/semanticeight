@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct TestVoxelT {
   typedef float VoxelData;
-  static inline VoxelData empty(){ return 0.f; }
+  static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
   template <typename T>
@@ -185,7 +185,7 @@ TEST_F(MultiscaleTest, MultipleInsert) {
 
 struct TestVoxel2T {
   typedef Eigen::Vector3i VoxelData;
-  static inline VoxelData empty(){ return Eigen::Vector3i::Zero(); }
+  static inline VoxelData invalid(){ return Eigen::Vector3i::Zero(); }
   static inline VoxelData initData(){ return Eigen::Vector3i::Zero(); }
 
   template <typename T>

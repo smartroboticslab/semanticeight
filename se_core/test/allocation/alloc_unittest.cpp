@@ -33,7 +33,7 @@
 
 struct TestVoxelT {
   typedef float VoxelData;
-  static inline VoxelData empty(){ return 0.f; }
+  static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 0.f; }
 
   template <typename T>
@@ -50,7 +50,7 @@ TEST(AllocationTest, EmptySingleVoxel) {
   const se::key_t code = octree.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   se::key_t allocation_list[1] = {code};
   const TestVoxelT::VoxelData data = octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-  EXPECT_EQ(data, TestVoxelT::empty());
+  EXPECT_EQ(data, TestVoxelT::invalid());
 }
 
 TEST(AllocationTest, SetSingleVoxel) {

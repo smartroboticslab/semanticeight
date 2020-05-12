@@ -156,25 +156,25 @@ inline void exterior_neighbours(se::key_t result[7],
   Eigen::Vector3i dir = Eigen::Vector3i((child_idx & 1) ? 1 : -1,
                                         (child_idx & 2) ? 1 : -1,
                                         (child_idx & 4) ? 1 : -1);
-  Eigen::Vector3i base = far_corner(octant_key, depth, voxel_depth);
-  dir.x() = se::math::in(base.x() + dir.x() , 0, (1 << voxel_depth) - 1) ? dir.x() : 0;
-  dir.y() = se::math::in(base.y() + dir.y() , 0, (1 << voxel_depth) - 1) ? dir.y() : 0;
-  dir.z() = se::math::in(base.z() + dir.z() , 0, (1 << voxel_depth) - 1) ? dir.z() : 0;
+  Eigen::Vector3i base_coord = far_corner(octant_key, depth, voxel_depth);
+  dir.x() = se::math::in(base_coord.x() + dir.x() , 0, (1 << voxel_depth) - 1) ? dir.x() : 0;
+  dir.y() = se::math::in(base_coord.y() + dir.y() , 0, (1 << voxel_depth) - 1) ? dir.y() : 0;
+  dir.z() = se::math::in(base_coord.z() + dir.z() , 0, (1 << voxel_depth) - 1) ? dir.z() : 0;
 
- result[0] = se::keyops::encode(base.x() + dir.x(), base.y() + 0, base.z() + 0,
+ result[0] = se::keyops::encode(base_coord.x() + dir.x(), base_coord.y() + 0, base_coord.z() + 0,
      depth, voxel_depth);
- result[1] = se::keyops::encode(base.x() + 0, base.y() + dir.y(), base.z() + 0,
+ result[1] = se::keyops::encode(base_coord.x() + 0, base_coord.y() + dir.y(), base_coord.z() + 0,
      depth, voxel_depth);
- result[2] = se::keyops::encode(base.x() + dir.x(), base.y() + dir.y(), base.z() + 0,
+ result[2] = se::keyops::encode(base_coord.x() + dir.x(), base_coord.y() + dir.y(), base_coord.z() + 0,
      depth, voxel_depth);
- result[3] = se::keyops::encode(base.x() + 0, base.y() + 0, base.z() + dir.z(),
+ result[3] = se::keyops::encode(base_coord.x() + 0, base_coord.y() + 0, base_coord.z() + dir.z(),
      depth, voxel_depth);
- result[4] = se::keyops::encode(base.x() + dir.x(), base.y() + 0, base.z() + dir.z(),
+ result[4] = se::keyops::encode(base_coord.x() + dir.x(), base_coord.y() + 0, base_coord.z() + dir.z(),
      depth, voxel_depth);
- result[5] = se::keyops::encode(base.x() + 0, base.y() + dir.y(), base.z() + dir.z(),
+ result[5] = se::keyops::encode(base_coord.x() + 0, base_coord.y() + dir.y(), base_coord.z() + dir.z(),
      depth, voxel_depth);
- result[6] = se::keyops::encode(base.x() + dir.x(), base.y() + dir.y(),
-     base.z() + dir.z(), depth, voxel_depth);
+ result[6] = se::keyops::encode(base_coord.x() + dir.x(), base_coord.y() + dir.y(),
+     base_coord.z() + dir.z(), depth, voxel_depth);
 }
 
 /*
@@ -192,7 +192,7 @@ inline void exterior_neighbours(se::key_t result[7],
 
 static inline void one_neighbourhood(Eigen::Ref<Eigen::Matrix<int, 4, 6>> res, 
     const Eigen::Vector3i& octant_coord, const int depth, const int voxel_depth) {
-  const Eigen::Vector3i base = octant_coord;
+  const Eigen::Vector3i base_coord = octant_coord;
   const int size = 1 << voxel_depth;
   const int step = 1 << (voxel_depth - depth);
   Eigen::Matrix<int, 4, 6> cross;
@@ -201,7 +201,7 @@ static inline void one_neighbourhood(Eigen::Ref<Eigen::Matrix<int, 4, 6>> res,
         0,    0, -step, step,     0,    0,
         0,    0,     0,    0, -step, step,
         0,    0,     0,    0,     0,    0;
-    res.colwise() += base.homogeneous();
+    res.colwise() += base_coord.homogeneous();
     res = res.unaryExpr([size](const int a) {
         return std::max(std::min(a, size-1), 0);
         });

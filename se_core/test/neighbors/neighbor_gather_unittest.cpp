@@ -39,7 +39,7 @@
 // Create a voxel trait storing a single float value.
 struct TestVoxelT {
   typedef float VoxelData;
-  static inline VoxelData empty(){ return 0.f; }
+  static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
   template <typename T>
@@ -124,7 +124,7 @@ TEST_F(NeighborGatherTest, GetFaceNeighborsLocal) {
 
 
 // Get the face neighbor values of a voxel located on the corner of the volume.
-// NOTE Neighbors outside the volume have a value of empty().
+// NOTE Neighbors outside the volume have a value of invalid().
 TEST_F(NeighborGatherTest, GetFaceNeighborsVolumeCorner) {
   // Safe version.
   std::array<TestVoxelT::VoxelData, 6> neighbor_data_safe
@@ -134,13 +134,13 @@ TEST_F(NeighborGatherTest, GetFaceNeighborsVolumeCorner) {
       = octree_.get_face_neighbors<false>(0, 0, 0);
 
   // Voxel -z (0, 0, -1), outside.
-  EXPECT_EQ(neighbor_data_safe[0], TestVoxelT::empty());
+  EXPECT_EQ(neighbor_data_safe[0], TestVoxelT::invalid());
 
   // Voxel -y (0, -1, 0), outside.
-  EXPECT_EQ(neighbor_data_safe[1], TestVoxelT::empty());
+  EXPECT_EQ(neighbor_data_safe[1], TestVoxelT::invalid());
 
   // Voxel -x (-1, 0, 0), outside.
-  EXPECT_EQ(neighbor_data_safe[2], TestVoxelT::empty());
+  EXPECT_EQ(neighbor_data_safe[2], TestVoxelT::invalid());
 
   // Voxel +x (1, 0, 0), inside.
   EXPECT_EQ(neighbor_data_safe[3], 2 * value_increment_);

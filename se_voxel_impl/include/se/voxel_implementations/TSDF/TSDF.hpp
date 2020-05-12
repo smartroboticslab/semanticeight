@@ -53,7 +53,7 @@ struct TSDF {
       float y; /**< The number of measurements integrated in the voxel. */
     };
 
-    static inline VoxelData empty()     { return {1.f, -1.f}; }
+    static inline VoxelData invalid()     { return {1.f, -1.f}; }
     static inline VoxelData initData() { return {1.f,  0.f}; }
 
     template <typename T>

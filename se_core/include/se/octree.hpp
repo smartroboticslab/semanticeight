@@ -340,10 +340,10 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point
       Eigen::Vector4f::Constant(size_ / dim_)).template head<3>().template cast<int>();
 
   if(cached != NULL){
-    Eigen::Vector3i lower = cached->coordinates();
-    Eigen::Vector3i upper = lower + Eigen::Vector3i::Constant(block_size-1);
+    Eigen::Vector3i lower_coord = cached->coordinates();
+    Eigen::Vector3i upper_coord = lower_coord + Eigen::Vector3i::Constant(block_size-1);
     const int contained =
-      ((voxel_coord.array() >= lower.array()) * (voxel_coord.array() <= upper.array())).all();
+      ((voxel_coord.array() >= lower_coord.array()) * (voxel_coord.array() <= upper_coord.array())).all();
     if(contained){
       return cached->data(voxel_coord, scale);
     }
@@ -351,7 +351,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point
 
   Node<T>* node = root_;
   if(!node) {
-    return T::empty();
+    return T::invalid();
   }
 
   // Get the block.
@@ -362,7 +362,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point
                        (voxel_coord.y() & node_size) > 0,
                        (voxel_coord.z() & node_size) > 0);
     if(!node){
-    return T::empty();
+    return T::invalid();
     }
   }
 
@@ -469,7 +469,7 @@ inline std::array<typename Octree<T>::VoxelData, 6> Octree<T>::get_face_neighbor
         neighbor_data[i] = get_fine(neighbor_x, neighbor_y, neighbor_z);
       } else {
         // The neighbor voxel is outside the map, set the value to empty.
-        neighbor_data[i] = T::empty();
+        neighbor_data[i] = T::invalid();
       }
     } else {
       // Get the value of the neighbor voxel.
@@ -492,10 +492,10 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
 
   if(cached != NULL){
     const Eigen::Vector3i voxel_coord = Eigen::Vector3i(x, y, z);
-    const Eigen::Vector3i lower = cached->coordinates();
-    const Eigen::Vector3i upper = lower + Eigen::Vector3i::Constant(block_size - 1);
+    const Eigen::Vector3i lower_coord = cached->coordinates();
+    const Eigen::Vector3i upper_coord = lower_coord + Eigen::Vector3i::Constant(block_size - 1);
     const int contained =
-      ((voxel_coord.array() >= lower.array()) && (voxel_coord.array() <= upper.array())).all();
+      ((voxel_coord.array() >= lower_coord.array()) && (voxel_coord.array() <= upper_coord.array())).all();
     if(contained){
       scale = std::max(cached->current_scale(), scale);
       return cached->data(Eigen::Vector3i(x, y, z), scale);
@@ -680,8 +680,8 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
     const int stride = 1 << scale;
     const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - offset_;
     factor = math::fracf(scaled_voxel_coord_f);
-    const Eigen::Vector3i base = stride * scaled_voxel_coord_f.cast<int>();
-    const Eigen::Vector3i lower = base.cwiseMax(Eigen::Vector3i::Zero());
+    const Eigen::Vector3i base_coord = stride * scaled_voxel_coord_f.cast<int>();
+    const Eigen::Vector3i lower = base_coord.cwiseMax(Eigen::Vector3i::Zero());
     if (((lower + Eigen::Vector3i::Constant(stride)).array() >= size_).any()) {
       return {select_value(T::initData()), scale};
     }
@@ -735,14 +735,14 @@ std::pair<float, int> Octree<T>::interp_checked(
     const int stride = 1 << scale;
     const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - offset_;
     factor =  math::fracf(scaled_voxel_coord_f);
-    const Eigen::Vector3i base = stride * scaled_voxel_coord_f.cast<int>();
-    const Eigen::Vector3i lower = base.cwiseMax(Eigen::Vector3i::Zero());
-    if (((lower + Eigen::Vector3i::Constant(stride)).array() >= size_).any()) {
+    const Eigen::Vector3i base_coord = stride * scaled_voxel_coord_f.cast<int>();
+    const Eigen::Vector3i lower_coord = base_coord.cwiseMax(Eigen::Vector3i::Zero());
+    if (((lower_coord + Eigen::Vector3i::Constant(stride)).array() >= size_).any()) {
       return {select_value(T::initData()), -1};
     }
 
-    int res = internal::gather_values(*this, lower, scale, select_value, voxel_values);
-    internal::gather_values(*this, lower, scale, select_weight, voxel_weights);
+    int res = internal::gather_values(*this, lower_coord, scale, select_value, voxel_values);
+    internal::gather_values(*this, lower_coord, scale, select_weight, voxel_weights);
 
     if (res == scale) {
       break;
@@ -787,38 +787,38 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
     const int stride = 1 << scale;
     const Eigen::Vector3f scaled_voxel_coord_f = 1.f/stride * voxel_coord_f - offset_;
     factor =  math::fracf(scaled_voxel_coord_f);
-    const Eigen::Vector3i base = stride * scaled_voxel_coord_f.cast<int>();
-    Eigen::Vector3i lower_lower = (base - stride * Eigen::Vector3i::Constant(1)).cwiseMax(Eigen::Vector3i::Constant(0));
-    Eigen::Vector3i lower_upper = base.cwiseMax(Eigen::Vector3i::Constant(0));
-    Eigen::Vector3i upper_lower = (base + stride * Eigen::Vector3i::Constant(1)).cwiseMin(
+    const Eigen::Vector3i base_coord = stride * scaled_voxel_coord_f.cast<int>();
+    Eigen::Vector3i lower_lower_coord = (base_coord - stride * Eigen::Vector3i::Constant(1)).cwiseMax(Eigen::Vector3i::Constant(0));
+    Eigen::Vector3i lower_upper_coord = base_coord.cwiseMax(Eigen::Vector3i::Constant(0));
+    Eigen::Vector3i upper_lower_coord = (base_coord + stride * Eigen::Vector3i::Constant(1)).cwiseMin(
         Eigen::Vector3i::Constant(size_) - Eigen::Vector3i::Constant(1));
-    Eigen::Vector3i upper_upper = (base + stride * Eigen::Vector3i::Constant(2)).cwiseMin(
+    Eigen::Vector3i upper_upper_coord = (base_coord + stride * Eigen::Vector3i::Constant(2)).cwiseMin(
         Eigen::Vector3i::Constant(size_) - Eigen::Vector3i::Constant(1));
-    Eigen::Vector3i & lower = lower_upper;
-    Eigen::Vector3i & upper = upper_lower;
+    Eigen::Vector3i & lower_coord = lower_upper_coord;
+    Eigen::Vector3i & upper_coord = upper_lower_coord;
 
 
-    VoxelBlock<T> * n = fetch(base.x(), base.y(), base.z());
-    gradient.x() = (((select_value(get(upper_lower.x(), lower.y(), lower.z(), scale, n))
-            - select_value(get(lower_lower.x(), lower.y(), lower.z(), scale, n))) * (1 - factor.x())
-          + (select_value(get(upper_upper.x(), lower.y(), lower.z(), scale, n))
-            - select_value(get(lower_upper.x(), lower.y(), lower.z(), scale, n))) * factor.x())
+    VoxelBlock<T>* block = fetch(base_coord.x(), base_coord.y(), base_coord.z());
+    gradient.x() = (((select_value(get(upper_lower_coord.x(), lower_coord.y(), lower_coord.z(), scale, block))
+            - select_value(get(lower_lower_coord.x(), lower_coord.y(), lower_coord.z(), scale, block))) * (1 - factor.x())
+          + (select_value(get(upper_upper_coord.x(), lower_coord.y(), lower_coord.z(), scale, block))
+            - select_value(get(lower_upper_coord.x(), lower_coord.y(), lower_coord.z(), scale, block))) * factor.x())
         * (1 - factor.y())
-        + ((select_value(get(upper_lower.x(), upper.y(), lower.z(), scale, n))
-            - select_value(get(lower_lower.x(), upper.y(), lower.z(), scale, n))) * (1 - factor.x())
-          + (select_value(get(upper_upper.x(), upper.y(), lower.z(), scale, n))
-            - select_value(get(lower_upper.x(), upper.y(), lower.z(), scale, n)))
+        + ((select_value(get(upper_lower_coord.x(), upper_coord.y(), lower_coord.z(), scale, block))
+            - select_value(get(lower_lower_coord.x(), upper_coord.y(), lower_coord.z(), scale, block))) * (1 - factor.x())
+          + (select_value(get(upper_upper_coord.x(), upper_coord.y(), lower_coord.z(), scale, block))
+            - select_value(get(lower_upper_coord.x(), upper_coord.y(), lower_coord.z(), scale, block)))
           * factor.x()) * factor.y()) * (1 - factor.z())
-      + (((select_value(get(upper_lower.x(), lower.y(), upper.z(), scale, n))
-              - select_value(get(lower_lower.x(), lower.y(), upper.z(), scale, n))) * (1 - factor.x())
-            + (select_value(get(upper_upper.x(), lower.y(), upper.z(), scale, n))
-              - select_value(get(lower_upper.x(), lower.y(), upper.z(), scale, n)))
+      + (((select_value(get(upper_lower_coord.x(), lower_coord.y(), upper_coord.z(), scale, block))
+              - select_value(get(lower_lower_coord.x(), lower_coord.y(), upper_coord.z(), scale, block))) * (1 - factor.x())
+            + (select_value(get(upper_upper_coord.x(), lower_coord.y(), upper_coord.z(), scale, block))
+              - select_value(get(lower_upper_coord.x(), lower_coord.y(), upper_coord.z(), scale, block)))
             * factor.x()) * (1 - factor.y())
-          + ((select_value(get(upper_lower.x(), upper.y(), upper.z(), scale, n))
-              - select_value(get(lower_lower.x(), upper.y(), upper.z(), scale, n)))
+          + ((select_value(get(upper_lower_coord.x(), upper_coord.y(), upper_coord.z(), scale, block))
+              - select_value(get(lower_lower_coord.x(), upper_coord.y(), upper_coord.z(), scale, block)))
             * (1 - factor.x())
-            + (select_value(get(upper_upper.x(), upper.y(), upper.z(), scale, n))
-              - select_value(get(lower_upper.x(), upper.y(), upper.z(), scale, n)))
+            + (select_value(get(upper_upper_coord.x(), upper_coord.y(), upper_coord.z(), scale, block))
+              - select_value(get(lower_upper_coord.x(), upper_coord.y(), upper_coord.z(), scale, block)))
             * factor.x()) * factor.y()) * factor.z();
     if(scale != last_scale) {
       last_scale = scale;
@@ -826,26 +826,26 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
       continue;
     }
 
-    gradient.y() = (((select_value(get(lower.x(), upper_lower.y(), lower.z(), scale, n))
-            - select_value(get(lower.x(), lower_lower.y(), lower.z(), scale, n))) * (1 - factor.x())
-          + (select_value(get(upper.x(), upper_lower.y(), lower.z(), scale, n))
-            - select_value(get(upper.x(), lower_lower.y(), lower.z(), scale, n))) * factor.x())
+    gradient.y() = (((select_value(get(lower_coord.x(), upper_lower_coord.y(), lower_coord.z(), scale, block))
+            - select_value(get(lower_coord.x(), lower_lower_coord.y(), lower_coord.z(), scale, block))) * (1 - factor.x())
+          + (select_value(get(upper_coord.x(), upper_lower_coord.y(), lower_coord.z(), scale, block))
+            - select_value(get(upper_coord.x(), lower_lower_coord.y(), lower_coord.z(), scale, block))) * factor.x())
         * (1 - factor.y())
-        + ((select_value(get(lower.x(), upper_upper.y(), lower.z(), scale, n))
-            - select_value(get(lower.x(), lower_upper.y(), lower.z(), scale, n))) * (1 - factor.x())
-          + (select_value(get(upper.x(), upper_upper.y(), lower.z(), scale, n))
-            - select_value(get(upper.x(), lower_upper.y(), lower.z(), scale, n)))
+        + ((select_value(get(lower_coord.x(), upper_upper_coord.y(), lower_coord.z(), scale, block))
+            - select_value(get(lower_coord.x(), lower_upper_coord.y(), lower_coord.z(), scale, block))) * (1 - factor.x())
+          + (select_value(get(upper_coord.x(), upper_upper_coord.y(), lower_coord.z(), scale, block))
+            - select_value(get(upper_coord.x(), lower_upper_coord.y(), lower_coord.z(), scale, block)))
           * factor.x()) * factor.y()) * (1 - factor.z())
-      + (((select_value(get(lower.x(), upper_lower.y(), upper.z(), scale, n))
-              - select_value(get(lower.x(), lower_lower.y(), upper.z(), scale, n))) * (1 - factor.x())
-            + (select_value(get(upper.x(), upper_lower.y(), upper.z(), scale, n))
-              - select_value(get(upper.x(), lower_lower.y(), upper.z(), scale, n)))
+      + (((select_value(get(lower_coord.x(), upper_lower_coord.y(), upper_coord.z(), scale, block))
+              - select_value(get(lower_coord.x(), lower_lower_coord.y(), upper_coord.z(), scale, block))) * (1 - factor.x())
+            + (select_value(get(upper_coord.x(), upper_lower_coord.y(), upper_coord.z(), scale, block))
+              - select_value(get(upper_coord.x(), lower_lower_coord.y(), upper_coord.z(), scale, block)))
             * factor.x()) * (1 - factor.y())
-          + ((select_value(get(lower.x(), upper_upper.y(), upper.z(), scale, n))
-              - select_value(get(lower.x(), lower_upper.y(), upper.z(), scale, n)))
+          + ((select_value(get(lower_coord.x(), upper_upper_coord.y(), upper_coord.z(), scale, block))
+              - select_value(get(lower_coord.x(), lower_upper_coord.y(), upper_coord.z(), scale, block)))
             * (1 - factor.x())
-            + (select_value(get(upper.x(), upper_upper.y(), upper.z(), scale, n))
-              - select_value(get(upper.x(), lower_upper.y(), upper.z(), scale, n)))
+            + (select_value(get(upper_coord.x(), upper_upper_coord.y(), upper_coord.z(), scale, block))
+              - select_value(get(upper_coord.x(), lower_upper_coord.y(), upper_coord.z(), scale, block)))
             * factor.x()) * factor.y()) * factor.z();
     if(scale != last_scale) {
       last_scale = scale;
@@ -853,26 +853,26 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
       continue;
     }
 
-    gradient.z() = (((select_value(get(lower.x(), lower.y(), upper_lower.z(), scale, n))
-            - select_value(get(lower.x(), lower.y(), lower_lower.z(), scale, n))) * (1 - factor.x())
-          + (select_value(get(upper.x(), lower.y(), upper_lower.z(), scale, n))
-            - select_value(get(upper.x(), lower.y(), lower_lower.z(), scale, n))) * factor.x())
+    gradient.z() = (((select_value(get(lower_coord.x(), lower_coord.y(), upper_lower_coord.z(), scale, block))
+            - select_value(get(lower_coord.x(), lower_coord.y(), lower_lower_coord.z(), scale, block))) * (1 - factor.x())
+          + (select_value(get(upper_coord.x(), lower_coord.y(), upper_lower_coord.z(), scale, block))
+            - select_value(get(upper_coord.x(), lower_coord.y(), lower_lower_coord.z(), scale, block))) * factor.x())
         * (1 - factor.y())
-        + ((select_value(get(lower.x(), upper.y(), upper_lower.z(), scale, n))
-            - select_value(get(lower.x(), upper.y(), lower_lower.z(), scale, n))) * (1 - factor.x())
-          + (select_value(get(upper.x(), upper.y(), upper_lower.z(), scale, n))
-            - select_value(get(upper.x(), upper.y(), lower_lower.z(), scale, n)))
+        + ((select_value(get(lower_coord.x(), upper_coord.y(), upper_lower_coord.z(), scale, block))
+            - select_value(get(lower_coord.x(), upper_coord.y(), lower_lower_coord.z(), scale, block))) * (1 - factor.x())
+          + (select_value(get(upper_coord.x(), upper_coord.y(), upper_lower_coord.z(), scale, block))
+            - select_value(get(upper_coord.x(), upper_coord.y(), lower_lower_coord.z(), scale, block)))
           * factor.x()) * factor.y()) * (1 - factor.z())
-      + (((select_value(get(lower.x(), lower.y(), upper_upper.z(), scale, n))
-              - select_value(get(lower.x(), lower.y(), lower_upper.z(), scale, n))) * (1 - factor.x())
-            + (select_value(get(upper.x(), lower.y(), upper_upper.z(), scale, n))
-              - select_value(get(upper.x(), lower.y(), lower_upper.z(), scale, n)))
+      + (((select_value(get(lower_coord.x(), lower_coord.y(), upper_upper_coord.z(), scale, block))
+              - select_value(get(lower_coord.x(), lower_coord.y(), lower_upper_coord.z(), scale, block))) * (1 - factor.x())
+            + (select_value(get(upper_coord.x(), lower_coord.y(), upper_upper_coord.z(), scale, block))
+              - select_value(get(upper_coord.x(), lower_coord.y(), lower_upper_coord.z(), scale, block)))
             * factor.x()) * (1 - factor.y())
-          + ((select_value(get(lower.x(), upper.y(), upper_upper.z(), scale, n))
-              - select_value(get(lower.x(), upper.y(), lower_upper.z(), scale, n)))
+          + ((select_value(get(lower_coord.x(), upper_coord.y(), upper_upper_coord.z(), scale, block))
+              - select_value(get(lower_coord.x(), upper_coord.y(), lower_upper_coord.z(), scale, block)))
             * (1 - factor.x())
-            + (select_value(get(upper.x(), upper.y(), upper_upper.z(), scale, n))
-              - select_value(get(upper.x(), upper.y(), lower_upper.z(), scale, n)))
+            + (select_value(get(upper_coord.x(), upper_coord.y(), upper_upper_coord.z(), scale, block))
+              - select_value(get(upper_coord.x(), upper_coord.y(), lower_upper_coord.z(), scale, block)))
             * factor.x()) * factor.y()) * factor.z();
     if(scale != last_scale) {
       last_scale = scale;

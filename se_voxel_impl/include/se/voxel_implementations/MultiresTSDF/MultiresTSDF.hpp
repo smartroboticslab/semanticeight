@@ -55,7 +55,7 @@ struct MultiresTSDF {
       int   delta_y;
     };
 
-    static inline VoxelData empty()     { return {1.f, 1.f, 0, 0}; }
+    static inline VoxelData invalid()     { return {1.f, 1.f, 0, 0}; }
     static inline VoxelData initData() { return {1.f, 1.f, 0, 0}; }
 
     template <typename T>

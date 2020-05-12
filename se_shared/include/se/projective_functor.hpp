@@ -123,9 +123,9 @@ namespace functor {
         /* Iterate over the Node children. */
 #pragma omp simd
         for(int child_idx = 0; child_idx < 8; ++child_idx) {
-          const Eigen::Vector3i dir = node->size_ / 2 *
+          const Eigen::Vector3i rel_step = node->size_ / 2 *
               Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0); // TODO: Offset needs to be discussed
-          const Eigen::Vector3i child_coord = node_coord + dir;
+          const Eigen::Vector3i child_coord = node_coord + rel_step;
           const Eigen::Vector3f child_point_C = (T_CM_ * (voxel_dim * (child_coord.cast<float>() + node->size_ * offset_)).homogeneous()).head(3);
           Eigen::Vector2f pixel_f;
           if (sensor_.model.project(child_point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {

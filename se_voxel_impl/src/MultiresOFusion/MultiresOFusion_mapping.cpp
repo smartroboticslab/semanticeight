@@ -155,7 +155,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                                          const unsigned                        frame) {
     if(!node->parent()) {
       node->timestamp(frame);
-      return MultiresOFusion::VoxelType::empty();
+      return MultiresOFusion::VoxelType::invalid();
     }
 
     int data_count = 0;
@@ -275,26 +275,26 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     const int stride = 1 << (scale + 1);
 
     const Eigen::Vector3f& offset = se::Octree<MultiresOFusion::VoxelType>::offset_;
-    Eigen::Vector3i base = stride * (voxel_coord.cast<float>()/stride - offset).cast<int>().cwiseMax(Eigen::Vector3i::Constant(0));
+    Eigen::Vector3i base_coord = stride * (voxel_coord.cast<float>()/stride - offset).cast<int>().cwiseMax(Eigen::Vector3i::Constant(0));
 
     const Eigen::Vector3f voxel_coord_f  = voxel_coord.cast<float>() + offset * (stride/2);
-    Eigen::Vector3f base_f = base.cast<float>() + offset*(stride);
-    Eigen::Vector3f factor = (voxel_coord_f - base_f) / stride;
+    Eigen::Vector3f base_coord_f = base_coord.cast<float>() + offset*(stride);
+    Eigen::Vector3f factor = (voxel_coord_f - base_coord_f) / stride;
 
     for (int i = 0; i < 3; i++) {
       if (factor[i] < 0) {
         factor[i]  = 1 + factor[i];
-        base[i]   -= stride;
-        base_f[i] -= stride;
+        base_coord[i]   -= stride;
+        base_coord_f[i] -= stride;
       }
     }
 
     float occupancies[8];
-    se::internal_multires::gather_values(map, block->coordinates() + base, scale + 1,
+    se::internal_multires::gather_values(map, block->coordinates() + base_coord, scale + 1,
                                          [](const auto& data) { return data.x; }, occupancies);
 
     bool observed[8];
-    se::internal_multires::gather_values(map, block->coordinates() + base, scale + 1,
+    se::internal_multires::gather_values(map, block->coordinates() + base_coord, scale + 1,
                             [](const auto& data) { return data.observed; }, observed);
     for(int i = 0; i < 8; ++i) {
       if(observed[i] == 0) {

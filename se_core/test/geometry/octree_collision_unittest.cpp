@@ -42,7 +42,7 @@ using namespace se::geometry;
 
 struct TestVoxelT{
   typedef float VoxelData;
-  static inline VoxelData empty(){ return 0.f; }
+  static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
   template <typename T>

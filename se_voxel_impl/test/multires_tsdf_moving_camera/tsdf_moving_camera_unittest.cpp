@@ -292,14 +292,14 @@ void propagateDown(se::VoxelBlock<T>* block, const int scale) {
     for (int z = 0; z < block_size; z += stride)
       for (int y = 0; y < block_size; y += stride)
         for (int x = 0; x < block_size; x += stride) {
-          const Eigen::Vector3i parent = block_coord + Eigen::Vector3i(x, y, z);
-          auto parent_data = block->data(parent, voxel_scale);
+          const Eigen::Vector3i parent_coord = block_coord + Eigen::Vector3i(x, y, z);
+          auto parent_data = block->data(parent_coord, voxel_scale);
           float delta_x = parent_data.x - parent_data.x_last;
           const int half_step = stride / 2;
           for(int k = 0; k < stride; k += half_step) {
             for(int j = 0; j < stride; j += half_step) {
               for(int i = 0; i < stride; i += half_step) {
-                const Eigen::Vector3i voxel_coord = parent + Eigen::Vector3i(i, j , k);
+                const Eigen::Vector3i voxel_coord = parent_coord + Eigen::Vector3i(i, j , k);
                 auto voxel_data = block->data(voxel_coord, voxel_scale - 1);
                 if(voxel_data.y == 0) {
                   voxel_data.x  =  parent_data.x;
@@ -316,7 +316,7 @@ void propagateDown(se::VoxelBlock<T>* block, const int scale) {
           }
           parent_data.x_last = parent_data.x;
           parent_data.delta_y = 0;
-          block->data(parent, voxel_scale, parent_data);
+          block->data(parent_coord, voxel_scale, parent_data);
         }
   }
 }

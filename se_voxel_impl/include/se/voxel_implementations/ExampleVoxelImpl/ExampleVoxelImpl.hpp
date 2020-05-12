@@ -64,7 +64,7 @@ struct ExampleVoxelImpl {
   /**
    * The declaration of the struct stored in each se::Octree voxel. It may
    * contain additional members if desired. Make sure to also update
-   * VoxelType::empty() and VoxelType::initData() to initialize all data
+   * VoxelType::invalid() and VoxelType::initData() to initialize all data
    * members by returning an appropriate struct brace initializer.
    *
    * \warning The struct name must always be `VoxelData`.
@@ -73,7 +73,7 @@ struct ExampleVoxelImpl {
       float  x; /**< The value stored in each voxel of the octree. */
 
       // Any other data stored in each voxel go here. Make sure to also update
-      // empty() and initData() to initialize all data members by returning an
+      // invalid() and initData() to initialize all data members by returning an
       // appropriate struct brace initializer.
     };
 
@@ -83,7 +83,7 @@ struct ExampleVoxelImpl {
      *
      * \warning The function signature must not be changed.
      */
-    static inline VoxelData empty()     { return {0.f}; }
+    static inline VoxelData invalid()     { return {0.f}; }
 
 
 

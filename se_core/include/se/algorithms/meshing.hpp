@@ -205,13 +205,13 @@ namespace algorithms {
       for (size_t i = 0; i < block_list.size(); i++) {
         se::VoxelBlock<FieldType>* block = static_cast<se::VoxelBlock<FieldType> *>(block_list[i]);
         const int block_size = se::VoxelBlock<FieldType>::size;
-        const Eigen::Vector3i& start = block->coordinates();
-        const Eigen::Vector3i last =
+        const Eigen::Vector3i& start_coord = block->coordinates();
+        const Eigen::Vector3i last_coord =
           (block->coordinates() + Eigen::Vector3i::Constant(block_size)).cwiseMin(
               Eigen::Vector3i::Constant(block_size-1));
-        for (int x = start.x(); x < last.x(); x++) {
-          for (int y = start.y(); y < last.y(); y++) {
-            for (int z = start.z(); z < last.z(); z++) {
+        for (int x = start_coord.x(); x < last_coord.x(); x++) {
+          for (int y = start_coord.y(); y < last_coord.y(); y++) {
+            for (int z = start_coord.z(); z < last_coord.z(); z++) {
 
               const uint8_t idx = meshing::compute_index(map, block, inside, x, y, z);
 

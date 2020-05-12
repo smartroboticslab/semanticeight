@@ -68,10 +68,10 @@ struct MultiresOFusion {
       bool   observed;      // All children have been observed at least once
 
       // Any other data stored in each voxel go here. Make sure to also update
-      // empty() and initData() to initialize all data members.
+      // invalid() and initData() to initialize all data members.
     };
 
-    static inline VoxelData empty()     { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
+    static inline VoxelData invalid()     { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
     static inline VoxelData initData() { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
 
     template <typename T>

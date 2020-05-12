@@ -38,7 +38,7 @@ typedef unsigned int MortonType;
 
 struct TestVoxelT {
   typedef float VoxelData;
-  static inline VoxelData empty(){ return 0.f; }
+  static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
   template <typename T>
@@ -76,10 +76,10 @@ class UniqueMultiscaleTest : public ::testing::Test {
 
       octree.init(1 << voxel_depth_, 10);
       const int root_size = pow(2, voxel_depth_ - 4);
-      const Eigen::Vector3i base(64, 0, 64);
-      keys.push_back(octree.hash(base.x(), base.y(), base.z(), 4));
-      keys.push_back(octree.hash(base.x() + root_size / 2, base.y(), base.z(), 5));
-      keys.push_back(octree.hash(base.x() + root_size / 4, base.y(), base.z(), 5));
+      const Eigen::Vector3i base_coord(64, 0, 64);
+      keys.push_back(octree.hash(base_coord.x(), base_coord.y(), base_coord.z(), 4));
+      keys.push_back(octree.hash(base_coord.x() + root_size / 2, base_coord.y(), base_coord.z(), 5));
+      keys.push_back(octree.hash(base_coord.x() + root_size / 4, base_coord.y(), base_coord.z(), 5));
       keys.push_back(octree.hash(128, 24, 80, 5));
       std::sort(keys.begin(), keys.end());
     }

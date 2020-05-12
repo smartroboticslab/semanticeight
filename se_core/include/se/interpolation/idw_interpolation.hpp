@@ -38,18 +38,18 @@ template <typename Precision, typename FieldType,
          class FieldSelector>
 static inline std::pair<Precision, bool>
     idw_interp(const OctreeT<FieldType>& octree, const Eigen::Vector3f& voxel_coord_f,
-        FieldSelector select) {
+        FieldSelector select_value) {
       std::pair<Precision, Eigen::Vector3i> samples[8];
 
       Node<FieldType>* stack[CAST_STACK_DEPTH] = {};
       int voxel_depth = octree.voxelDepth();
-      auto base_ptr = se::internal::fetch(stack, octree.root(), voxel_depth,
+      auto base = se::internal::fetch(stack, octree.root(), voxel_depth,
           voxel_coord_f.cast<int>());
-      std::cout << "base octant: \n" << se::keyops::decode(base_ptr->code_) << std::endl;
+      std::cout << "base octant: \n" << se::keyops::decode(base->code_) << std::endl;
 
       for(int i = 1; i < 7; ++i) {
-        samples[i] = se::internal::fetch_neighbour_sample<Precision>(stack, base_ptr, 
-            voxel_depth, i, select);
+        samples[i] = se::internal::fetch_neighbour_sample<Precision>(stack, base,
+            voxel_depth, i, select_value);
         std::cout << "direction: " << i << std::endl;
         std::cout << "sample " << i << samples[i].first << std::endl;
         std::cout << "coords: \n" << samples[i].second << std::endl << std::endl;

@@ -60,16 +60,16 @@ void savePointCloud(const T* points_M, const int num_points,
 }
 
 template <typename OctreeT, typename FieldSelector>
-void save3DSlice(const OctreeT& in, const Eigen::Vector3i& lower,
-    const Eigen::Vector3i& upper, FieldSelector select, const int scale, const char* filename){
+void save3DSlice(const OctreeT& in, const Eigen::Vector3i& lower_coord,
+    const Eigen::Vector3i& upper_coord, FieldSelector select_value, const int scale, const char* filename){
   std::stringstream ss_x_coord, ss_y_coord, ss_z_coord, ss_scalars;
   std::ofstream f;
   f.open(filename);
 
   const int stride = 1 << scale;
-  const int dimX = std::max(1, (upper.x() - lower.x()) / stride);
-  const int dimY = std::max(1, (upper.y() - lower.y()) / stride);
-  const int dimZ = std::max(1, (upper.z() - lower.z()) / stride);
+  const int dimX = std::max(1, (upper_coord.x() - lower_coord.x()) / stride);
+  const int dimY = std::max(1, (upper_coord.y() - lower_coord.y()) / stride);
+  const int dimZ = std::max(1, (upper_coord.z() - lower_coord.z()) / stride);
 
   f << "# vtk DataFile Version 1.0" << std::endl;
   f << "vtk mesh generated from KFusion" << std::endl;
@@ -77,18 +77,18 @@ void save3DSlice(const OctreeT& in, const Eigen::Vector3i& lower,
   f << "DATASET RECTILINEAR_GRID" << std::endl;
   f << "DIMENSIONS " << dimX << " " << dimY << " " << dimZ << std::endl;
 
-  for(int x = lower.x(); x < upper.x(); x += stride)
+  for(int x = lower_coord.x(); x < upper_coord.x(); x += stride)
     ss_x_coord << x << " ";
-  for(int y = lower.y(); y < upper.y(); y += stride)
+  for(int y = lower_coord.y(); y < upper_coord.y(); y += stride)
     ss_y_coord << y << " ";
-  for(int z = lower.z(); z < upper.z(); z += stride)
+  for(int z = lower_coord.z(); z < upper_coord.z(); z += stride)
     ss_z_coord << z << " ";
 
-  for(int z = lower.z(); z < upper.z(); z += stride)
-    for(int y = lower.y(); y < upper.y(); y += stride)
-      for(int x = lower.x(); x < upper.x(); x += stride) {
-        const auto data = select(in.get_fine(x, y, z, scale));
-        ss_scalars << data  << std::endl;
+  for(int z = lower_coord.z(); z < upper_coord.z(); z += stride)
+    for(int y = lower_coord.y(); y < upper_coord.y(); y += stride)
+      for(int x = lower_coord.x(); x < upper_coord.x(); x += stride) {
+        const auto value = select_value(in.get_fine(x, y, z, scale));
+        ss_scalars << value  << std::endl;
       }
 
   f << "X_COORDINATES " << dimX << " int " << std::endl;

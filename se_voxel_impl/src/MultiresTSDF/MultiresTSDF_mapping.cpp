@@ -147,17 +147,17 @@ namespace se {
       const int stride = 1 << (scale + 1);
 
       const Eigen::Vector3f& centre_offset = se::Octree<MultiresTSDF::VoxelType>::offset_;
-      Eigen::Vector3i base =
+      Eigen::Vector3i base_coord =
           stride * (voxel_coord.cast<float>() / stride - centre_offset).cast<int>().cwiseMax(Eigen::Vector3i::Zero());
-      base = (base.array() == block_size - 1).select(base - Eigen::Vector3i::Constant(1), base);
+      base_coord = (base_coord.array() == block_size - 1).select(base_coord - Eigen::Vector3i::Constant(1), base_coord);
 
       select_value_t values[8];
       internal::gather_values(
-          map, block->coordinates() + base, scale + 1, select_value, values);
+          map, block->coordinates() + base_coord, scale + 1, select_value, values);
 
       select_weight_t weights[8];
       internal::gather_values(
-          map, block->coordinates() + base, scale + 1, select_weight, weights);
+          map, block->coordinates() + base_coord, scale + 1, select_weight, weights);
       for (int i = 0; i < 8; ++i) {
         if (weights[i] == 0) {
           is_valid = false;
@@ -167,8 +167,8 @@ namespace se {
       is_valid = true;
 
       const Eigen::Vector3f voxel_coord_f = voxel_coord.cast<float>() + centre_offset * (stride / 2);
-      const Eigen::Vector3f base_f = base.cast<float>() + centre_offset * (stride);
-      const Eigen::Vector3f factor = (voxel_coord_f - base_f) / stride;
+      const Eigen::Vector3f base_coord_f = base_coord.cast<float>() + centre_offset * (stride);
+      const Eigen::Vector3f factor = (voxel_coord_f - base_coord_f) / stride;
 
       const float v_000 = values[0] * (1 - factor.x()) + values[1] * factor.x();
       const float v_001 = values[2] * (1 - factor.x()) + values[3] * factor.x();

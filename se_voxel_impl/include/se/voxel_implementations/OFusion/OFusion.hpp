@@ -53,7 +53,7 @@ struct OFusion {
       double y; /**< The timestamp of the last update. */
     };
 
-    static inline VoxelData empty()     { return {0.f, 0.f}; }
+    static inline VoxelData invalid()     { return {0.f, 0.f}; }
     static inline VoxelData initData() { return {0.f, 0.f}; }
 
     template <typename T>

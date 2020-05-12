@@ -38,7 +38,7 @@
 // Create a voxel trait storing a single float value.
 struct TestVoxelT {
   typedef float VoxelData;
-  static inline VoxelData empty(){ return -1.f; }
+  static inline VoxelData invalid(){ return -1.f; }
   static inline VoxelData initData(){ return 0.f; }
 
   template <typename T>
