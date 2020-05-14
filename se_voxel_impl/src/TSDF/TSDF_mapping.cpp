@@ -91,6 +91,6 @@ void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
 
   struct tsdf_update funct(depth_image, sensor.mu);
 
-  se::functor::projective_octree(map, map.offset_, T_CM, sensor, depth_image_res, funct);
+  se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image_res, funct);
 }
 

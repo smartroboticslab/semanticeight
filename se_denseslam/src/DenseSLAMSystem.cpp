@@ -292,20 +292,23 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
 
   auto interp_down = [this](auto block) {
     if(block->min_scale() == 0) return;
-    const Eigen::Vector3f& offset = this->volume_.octree_->offset_;
+    const Eigen::Vector3f& sample_offset_frac = this->volume_.octree_->sample_offset_frac_;
     const Eigen::Vector3i block_coord = block->coordinates();
     const int block_size = block->size;
+    bool is_valid;
     for(int z = 0; z < block_size; ++z)
       for(int y = 0; y < block_size; ++y)
         for(int x = 0; x < block_size; ++x) {
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y , z);
           auto voxel_data = block->data(voxel_coord, 0);
-          auto res = this->volume_.octree_->interp_checked(
-              voxel_coord.cast<float>() + offset, 0, [](const auto& data) { return data.x; });
-          if(res.second >= 0) {
-            voxel_data.x = res.first;
+          auto voxel_value = (this->volume_.octree_->interp(
+              se::getSampleCoord(voxel_coord, 1, sample_offset_frac), 0,
+              [](const auto& data) { return data.x; }, is_valid)).first;
+          if(is_valid) {
+            voxel_data.x = voxel_value;
             voxel_data.y = this->volume_.octree_->interp(
-                voxel_coord.cast<float>() + offset, [](const auto& data) { return data.y; }).first;
+                se::getSampleCoord(voxel_coord, 1, sample_offset_frac),
+                [](const auto& data) { return data.y; }).first;
           } else {
             voxel_data.y = 0;
           }

@@ -52,7 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "algorithms/unique.hpp"
 #include "geometry/aabb_collision.hpp"
 #include "interpolation/interp_gather.hpp"
-#include "interpolation/interp_multires_gather.hpp"
+#include "se/interpolation/interp_gather.hpp"
 #include "neighbors/neighbor_gather.hpp"
 
 namespace se {
@@ -90,7 +90,7 @@ public:
   // Tree depth at which blocks are found
   static constexpr unsigned int max_block_depth = max_voxel_depth - math::log2_const(BLOCK_SIZE);
 
-  static const Eigen::Vector3f offset_;
+  static const Eigen::Vector3f sample_offset_frac_;
 
 
   Octree(){
@@ -194,7 +194,7 @@ public:
    */
   template <typename FieldSelect>
   std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               FieldSelect            f) const;
+                               FieldSelect            select_value) const;
 
   /*! \brief Interp voxel value at voxel position  (x,y,z)
    * \param voxel_coord_f three-dimensional coordinates in which each component belongs
@@ -206,12 +206,20 @@ public:
   template <typename FieldSelect>
   std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
                                const int              stride,
-                               FieldSelect            f) const;
+                               FieldSelect            select_value) const;
 
-  template <typename FieldSelect>
-  std::pair<float, int> interp_checked(const Eigen::Vector3f& voxel_coord_f,
-                                       const int              stride,
-                                       FieldSelect            f) const;
+  template <typename ValueSelector>
+  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                               const int              stride,
+                               ValueSelector          select_value,
+                               bool&                  is_valid) const;
+
+  template <typename NodeValueSelector, typename VoxelValueSelector>
+  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                               const int              stride,
+                               NodeValueSelector      select_node_value,
+                               VoxelValueSelector     select_voxel_value,
+                               bool&                  is_valid) const;
 
 
   /*! \brief Compute the gradient at voxel position  (x,y,z)
@@ -657,7 +665,6 @@ template <typename T>
 template <typename FieldSelector>
 std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord,
                                         FieldSelector          select_value) const {
-
   return interp(voxel_coord, 0, select_value);
 }
 
@@ -670,27 +677,27 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
   // The return type of the select_value() function. Since it can be a lambda
   // function, an argument needs to be passed to it before deducing the return
   // type.
-  typedef decltype(select_value(T::initData())) select_value_t;
+  typedef decltype(select_value(T::initData())) value_t;
 
   int iter = 0;
-  int scale = min_scale;
-  select_value_t voxel_values[8] = { select_value(T::initData()) };
+  int target_scale = min_scale;
+  value_t voxel_values[8] = { select_value(T::initData()) };
   Eigen::Vector3f factor;
   while (iter < 3) {
-    const int stride = 1 << scale;
-    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - offset_;
+    const int stride = 1 << target_scale;
+    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - sample_offset_frac_;
     factor = math::fracf(scaled_voxel_coord_f);
     const Eigen::Vector3i base_coord = stride * scaled_voxel_coord_f.cast<int>();
-    const Eigen::Vector3i lower = base_coord.cwiseMax(Eigen::Vector3i::Zero());
-    if (((lower + Eigen::Vector3i::Constant(stride)).array() >= size_).any()) {
-      return {select_value(T::initData()), scale};
+    if ((base_coord.array() < 0).any() ||
+        ((base_coord + Eigen::Vector3i::Constant(stride)).array() >= size_).any()) {
+      return {select_value(T::initData()), target_scale};
     }
-
-    int res = internal::gather_values(*this, lower, scale, select_value, voxel_values);
-    if (res == scale) {
+    int interp_scale = internal::gather_values(*this, base_coord, target_scale,
+        select_value, voxel_values);
+    if (interp_scale == target_scale) {
       break;
     } else {
-      scale = res;
+      target_scale = interp_scale;
     }
     iter++;
   }
@@ -706,58 +713,71 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
           * (1 - factor.y())
           + (voxel_values[6] * (1 - factor.x())
           + voxel_values[7] * factor.x())
-          * factor.y()) * factor.z()), scale};
+          * factor.y()) * factor.z()), target_scale};
 }
 
-
+template <typename T>
+template <typename ValueSelector>
+std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
+                                        const int              min_scale,
+                                        ValueSelector          select_value,
+                                        bool&                  is_valid) const {
+  return interp(voxel_coord_f, min_scale, select_value, select_value, is_valid);
+}
 
 template <typename T>
-template <typename FieldSelector>
-std::pair<float, int> Octree<T>::interp_checked(
-    const Eigen::Vector3f& voxel_coord_f,
-    const int              min_scale,
-    FieldSelector          select_value) const {
+template <typename NodeValueSelector, typename VoxelValueSelector>
+std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
+                                        const int              min_scale,
+                                        NodeValueSelector      select_node_value,
+                                        VoxelValueSelector     select_voxel_value,
+                                        bool&                  is_valid) const {
 
   auto select_weight = [](const auto& data) { return data.y; };
 
   // The return types of the select() and select_weight() functions. Since they
   // can be lambda functions, an argument needs to be passed to the, before
   // deducing the return type.
-  typedef decltype(select_value(T::initData())) select_value_t;
-  typedef decltype(select_weight(T::initData())) select_weight_t;
+  typedef decltype(select_voxel_value(T::initData())) value_t;
+  typedef decltype(select_weight(T::initData())) weight_t;
 
   int iter = 0;
-  int scale = min_scale;
-  select_value_t voxel_values[8] = { select_value(T::initData()) };
-  select_weight_t voxel_weights[8];
+  int target_scale = min_scale;
+  value_t voxel_values[8] = { select_voxel_value(T::initData()) };
+  weight_t voxel_weights[8];
   Eigen::Vector3f factor;
   while (iter < 3) {
-    const int stride = 1 << scale;
-    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - offset_;
+    const int stride = 1 << target_scale;
+    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - sample_offset_frac_;
     factor =  math::fracf(scaled_voxel_coord_f);
     const Eigen::Vector3i base_coord = stride * scaled_voxel_coord_f.cast<int>();
-    const Eigen::Vector3i lower_coord = base_coord.cwiseMax(Eigen::Vector3i::Zero());
-    if (((lower_coord + Eigen::Vector3i::Constant(stride)).array() >= size_).any()) {
-      return {select_value(T::initData()), -1};
+    if ((base_coord.array() < 0).any() ||
+        ((base_coord + Eigen::Vector3i::Constant(stride)).array() >= size_).any()) {
+      is_valid = false;
+      return {select_voxel_value(T::initData()), target_scale};
     }
 
-    int res = internal::gather_values(*this, lower_coord, scale, select_value, voxel_values);
-    internal::gather_values(*this, lower_coord, scale, select_weight, voxel_weights);
+    int interp_scale = se::internal::gather_values(
+        *this, base_coord, target_scale, select_node_value, select_voxel_value, voxel_values);
+    se::internal::gather_values(
+        *this, base_coord, target_scale, select_weight, select_weight, voxel_weights);
 
-    if (res == scale) {
+    if (interp_scale == target_scale) {
       break;
     } else {
-      scale = res;
+      target_scale = interp_scale;
     }
     iter++;
   }
 
   for (int i = 0; i < 8; ++i) {
     if (voxel_weights[i] == 0) {
-      return {select_value(T::initData()), -1};
+      is_valid = false;
+      return {select_voxel_value(T::initData()), -1};
     }
   }
 
+  is_valid = true;
   return {(((voxel_values[0] * (1 - factor.x())
           + voxel_values[1] * factor.x()) * (1 - factor.y())
           + (voxel_values[2] * (1 - factor.x())
@@ -768,7 +788,7 @@ std::pair<float, int> Octree<T>::interp_checked(
           * (1 - factor.y())
           + (voxel_values[6] * (1 - factor.x())
           + voxel_values[7] * factor.x())
-          * factor.y()) * factor.z()), scale};
+          * factor.y()) * factor.z()), target_scale};
 }
 
 
@@ -785,7 +805,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
   Eigen::Vector3f gradient = Eigen::Vector3f::Constant(0);
   while(iter < 3) {
     const int stride = 1 << scale;
-    const Eigen::Vector3f scaled_voxel_coord_f = 1.f/stride * voxel_coord_f - offset_;
+    const Eigen::Vector3f scaled_voxel_coord_f = 1.f/stride * voxel_coord_f - sample_offset_frac_;
     factor =  math::fracf(scaled_voxel_coord_f);
     const Eigen::Vector3i base_coord = stride * scaled_voxel_coord_f.cast<int>();
     Eigen::Vector3i lower_lower_coord = (base_coord - stride * Eigen::Vector3i::Constant(1)).cwiseMax(Eigen::Vector3i::Constant(0));
@@ -1110,6 +1130,6 @@ void Octree<T>::load(const std::string& filename) {
 }
 }
 template <typename FieldType>
-const Eigen::Vector3f se::Octree<FieldType>::offset_ =
+const Eigen::Vector3f se::Octree<FieldType>::sample_offset_frac_ =
   Eigen::Vector3f::Constant(SAMPLE_POINT_POSITION);
 #endif // OCTREE_H

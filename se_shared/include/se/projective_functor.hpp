@@ -51,9 +51,13 @@ namespace functor {
                          UpdateF                funct,
                          const Eigen::Matrix4f& T_CM,
                          const SensorImpl       sensor,
-                         const Eigen::Vector3f& offset,
+                         const Eigen::Vector3f& sample_offset_frac,
                          const Eigen::Vector2i& image_res) :
-        octree_(octree), funct_(funct), T_CM_(T_CM), sensor_(sensor), offset_(offset),
+        octree_(octree),
+        funct_(funct),
+        T_CM_(T_CM),
+        sensor_(sensor),
+        sample_offset_frac_(sample_offset_frac),
         image_res_(image_res) {
       }
 
@@ -97,7 +101,8 @@ namespace functor {
 #pragma omp simd
             for (unsigned int x = block_coord.x(); x < x_last; ++x) {
               const Eigen::Vector3i voxel_coord = Eigen::Vector3i(x, y, z);
-              const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim * (voxel_coord.cast<float>() + offset_)).homogeneous()).head(3);
+              const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim * (voxel_coord.cast<float>() +
+                  sample_offset_frac_)).homogeneous()).head(3);
 
               Eigen::Vector2f pixel_f;
               if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
@@ -126,7 +131,8 @@ namespace functor {
           const Eigen::Vector3i rel_step = node->size_ / 2 *
               Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0); // TODO: Offset needs to be discussed
           const Eigen::Vector3i child_coord = node_coord + rel_step;
-          const Eigen::Vector3f child_point_C = (T_CM_ * (voxel_dim * (child_coord.cast<float>() + node->size_ * offset_)).homogeneous()).head(3);
+          const Eigen::Vector3f child_point_C = (T_CM_ * (voxel_dim * (child_coord.cast<float>() + node->size_ *
+              sample_offset_frac_)).homogeneous()).head(3);
           Eigen::Vector2f pixel_f;
           if (sensor_.model.project(child_point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
             continue;
@@ -163,7 +169,7 @@ namespace functor {
       UpdateF funct_;
       const Eigen::Matrix4f& T_CM_;
       const SensorImpl sensor_;
-      const Eigen::Vector3f offset_;
+      const Eigen::Vector3f sample_offset_frac_;
       const Eigen::Vector2i image_res_;
       std::vector<se::VoxelBlock<FieldType>*> active_list_;
   };
@@ -173,14 +179,14 @@ namespace functor {
   template <typename FieldType, template <typename FieldT> class OctreeT,
             typename UpdateF>
   void projective_octree(OctreeT<FieldType>&    octree,
-                         const Eigen::Vector3f& offset,
+                         const Eigen::Vector3f& sample_offset_frac,
                          const Eigen::Matrix4f& T_CM,
                          const SensorImpl&      sensor,
                          const Eigen::Vector2i& image_res,
                          UpdateF                funct) {
 
     projective_functor<FieldType, OctreeT, UpdateF>
-      it(octree, funct, T_CM, sensor, offset, image_res);
+      it(octree, funct, T_CM, sensor, sample_offset_frac, image_res);
     it.apply();
   }
 }

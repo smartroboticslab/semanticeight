@@ -136,7 +136,7 @@ float computeMapIntersection( const Eigen::Vector3f& ray_pos_M, const Eigen::Vec
  * @param t             Distance until the search voxel block is reached
  * @param t_near        Distance to near plane or until the map is entered
  * @param t_far         Distance to far plane or until the map is surpassed
- * @param map_res       Resolution of the map
+ * @param voxel_dim     Resolution of the map
  * @param max_scale     Finest scale at which to check the occupancy
  * @param is_valid      Indiactes if a voxel block was found
  * \return              Surface intersection point in [m] and scale
@@ -147,16 +147,16 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
                 float&                 t,
                 const float&           t_near,
                 float&                 t_far,
-                const float&           map_res,
+                const float&           voxel_dim,
                 int                    max_scale,
                 bool&                  is_valid) {
   int scale = max_scale;  // Initialize scale
   // Additional distance travelled in [voxel]
   float v_add  = 0;                     // TODO: I'll have to re-evaluate this value.
-  float v      = 1 / map_res * t;       // t in voxel coordinates
-  float v_near = 1 / map_res * t_near;  // t_near in voxel coordinates
-  float v_far  = 1 / map_res * t_far;   // t_far in voxel coordinates
-  Eigen::Vector3f origin_vox = 1 / map_res * ray_origin_M; // Origin in voxel coordinates
+  float v      = 1 / voxel_dim * t;       // t in voxel coordinates
+  float v_near = 1 / voxel_dim * t_near;  // t_near in voxel coordinates
+  float v_far  = 1 / voxel_dim * t_far;   // t_far in voxel coordinates
+  Eigen::Vector3f origin_vox = 1 / voxel_dim * ray_origin_M; // Origin in voxel coordinates
 
   // Current state of V in [voxel]
   Eigen::Vector3f V_max = Eigen::Vector3f::Ones();
@@ -184,7 +184,7 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
   // Maximum valid travelled distance in voxel is the minimum out of the far plane,
   // and the smallest distance that will make the ray cross the map boundary in either x, y or z ray_dir_M.
   v_far = std::min(std::min(std::min(v_map.x(), v_map.y()), v_map.z()) + v, v_far); // [voxel]
-  t_far = map_res * v_far;                                                          // [m]
+  t_far = voxel_dim * v_far;                                                          // [m]
 
   auto value = map->get_fine(origin_vox.x(), origin_vox.y(), origin_vox.z(), max_scale);
   while (value.x_max > -0.2f && scale > 2) {
@@ -197,7 +197,7 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
   int iter_1 = 0;
   while ((v + v_add) < v_far) {
     if (scale <= 2) {
-      t = map_res * (v + v_add - 4);
+      t = voxel_dim * (v + v_add - 4);
       return;
     }
 
@@ -277,9 +277,9 @@ Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, s
                                          float,
                                          float) {
   const int map_size = volume.size();              // map_size    := [voxel]
-  const float voxel_dim = volume.dim() / map_size; // map_res     := [m / voxel];
-  const float inverse_voxel_dim = 1.f / voxel_dim; // inv_map_res := [voxel / m];
-  // inv_map_res := [m] to [voxel]; map_res := [voxel] to [m]
+  const float voxel_dim = volume.dim() / map_size; // voxel_dim     := [m / voxel];
+  const float inverse_voxel_dim = 1.f / voxel_dim; // inv_voxel_dim := [voxel / m];
+  // inv_voxel_dim := [m] to [voxel]; voxel_dim := [voxel] to [m]
   float t_near = near_plane;                       // max travel distance in [m]
   float t_far  = far_plane;                        // min travel distance in [m]
 

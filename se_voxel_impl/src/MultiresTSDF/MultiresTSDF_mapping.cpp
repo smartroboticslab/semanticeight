@@ -125,64 +125,6 @@ namespace se {
       node->timestamp(timestamp);
     }
 
-
-    template<typename FieldSelector>
-    float interp(const Eigen::Vector3i&                         voxel_coord,
-                 const int                                      scale,
-                 const se::Octree<MultiresTSDF::VoxelType>&     map,
-                 const se::VoxelBlock<MultiresTSDF::VoxelType>* block,
-                 FieldSelector                                  select_value,
-                 bool&                                          is_valid) {
-
-      auto select_weight = [](const auto &data) { return data.y; };
-
-      // The return types of the select_value() and select_weight() functions. Since they
-      // can be lambda functions, an argument needs to be passed to them before
-      // deducing the return type.
-      typedef decltype(select_value(MultiresTSDF::VoxelType::initData())) select_value_t;
-      typedef decltype(select_weight(MultiresTSDF::VoxelType::initData())) select_weight_t;
-
-      // Compute base point in parent block
-      const int block_size = se::VoxelBlock<MultiresTSDF::VoxelType>::size >> (scale + 1);
-      const int stride = 1 << (scale + 1);
-
-      const Eigen::Vector3f& centre_offset = se::Octree<MultiresTSDF::VoxelType>::offset_;
-      Eigen::Vector3i base_coord =
-          stride * (voxel_coord.cast<float>() / stride - centre_offset).cast<int>().cwiseMax(Eigen::Vector3i::Zero());
-      base_coord = (base_coord.array() == block_size - 1).select(base_coord - Eigen::Vector3i::Constant(1), base_coord);
-
-      select_value_t values[8];
-      internal::gather_values(
-          map, block->coordinates() + base_coord, scale + 1, select_value, values);
-
-      select_weight_t weights[8];
-      internal::gather_values(
-          map, block->coordinates() + base_coord, scale + 1, select_weight, weights);
-      for (int i = 0; i < 8; ++i) {
-        if (weights[i] == 0) {
-          is_valid = false;
-          return select_value(MultiresTSDF::VoxelType::initData());
-        }
-      }
-      is_valid = true;
-
-      const Eigen::Vector3f voxel_coord_f = voxel_coord.cast<float>() + centre_offset * (stride / 2);
-      const Eigen::Vector3f base_coord_f = base_coord.cast<float>() + centre_offset * (stride);
-      const Eigen::Vector3f factor = (voxel_coord_f - base_coord_f) / stride;
-
-      const float v_000 = values[0] * (1 - factor.x()) + values[1] * factor.x();
-      const float v_001 = values[2] * (1 - factor.x()) + values[3] * factor.x();
-      const float v_010 = values[4] * (1 - factor.x()) + values[5] * factor.x();
-      const float v_011 = values[6] * (1 - factor.x()) + values[7] * factor.x();
-
-      const float v_0 = v_000 * (1 - factor.y()) + v_001 * (factor.y());
-      const float v_1 = v_010 * (1 - factor.y()) + v_011 * (factor.y());
-
-      const float val = v_0 * (1 - factor.z()) + v_1 * factor.z();
-      return val;
-    }
-
-
 /**
  * Update the subgrids of a voxel block starting from a given scale
  * down to the finest grid.
@@ -213,9 +155,10 @@ namespace se {
                     auto voxel_data = block->data(voxel_coord, voxel_scale - 1);
                     if (voxel_data.y == 0) {
                       bool is_valid;
-                      voxel_data.x = se::math::clamp(
-                          interp(voxel_coord - block_coord, voxel_scale - 1, map, block,
-                                 [](const auto &data) { return data.x; }, is_valid), -1.f, 1.f);
+                      const Eigen::Vector3f voxel_sample_coord_f =
+                          getSampleCoord(voxel_coord, stride, map.sample_offset_frac_);
+                      voxel_data.x = se::math::clamp(map.interp(voxel_sample_coord_f, voxel_scale - 1,
+                          [](const auto &data) { return data.x; }, is_valid).first, -1.f, 1.f);
                       voxel_data.y = is_valid ? parent_data.y : 0;
                       voxel_data.x_last = voxel_data.x;
                       voxel_data.delta_y = 0;
@@ -240,39 +183,41 @@ namespace se {
  * values and then integrating the new measurement;
 */
     void propagateUpdate(se::VoxelBlock<MultiresTSDF::VoxelType>*   block,
-                         const int                                  scale,
+                         const int                                  voxel_scale,
                          const se::Octree<MultiresTSDF::VoxelType>& map,
                          const se::Image<float>&                    depth_image,
                          const Eigen::Matrix4f&                     T_CM,
                          const SensorImpl&                          sensor,
-                         const float                                map_res,
+                         const float                                voxel_dim,
                          const int                                  max_weight,
-                         const Eigen::Vector3f&                     centre_offset,
+                         const Eigen::Vector3f&                     sample_offset_frac,
                          const float                                mu) {
 
       const int block_size = se::VoxelBlock<MultiresTSDF::VoxelType>::size;
-      const int parent_scale = scale + 1;
-      const int stride = 1 << parent_scale;
-      const int half_stride = stride >> 1;
+      const int parent_scale = voxel_scale + 1;
+      const int parent_stride = 1 << parent_scale;
+      const int voxel_stride = parent_stride >> 1;
       bool is_visible = false;
 
       const Eigen::Vector3i block_coord = block->coordinates();
 
-      for (unsigned int z = 0; z < block_size; z += stride) {
-        for (unsigned int y = 0; y < block_size; y += stride) {
-          for (unsigned int x = 0; x < block_size; x += stride) {
+      for (unsigned int z = 0; z < block_size; z += parent_stride) {
+        for (unsigned int y = 0; y < block_size; y += parent_stride) {
+          for (unsigned int x = 0; x < block_size; x += parent_stride) {
             const Eigen::Vector3i parent_coord = block_coord + Eigen::Vector3i(x, y, z);
             auto parent_data = block->data(parent_coord, parent_scale);
             float delta_x = parent_data.x - parent_data.x_last;
-            for (int k = 0; k < stride; k += half_stride) {
-              for (int j = 0; j < stride; j += half_stride) {
-                for (int i = 0; i < stride; i += half_stride) {
+            for (int k = 0; k < parent_stride; k += voxel_stride) {
+              for (int j = 0; j < parent_stride; j += voxel_stride) {
+                for (int i = 0; i < parent_stride; i += voxel_stride) {
                   const Eigen::Vector3i voxel_coord = parent_coord + Eigen::Vector3i(i, j, k);
-                  auto voxel_data = block->data(voxel_coord, scale);
+                  auto voxel_data = block->data(voxel_coord, voxel_scale);
+                  const Eigen::Vector3f voxel_sample_coord_f =
+                      getSampleCoord(voxel_coord, voxel_stride, sample_offset_frac);
                   if (voxel_data.y == 0) {
                     bool is_valid;
-                    voxel_data.x = se::math::clamp(interp(voxel_coord - block_coord, scale, map, block,
-                        [](const auto &val) { return val.x; }, is_valid), -1.f, 1.f);
+                    voxel_data.x = se::math::clamp(map.interp(voxel_sample_coord_f, voxel_scale + 1,
+                        [](const auto &data) { return data.x; }, is_valid).first, -1.f, 1.f);
                     voxel_data.y = is_valid ? parent_data.y : 0;
                     voxel_data.x_last = voxel_data.x;
                     voxel_data.delta_y = 0;
@@ -282,12 +227,11 @@ namespace se {
                     voxel_data.delta_y = parent_data.delta_y;
                   }
 
-                  const Eigen::Vector3f point_C = (T_CM * (map_res * (voxel_coord.cast<float>() +
-                      centre_offset)).homogeneous()).head(3);
+                  const Eigen::Vector3f point_C = (T_CM * (voxel_dim * voxel_sample_coord_f).homogeneous()).head(3);
                   
                   Eigen::Vector2f pixel_f;
                   if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
-                    block->data(voxel_coord, scale, voxel_data);
+                    block->data(voxel_coord, voxel_scale, voxel_data);
                     continue;
                   }
                   const Eigen::Vector2i pixel = round_pixel(pixel_f);
@@ -297,7 +241,7 @@ namespace se {
                   const float depth_value = depth_image[pixel.x() + depth_image.width() * pixel.y()];
                   // continue on invalid depth measurement
                   if (depth_value <= 0) {
-                    block->data(voxel_coord, scale, voxel_data);
+                    block->data(voxel_coord, voxel_scale, voxel_data);
                     continue;
                   }
 
@@ -314,7 +258,7 @@ namespace se {
                     voxel_data.y = fminf(voxel_data.y + 1, max_weight);
                     voxel_data.delta_y++;
                   }
-                  block->data(voxel_coord, scale, voxel_data);
+                  block->data(voxel_coord, voxel_scale, voxel_data);
                 }
               }
             }
@@ -324,7 +268,7 @@ namespace se {
           }
         }
       }
-      block->current_scale(scale);
+      block->current_scale(voxel_scale);
       block->active(is_visible);
     }
 
@@ -342,7 +286,7 @@ namespace se {
           sensor(sensor),
           voxel_dim(voxel_dim),
           max_weight(max_weight),
-          sample_offset_fraction(map.offset_),
+          sample_offset_frac(map.sample_offset_frac_),
           mu(sensor.mu) {}
 
       const se::Octree<MultiresTSDF::VoxelType>& map;
@@ -351,14 +295,14 @@ namespace se {
       const SensorImpl sensor;
       const float voxel_dim;
       const int max_weight;
-      const Eigen::Vector3f& sample_offset_fraction;
+      const Eigen::Vector3f& sample_offset_frac;
       const float mu;
 
       void operator()(se::VoxelBlock<MultiresTSDF::VoxelType>* block) {
 
         constexpr int block_size = se::VoxelBlock<MultiresTSDF::VoxelType>::size;
         const Eigen::Vector3i block_coord = block->coordinates();
-        const Eigen::Vector3f block_sample_offset = (sample_offset_fraction.array().colwise() *
+        const Eigen::Vector3f block_sample_offset = (sample_offset_frac.array().colwise() *
             Eigen::Vector3f::Constant(block_size).array());
         const float block_diff = (T_CM * (voxel_dim * (block_coord.cast<float>() +
             block_sample_offset)).homogeneous()).head(3).z();
@@ -376,14 +320,14 @@ namespace se {
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
         if (last_scale > scale) {
           propagateUpdate(block, scale, map, depth_image, T_CM, sensor,
-              voxel_dim, max_weight, sample_offset_fraction, mu);
+              voxel_dim, max_weight, sample_offset_frac, mu);
           return;
         }
         bool is_visible = false;
         block->current_scale(scale);
         const int stride = 1 << scale;
 
-        const Eigen::Vector3f voxel_sample_offset = sample_offset_fraction;
+        const Eigen::Vector3f voxel_sample_offset = sample_offset_frac;
         for (unsigned int z = 0; z < block_size; z += stride) {
           for (unsigned int y = 0; y < block_size; y += stride) {
 #pragma omp simd
