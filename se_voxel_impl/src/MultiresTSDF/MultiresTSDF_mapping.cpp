@@ -363,8 +363,16 @@ namespace se {
         const float block_diff = (T_CM * (voxel_dim * (block_coord.cast<float>() +
             block_sample_offset)).homogeneous()).head(3).z();
         const int last_scale = block->current_scale();
-        const int scale = std::max(std::min(sensor.computeIntegrationScale(block_diff, voxel_dim),
-        map.maxBlockScale()), last_scale - 1);
+
+        //  inline float computeScale(const Eigen::Vector3f& block_coord,
+//                            const Eigen::Vector3f& t_wc,
+//                            const Eigen::Matrix3f& R_cw,
+//                            const int              last_scale,
+//                            const int              min_scale)
+
+
+        const int scale = std::max(sensor.computeIntegrationScale(
+            block_diff, voxel_dim, last_scale, block->min_scale(), map.maxBlockScale()), last_scale - 1);
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
         if (last_scale > scale) {
           propagateUpdate(block, scale, map, depth_image, T_CM, sensor,

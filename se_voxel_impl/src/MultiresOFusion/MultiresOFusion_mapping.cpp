@@ -92,57 +92,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 
   static inline constexpr int max_block_scale_ =  se::math::log2_const(se::VoxelBlock<MultiresOFusion::VoxelType>::size);;
 
-//  /**
-//   * \brief Computes the scale depending on the voxel block distance to the camera.
-//   * \param voxel_coord         Centroid coordinates of the voxel block
-//   * \param t_wc        Translational component of the camera position
-//   * \param scale_pix   Unitary pixel side after application of inverse
-//   *                        calibration matrix
-//   * \return scale      Scale at which to integrate new measurements
-//   */
-//  inline float computeScale(const Eigen::Vector3f& block_coord,
-//                            const Eigen::Vector3f& t_wc,
-//                            const Eigen::Matrix3f& R_cw,
-//                            const int              last_scale,
-//                            const int              min_scale) {
-//    const float dist = (R_cw * (voxel_dim_ * block_coord - t_wc)).z();
-//
-//    int scale = 0;
-//    if (dist < dist_thresh_0_)
-//      scale = 0;
-//    else if (dist < dist_thresh_1_)
-//      scale = 1;
-//    else if (dist < dist_thresh_2_)
-//      scale = 2;
-//    else
-//      scale = 3;
-//    scale = std::min(scale, max_block_scale_);
-//
-//    float dist_hyst = dist;
-//    bool recompute = false;
-//    if (scale > last_scale && min_scale != -1) {
-//      dist_hyst = dist - 0.25;
-//      recompute = true;
-//    } else if (scale < last_scale && min_scale != -1) {
-//      dist_hyst = dist + 0.25;
-//      recompute = true;
-//    }
-//
-//    if (recompute) {
-//      if (dist_hyst < dist_thresh_0_)
-//        scale = 0;
-//      else if (dist_hyst < dist_thresh_1_)
-//        scale = 1;
-//      else if (dist_hyst < dist_thresh_2_)
-//        scale = 2;
-//      else
-//        scale = 3;
-//      scale = std::min(scale, max_block_scale_);
-//    }
-//
-//    return scale;
-//  }
-
   /**
    * \brief Propagate a summary of the eight nodes children to its parent
    * \param node        Node to be summariesed
@@ -451,8 +400,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     const float block_diff = (T_CM_ * (voxel_dim_ * (block_coord.cast<float>() +
                                                    block_sample_offset)).homogeneous()).head(3).z();
     const int last_scale = block->current_scale();
-    const int scale = std::max(std::max(sensor_.computeIntegrationScale(block_diff, voxel_dim_),
-                                        min_scale), last_scale - 1);
+    const int scale = std::max(sensor_.computeIntegrationScale(
+        block_diff, voxel_dim_, last_scale, block->min_scale(), map_.maxBlockScale()), last_scale - 1);
     block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
 
     if(last_scale > scale) {

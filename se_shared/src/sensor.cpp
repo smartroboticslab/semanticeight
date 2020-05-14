@@ -40,21 +40,50 @@ se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
  * \param[in] depth distance from the camera to the voxel block centre
  * \param[out] scale scale from which propagate up voxel values
  */
-int se::PinholeCamera::computeIntegrationScale(const float dist, const float voxel_dim) const {
-  const float pv_ration = dist * scaled_pixel / voxel_dim;
-
+int se::PinholeCamera::computeIntegrationScale(const float dist,
+                                               const float voxel_dim,
+                                               const int   last_scale,
+                                               const int   min_scale,
+                                               const int   max_block_scale) const {
   int scale = 0;
-  if (pv_ration < 1.5)
+  const float pv_ration = dist * scaled_pixel / voxel_dim;
+  if (pv_ration < 1.5) {
     scale = 0;
-  else if (pv_ration < 3)
+  } else if (pv_ration < 3) {
     scale = 1;
-  else if (pv_ration < 6)
+  } else if (pv_ration < 6) {
     scale = 2;
-  else
+  } else {
     scale = 3;
+  }
+  scale = std::min(scale, max_block_scale);
 
-//      int scale = std::min(std::max(0, int(log2(pix_size / voxel_dim + 0.5f))),
-//                           max_scale);
+  float dist_hyst = dist;
+  bool recompute = false;
+  if (scale > last_scale && min_scale != -1) {
+    dist_hyst = dist - 0.25;
+    recompute = true;
+  } else if (scale < last_scale && min_scale != -1) {
+    dist_hyst = dist + 0.25;
+    recompute = true;
+  }
+
+  if (!recompute) {
+    return scale;
+  }
+
+  const float pv_hyst_ration = dist_hyst * scaled_pixel / voxel_dim;
+  if (pv_hyst_ration < 1.5) {
+    scale = 0;
+  } else if (pv_hyst_ration < 3) {
+    scale = 1;
+  } else if (pv_hyst_ration < 6) {
+    scale = 2;
+  } else {
+    scale = 3;
+  }
+  scale = std::min(scale, max_block_scale);
+
   return scale;
 }
 
