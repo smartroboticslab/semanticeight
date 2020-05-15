@@ -236,7 +236,7 @@ class DenseSLAMSystem {
      *
      * \param[out] output_image_data A pointer to an array containing the rendered frame.
      * The array must be allocated before calling this function. The storage
-     * layout is rgbwrgbwrgbw.
+     * layout is rgbargbargba.
      * \param[in] output_image_res The dimensions of the output array (width and
      * height in pixels).
      */

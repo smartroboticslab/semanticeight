@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
       ? Eigen::Vector2i(reader->getInputImageResolution().x, reader->getInputImageResolution().y)
       : Eigen::Vector2i(640, 480);
   const Eigen::Vector2i image_res
-      = input_image_res / config.image_resolution_ratio;
+      = input_image_res / config.image_downsampling_factor;
 
   //  =========  BASIC BUFFERS  (input / output )  =========
 
@@ -230,13 +230,13 @@ int processAll(DepthReader*   reader,
       ? Eigen::Vector2i(reader->getInputImageResolution().x, reader->getInputImageResolution().y)
       : Eigen::Vector2i(640, 480);
   const Eigen::Vector2i image_res
-      = input_image_res / config->image_resolution_ratio;
+      = input_image_res / config->image_downsampling_factor;
   const SensorImpl sensor({image_res.x(), image_res.y(), config->left_hand_frame,
                            nearPlane, farPlane, config->mu,
-                           config->camera[0] / config->image_resolution_ratio,
-                           config->camera[1] / config->image_resolution_ratio,
-                           config->camera[2] / config->image_resolution_ratio,
-                           config->camera[3] / config->image_resolution_ratio,
+                           config->camera[0] / config->image_downsampling_factor,
+                           config->camera[1] / config->image_downsampling_factor,
+                           config->camera[2] / config->image_downsampling_factor,
+                           config->camera[3] / config->image_downsampling_factor,
                            Eigen::VectorXf(0), Eigen::VectorXf(0)});
 
   if (reset) {

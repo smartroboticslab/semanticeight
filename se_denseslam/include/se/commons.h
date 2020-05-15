@@ -102,7 +102,7 @@ void read_input(std::string inputfile, T * in) {
 	}
 }
 
-inline void gs2rgb(double h, unsigned char rgbw[4]) {
+inline void gs2rgb(double h, unsigned char rgba[4]) {
 	double v = 0;
 	double r = 0, g = 0, b = 0;
 	v = 0.75;
@@ -157,10 +157,10 @@ inline void gs2rgb(double h, unsigned char rgbw[4]) {
 			break;
 		}
 	}
-	rgbw[0] = r * 255;
-	rgbw[1] = g * 255;
-	rgbw[2] = b * 255;
-	rgbw[3] = 255; // Only for padding purposes
+	rgba[0] = r * 255;
+	rgba[1] = g * 255;
+	rgba[2] = b * 255;
+	rgba[3] = 255; // Only for padding purposes
 }
 
 typedef struct Triangle {

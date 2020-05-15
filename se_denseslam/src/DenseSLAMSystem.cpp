@@ -245,26 +245,26 @@ void DenseSLAMSystem::dump_volume(std::string ) {
 
 }
 
-void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBW_image_data,
-                                   const Eigen::Vector2i& volume_RGBW_image_res,
+void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBA_image_data,
+                                   const Eigen::Vector2i& volume_RGBA_image_res,
                                    const SensorImpl&      sensor) {
 
   float step = map_dim_.x() / map_size_.x();
-  renderVolumeKernel(volume_, volume_RGBW_image_data, volume_RGBW_image_res,
+  renderVolumeKernel(volume_, volume_RGBA_image_data, volume_RGBA_image_res,
       *this->render_T_MC_, sensor, step, step * BLOCK_SIZE,
       se::math::to_translation(*this->render_T_MC_), ambient,
       !(this->render_T_MC_->isApprox(raycast_T_MC_)), surface_point_cloud_M_, surface_normals_M_);
 }
 
-void DenseSLAMSystem::renderTrack(unsigned char*         tracking_RGBW_image_data,
-                                  const Eigen::Vector2i& tracking_RGBW_image_res) {
-  renderTrackKernel(tracking_RGBW_image_data, tracking_result_.data(), tracking_RGBW_image_res);
+void DenseSLAMSystem::renderTrack(unsigned char*         tracking_RGBA_image_data,
+                                  const Eigen::Vector2i& tracking_RGBA_image_res) {
+  renderTrackKernel(tracking_RGBA_image_data, tracking_result_.data(), tracking_RGBA_image_res);
 }
 
-void DenseSLAMSystem::renderDepth(unsigned char*         depth_RGBW_image_data,
-                                  const Eigen::Vector2i& depth_RGBW_image_res,
+void DenseSLAMSystem::renderDepth(unsigned char*         depth_RGBA_image_data,
+                                  const Eigen::Vector2i& depth_RGBA_image_res,
                                   const SensorImpl&      sensor) {
-  renderDepthKernel(depth_RGBW_image_data, depth_image_.data(), depth_RGBW_image_res,
+  renderDepthKernel(depth_RGBA_image_data, depth_image_.data(), depth_RGBA_image_res,
       sensor.near_plane, sensor.far_plane);
 }
 

@@ -30,7 +30,7 @@ const bool default_blocking_read = false;
 const int default_fps = 0;
 const bool default_left_hand_frame = false;
 const float default_icp_threshold = 1e-5;
-const int default_image_resolution_ratio = 1;
+const int default_image_downsampling_factor = 1;
 const int default_integration_rate = 2;
 const int default_rendering_rate = 4;
 const int default_tracking_rate = 1;
@@ -77,7 +77,7 @@ static struct option long_options[] =
 inline
 void print_arguments() {
   std::cerr << "-b  (--block-read)                        : default is False: Block on read " << std::endl;
-  std::cerr << "-c  (--image-resolution-ratio)                : default is " << default_image_resolution_ratio << "   (same size)      " << std::endl;
+  std::cerr << "-c  (--image-downsampling-factor)         : default is " << default_image_downsampling_factor << "   (same size)      " << std::endl;
   std::cerr << "-d  (--dump-volume) <filename>            : Output volume file              " << std::endl;
   std::cerr << "-f  (--fps)                               : default is " << default_fps       << std::endl;
   std::cerr << "-F  (--bilateral-filter                   : default is disabled"               << std::endl;
@@ -179,7 +179,7 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
 
   Configuration config;
 
-  config.image_resolution_ratio = default_image_resolution_ratio;
+  config.image_downsampling_factor = default_image_downsampling_factor;
   config.left_hand_frame = default_left_hand_frame;
   config.integration_rate = default_integration_rate;
   config.tracking_rate = default_tracking_rate;
@@ -232,11 +232,11 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
         std::cerr << "activate blocking read" << std::endl;
         break;
       case 'c':  //   -c  (--image-resolution-ratio)
-        config.image_resolution_ratio = atoi(optarg);
-        if ((config.image_resolution_ratio != 1)
-            && (config.image_resolution_ratio != 2)
-            && (config.image_resolution_ratio != 4)
-            && (config.image_resolution_ratio != 8)) {
+        config.image_downsampling_factor = atoi(optarg);
+        if ((config.image_downsampling_factor != 1)
+            && (config.image_downsampling_factor != 2)
+            && (config.image_downsampling_factor != 4)
+            && (config.image_downsampling_factor != 8)) {
           std::cerr
             << "ERROR: --image-resolution-ratio (-c) must be 1, 2 ,4 or 8  (was "
             << optarg << ")\n";
