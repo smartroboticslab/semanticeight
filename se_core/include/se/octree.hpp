@@ -192,9 +192,9 @@ public:
    * to the interval [0, size]
    * \return signed distance function value at voxel position (x, y, z)
    */
-  template <typename FieldSelect>
+  template <typename ValueSelector>
   std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               FieldSelect            select_value) const;
+                               ValueSelector          select_value) const;
 
   /*! \brief Interp voxel value at voxel position  (x,y,z)
    * \param voxel_coord_f three-dimensional coordinates in which each component belongs
@@ -203,20 +203,31 @@ public:
    * \return signed distance function value at voxel position (x, y, z)
    */
 
-  template <typename FieldSelect>
+  template <typename ValueSelector>
   std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               const int              stride,
-                               FieldSelect            select_value) const;
+                               const int              min_scale,
+                               ValueSelector          select_value) const;
+
+  template <typename NodeValueSelector, typename VoxelValueSelector>
+  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                               NodeValueSelector      select_node_value,
+                               VoxelValueSelector     select_voxel_value) const;
+
+  template <typename NodeValueSelector, typename VoxelValueSelector>
+  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                               const int              min_scale,
+                               NodeValueSelector      select_node_value,
+                               VoxelValueSelector     select_voxel_value) const;
 
   template <typename ValueSelector>
   std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               const int              stride,
+                               const int              min_scale,
                                ValueSelector          select_value,
                                bool&                  is_valid) const;
 
   template <typename NodeValueSelector, typename VoxelValueSelector>
   std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               const int              stride,
+                               const int              min_scale,
                                NodeValueSelector      select_node_value,
                                VoxelValueSelector     select_voxel_value,
                                bool&                  is_valid) const;
@@ -665,23 +676,33 @@ template <typename T>
 template <typename FieldSelector>
 std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord,
                                         FieldSelector          select_value) const {
-  return interp(voxel_coord, 0, select_value);
+  return interp(voxel_coord, 0, select_value, select_value);
 }
 
 template <typename T>
-template <typename FieldSelector>
+template <typename ValueSelector>
+std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord,
+                                        const int              min_scale,
+                                        ValueSelector          select_value) const {
+  return interp(voxel_coord, min_scale, select_value, select_value);
+}
+
+template <typename T>
+template <typename NodeValueSelector,
+          typename VoxelValueSelector>
 std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
                                         const int              min_scale,
-                                        FieldSelector          select_value) const {
+                                        NodeValueSelector      select_node_value,
+                                        VoxelValueSelector     select_voxel_value) const {
 
   // The return type of the select_value() function. Since it can be a lambda
   // function, an argument needs to be passed to it before deducing the return
   // type.
-  typedef decltype(select_value(T::initData())) value_t;
+  typedef decltype(select_voxel_value(T::initData())) value_t;
 
   int iter = 0;
   int target_scale = min_scale;
-  value_t voxel_values[8] = { select_value(T::initData()) };
+  value_t voxel_values[8] = { select_voxel_value(T::initData()) };
   Eigen::Vector3f factor;
   while (iter < 3) {
     const int stride = 1 << target_scale;
@@ -690,10 +711,10 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
     const Eigen::Vector3i base_coord = stride * scaled_voxel_coord_f.cast<int>();
     if ((base_coord.array() < 0).any() ||
         ((base_coord + Eigen::Vector3i::Constant(stride)).array() >= size_).any()) {
-      return {select_value(T::initData()), target_scale};
+      return {select_voxel_value(T::initData()), target_scale};
     }
     int interp_scale = internal::gather_values(*this, base_coord, target_scale,
-        select_value, voxel_values);
+        select_node_value, select_voxel_value, voxel_values);
     if (interp_scale == target_scale) {
       break;
     } else {

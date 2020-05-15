@@ -84,28 +84,52 @@ class VolumeTemplate {
       return octree_->get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
     }
 
-    template <typename FieldSelector>
-    std::pair<float, int> interp(const Eigen::Vector3f& point_M, FieldSelector select) const {
+    template <typename ValueSelector>
+    std::pair<float, int> interp(const Eigen::Vector3f& point_M,
+                                 ValueSelector          select_value) const {
       const float inverse_voxel_dim = size_ / dim_;
       Eigen::Vector3f voxel_coord_f = inverse_voxel_dim * point_M;
-      return octree_->interp(voxel_coord_f, select);
+      return octree_->interp(voxel_coord_f, 0, select_value, select_value);
     }
 
-  /*! \brief Interp voxel value at metric position  (x,y,z)
-   * \param point_M three-dimensional coordinates in which each component belongs
-   * to the interval [0, _extent]
-   * \param stride distance between neighbouring sampling point, in voxels.
-   * Must be >= 1
-   * \return signed distance function value at voxel position (x,y,z)
-   */
-    template <typename FieldSelector>
-    std::pair<float, int> interp(const Eigen::Vector3f& point_M, const int h, FieldSelector select) const {
+    template <typename ValueSelector>
+    std::pair<float, int> interp(const Eigen::Vector3f& point_M,
+                                 const int              min_scale,
+                                 ValueSelector          select_value) const {
+      const float inverse_voxel_dim = size_ / dim_;
+      Eigen::Vector3f voxel_coord_f = inverse_voxel_dim * point_M;
+      return octree_->interp(voxel_coord_f, min_scale, select_value, select_value);
+    }
+
+    /*! \brief Interp voxel value at metric position  (x,y,z)
+     * \param point_M three-dimensional coordinates in which each component belongs
+     * to the interval [0, _extent]
+     * \param stride distance between neighbouring sampling point, in voxels.
+     * Must be >= 1
+     * \return signed distance function value at voxel position (x,y,z)
+     */
+    template <typename NodeValueSelector,
+              typename VoxelValueSelector>
+    std::pair<float, int> interp(const Eigen::Vector3f& point_M,
+                                 NodeValueSelector      select_node_value,
+                                 VoxelValueSelector     select_voxel_value) const {
       const float inverse_voxel_dim = size_ / dim_;
       Eigen::Vector3f voxel_coord_f = (inverse_voxel_dim * point_M);
-      return octree_->interp(voxel_coord_f, h, select);
+      return octree_->interp(voxel_coord_f, 0, select_node_value, select_voxel_value);
     }
 
-    /*! \brief Compute gradient at metric position  (x,y,z)
+    template <typename NodeValueSelector,
+              typename VoxelValueSelector>
+    std::pair<float, int> interp(const Eigen::Vector3f& point_M,
+                                 const int              min_scale,
+                                 NodeValueSelector      select_node_value,
+                                 VoxelValueSelector     select_voxel_value) const {
+      const float inverse_voxel_dim = size_ / dim_;
+      Eigen::Vector3f voxel_coord_f = (inverse_voxel_dim * point_M);
+      return octree_->interp(voxel_coord_f, min_scale, select_node_value, select_voxel_value);
+    }
+
+  /*! \brief Compute gradient at metric position  (x,y,z)
      * \param point_M three-dimensional coordinates in which each component belongs
      * to the interval [0, dim_]
      * \return signed distance function value at voxel position (x,y,z)

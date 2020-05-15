@@ -302,13 +302,15 @@ Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, s
     // Ray passes only through free space or intersects with the map before t_near or after t_far.
     return Eigen::Vector4f::Zero();
   }
-  auto select_occupancy = [](const auto& data){ return data.x; };
+  auto select_node_occupancy = [](const auto& data){ return data.x; };
+  auto select_voxel_occupancy = [](const auto& data){ return data.x / data.y; };
+
   // first walk with largesteps until we found a hit
   float step_dim = voxel_dim / 2;
   Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
 
   const int scale = 0;
-  auto interp_res = volume.interp(ray_pos_M, scale, select_occupancy);
+  auto interp_res = volume.interp(ray_pos_M, scale, select_node_occupancy, select_voxel_occupancy);
   float f_t = interp_res.first;
   float f_tt = 0;
 
@@ -319,7 +321,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, s
       auto data = volume.get(ray_pos_M, scale);
 
       if (data.x > -0.2f && data.frame > 0.f) {
-        interp_res = volume.interp(ray_pos_M, scale, select_occupancy);
+        interp_res = volume.interp(ray_pos_M, scale, select_node_occupancy, select_voxel_occupancy);
         f_tt = interp_res.first;
       }
       if (f_tt > MultiresOFusion::surface_boundary)                  // got it, jump out of inner loop
