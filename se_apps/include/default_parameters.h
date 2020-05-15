@@ -46,7 +46,7 @@ const std::string default_log_file = "";
 const std::string default_groundtruth_file = "";
 const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
 
-static std::string short_options = "a:bqc:d:f:g:G:hi:l:m:k:o:p:r:s:t:v:y:z:FC:M";
+static std::string short_options = "bqc:d:f:g:G:i:l:m:k:o:p:r:s:t:v:y:z:F";
 
 static struct option long_options[] =
 {
@@ -67,7 +67,6 @@ static struct option long_options[] =
   {"map-size",                  required_argument, 0, 'v'},
   {"pyramid-levels",            required_argument, 0, 'y'},
   {"rendering-rate",            required_argument, 0, 'z'},
-  {"voxel-block-size",          required_argument, 0, 'B'},
   {"bilateral-filter",          no_argument, 0, 'F'},
   {"ground-truth",              required_argument, 0, 'g'},
   {"gt-transform",              required_argument, 0, 'G'},
@@ -217,16 +216,6 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
           &option_index)) != -1)
     switch (c) {
-      case 'a':
-        {
-          //float4 vals = atof4(optarg);
-          //initial_pose_quant = Eigen::Quaternionf(vals.w, vals.x, vals.y, vals.z);
-
-          //std::cerr << "update quaternion rotation to " << config.initial_pose_quant.x() << ","
-          //<< config.initial_pose_quant.y() << "," << config.initial_pose_quant.z() << ","
-          //<< config.initial_pose_quant.w() << std::endl;
-          break;
-        }
       case 'b':
         config.blocking_read = true;
         std::cerr << "activate blocking read" << std::endl;
@@ -246,11 +235,6 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
       case 'd':
         config.dump_volume_file = optarg;
         break;
-      case 'e':
-        //config.invert_y = true;
-        //std::cerr << "Inverting Y axis (ICL-NUIM Fix)" << std::endl;
-        break;
-
       case 'f':  //   -f  (--fps)
         config.fps = atoi(optarg);
         std::cerr << "update fps to " << config.fps << std::endl;
