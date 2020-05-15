@@ -343,7 +343,7 @@ namespace se {
               const Eigen::Vector2i pixel = round_pixel(pixel_f);
 
               is_visible = true;
-              // const Eigen::Vector2i pixel = (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();
+
               const float depth_value = depth_image[pixel.x() + depth_image.width() * pixel.y()];
               // continue on invalid depth measurement
               if (depth_value <= 0) continue;

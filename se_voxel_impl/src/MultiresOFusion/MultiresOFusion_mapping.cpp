@@ -232,7 +232,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                 auto voxel_data = block->data(voxel_coord, scale);
 
                 bool is_valid = true;
-//                auto occupancy = interp(map_, block, voxel_coord - block_coord, scale, is_valid);
                 
                 const Eigen::Vector3f voxel_sample_coord_f =
                     se::getSampleCoord(voxel_coord, voxel_stride, sample_offset_frac_);
@@ -598,7 +597,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 
     // Project the 8 corners into the image plane
     Eigen::Matrix2Xf proj_node_corner_pixels_f(2, 8);
-    Eigen::VectorXf node_corners_diff = node_corner_points_C.row(2);
+    const Eigen::VectorXf node_corners_diff = node_corner_points_C.row(2);
     std::vector<srl::projection::ProjectionStatus> proj_node_corner_stati;
     sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
 
@@ -622,10 +621,10 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         // CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary
       } else {
         // Compute the minimum and maximum pixel values to generate the bounding box
-        Eigen::Vector2i image_bb_min = proj_node_corner_pixels_f.rowwise().minCoeff().cast<int>();
-        Eigen::Vector2i image_bb_max = proj_node_corner_pixels_f.rowwise().maxCoeff().cast<int>();
-        float node_dist_min = node_corners_diff.minCoeff();
-        float node_dist_max = node_corners_diff.maxCoeff();
+        const Eigen::Vector2i image_bb_min = proj_node_corner_pixels_f.rowwise().minCoeff().cast<int>();
+        const Eigen::Vector2i image_bb_max = proj_node_corner_pixels_f.rowwise().maxCoeff().cast<int>();
+        const float node_dist_min = node_corners_diff.minCoeff();
+        const float node_dist_max = node_corners_diff.maxCoeff();
 
         kernel_pixel = kernel_depth_image_->conservativeQuery(image_bb_min, image_bb_max);
 
@@ -702,9 +701,9 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 #pragma omp parallel for
         for(int child_idx = 0; child_idx < 8; ++child_idx) {
           int child_size = node_size / 2;
-          Eigen::Vector3i child_rel_step = 
+          const Eigen::Vector3i child_rel_step =
               Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0);
-          Eigen::Vector3i child_coord = node_coord + child_rel_step * child_size;
+          const Eigen::Vector3i child_coord = node_coord + child_rel_step * child_size;
           (*this)(child_coord, child_size, depth + 1, child_rel_step, node);
         }
       }

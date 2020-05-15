@@ -119,7 +119,7 @@ namespace se {
     KernelImage(const se::Image<float>& depth_image);
 
     bool inImage(const int u, const int v) const;
-    KernelImage::Pixel conservativeQuery(Eigen::Vector2i& bb_min, Eigen::Vector2i& bb_max) const;
+    KernelImage::Pixel conservativeQuery(const Eigen::Vector2i& bb_min, const Eigen::Vector2i& bb_max) const;
     KernelImage::Pixel poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const;
 
     size_t width() const {return image_width_;};

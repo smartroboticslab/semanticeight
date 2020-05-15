@@ -91,7 +91,7 @@ size_t OFusion::buildAllocationList(
 #pragma omp parallel for
   for (unsigned int y = 0; y < depth_image_res.y(); ++y) {
     for (unsigned int x = 0; x < depth_image_res.x(); ++x) {
-      Eigen::Vector2i pixel(x, y);
+      const Eigen::Vector2i pixel(x, y);
       if (depth_image[pixel.x() + pixel.y() * depth_image_res.x()] == 0) {
         continue;
       }

@@ -77,7 +77,7 @@ size_t MultiresTSDF::buildAllocationList(
 #pragma omp parallel for
   for (int y = 0; y < depth_image_res.y(); ++y) {
     for (int x = 0; x < depth_image_res.x(); ++x) {
-      Eigen::Vector2i pixel(x, y);
+      const Eigen::Vector2i pixel(x, y);
       if (depth_image[x + y*depth_image_res.x()] == 0.f)
         continue;
 

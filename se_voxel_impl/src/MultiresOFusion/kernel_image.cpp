@@ -205,7 +205,8 @@ namespace se {
     return false;
   }
 
-  KernelImage::Pixel KernelImage::conservativeQuery(Eigen::Vector2i& bb_min, Eigen::Vector2i& bb_max) const {
+  KernelImage::Pixel KernelImage::conservativeQuery(const Eigen::Vector2i& bb_min,
+                                                    const Eigen::Vector2i& bb_max) const {
     bool u_in = true;   // << Pixel batch width is entirely contained within the image
     bool u_out = false; // << Pixel batch width is entirely outside the image
 
