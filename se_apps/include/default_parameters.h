@@ -10,6 +10,7 @@
 #ifndef __DEFAULT_PARAMETERS_H
 #define __DEFAULT_PARAMETERS_H
 
+#include <cstdlib>
 #include <getopt.h>
 #include <sstream>
 #include <vector>
@@ -220,7 +221,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
   int c;
   int option_index = 0;
-  int flagErr = 0;
   std::vector<std::string> tokens;
   Eigen::Vector3f gt_transform_tran;
   Eigen::Quaternionf gt_transform_quat;
@@ -239,9 +239,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
             && (config.image_downsampling_factor != 4)
             && (config.image_downsampling_factor != 8)) {
           std::cerr
-            << "ERROR: --image-resolution-ratio (-c) must be 1, 2 ,4 or 8  (was "
+            << "Error: --image-resolution-ratio (-c) must be 1, 2 ,4 or 8  (was "
             << optarg << ")\n";
-          flagErr++;
+          exit(EXIT_FAILURE);
         }
         break;
 
@@ -254,9 +254,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         std::cerr << "update fps to " << config.fps << std::endl;
 
         if (config.fps < 0) {
-          std::cerr << "ERROR: --fps (-f) must be >= 0 (was "
+          std::cerr << "Error: --fps (-f) must be >= 0 (was "
             << optarg << ")\n";
-          flagErr++;
+          exit(EXIT_FAILURE);
         }
         break;
 
@@ -291,13 +291,12 @@ Configuration parseArgs(unsigned int argc, char** argv) {
             config.T_BC.block<3,3>(0,0) = gt_transform_quat.toRotationMatrix();
             break;
           default:
-            std::cerr << "Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
+            std::cerr << "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
                 << "3 parameters (translation): tx,ty,tz\n"
                 << "4 parameters (rotation in quaternion form): qx,qy,qz,qw\n"
                 << "7 parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw"
                 << std::endl;
-            flagErr++;
-            break;
+            exit(EXIT_FAILURE);
         }
         break;
 
@@ -305,9 +304,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.input_file = optarg;
         struct stat st;
         if (stat(config.input_file.c_str(), &st) != 0) {
-          std::cerr << "ERROR: --input-file (-i) does not exist (was "
+          std::cerr << "Error: --input-file (-i) does not exist (was "
             << config.input_file << ")\n";
-          flagErr++;
+          exit(EXIT_FAILURE);
         }
         break;
 
@@ -344,9 +343,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.integration_rate = atoi(optarg);
         if (config.integration_rate < 1) {
           std::cerr
-              << "ERROR: --integration-rate (-r) must >= 1 (was "
+              << "Error: --integration-rate (-r) must >= 1 (was "
               << optarg << ")\n";
-          flagErr++;
+          exit(EXIT_FAILURE);
         }
         break;
 
@@ -356,9 +355,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
             || (config.map_dim.y() <= 0)
             || (config.map_dim.z() <= 0)) {
           std::cerr
-              << "ERROR: --map-dim (-s) all dimensions must > 0 (was "
+              << "Error: --map-dim (-s) all dimensions must > 0 (was "
               << optarg << ")\n";
-          flagErr++;
+          exit(EXIT_FAILURE);
         }
         break;
 
@@ -376,9 +375,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
             || (config.map_size.y() <= 0)
             || (config.map_size.z() <= 0)) {
           std::cerr
-              << "ERROR: --map-size (-s) all dimensions must > 0 (was "
+              << "Error: --map-size (-s) all dimensions must > 0 (was "
               << optarg << ")\n";
-          flagErr++;
+          exit(EXIT_FAILURE);
         }
 
         break;
@@ -398,23 +397,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.bilateral_filter = true;
         break;
 
-      case 0:
-      case '?':
-        std::cerr << "Unknown option character -" << char(optopt)
-            << " or bad usage.\n";
-        print_arguments();
-        exit(0);
       default:
-        std::cerr << "GetOpt abort.";
-        flagErr = true;
+        print_arguments();
+        exit(EXIT_FAILURE);
     }
-
-  if (flagErr) {
-    std::cerr << "Exited due to " << flagErr << " error"
-        << (flagErr == 1 ? "" : "s")
-        << " in command line options\n";
-    exit(1);
-  }
 
   std::cout << config;
   return config;
