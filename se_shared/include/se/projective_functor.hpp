@@ -32,7 +32,6 @@
 #include <functional>
 #include <vector>
 
-#include <sophus/se3.hpp>
 #include "se/utils/math_utils.h"
 #include "filter.hpp"
 #include "se/node.hpp"

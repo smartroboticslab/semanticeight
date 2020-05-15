@@ -36,6 +36,8 @@
 
 #include "se/tracking.hpp"
 
+#include <sophus/se3.hpp>
+
 
 
 static inline Eigen::Matrix<float, 6, 6> makeJTJ(

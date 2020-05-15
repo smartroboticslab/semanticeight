@@ -5,7 +5,6 @@
 #include "se/filter.hpp"
 #include "se/io/vtk-io.h"
 #include "se/io/ply_io.hpp"
-#include "sophus/se3.hpp"
 #include "se/utils/math_utils.h"
 #include "se/node.hpp"
 #include "se/functors/data_handler.hpp"
@@ -553,9 +552,9 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereRotation) {
   std::vector<obstacle*> spheres;
 
   // Allocate spheres in world frame
-  sphere_obstacle* sphere_close = new sphere_obstacle(voxel_dim_ 
+  sphere_obstacle* sphere_close = new sphere_obstacle(voxel_dim_
       * Eigen::Vector3f(size_ * 1 / 8, size_ * 2 / 3, size_ / 2), 0.3f);
-  sphere_obstacle* sphere_far   = new sphere_obstacle(voxel_dim_ 
+  sphere_obstacle* sphere_far   = new sphere_obstacle(voxel_dim_
       * Eigen::Vector3f(size_ * 7 / 8, size_ * 1 / 3, size_ / 2), 0.3f);
   spheres.push_back(sphere_close);
   spheres.push_back(sphere_far);
@@ -604,9 +603,9 @@ TEST_F(MultiscaleTSDFMovingCameraTest, BoxTranslation) {
   std::vector<obstacle*> boxes;
 
   // Allocate boxes in world frame
-  boxes.push_back(new box_obstacle(voxel_dim_ * Eigen::Vector3f(size_ * 1 / 2, size_ * 1 / 4, size_ / 2), voxel_dim_ 
+  boxes.push_back(new box_obstacle(voxel_dim_ * Eigen::Vector3f(size_ * 1 / 2, size_ * 1 / 4, size_ / 2), voxel_dim_
   * Eigen::Vector3f(size_ * 1 / 4, size_ * 1 / 4, size_ / 4)));
-  boxes.push_back(new box_obstacle(voxel_dim_ * Eigen::Vector3f(size_ * 1 / 2, size_ * 3 / 4, size_ / 2), voxel_dim_ 
+  boxes.push_back(new box_obstacle(voxel_dim_ * Eigen::Vector3f(size_ * 1 / 2, size_ * 3 / 4, size_ / 2), voxel_dim_
   * Eigen::Vector3f(size_ * 1 / 4, size_ * 1 / 4, size_ / 4)));
   generate_depth_image_ = generate_depth_image(depth_image_data_, boxes);
 
@@ -648,7 +647,7 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereBoxTranslation) {
   std::vector<obstacle*> obstacles;
 
   // Allocate boxes in world frame
-  obstacles.push_back(new box_obstacle(voxel_dim_ * Eigen::Vector3f(size_ * 1 / 2, size_ * 1 / 4, size_ / 2), voxel_dim_ 
+  obstacles.push_back(new box_obstacle(voxel_dim_ * Eigen::Vector3f(size_ * 1 / 2, size_ * 1 / 4, size_ / 2), voxel_dim_
   * Eigen::Vector3f(size_ * 1 / 4, size_ * 1 / 4, size_ / 4)));
   obstacles.push_back(new sphere_obstacle(voxel_dim_ * Eigen::Vector3f(size_ * 1 / 2, size_ * 1 / 2, size_ / 2), 0.5f));
   generate_depth_image_ = generate_depth_image(depth_image_data_, obstacles);

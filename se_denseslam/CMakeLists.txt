@@ -76,7 +76,8 @@ foreach(voxel_impl ${SUPEREIGHT_VOXEL_IMPLS})
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/se>
       $<INSTALL_INTERFACE:include>
-      ${EIGEN3_INCLUDE_DIR})
+      ${EIGEN3_INCLUDE_DIR}
+      ${SOPHUS_INCLUDE_DIR})
     target_compile_options(${lib_name} PUBLIC ${compile_flags})
     target_link_libraries(${lib_name} ${libraries} ${voxel_impl_lib_name})
     target_compile_definitions(${lib_name}

@@ -39,8 +39,6 @@
 
 #include <cstdint>
 
-#include <sophus/se3.hpp>
-
 #include "se/utils/math_utils.h"
 #include "se/commons.h"
 #include "lodepng.h"
@@ -103,7 +101,7 @@ void raycastKernel(const Volume<T>&            volume,
       if (std::is_same<T, MultiresOFusion>::value) {
         surface_intersection_M = T::raycast(volume, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
       } else {
-        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_MC, ray_dir_M, 
+        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_MC, ray_dir_M,
             sensor.near_plane, sensor.far_plane);
         ray.next();
         const float t_min = ray.tmin(); /* Get distance to the first intersected block */
