@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <getopt.h>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -25,8 +26,8 @@
 
 
 // Default option values.
-#define DEFAULT_ITERATION_COUNT 3
-static constexpr int default_iterations[DEFAULT_ITERATION_COUNT] = { 10, 5, 4 };
+static constexpr int default_iteration_count = 3;
+static constexpr int default_iterations[default_iteration_count] = { 10, 5, 4 };
 static constexpr float default_mu = 0.1f;
 static constexpr bool default_blocking_read = false;
 static constexpr int default_fps = 0;
@@ -81,49 +82,53 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
-  std::cerr << "-b  (--block-read)                        : default is false: don't block reading" << std::endl;
-  std::cerr << "-c  (--image-downsampling-factor)         : default is " << default_image_downsampling_factor << " (same size)" << std::endl;
-  std::cerr << "-d  (--dump-volume) <filename>            : output mesh file" << std::endl;
-  std::cerr << "-f  (--fps)                               : default is " << default_fps       << std::endl;
-  std::cerr << "-F  (--bilateral-filter                   : default is disabled"               << std::endl;
-  std::cerr << "-i  (--input-file) <filename>             : input file" << std::endl;
-  std::cerr << "-k  (--camera)                            : default is defined by input" << std::endl;
-  std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << std::endl;
-  std::cerr << "-o  (--log-file) <filename>               : default is stdout" << std::endl;
-  std::cerr << "-m  (--mu)                                : default is " << default_mu << std::endl;
-  std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << std::endl;
-  std::cerr << "-q  (--no-gui)                            : default is to display gui"<<std::endl;
-  std::cerr << "-r  (--integration-rate)                  : default is " << default_integration_rate << std::endl;
-  std::cerr << "-s  (--map-dim)                           : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << std::endl;
-  std::cerr << "-t  (--tracking-rate)                     : default is " << default_tracking_rate << "     " << std::endl;
-  std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << std::endl;
-  std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4" << std::endl;
-  std::cerr << "-z  (--rendering-rate)                    : default is " << default_rendering_rate << std::endl;
-  std::cerr << "-g  (--ground-truth) <filename>           : Ground truth file" << std::endl;
-  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : T_BC (translation and/or rotation)" << std::endl;
-  std::cerr << "-h  (--help)                              : show this help message" << std::endl;
+  std::cerr << "-b  (--block-read)                        : default is false: don't block reading\n";
+  std::cerr << "-c  (--image-downsampling-factor)         : default is " << default_image_downsampling_factor << " (same size)\n";
+  std::cerr << "-d  (--dump-volume) <filename>            : output mesh file\n";
+  std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
+  std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
+  std::cerr << "-i  (--input-file) <filename>             : input file\n";
+  std::cerr << "-k  (--camera)                            : default is defined by input\n";
+  std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
+  std::cerr << "-o  (--log-file) <filename>               : default is stdout\n";
+  std::cerr << "-m  (--mu)                                : default is " << default_mu << "\n";
+  std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
+  std::cerr << "-q  (--no-gui)                            : default is to display gui\n";
+  std::cerr << "-r  (--integration-rate)                  : default is " << default_integration_rate << "\n";
+  std::cerr << "-s  (--map-dim)                           : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
+  std::cerr << "-t  (--tracking-rate)                     : default is " << default_tracking_rate << "\n";
+  std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
+  std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4\n";
+  std::cerr << "-z  (--rendering-rate)                    : default is " << default_rendering_rate << "\n";
+  std::cerr << "-g  (--ground-truth) <filename>           : Ground truth file\n";
+  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : T_BC (translation and/or rotation)\n";
+  std::cerr << "-h  (--help)                              : show this help message\n";
 }
 
 
 
-inline Eigen::Vector3f atof3(char* optarg) {
+inline Eigen::Vector3f atof3(char* arg) {
   Eigen::Vector3f res;
-  std::istringstream dotargs(optarg);
+  std::istringstream remaining_arg(arg);
   std::string s;
-  if (getline(dotargs, s, ',')) {
+  if (std::getline(remaining_arg, s, ',')) {
     res.x() = atof(s.c_str());
-  } else
-    return res;
-  if (getline(dotargs, s, ',')) {
-    res.y() = atof(s.c_str());
   } else {
-    res.y() = res.x();
-    res.z() = res.y();
+    // arg is empty
     return res;
   }
-  if (getline(dotargs, s, ',')) {
+  if (std::getline(remaining_arg, s, ',')) {
+    res.y() = atof(s.c_str());
+  } else {
+    // arg is x
+    res.y() = res.x();
+    res.z() = res.x();
+    return res;
+  }
+  if (std::getline(remaining_arg, s, ',')) {
     res.z() = atof(s.c_str());
   } else {
+    // arg is x,y
     res.z() = res.y();
   }
   return res;
@@ -131,24 +136,28 @@ inline Eigen::Vector3f atof3(char* optarg) {
 
 
 
-inline Eigen::Vector3i atoi3(char* optarg) {
+inline Eigen::Vector3i atoi3(char* arg) {
   Eigen::Vector3i res;
-  std::istringstream dotargs(optarg);
+  std::istringstream remaining_arg(arg);
   std::string s;
-  if (getline(dotargs, s, ',')) {
+  if (std::getline(remaining_arg, s, ',')) {
     res.x() = atoi(s.c_str());
-  } else
+  } else {
+    // arg is empty
     return res;
-  if (getline(dotargs, s, ',')) {
+  }
+  if (std::getline(remaining_arg, s, ',')) {
     res.y() = atoi(s.c_str());
   } else {
+    // arg is x
     res.y() = res.x();
-    res.z() = res.y();
+    res.z() = res.x();
     return res;
   }
-  if (getline(dotargs, s, ',')) {
+  if (std::getline(remaining_arg, s, ',')) {
     res.z() = atoi(s.c_str());
   } else {
+    // arg is x,y
     res.z() = res.y();
   }
   return res;
@@ -156,32 +165,37 @@ inline Eigen::Vector3i atoi3(char* optarg) {
 
 
 
-inline Eigen::Vector4f atof4(char* optarg) {
+inline Eigen::Vector4f atof4(char* arg) {
   Eigen::Vector4f res;
-  std::istringstream dotargs(optarg);
+  std::istringstream remaining_arg(arg);
   std::string s;
-  if (getline(dotargs, s, ',')) {
+  if (std::getline(remaining_arg, s, ',')) {
     res.x() = atof(s.c_str());
-  } else
+  } else {
+    // arg is empty
     return res;
-  if (getline(dotargs, s, ',')) {
+  }
+  if (std::getline(remaining_arg, s, ',')) {
     res.y() = atof(s.c_str());
   } else {
+    // arg is x
     res.y() = res.x();
-    res.z() = res.y();
-    res.w() = res.z();
+    res.z() = res.x();
+    res.w() = res.x();
     return res;
   }
-  if (getline(dotargs, s, ',')) {
+  if (std::getline(remaining_arg, s, ',')) {
     res.z() = atof(s.c_str());
   } else {
+    // arg is x,y
     res.z() = res.y();
-    res.w() = res.z();
+    res.w() = res.y();
     return res;
   }
-  if (getline(dotargs, s, ',')) {
+  if (std::getline(remaining_arg, s, ',')) {
     res.w() = atof(s.c_str());
   } else {
+    // arg is x,y,z
     res.w() = res.z();
   }
   return res;
@@ -218,7 +232,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.bilateral_filter = default_bilateral_filter;
 
   config.pyramid.clear();
-  for (int i = 0; i < DEFAULT_ITERATION_COUNT; i++) {
+  for (int i = 0; i < default_iteration_count; i++) {
     config.pyramid.push_back(default_iterations[i]);
   }
 
@@ -228,46 +242,41 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   Eigen::Vector3f gt_transform_tran;
   Eigen::Quaternionf gt_transform_quat;
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
-          &option_index)) != -1)
+          &option_index)) != -1) {
     switch (c) {
-      case 'b':
+      case 'b': // blocking-read
         config.blocking_read = true;
-        std::cerr << "activate blocking read" << std::endl;
         break;
 
-      case 'c':  //   -c  (--image-downsampling-factor)
+      case 'c': // image-downsampling-factor
         config.image_downsampling_factor = atoi(optarg);
-        if ((config.image_downsampling_factor != 1)
+        if (   (config.image_downsampling_factor != 1)
             && (config.image_downsampling_factor != 2)
             && (config.image_downsampling_factor != 4)
             && (config.image_downsampling_factor != 8)) {
-          std::cerr
-            << "Error: --image-resolution-ratio (-c) must be 1, 2 ,4 or 8  (was "
-            << optarg << ")\n";
+          std::cerr << "Error: --image-resolution-ratio (-c) must be 1, 2 ,4 "
+              << "or 8  (was " << optarg << ")\n";
           exit(EXIT_FAILURE);
         }
         break;
 
-      case 'd':
+      case 'd': // dump-volume
         config.dump_volume_file = optarg;
         break;
 
-      case 'f':  //   -f  (--fps)
+      case 'f': // fps
         config.fps = atoi(optarg);
-        std::cerr << "update fps to " << config.fps << std::endl;
-
         if (config.fps < 0) {
-          std::cerr << "Error: --fps (-f) must be >= 0 (was "
-            << optarg << ")\n";
+          std::cerr << "Error: --fps (-f) must be >= 0 (was " << optarg << ")\n";
           exit(EXIT_FAILURE);
         }
         break;
 
-      case 'g': // -g (--ground-truth)
+      case 'g': // ground-truth
         config.groundtruth_file = optarg;
         break;
 
-      case 'G': // -G (--gt-transform)
+      case 'G': // gt-transform
         // Split argument into substrings
         tokens = split_string(optarg, ',');
         switch (tokens.size()) {
@@ -303,22 +312,22 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         }
         break;
 
-      case '?':    //   -?
-      case 'h':    //   -h  (--help)
+      case '?':
+      case 'h': // help
         print_arguments();
         exit(EXIT_SUCCESS);
 
-      case 'i':    //   -i  (--input-file)
+      case 'i': // input-file
         config.input_file = optarg;
         struct stat st;
         if (stat(config.input_file.c_str(), &st) != 0) {
           std::cerr << "Error: --input-file (-i) does not exist (was "
-            << config.input_file << ")\n";
+              << config.input_file << ")\n";
           exit(EXIT_FAILURE);
         }
         break;
 
-      case 'k':    //   -k  (--camera)
+      case 'k': // camera
         config.camera = atof4(optarg);
         config.camera_overrided = true;
         if (config.camera.y() < 0) {
@@ -327,81 +336,78 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         }
         break;
 
-      case 'o':    //   -o  (--log-file)
+      case 'o': // log-file
         config.log_file = optarg;
         break;
 
-      case 'l':  //   -l (--icp-threshold)
+      case 'l': // icp-threshold
         config.icp_threshold = atof(optarg);
         break;
 
-      case 'm':   // -m  (--mu)
+      case 'm': // mu
         config.mu = atof(optarg);
         break;
 
-      case 'p':    //   -p  (--init-pose)
+      case 'p': // init-pose
         config.t_MW_factor = atof3(optarg);
         break;
 
-      case 'q':
+      case 'q': // no-qui
         config.no_gui = true;
         break;
 
-      case 'r':    //   -r  (--integration-rate)
+      case 'r': // integration-rate
         config.integration_rate = atoi(optarg);
         if (config.integration_rate < 1) {
-          std::cerr
-              << "Error: --integration-rate (-r) must >= 1 (was "
+          std::cerr << "Error: --integration-rate (-r) must >= 1 (was "
               << optarg << ")\n";
           exit(EXIT_FAILURE);
         }
         break;
 
-      case 's':    //   -s  (--map-size)
+      case 's': // map-size
         config.map_dim = atof3(optarg);
         if (   (config.map_dim.x() <= 0)
             || (config.map_dim.y() <= 0)
             || (config.map_dim.z() <= 0)) {
-          std::cerr
-              << "Error: --map-dim (-s) all dimensions must > 0 (was "
+          std::cerr << "Error: --map-dim (-s) all dimensions must > 0 (was "
               << optarg << ")\n";
           exit(EXIT_FAILURE);
         }
         break;
 
-      case 't':    //   -t  (--tracking-rate)
+      case 't': // tracking-rate
         config.tracking_rate = atof(optarg);
         break;
 
-      case 'z':    //   -z  (--rendering-rate)
+      case 'z': // rendering-rate
         config.rendering_rate = atof(optarg);
         break;
 
-      case 'v':    //   -v  (--map-size)
+      case 'v': // map-size
         config.map_size = atoi3(optarg);
         if (   (config.map_size.x() <= 0)
             || (config.map_size.y() <= 0)
             || (config.map_size.z() <= 0)) {
-          std::cerr
-              << "Error: --map-size (-s) all dimensions must > 0 (was "
+          std::cerr << "Error: --map-size (-s) all dimensions must > 0 (was "
               << optarg << ")\n";
           exit(EXIT_FAILURE);
         }
 
         break;
 
-      case 'y':
+      case 'y': // pyramid-levels
         {
-          std::istringstream dotargs(optarg);
+          std::istringstream remaining_arg(optarg);
           std::string s;
           config.pyramid.clear();
-          while (getline(dotargs, s, ',')) {
+          while (std::getline(remaining_arg, s, ',')) {
             config.pyramid.push_back(atof(s.c_str()));
           }
         }
         break;
 
-      case 'F':
+      case 'F': // bilateral-filter
         config.bilateral_filter = true;
         break;
 
@@ -409,6 +415,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         print_arguments();
         exit(EXIT_FAILURE);
     }
+  }
 
   std::cout << config;
   return config;
