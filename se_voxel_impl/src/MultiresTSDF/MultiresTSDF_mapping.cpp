@@ -308,13 +308,6 @@ namespace se {
             block_sample_offset)).homogeneous()).head(3).z();
         const int last_scale = block->current_scale();
 
-        //  inline float computeScale(const Eigen::Vector3f& block_coord,
-//                            const Eigen::Vector3f& t_wc,
-//                            const Eigen::Matrix3f& R_cw,
-//                            const int              last_scale,
-//                            const int              min_scale)
-
-
         const int scale = std::max(sensor.computeIntegrationScale(
             block_diff, voxel_dim, last_scale, block->min_scale(), map.maxBlockScale()), last_scale - 1);
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
