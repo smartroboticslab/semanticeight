@@ -26,27 +26,27 @@
 
 // Default option values.
 #define DEFAULT_ITERATION_COUNT 3
-static const int default_iterations[DEFAULT_ITERATION_COUNT] = { 10, 5, 4 };
-const float default_mu = 0.1f;
-const bool default_blocking_read = false;
-const int default_fps = 0;
-const bool default_left_hand_frame = false;
-const float default_icp_threshold = 1e-5;
-const int default_image_downsampling_factor = 1;
-const int default_integration_rate = 2;
-const int default_rendering_rate = 4;
-const int default_tracking_rate = 1;
-const Eigen::Vector3i default_map_size(256, 256, 256);
-const Eigen::Vector3f default_map_dim(2.f, 2.f, 2.f);
-const Eigen::Vector3f default_t_MW_factor(0.5f, 0.5f, 0.0f);
-const bool default_no_gui = false;
-const bool default_render_volume_fullsize = false;
-const bool default_bilateral_filter = false;
-const std::string default_dump_volume_file = "";
-const std::string default_input_file = "";
-const std::string default_log_file = "";
-const std::string default_groundtruth_file = "";
-const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
+static constexpr int default_iterations[DEFAULT_ITERATION_COUNT] = { 10, 5, 4 };
+static constexpr float default_mu = 0.1f;
+static constexpr bool default_blocking_read = false;
+static constexpr int default_fps = 0;
+static constexpr bool default_left_hand_frame = false;
+static constexpr float default_icp_threshold = 1e-5;
+static constexpr int default_image_downsampling_factor = 1;
+static constexpr int default_integration_rate = 2;
+static constexpr int default_rendering_rate = 4;
+static constexpr int default_tracking_rate = 1;
+static const Eigen::Vector3i default_map_size(256, 256, 256);
+static const Eigen::Vector3f default_map_dim(2.f, 2.f, 2.f);
+static const Eigen::Vector3f default_t_MW_factor(0.5f, 0.5f, 0.0f);
+static constexpr bool default_no_gui = false;
+static constexpr bool default_render_volume_fullsize = false;
+static constexpr bool default_bilateral_filter = false;
+static const std::string default_dump_volume_file = "";
+static const std::string default_input_file = "";
+static const std::string default_log_file = "";
+static const std::string default_groundtruth_file = "";
+static const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
 
 
 
