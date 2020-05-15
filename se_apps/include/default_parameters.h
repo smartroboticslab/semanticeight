@@ -108,7 +108,7 @@ inline void print_arguments() {
 
 
 inline Eigen::Vector3f atof3(char* arg) {
-  Eigen::Vector3f res;
+  Eigen::Vector3f res = Eigen::Vector3f::Zero();
   std::istringstream remaining_arg(arg);
   std::string s;
   if (std::getline(remaining_arg, s, ',')) {
@@ -137,7 +137,7 @@ inline Eigen::Vector3f atof3(char* arg) {
 
 
 inline Eigen::Vector3i atoi3(char* arg) {
-  Eigen::Vector3i res;
+  Eigen::Vector3i res = Eigen::Vector3i::Zero();
   std::istringstream remaining_arg(arg);
   std::string s;
   if (std::getline(remaining_arg, s, ',')) {
@@ -166,7 +166,7 @@ inline Eigen::Vector3i atoi3(char* arg) {
 
 
 inline Eigen::Vector4f atof4(char* arg) {
-  Eigen::Vector4f res;
+  Eigen::Vector4f res = Eigen::Vector4f::Zero();
   std::istringstream remaining_arg(arg);
   std::string s;
   if (std::getline(remaining_arg, s, ',')) {
