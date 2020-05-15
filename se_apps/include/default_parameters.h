@@ -81,26 +81,26 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
-  std::cerr << "-b  (--block-read)                        : default is False: Block on read " << std::endl;
-  std::cerr << "-c  (--image-downsampling-factor)         : default is " << default_image_downsampling_factor << "   (same size)      " << std::endl;
-  std::cerr << "-d  (--dump-volume) <filename>            : Output volume file              " << std::endl;
+  std::cerr << "-b  (--block-read)                        : default is false: don't block reading" << std::endl;
+  std::cerr << "-c  (--image-downsampling-factor)         : default is " << default_image_downsampling_factor << " (same size)" << std::endl;
+  std::cerr << "-d  (--dump-volume) <filename>            : output mesh file" << std::endl;
   std::cerr << "-f  (--fps)                               : default is " << default_fps       << std::endl;
   std::cerr << "-F  (--bilateral-filter                   : default is disabled"               << std::endl;
-  std::cerr << "-i  (--input-file) <filename>             : Input camera file               " << std::endl;
-  std::cerr << "-k  (--camera)                            : default is defined by input     " << std::endl;
+  std::cerr << "-i  (--input-file) <filename>             : input file" << std::endl;
+  std::cerr << "-k  (--camera)                            : default is defined by input" << std::endl;
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << std::endl;
-  std::cerr << "-o  (--log-file) <filename>               : default is stdout               " << std::endl;
-  std::cerr << "-m  (--mu)                                : default is " << default_mu << "               " << std::endl;
-  std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "     " << std::endl;
+  std::cerr << "-o  (--log-file) <filename>               : default is stdout" << std::endl;
+  std::cerr << "-m  (--mu)                                : default is " << default_mu << std::endl;
+  std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << std::endl;
   std::cerr << "-q  (--no-gui)                            : default is to display gui"<<std::endl;
-  std::cerr << "-r  (--integration-rate)                  : default is " << default_integration_rate << "     " << std::endl;
-  std::cerr << "-s  (--map-dim)                           : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "      " << std::endl;
+  std::cerr << "-r  (--integration-rate)                  : default is " << default_integration_rate << std::endl;
+  std::cerr << "-s  (--map-dim)                           : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << std::endl;
   std::cerr << "-t  (--tracking-rate)                     : default is " << default_tracking_rate << "     " << std::endl;
-  std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "    " << std::endl;
-  std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4     " << std::endl;
+  std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << std::endl;
+  std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4" << std::endl;
   std::cerr << "-z  (--rendering-rate)                    : default is " << default_rendering_rate << std::endl;
   std::cerr << "-g  (--ground-truth) <filename>           : Ground truth file" << std::endl;
-  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : Ground truth pose tranform (translation and/or rotation)" << std::endl;
+  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : T_BC (translation and/or rotation)" << std::endl;
   std::cerr << "-h  (--help)                              : show this help message" << std::endl;
 }
 
