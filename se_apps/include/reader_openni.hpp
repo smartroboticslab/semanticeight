@@ -19,7 +19,7 @@
 #include "se/image/image.hpp"
 #include "reader_base.hpp"
 
-#ifdef DO_OPENNI
+#ifdef SE_USE_OPENNI
 #include <openni2/OpenNI.h>
 #endif
 
@@ -50,7 +50,7 @@ namespace se {
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
-#ifdef DO_OPENNI
+#ifdef SE_USE_OPENNI
       template<typename T>
       class MyFrameAllocator: public openni::VideoStream::FrameAllocator {
         public:

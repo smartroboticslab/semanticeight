@@ -137,31 +137,31 @@ class DenseSLAMSystem {
      * This is the first stage of the pipeline.
      *
      * \param[in] input_depth Pointer to the depth frame data. Each pixel is
-     * represented by a single uint16_t.
+     * represented by a single float containing the depth value in meters.
      * \param[in] input_res Size of the depth frame in pixels (width and
      * height).
      * \param[in] filter_depth Whether to filter the depth frame using a
      * bilateral filter to reduce the measurement noise.
      * \return true (does not fail).
      */
-    bool preprocessDepth(const uint16_t*        input_depth_image_data,
+    bool preprocessDepth(const float*           input_depth_image_data,
                          const Eigen::Vector2i& input_depth_image_res,
                          const bool             filter_depth_image);
 
     /**
-     * Preprocess an RGB frame and add it to the pipeline.
+     * Preprocess an RGBA frame and add it to the pipeline.
      * This is the first stage of the pipeline.
      *
-     * \param[in] input_RGB Pointer to the RGB frame data, 3 channels, 8 bits
-     * per channel.
-     * \param[in] input_res Size of the depth and RGB frames in pixels (width
-     * and height).
+     * \param[in] input_RGBA Pointer to the RGBA frame data, 4 channels, 8
+     * bits per channel.
+     * \param[in] input_res Size of the depth and RGBA frames in pixels
+     * (width and height).
      * \param[in] filter_depth Whether to filter the depth frame using a
      * bilateral filter to reduce the measurement noise.
      * \return true (does not fail).
      */
-    bool preprocessColor(const uint8_t*         input_RGB_image_data,
-                         const Eigen::Vector2i& input_RGB_image_res);
+    bool preprocessColor(const uint32_t*        input_RGBA_image_data,
+                         const Eigen::Vector2i& input_RGBA_image_res);
 
     /**
      * Update the camera pose. Create a 3D reconstruction from the current

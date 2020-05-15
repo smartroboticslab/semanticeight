@@ -14,7 +14,7 @@
 
 
 
-#ifdef DO_OPENNI
+#ifdef SE_USE_OPENNI
 
 se::OpenNIReader::OpenNIReader(const se::ReaderConfig& c)
     : se::Reader(c),
@@ -278,5 +278,5 @@ se::ReaderStatus se::OpenNIReader::nextRGBA(se::Image<uint32_t>&) {
   return se::ReaderStatus::error;
 }
 
-#endif // DO_OPENNI
+#endif // SE_USE_OPENNI
 

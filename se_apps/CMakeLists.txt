@@ -22,20 +22,27 @@ function(add_version lib_name libraries)
 
   set(main_common_compile_flags "")
 
+  set(reader_sources
+    src/reader_base.cpp
+	src/reader_iclnuim.cpp
+	src/reader_openni.cpp
+	src/reader_raw.cpp
+	src/reader.cpp
+  )
+
   if (OPENNI2_FOUND)
     include_directories(${OPENNI2_INCLUDE_PATHS})
     set(main_common_libraries
       ${main_common_libraries}
       ${OPENNI2_LIBRARIES})
-    set(main_common_compile_flags
-      "-DDO_OPENNI ${main_common_compile_flags}")
+    set(main_common_compile_flags "-DSE_USE_OPENNI ${main_common_compile_flags}")
   endif(OPENNI2_FOUND)
 
   #  ------ MAIN --------
   add_executable(${lib_name}-main
     src/main.cpp
     src/PowerMonitor.cpp
-    src/reader.cpp
+    ${reader_sources}
   )
   target_include_directories(${lib_name}-main PUBLIC include)
   target_link_libraries(${lib_name}-main
@@ -43,6 +50,8 @@ function(add_version lib_name libraries)
       ${lib_name}
       ${main_common_libraries}
   )
+  set_target_properties(${lib_name}-main PROPERTIES COMPILE_FLAGS
+    "${main_common_compile_flags}")
   # Compile with GUI support
   if (GLUT_FOUND)
     target_compile_definitions(${lib_name}-main PUBLIC -DSE_GLUT)
@@ -78,7 +87,7 @@ function(add_version lib_name libraries)
       src/main.cpp
       src/PowerMonitor.cpp
       ${qt_srcs}
-      src/reader.cpp)
+      ${reader_sources})
     target_include_directories(${lib_name}-qt PUBLIC
       include)
 
@@ -90,7 +99,7 @@ function(add_version lib_name libraries)
     include_directories(${Qt5PrintSupport_INCLUDE_DIRS})
     include_directories(${Qt5Gui_INCLUDE_DIRS})
 
-    SET_TARGET_PROPERTIES(${lib_name}-qt PROPERTIES COMPILE_FLAGS
+    set_target_properties(${lib_name}-qt PROPERTIES COMPILE_FLAGS
       "${main_common_compile_flags} -D__QT__")
 
     if(APPLE)

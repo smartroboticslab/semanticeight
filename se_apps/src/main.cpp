@@ -23,12 +23,13 @@
 
 #include <Eigen/Dense>
 
+#include "se/image/image.hpp"
 #include "se/DenseSLAMSystem.h"
 #include "se/perfstats.h"
 #include "se/system_info.hpp"
 
 #include "default_parameters.h"
-#include "interface.h"
+#include "reader.hpp"
 #include "PowerMonitor.h"
 #ifdef SE_GLUT
 #include "draw.h"
@@ -38,23 +39,18 @@
 
 PerfStats stats;
 PowerMonitor* power_monitor = nullptr;
-static uint16_t* input_depth_image_data = nullptr;
-static uchar3* input_rgb_image_data = nullptr;
 static uint32_t* rgba_render = nullptr;
 static uint32_t* depth_render = nullptr;
 static uint32_t* track_render = nullptr;
 static uint32_t* volume_render = nullptr;
-static DepthReader* reader = nullptr;
+static se::Reader* reader = nullptr;
 static DenseSLAMSystem* pipeline = nullptr;
 
 static Eigen::Vector3f t_MW;
 static std::ostream* log_stream = &std::cout;
 static std::ofstream log_file_stream;
 
-DepthReader* createReader(Configuration* config,
-                          std::string    filename = "");
-
-int processAll(DepthReader*   reader,
+int processAll(se::Reader*    reader,
                bool           process_frame,
                bool           render_images,
                Configuration* config,
@@ -63,7 +59,7 @@ int processAll(DepthReader*   reader,
 void qtLinkKinectQt(int               argc,
                     char**            argv,
                     DenseSLAMSystem** pipeline,
-                    DepthReader**     reader,
+                    se::Reader**      reader,
                     Configuration*    config,
                     void*             depth_render,
                     void*             track_render,
@@ -135,11 +131,11 @@ int main(int argc, char** argv) {
   progress_bar  = new ProgressBar(config.max_frame);
 
   // ========= READER INITIALIZATION  =========
-  reader = createReader(&config);
+  reader = se::create_reader(config);
 
   //  =========  BASIC PARAMETERS  (input image size / image size )  =========
   const Eigen::Vector2i input_image_res = (reader != nullptr)
-      ? Eigen::Vector2i(reader->getInputImageResolution().x, reader->getInputImageResolution().y)
+      ? reader->depthImageRes()
       : Eigen::Vector2i(640, 480);
   const Eigen::Vector2i image_res
       = input_image_res / config.sensor_downsampling_factor;
@@ -147,8 +143,6 @@ int main(int argc, char** argv) {
   //  =========  BASIC BUFFERS  (input / output )  =========
 
   // Construction Scene reader and input buffer
-  input_depth_image_data =   new uint16_t[input_image_res.x() * input_image_res.y()];
-  input_rgb_image_data =     new   uchar3[input_image_res.x() * input_image_res.y()];
   rgba_render =   new uint32_t[image_res.x() * image_res.y()];
   depth_render =  new uint32_t[image_res.x() * image_res.y()];
   track_render =  new uint32_t[image_res.x() * image_res.y()];
@@ -161,7 +155,7 @@ int main(int argc, char** argv) {
       Eigen::Vector3f::Constant(config.map_dim.x()),
       t_MW,
       config.pyramid, config);
-  
+
   if (config.log_file != "") {
     log_file_stream.open(config.log_file.c_str());
     log_stream = &log_file_stream;
@@ -183,7 +177,7 @@ int main(int argc, char** argv) {
   // is specified use that, else use GLUT. We can opt to disable the gui and the rendering which
   // would be faster.
   if (config.benchmark || !config.enable_render) {
-    if ((reader == nullptr) || (reader->cameraActive == false)) {
+    if ((reader == nullptr) || !reader->good()) {
       std::cerr << "No valid input file specified\n";
       exit(1);
     }
@@ -197,7 +191,7 @@ int main(int argc, char** argv) {
     qtLinkKinectQt(argc,argv, &pipeline, &reader, &config,
         depth_render, track_render, volume_render, rgba_render);
 #else
-    if ((reader == nullptr) || (reader->cameraActive == false)) {
+    if ((reader == nullptr) || !reader->good()) {
       std::cerr << "No valid input file specified\n";
       exit(1);
     }
@@ -239,15 +233,13 @@ int main(int argc, char** argv) {
   //  =========  FREE BASIC BUFFERS  =========
   delete pipeline;
   delete progress_bar;
-  delete[] input_depth_image_data;
-  delete[] input_rgb_image_data;
   delete[] rgba_render;
   delete[] depth_render;
   delete[] track_render;
   delete[] volume_render;
 }
 
-int processAll(DepthReader*   reader,
+int processAll(se::Reader*    reader,
                bool           process_frame,
                bool           render_images,
                Configuration* config,
@@ -261,7 +253,7 @@ int processAll(DepthReader*   reader,
   const bool raycast = (track || render_images);
   int frame = 0;
   const Eigen::Vector2i input_image_res = (reader != nullptr)
-      ? Eigen::Vector2i(reader->getInputImageResolution().x, reader->getInputImageResolution().y)
+      ? reader->depthImageRes()
       : Eigen::Vector2i(640, 480);
   const Eigen::Vector2i image_res
       = input_image_res / config->sensor_downsampling_factor;
@@ -273,38 +265,46 @@ int processAll(DepthReader*   reader,
                            config->sensor_intrinsics[3] / config->sensor_downsampling_factor,
                            Eigen::VectorXf(0), Eigen::VectorXf(0)});
 
+  static se::Image<float> input_depth_image (input_image_res.x(), input_image_res.y());
+  static se::Image<uint32_t> input_rgba_image (input_image_res.x(), input_image_res.y());
+
   if (reset) {
-    frame_offset = reader->getFrameNumber();
+    frame_offset = reader->frame();
   }
 
   if (process_frame) {
     stats.start();
   }
-  Eigen::Matrix4f gt_T_WC;
+  Eigen::Matrix4f T_WB;
   const std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
   std::vector<std::chrono::time_point<std::chrono::steady_clock>> timings (7, now);
 
   if (process_frame) {
 
     // Read frames and ground truth data if set
-    bool read_ok;
+    se::ReaderStatus read_ok;
     if (config->ground_truth_file == "") {
-      read_ok = reader->readNextDepthFrame(input_rgb_image_data, input_depth_image_data);
+      read_ok = reader->nextData(input_depth_image, input_rgba_image);
     } else {
-      read_ok = reader->readNextData(input_rgb_image_data, input_depth_image_data, gt_T_WC);
+      read_ok = reader->nextData(input_depth_image, input_rgba_image, T_WB);
       if (frame == 0) {
-        pipeline->setInitT_WC(gt_T_WC);
+        pipeline->setInitT_WC(T_WB * config->T_BC);
       }
     }
 
-    // Finish processing if the next frame could not be read
-    if (!read_ok) {
+    if (read_ok == se::ReaderStatus::ok) {
+      // Continue normally
+    } else if (read_ok == se::ReaderStatus::skip) {
+      // Skip this frame
+      return false;
+    } else {
+      // Finish processing if the next frame could not be read
       timings[0] = std::chrono::steady_clock::now();
       return true;
     }
 
     // Process read frames
-    frame = reader->getFrameNumber() - frame_offset;
+    frame = reader->frame() - frame_offset;
     if (config->max_frame != -1 && frame > config->max_frame) {
       timings[0] = std::chrono::steady_clock::now();
       return true;
@@ -314,9 +314,9 @@ int processAll(DepthReader*   reader,
 
     timings[1] = std::chrono::steady_clock::now();
 
-    pipeline->preprocessDepth(input_depth_image_data, input_image_res,
+    pipeline->preprocessDepth(input_depth_image.data(), input_image_res,
         config->bilateral_filter);
-    pipeline->preprocessColor((uint8_t*) input_rgb_image_data, input_image_res);
+    pipeline->preprocessColor(input_rgba_image.data(), input_image_res);
 
     timings[2] = std::chrono::steady_clock::now();
 
@@ -329,7 +329,7 @@ int processAll(DepthReader*   reader,
       }
     } else {
       // Set the pose to the ground truth.
-      pipeline->setT_WC(gt_T_WC);
+      pipeline->setT_WC(T_WB * config->T_BC);
       tracked = true;
     }
 

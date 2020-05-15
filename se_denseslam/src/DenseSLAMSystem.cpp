@@ -128,7 +128,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
 
 
 
-bool DenseSLAMSystem::preprocessDepth(const uint16_t*        input_depth_image_data,
+bool DenseSLAMSystem::preprocessDepth(const float*           input_depth_image_data,
                                       const Eigen::Vector2i& input_depth_image_res,
                                       const bool             filter_depth){
 
@@ -146,10 +146,10 @@ bool DenseSLAMSystem::preprocessDepth(const uint16_t*        input_depth_image_d
 
 
 
-bool DenseSLAMSystem::preprocessColor(const uint8_t*         input_RGB_image_data,
-                                      const Eigen::Vector2i& input_RGB_image_res) {
+bool DenseSLAMSystem::preprocessColor(const uint32_t*        input_RGBA_image_data,
+                                      const Eigen::Vector2i& input_RGBA_image_res) {
 
-  downsampleImageKernel(input_RGB_image_data, input_RGB_image_res, rgba_image_);
+  downsampleImageKernel(input_RGBA_image_data, input_RGBA_image_res, rgba_image_);
 
   return true;
 }

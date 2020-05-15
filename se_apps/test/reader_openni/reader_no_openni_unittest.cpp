@@ -6,8 +6,8 @@
 #include <gtest/gtest.h>
 
 // Ensure OpenNI won't be used
-#ifdef DO_OPENNI
-#undef DO_OPENNI
+#ifdef SE_USE_OPENNI
+#undef SE_USE_OPENNI
 #endif
 
 #include <cstdint>
