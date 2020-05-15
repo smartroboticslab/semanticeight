@@ -86,40 +86,40 @@ namespace se {
       return (n < 2 ? 0 : 1 + log2_const(n/2));
     }
 
-    static inline Eigen::Vector3f toTranslation(const Eigen::Matrix4f& T) {
+    static inline Eigen::Vector3f to_translation(const Eigen::Matrix4f& T) {
       Eigen::Vector3f t = T.block<3,1>(0,3);
       return t;
     }
 
-    static inline Eigen::Matrix3f toRotation(const Eigen::Matrix4f& T) {
+    static inline Eigen::Matrix3f to_rotation(const Eigen::Matrix4f& T) {
       Eigen::Matrix3f R = T.block<3,3>(0,0);
       return R;
     }
 
-    static inline Eigen::Matrix4f toTransformation(const Eigen::Vector3f& t) {
+    static inline Eigen::Matrix4f to_transformation(const Eigen::Vector3f& t) {
       Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
       T.block<3,1>(0,3) = t;
       return T;
     }
 
-    static inline Eigen::Matrix4f toTransformation(const Eigen::Matrix3f& R, const Eigen::Vector3f& t) {
+    static inline Eigen::Matrix4f to_transformation(const Eigen::Matrix3f& R, const Eigen::Vector3f& t) {
       Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
       T.block<3,3>(0,0) = R;
       T.block<3,1>(0,3) = t;
       return T;
     }
 
-    static inline Eigen::Vector3f toInverseTranslation(const Eigen::Matrix4f& T) {
+    static inline Eigen::Vector3f to_inverse_translation(const Eigen::Matrix4f& T) {
       Eigen::Vector3f t_inv = -T.block<3,3>(0,0).inverse() * T.block<3,1>(0,3);
       return t_inv;
     }
 
-    static inline Eigen::Matrix3f toInverseRotation(const Eigen::Matrix4f& T) {
+    static inline Eigen::Matrix3f to_inverse_rotation(const Eigen::Matrix4f& T) {
       Eigen::Matrix3f R_inv = (T.block<3,3>(0,0)).inverse();
       return R_inv;
     }
 
-    static inline Eigen::Matrix4f toInverseTransformation(const Eigen::Matrix4f& T) {
+    static inline Eigen::Matrix4f to_inverse_transformation(const Eigen::Matrix4f& T) {
       Eigen::Matrix4f T_inv = Eigen::Matrix4f::Identity();
       T_inv.block<3,3>(0,0) = T.block<3,3>(0,0).inverse();
       T_inv.block<3,1>(0,3) = -T.block<3,3>(0,0).inverse() * T.block<3,1>(0,3);

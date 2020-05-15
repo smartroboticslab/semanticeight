@@ -57,7 +57,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
                                  std::vector<int> & pyramid,
                                  const Configuration& config):
       DenseSLAMSystem(image_res, map_size, map_dim,
-          se::math::toTransformation(t_MW), pyramid, config) { }
+          se::math::to_transformation(t_MW), pyramid, config) { }
 
 DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
                                  const Eigen::Vector3i& map_size,
@@ -165,7 +165,7 @@ bool DenseSLAMSystem::track(const SensorImpl& sensor,
 
   // prepare the 3D information from the input depth maps
   for (unsigned int i = 0; i < iterations_.size(); ++i) {
-    float scaling_factor = 1.f / float(1 << i);
+    const float scaling_factor = 1.f / (1 << i);
     const SensorImpl scaled_sensor(sensor, scaling_factor);
     depthToPointCloudKernel(input_point_cloud_C_[i], scaled_depth_image_[i], scaled_sensor);
     if(sensor.left_hand_frame)
@@ -208,7 +208,7 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
     * image_res_.x() * image_res_.y();
   allocation_list_.reserve(num_blocks_total);
 
-  const Eigen::Matrix4f T_CM = se::math::toInverseTransformation(T_MC_); // TODO:
+  const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC_); // TODO:
   const size_t num_voxel = VoxelImpl::buildAllocationList(
       *volume_.octree_,
       depth_image_,
@@ -252,7 +252,7 @@ void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBW_image_data
   float step = map_dim_.x() / map_size_.x();
   renderVolumeKernel(volume_, volume_RGBW_image_data, volume_RGBW_image_res,
       *this->render_T_MC_, sensor, step, step * BLOCK_SIZE,
-      se::math::toTranslation(*this->render_T_MC_), ambient,
+      se::math::to_translation(*this->render_T_MC_), ambient,
       !(this->render_T_MC_->isApprox(raycast_T_MC_)), surface_point_cloud_M_, surface_normals_M_);
 }
 
@@ -334,5 +334,5 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
     };
 
     se::algorithms::marching_cube(*volume_.octree_, select_value, inside, mesh);
-    writeVtkMesh(filename.c_str(), mesh, se::math::toInverseTransformation(this->T_MW_));
+    writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(this->T_MW_));
 }

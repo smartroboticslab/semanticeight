@@ -378,7 +378,7 @@ void foreach(float                                  voxel_dim,
 
     const Eigen::Matrix4f T_CM = (camera_parameter.T_MC()).inverse();
     const Eigen::Matrix3f R_CM = T_CM.topLeftCorner<3,3>();
-    const Eigen::Vector3f t_CM = se::math::toTranslation(T_CM);
+    const Eigen::Vector3f t_CM = se::math::to_translation(T_CM);
     const Eigen::Matrix4f K = camera_parameter.K();
     const Eigen::Vector2i depth_image_res = camera_parameter.imageResolution();
     const float scaled_pix = (camera_parameter.K().inverse() * (Eigen::Vector3f(1, 0 ,1) - Eigen::Vector3f(0, 0, 1)).homogeneous()).x();

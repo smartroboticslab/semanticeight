@@ -97,8 +97,8 @@ void raycastKernel(const Volume<T>&            volume,
       const Eigen::Vector2f pixel_f = pixel.cast<float>();
       Eigen::Vector3f ray_dir_C;
       sensor.model.backProject(pixel_f, &ray_dir_C);
-      const Eigen::Vector3f ray_dir_M = (se::math::toRotation(T_MC) * ray_dir_C.normalized()).head(3);
-      const Eigen::Vector3f t_MC = se::math::toTranslation(T_MC);
+      const Eigen::Vector3f ray_dir_M = (se::math::to_rotation(T_MC) * ray_dir_C.normalized()).head(3);
+      const Eigen::Vector3f t_MC = se::math::to_translation(T_MC);
 
       if (std::is_same<T, MultiresOFusion>::value) {
         surface_intersection_M = T::raycast(volume, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);

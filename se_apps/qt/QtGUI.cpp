@@ -82,7 +82,7 @@ extern PowerMonitor *powerMonitor;
 
 // We can pass this to the QT and it will allow us to change features in the DenseSLAMSystem
 static void newDenseSLAMSystem(bool resetPose) {
-  Eigen::Matrix4f T_MW = (*pipeline_pp)->getMapToWorldTransformation();
+  Eigen::Matrix4f T_MW = (*pipeline_pp)->T_WM();
 
 	if (*pipeline_pp)
 		delete *pipeline_pp;
@@ -213,11 +213,11 @@ CameraState setEnableCamera(CameraState state, string inputFile) {
 //This function is passed to QT and is called whenever we aren't busy i.e in a constant loop
 void qtIdle(void) {
 	//This will set the view for rendering the model, either to the tracked camera view or the static view
-	Eigen::Matrix4f T_MV = (rot * trans).matrix();
+	Eigen::Matrix4f render_T_MR = (rot * trans).matrix();
 	if (usePOV)
-		(*pipeline_pp)->setViewPoseM(); //current position as found by track
+		(*pipeline_pp)->setRenderT_MC(); //current position as found by track
 	else
-		(*pipeline_pp)->setViewPoseM(&T_MV);
+		(*pipeline_pp)->setRenderT_MC(&render_T_MR);
 	//If we are are reading a file then get a new frame and process it.
 	if ((*reader_pp) && (*reader_pp)->cameraActive) {
 		int finished = processAll((*reader_pp), true, true, config, reset);

@@ -327,8 +327,8 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of the translation.
      */
-    Eigen::Vector3f getWorldToMapTranslation() {
-      return se::math::toTranslation(T_MW_);
+    Eigen::Vector3f t_MW() {
+      return se::math::to_translation(T_MW_);
     }
 
     /**
@@ -336,7 +336,7 @@ class DenseSLAMSystem {
      *
      * \return The rotation (3x3 rotation matrix) and translation (3x1 vector) encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f getWorldToMapTransformation() {
+    Eigen::Matrix4f T_MW() {
       return T_MW_;
     }
 
@@ -345,8 +345,8 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of the translation.
      */
-    Eigen::Vector3f getMapToWorldTranslation() {
-      Eigen::Vector3f t_WM = se::math::toInverseTranslation(T_MW_);
+    Eigen::Vector3f t_WM() {
+      Eigen::Vector3f t_WM = se::math::to_inverse_translation(T_MW_);
       return t_WM;
     }
 
@@ -355,8 +355,8 @@ class DenseSLAMSystem {
      *
      * \return The rotation (3x3 rotation matrix) and translation (3x1 vector) encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f getMapToWorldTransformation() {
-      Eigen::Matrix4f T_WM = se::math::toInverseTransformation(T_MW_);
+    Eigen::Matrix4f T_WM() {
+      Eigen::Matrix4f T_WM = se::math::to_inverse_transformation(T_MW_);
       return T_WM;
     }
 
@@ -365,8 +365,8 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates t_MC.
      */
-    Eigen::Vector3f getCameraPositionM() {
-      return se::math::toTranslation(T_MC_);
+    Eigen::Vector3f t_MC() {
+      return se::math::to_translation(T_MC_);
     }
 
     /**
@@ -374,30 +374,30 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of t_WC.
      */
-    Eigen::Vector3f getCameraPositionW() {
-      Eigen::Matrix4f T_WC = se::math::toInverseTransformation(T_MW_) * init_T_MC_;
-      Eigen::Vector3f t_WC = se::math::toTranslation(T_WC);
+    Eigen::Vector3f t_WC() {
+      Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
+      Eigen::Vector3f t_WC = se::math::to_translation(T_WC);
       return t_WC;
     }
 
     /**
      * Get the initial camera position in map frame.
      *
-     * \return A vector containing the x, y and z coordinates of init_t_MC.
+     * \return A vector containing the x, y and z coordinates of initt_MC.
      */
-    Eigen::Vector3f getInitialCameraPositionM(){
-      return se::math::toTranslation(T_MC_);
+    Eigen::Vector3f initt_MC(){
+      return se::math::to_translation(T_MC_);
     }
 
     /**
      * Get the initial camera position in world frame.
      *
-     * \return A vector containing the x, y and z coordinates of init_t_WC.
+     * \return A vector containing the x, y and z coordinates of initt_WC.
      */
-    Eigen::Vector3f getInitialCameraPositionW(){
-      Eigen::Matrix4f init_T_WC = se::math::toInverseTransformation(T_MW_) * init_T_MC_;
-      Eigen::Vector3f init_t_WC = se::math::toTranslation(init_T_WC);
-      return init_t_WC;
+    Eigen::Vector3f initt_WC(){
+      Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
+      Eigen::Vector3f initt_WC = se::math::to_translation(init_T_WC);
+      return initt_WC;
     }
 
     /**
@@ -405,7 +405,7 @@ class DenseSLAMSystem {
      *
      * \return The current camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f getCameraPoseM() {
+    Eigen::Matrix4f T_MC() {
       return T_MC_;
     }
 
@@ -414,8 +414,8 @@ class DenseSLAMSystem {
      *
      * \return The current camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f getCameraPoseW() {
-      Eigen::Matrix4f T_WC = se::math::toInverseTransformation(T_MW_) * T_MC_;
+    Eigen::Matrix4f T_WC() {
+      Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
       return T_WC;
     }
 
@@ -424,7 +424,7 @@ class DenseSLAMSystem {
      *
      * \return The initial camera pose init_T_MC_ encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f getInitialCameraPoseM() {
+    Eigen::Matrix4f initT_MC() {
       return init_T_MC_;
     }
 
@@ -433,8 +433,8 @@ class DenseSLAMSystem {
      *
      * \return The initial camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f getInitialCameraPoseW() {
-      Eigen::Matrix4f init_T_WC = se::math::toInverseTransformation(T_MW_) * init_T_MC_;
+    Eigen::Matrix4f initT_WC() {
+      Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
       return init_T_WC;
     }
 
@@ -443,7 +443,7 @@ class DenseSLAMSystem {
      *
      * \param[in] T_MC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setCameraPoseM(const Eigen::Matrix4f& T_MC) {
+    void setT_MC(const Eigen::Matrix4f& T_MC) {
       T_MC_ = T_MC;
     }
 
@@ -454,7 +454,7 @@ class DenseSLAMSystem {
      *
      * \param[in] T_WC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setCameraPoseW(const Eigen::Matrix4f& T_WC) {
+    void setT_WC(const Eigen::Matrix4f& T_WC) {
       T_MC_ = T_MW_ * T_WC;
     }
 
@@ -463,7 +463,7 @@ class DenseSLAMSystem {
      *
      * \param[in] init_T_MC The initial camera pose encoded in a 4x4 matrix.
      */
-    void setInitialCameraPoseM(const Eigen::Matrix4f& init_T_MC) {
+    void setInitT_MC(const Eigen::Matrix4f& init_T_MC) {
       init_T_MC_ = init_T_MC;
     }
 
@@ -474,7 +474,7 @@ class DenseSLAMSystem {
      *
      * \param[in] init_T_WC The initial camera pose encoded in a 4x4 matrix.
      */
-    void setInitialCameraPoseW(const Eigen::Matrix4f& init_T_WC) {
+    void setInitT_WC(const Eigen::Matrix4f& init_T_WC) {
       init_T_MC_ = T_MW_ * init_T_WC;
     }
 
@@ -483,7 +483,7 @@ class DenseSLAMSystem {
      *
      * \param[in] T_WC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setViewPoseM(Eigen::Matrix4f* render_T_MC = nullptr) {
+    void setRenderT_MC(Eigen::Matrix4f* render_T_MC = nullptr) {
       if (render_T_MC == nullptr){
         render_T_MC_ = &T_MC_;
         need_render_ = false;
@@ -502,7 +502,7 @@ class DenseSLAMSystem {
      *
      * \return The current rendering camera pose render_T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f *getViewPoseM() {
+    Eigen::Matrix4f *renderT_MC_() {
       return render_T_MC_;
     }
 

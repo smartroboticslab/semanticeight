@@ -514,7 +514,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   bool cameraInNode(const Eigen::Vector3i& node_coord,
                     const int              node_size,
                     const Eigen::Matrix4f& T_MC) {
-    const Eigen::Vector3f voxel_coord = se::math::toTranslation(T_MC) / voxel_dim_;
+    const Eigen::Vector3f voxel_coord = se::math::to_translation(T_MC) / voxel_dim_;
     if (   voxel_coord.x() >= node_coord.x() && voxel_coord.x() <= node_coord.x() + node_size
         && voxel_coord.y() >= node_coord.y() && voxel_coord.y() <= node_coord.y() + node_size
         && voxel_coord.z() >= node_coord.z() && voxel_coord.z() <= node_coord.z() + node_size) {

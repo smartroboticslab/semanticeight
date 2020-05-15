@@ -72,7 +72,7 @@ size_t MultiresTSDF::buildAllocationList(
   unsigned int voxel_count = 0;
 #endif
 
-  const Eigen::Vector3f t_MC = se::math::toTranslation(T_MC);
+  const Eigen::Vector3f t_MC = se::math::to_translation(T_MC);
   const int num_steps = ceil(band * inverse_voxel_dim);
 #pragma omp parallel for
   for (int y = 0; y < depth_image_res.y(); ++y) {

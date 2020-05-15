@@ -259,7 +259,7 @@ int processAll(DepthReader*   reader,
     } else {
       read_ok = reader->readNextData(input_rgb_image_data, input_depth_image_data, gt_T_WC);
       if (frame == 0) {
-        pipeline->setInitialCameraPoseW(gt_T_WC);
+        pipeline->setInitT_WC(gt_T_WC);
       }
     }
 
@@ -291,7 +291,7 @@ int processAll(DepthReader*   reader,
       }
     } else {
       // Set the pose to the ground truth.
-      pipeline->setCameraPoseW(gt_T_WC);
+      pipeline->setT_WC(gt_T_WC);
       tracked = true;
     }
 
@@ -326,8 +326,8 @@ int processAll(DepthReader*   reader,
   if (powerMonitor != nullptr && !first_frame)
     powerMonitor->sample();
 
-  const Eigen::Vector3f t_MC = pipeline->getCameraPositionM();
-  const Eigen::Vector3f t_WC = pipeline->getCameraPositionW();
+  const Eigen::Vector3f t_MC = pipeline->t_MC();
+  const Eigen::Vector3f t_WC = pipeline->t_WC();
   storeStats(frame, timings, t_WC, tracked, integrated);
   if (config->no_gui){
     *log_stream << reader->getFrameNumber() << "\t" << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" << std::endl;
