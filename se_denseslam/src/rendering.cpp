@@ -69,11 +69,11 @@ void renderDepthKernel(unsigned char*         depth_RGBA_image_data,
     for (int x = 0; x < depth_RGBA_image_res.x(); x++) {
 
       const unsigned int pixel_idx = row_offset + x;
-      const unsigned int RGBA_idx = pixel_idx * 4;
+      const unsigned int rgba_idx = pixel_idx * 4;
 
       if (depth_image_data[pixel_idx] < near_plane) {
-        depth_RGBW_image_data[rgba_idx + 0] = 255;
-        depth_RGBW_image_data[rgba_idx + 1] = 255;
+        depth_RGBA_image_data[rgba_idx + 0] = 255;
+        depth_RGBA_image_data[rgba_idx + 1] = 255;
         depth_RGBA_image_data[rgba_idx + 2] = 255;
         depth_RGBA_image_data[rgba_idx + 3] = 255;
       } else if (depth_image_data[pixel_idx] > far_plane) {
