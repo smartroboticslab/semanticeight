@@ -104,11 +104,11 @@ void depthToPointCloudKernel(se::Image<Eigen::Vector3f>& point_cloud_C,
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
       const Eigen::Vector2i pixel(x, y);
-      if (depth_image[pixel.x() + pixel.y() * depth_image.width()] > 0) {
+      if (depth_image(pixel.x(), pixel.y()) > 0) {
         const Eigen::Vector2f pixel_f = pixel.cast<float>();
         Eigen::Vector3f ray_dir_C;
         sensor.model.backProject(pixel_f, &ray_dir_C);
-        point_cloud_C[pixel.x() + pixel.y() * depth_image.width()] = depth_image[x + y * depth_image.width()] * ray_dir_C;
+        point_cloud_C[pixel.x() + pixel.y() * depth_image.width()] = depth_image(pixel.x(), pixel.y()) * ray_dir_C;
       } else {
         point_cloud_C[pixel.x() + pixel.y() * depth_image.width()] = Eigen::Vector3f::Zero();
       }
@@ -227,7 +227,7 @@ void mm2metersKernel(se::Image<float>&      m_depth_image,
           pixel_value_sum += mm_depth_image_data[x_in + mm_depth_image_res.x() * y_in];
           valid_count++;
         }
-      m_depth_image[x_out + m_depth_image.width() * y_out]
+      m_depth_image(x_out, y_out)
           = (valid_count > 0) ? pixel_value_sum / (valid_count * 1000.0f) : 0;
     }
   TOCK("mm2metersKernel", m_depth_image.width() * m_depth_image.height());

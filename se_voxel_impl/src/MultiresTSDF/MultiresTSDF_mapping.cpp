@@ -238,7 +238,7 @@ namespace se {
                 
                   is_visible = true;
 
-                  const float depth_value = depth_image[pixel.x() + depth_image.width() * pixel.y()];
+                  const float depth_value = depth_image(pixel.x(), pixel.y());
                   // continue on invalid depth measurement
                   if (depth_value <= 0) {
                     block->data(voxel_coord, voxel_scale, voxel_data);
@@ -344,7 +344,7 @@ namespace se {
 
               is_visible = true;
 
-              const float depth_value = depth_image[pixel.x() + depth_image.width() * pixel.y()];
+              const float depth_value = depth_image(pixel.x(), pixel.y());
               // continue on invalid depth measurement
               if (depth_value <= 0) continue;
 

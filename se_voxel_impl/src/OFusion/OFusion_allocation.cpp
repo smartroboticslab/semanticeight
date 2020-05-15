@@ -92,12 +92,12 @@ size_t OFusion::buildAllocationList(
   for (unsigned int y = 0; y < depth_image_res.y(); ++y) {
     for (unsigned int x = 0; x < depth_image_res.x(); ++x) {
       const Eigen::Vector2i pixel(x, y);
-      if (depth_image[pixel.x() + pixel.y() * depth_image_res.x()] == 0) {
+      if (depth_image(pixel.x(), pixel.y()) == 0) {
         continue;
       }
       int depth = voxel_depth;
       float step_size = voxel_dim;
-      const float depth_value = depth_image[pixel.x() + pixel.y() * depth_image_res.x()];
+      const float depth_value = depth_image(pixel.x(), pixel.y());
 
       Eigen::Vector3f ray_dir_C;
       const Eigen::Vector2f pixel_f = pixel.cast<float>();
