@@ -50,27 +50,27 @@ static std::string short_options = "a:bqc:d:f:g:G:hi:l:m:k:o:p:r:s:t:v:y:z:FC:M"
 
 static struct option long_options[] =
 {
-  {"block-read",         no_argument, 0, 'b'},
-  {"compute-size-ratio", required_argument, 0, 'c'},
-  {"dump-volume",        required_argument, 0, 'd'},
-  {"fps",                required_argument, 0, 'f'},
-  {"input-file",         required_argument, 0, 'i'},
-  {"camera",             required_argument, 0, 'k'},
-  {"icp-threshold",      required_argument, 0, 'l'},
-  {"log-file",           required_argument, 0, 'o'},
-  {"mu",                 required_argument, 0, 'm'},
-  {"init-pose",          required_argument, 0, 'p'},
-  {"no-gui",             no_argument,       0, 'q'},
-  {"integration-rate",   required_argument, 0, 'r'},
-  {"map-dim",            required_argument, 0, 's'},
-  {"tracking-rate",      required_argument, 0, 't'},
-  {"map-size",           required_argument, 0, 'v'},
-  {"pyramid-levels",     required_argument, 0, 'y'},
-  {"rendering-rate",     required_argument, 0, 'z'},
-  {"voxel-block-size",   required_argument, 0, 'B'},
-  {"bilateral-filter",   no_argument, 0, 'F'},
-  {"ground-truth",       required_argument, 0, 'g'},
-  {"gt-transform",       required_argument, 0, 'G'},
+  {"block-read",                no_argument, 0, 'b'},
+  {"image-downsampling-factor", required_argument, 0, 'c'},
+  {"dump-volume",               required_argument, 0, 'd'},
+  {"fps",                       required_argument, 0, 'f'},
+  {"input-file",                required_argument, 0, 'i'},
+  {"camera",                    required_argument, 0, 'k'},
+  {"icp-threshold",             required_argument, 0, 'l'},
+  {"log-file",                  required_argument, 0, 'o'},
+  {"mu",                        required_argument, 0, 'm'},
+  {"init-pose",                 required_argument, 0, 'p'},
+  {"no-gui",                    no_argument,       0, 'q'},
+  {"integration-rate",          required_argument, 0, 'r'},
+  {"map-dim",                   required_argument, 0, 's'},
+  {"tracking-rate",             required_argument, 0, 't'},
+  {"map-size",                  required_argument, 0, 'v'},
+  {"pyramid-levels",            required_argument, 0, 'y'},
+  {"rendering-rate",            required_argument, 0, 'z'},
+  {"voxel-block-size",          required_argument, 0, 'B'},
+  {"bilateral-filter",          no_argument, 0, 'F'},
+  {"ground-truth",              required_argument, 0, 'g'},
+  {"gt-transform",              required_argument, 0, 'G'},
   {0, 0, 0, 0}
 };
 
@@ -231,7 +231,7 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
         config.blocking_read = true;
         std::cerr << "activate blocking read" << std::endl;
         break;
-      case 'c':  //   -c  (--image-resolution-ratio)
+      case 'c':  //   -c  (--image-downsampling-factor)
         config.image_downsampling_factor = atoi(optarg);
         if ((config.image_downsampling_factor != 1)
             && (config.image_downsampling_factor != 2)
