@@ -152,11 +152,11 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
                 bool&                  is_valid) {
   int scale = max_scale;  // Initialize scale
   // Additional distance travelled in [voxel]
-  float v_add  = 0;                     // TODO: I'll have to re-evaluate this value.
-  float v      = 1 / voxel_dim * t;       // t in voxel coordinates
-  float v_near = 1 / voxel_dim * t_near;  // t_near in voxel coordinates
-  float v_far  = 1 / voxel_dim * t_far;   // t_far in voxel coordinates
-  Eigen::Vector3f origin_vox = 1 / voxel_dim * ray_origin_M; // Origin in voxel coordinates
+  float v_add   = 0;                     // TODO: I'll have to re-evaluate this value.
+  const float v = 1 / voxel_dim * t;       // t in voxel coordinates
+  float v_near  = 1 / voxel_dim * t_near;  // t_near in voxel coordinates
+  float v_far   = 1 / voxel_dim * t_far;   // t_far in voxel coordinates
+  const Eigen::Vector3f ray_origin_coord_f = 1 / voxel_dim * ray_origin_M; // Origin in voxel coordinates
 
   // Current state of V in [voxel]
   Eigen::Vector3f V_max = Eigen::Vector3f::Ones();
@@ -164,7 +164,7 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
 
   Eigen::Vector3f delta_V_map = map->size() / ray_dir_M.array().abs(); // [voxel]/[-], potentionally dividing by 0
 
-  Eigen::Vector3f map_frac  = origin_vox / map->size();
+  Eigen::Vector3f map_frac  = ray_origin_coord_f / map->size();
   // V at which the map boundary gets crossed (separate V for each dimension x-y-z)
   Eigen::Vector3f v_map;
   if(ray_dir_M.x() < 0) {
@@ -186,13 +186,13 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
   v_far = std::min(std::min(std::min(v_map.x(), v_map.y()), v_map.z()) + v, v_far); // [voxel]
   t_far = voxel_dim * v_far;                                                          // [m]
 
-  auto value = map->get_fine(origin_vox.x(), origin_vox.y(), origin_vox.z(), max_scale);
+  auto value = map->get_fine(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), max_scale);
   while (value.x_max > -0.2f && scale > 2) {
     scale -= 1;
-    value = map->get_fine(origin_vox.x(), origin_vox.y(), origin_vox.z(), scale);
+    value = map->get_fine(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), scale);
   }
 
-  Eigen::Vector3f curr_vox = origin_vox;
+  Eigen::Vector3f ray_coord_f = ray_origin_coord_f;
 
   int iter_1 = 0;
   while ((v + v_add) < v_far) {
@@ -202,11 +202,11 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
     }
 
     const int node_size = 1 << scale;
-    Eigen::Vector3i curr_node = node_size*(((curr_vox).array().floor())/node_size).cast<int>();
+    Eigen::Vector3i curr_node = node_size*(((ray_coord_f).array().floor())/node_size).cast<int>();
 
 
     // Fraction of the current position in [voxel] in the current node along the x-, y- and z-axis
-    Eigen::Vector3f node_frac = (curr_vox - curr_node.cast<float>()) / node_size;
+    Eigen::Vector3f node_frac = (ray_coord_f - curr_node.cast<float>()) / node_size;
 
     // Travelled distance needed in [voxel] to the whole node_size in x, y and z ray_dir_M
     Eigen::Vector3f delta_V = node_size / ray_dir_M.array().abs(); // [voxel]/[-]
@@ -235,18 +235,18 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
     float V_min = std::min(std::min(V_max.x(), V_max.y()), V_max.z());
 
     v_add += V_min + 0.01;
-    curr_vox = (v + v_add) * ray_dir_M + origin_vox;
+    ray_coord_f = (v + v_add) * ray_dir_M + ray_origin_coord_f;
 
-    value = map->get_fine(curr_vox.x(), curr_vox.y(), curr_vox.z(), scale);
+    value = map->get_fine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), scale);
 
     if (value.x_max > -0.2f) {
       while (value.x_max > -0.2f && scale > 2) {
         scale -= 1;
-        value = map->get_fine(curr_vox.x(), curr_vox.y(), curr_vox.z(), scale);
+        value = map->get_fine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), scale);
       }
     } else {
       for (int s = scale + 1; s <= max_scale; s++) {
-        value = map->get_fine(curr_vox.x(), curr_vox.y(), curr_vox.z(), s);
+        value = map->get_fine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), s);
 
         if (value.x_max > -0.2f)
           break;
