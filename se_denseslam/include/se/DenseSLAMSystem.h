@@ -74,7 +74,6 @@ class DenseSLAMSystem {
     bool integrated_;
     bool need_render_ = false;
     Configuration config_;
-    SensorImpl sensor_;
 
     // input once
     std::vector<float> gaussian_;
@@ -186,7 +185,8 @@ class DenseSLAMSystem {
      * \param[in] icp_threshold The ICP convergence threshold.
      * \return true if the camera pose was updated and false if it wasn't.
      */
-    bool track(const float icp_threshold);
+    bool track(const SensorImpl& sensor,
+               const float       icp_threshold);
 
     /**
      * Integrate the 3D reconstruction resulting from the current frame to the
@@ -199,7 +199,8 @@ class DenseSLAMSystem {
      * \param[in] frame The index of the current frame (starts from 0).
      * \return true (does not fail).
      */
-    bool integrate(unsigned frame);
+    bool integrate(const SensorImpl& sensor,
+                   const unsigned    frame);
 
     /**
      * Raycast the map from the current pose to create a point cloud (point cloud
@@ -216,7 +217,7 @@ class DenseSLAMSystem {
      * details.
      * \return true (does not fail).
      */
-    bool raycast();
+    bool raycast(const SensorImpl& sensor);
 
     /*
      * TODO Implement this.
@@ -240,7 +241,8 @@ class DenseSLAMSystem {
      * height in pixels).
      */
     void renderVolume(unsigned char*         output_image_data,
-                      const Eigen::Vector2i& output_image_res);
+                      const Eigen::Vector2i& output_image_res,
+                      const SensorImpl&      sensor);
 
     /**
      * Render the output of the tracking algorithm. The meaning of the colors is as follows:
@@ -280,7 +282,8 @@ class DenseSLAMSystem {
      * height in pixels).
      */
     void renderDepth(unsigned char*         output_image_data,
-                     const Eigen::Vector2i& output_image_res);
+                     const Eigen::Vector2i& output_image_res,
+                     const SensorImpl&      sensor);
 
     /**
      * Render the RGB frame currently in the pipeline.

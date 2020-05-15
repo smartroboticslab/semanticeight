@@ -103,7 +103,7 @@ void depthToPointCloudKernel(se::Image<Eigen::Vector3f>& point_cloud_C,
 #pragma omp parallel for
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
-      Eigen::Vector2i pixel(x, y);
+      const Eigen::Vector2i pixel(x, y);
       if (depth_image[pixel.x() + pixel.y() * depth_image.width()] > 0) {
         const Eigen::Vector2f pixel_f = pixel.cast<float>();
         Eigen::Vector3f ray_dir_C;

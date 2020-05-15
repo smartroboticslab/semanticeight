@@ -229,6 +229,15 @@ int processAll(DepthReader*   reader,
   const Eigen::Vector2i input_image_res = (reader != nullptr)
       ? Eigen::Vector2i(reader->getInputImageResolution().x, reader->getInputImageResolution().y)
       : Eigen::Vector2i(640, 480);
+  const Eigen::Vector2i image_res
+      = input_image_res / config->image_resolution_ratio;
+  const SensorImpl sensor({image_res.x(), image_res.y(), config->left_hand_frame,
+                           nearPlane, farPlane, config->mu,
+                           config->camera[0] / config->image_resolution_ratio,
+                           config->camera[1] / config->image_resolution_ratio,
+                           config->camera[2] / config->image_resolution_ratio,
+                           config->camera[3] / config->image_resolution_ratio,
+                           Eigen::VectorXf(0), Eigen::VectorXf(0)});
 
   if (reset) {
     frame_offset = reader->getFrameNumber();
@@ -240,6 +249,7 @@ int processAll(DepthReader*   reader,
   Eigen::Matrix4f T_WC;
   Eigen::Matrix4f gt_T_WC;
   timings[0] = std::chrono::steady_clock::now();
+
   if (process_frame) {
 
     // Read frames and ground truth data if set
@@ -275,7 +285,7 @@ int processAll(DepthReader*   reader,
     if (config->groundtruth_file == "") {
       // No ground truth used, call track every tracking_rate frames.
       if (frame % config->tracking_rate == 0) {
-        tracked = pipeline->track(config->icp_threshold);
+        tracked = pipeline->track(sensor, config->icp_threshold);
       } else {
         tracked = false;
       }
@@ -290,7 +300,7 @@ int processAll(DepthReader*   reader,
     // Integrate only if tracking was successful every integration_rate frames
     // or it is one of the first 4 frames.
     if ((tracked && (frame % config->integration_rate == 0)) || frame <= 3) {
-        integrated = pipeline->integrate(frame);
+        integrated = pipeline->integrate(sensor, frame);
     } else {
       integrated = false;
     }
@@ -298,17 +308,17 @@ int processAll(DepthReader*   reader,
     timings[4] = std::chrono::steady_clock::now();
 
     if (frame > 2) {
-      pipeline->raycast();
+      pipeline->raycast(sensor);
     }
 
     timings[5] = std::chrono::steady_clock::now();
   }
   if (render_images) {
     pipeline->renderRGBA((uint8_t*) rgba_render, pipeline->getImageResolution());
-    pipeline->renderDepth((unsigned char*)depth_render, pipeline->getImageResolution());
+    pipeline->renderDepth((unsigned char*)depth_render, pipeline->getImageResolution(), sensor);
     pipeline->renderTrack((unsigned char*)track_render, pipeline->getImageResolution());
     if (frame % config->rendering_rate == 0) {
-      pipeline->renderVolume((unsigned char*)volume_render, pipeline->getImageResolution());
+      pipeline->renderVolume((unsigned char*)volume_render, pipeline->getImageResolution(), sensor);
     }
     timings[6] = std::chrono::steady_clock::now();
   }

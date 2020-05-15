@@ -67,11 +67,6 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
                                  const Configuration& config) :
   image_res_(image_res),
   config_(config),
-  sensor_({image_res.x(), image_res.y(), config.left_hand_frame,
-        nearPlane, farPlane, config.mu,
-        config.camera[0] / config.image_resolution_ratio, config.camera[1] / config.image_resolution_ratio,
-        config.camera[2] / config.image_resolution_ratio, config.camera[3] / config.image_resolution_ratio,
-        Eigen::VectorXf(0), Eigen::VectorXf(0)}),
   surface_point_cloud_M_(image_res_.x(), image_res_.y()),
   surface_normals_M_(image_res_.x(), image_res_.y()),
   depth_image_(image_res_.x(), image_res_.y()),
@@ -160,7 +155,8 @@ bool DenseSLAMSystem::preprocessColor(const uint8_t*         input_RGB_image_dat
 
 
 
-bool DenseSLAMSystem::track(float icp_threshold) {
+bool DenseSLAMSystem::track(const SensorImpl& sensor,
+                            const float       icp_threshold) {
 
   // half sample the input depth maps into the pyramid levels
   for (unsigned int i = 1; i < iterations_.size(); ++i) {
@@ -170,9 +166,9 @@ bool DenseSLAMSystem::track(float icp_threshold) {
   // prepare the 3D information from the input depth maps
   for (unsigned int i = 0; i < iterations_.size(); ++i) {
     float scaling_factor = 1.f / float(1 << i);
-    SensorImpl scaled_sensor(sensor_, scaling_factor);
+    const SensorImpl scaled_sensor(sensor, scaling_factor);
     depthToPointCloudKernel(input_point_cloud_C_[i], scaled_depth_image_[i], scaled_sensor);
-    if(sensor_.left_hand_frame)
+    if(sensor.left_hand_frame)
       pointCloudToNormalKernel<true>(input_normals_C_[i], input_point_cloud_C_[i]);
     else
       pointCloudToNormalKernel<false>(input_normals_C_[i], input_point_cloud_C_[i]);
@@ -187,7 +183,7 @@ bool DenseSLAMSystem::track(float icp_threshold) {
     for (int i = 0; i < iterations_[level]; ++i) {
 
       trackKernel(tracking_result_.data(), input_point_cloud_C_[level], input_normals_C_[level],
-                  surface_point_cloud_M_, surface_normals_M_, T_MC_, sensor_, dist_threshold, normal_threshold);
+                  surface_point_cloud_M_, surface_normals_M_, T_MC_, sensor, dist_threshold, normal_threshold);
 
       reduceKernel(reduction_output_.data(), reduction_output_res, tracking_result_.data(), image_res_);
 
@@ -202,7 +198,8 @@ bool DenseSLAMSystem::track(float icp_threshold) {
 
 
 
-bool DenseSLAMSystem::integrate(unsigned int frame) {
+bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
+                                const unsigned     frame) {
 
   const float voxel_dim = volume_.dim() / volume_.size();
   const int num_blocks_per_pixel = volume_.size()
@@ -216,7 +213,7 @@ bool DenseSLAMSystem::integrate(unsigned int frame) {
       *volume_.octree_,
       depth_image_,
       T_MC_,
-      sensor_,
+      sensor,
       allocation_list_.data(),
       allocation_list_.capacity());
 
@@ -226,18 +223,18 @@ bool DenseSLAMSystem::integrate(unsigned int frame) {
       *volume_.octree_,
       depth_image_,
       T_CM,
-      sensor_,
+      sensor,
       frame);
   return true;
 }
 
 
 
-bool DenseSLAMSystem::raycast() {
+bool DenseSLAMSystem::raycast(const SensorImpl& sensor) {
 
   raycast_T_MC_ = T_MC_;
   float step = map_dim_.x() / map_size_.x();
-  raycastKernel(volume_, surface_point_cloud_M_, surface_normals_M_, raycast_T_MC_, sensor_, step, step * BLOCK_SIZE);
+  raycastKernel(volume_, surface_point_cloud_M_, surface_normals_M_, raycast_T_MC_, sensor, step, step * BLOCK_SIZE);
 
   return true;
 }
@@ -249,11 +246,12 @@ void DenseSLAMSystem::dump_volume(std::string ) {
 }
 
 void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBW_image_data,
-                                   const Eigen::Vector2i& volume_RGBW_image_res) {
+                                   const Eigen::Vector2i& volume_RGBW_image_res,
+                                   const SensorImpl&      sensor) {
 
   float step = map_dim_.x() / map_size_.x();
   renderVolumeKernel(volume_, volume_RGBW_image_data, volume_RGBW_image_res,
-      *this->render_T_MC_, sensor_, step, step * BLOCK_SIZE,
+      *this->render_T_MC_, sensor, step, step * BLOCK_SIZE,
       se::math::toTranslation(*this->render_T_MC_), ambient,
       !(this->render_T_MC_->isApprox(raycast_T_MC_)), surface_point_cloud_M_, surface_normals_M_);
 }
@@ -264,9 +262,10 @@ void DenseSLAMSystem::renderTrack(unsigned char*         tracking_RGBW_image_dat
 }
 
 void DenseSLAMSystem::renderDepth(unsigned char*         depth_RGBW_image_data,
-                                  const Eigen::Vector2i& depth_RGBW_image_res) {
+                                  const Eigen::Vector2i& depth_RGBW_image_res,
+                                  const SensorImpl&      sensor) {
   renderDepthKernel(depth_RGBW_image_data, depth_image_.data(), depth_RGBW_image_res,
-      sensor_.near_plane, sensor_.far_plane);
+      sensor.near_plane, sensor.far_plane);
 }
 
 

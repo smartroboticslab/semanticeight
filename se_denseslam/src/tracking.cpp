@@ -301,7 +301,7 @@ void trackKernel(TrackData*                        output_data,
       row.J[1] = ref_normal_M.y();
       row.J[2] = ref_normal_M.z();
 
-      Eigen::Vector3f cross_prod = point_M.cross(ref_normal_M);
+      const Eigen::Vector3f cross_prod = point_M.cross(ref_normal_M);
       row.J[3] = cross_prod.x();
       row.J[4] = cross_prod.y();
       row.J[5] = cross_prod.z();
