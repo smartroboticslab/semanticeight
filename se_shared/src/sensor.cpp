@@ -68,23 +68,11 @@ int se::PinholeCamera::computeIntegrationScale(const float dist,
     recompute = true;
   }
 
-  if (!recompute) {
+  if (recompute) {
+    return computeIntegrationScale(dist_hyst, voxel_dim, last_scale, -1, max_block_scale);
+  } else {
     return scale;
   }
-
-  const float pv_hyst_ratio = dist_hyst * scaled_pixel / voxel_dim;
-  if (pv_hyst_ratio < 1.5) {
-    scale = 0;
-  } else if (pv_hyst_ratio < 3) {
-    scale = 1;
-  } else if (pv_hyst_ratio < 6) {
-    scale = 2;
-  } else {
-    scale = 3;
-  }
-  scale = std::min(scale, max_block_scale);
-
-  return scale;
 }
 
 
