@@ -61,27 +61,27 @@ namespace se {
                              VoxelValueSelector               select_voxel_value,
                              ValueT                           values[8]) {
 
-      if (!block) {
-        Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[0];
-        ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
-        values[0] = value;
-        values[1] = value;
-        values[2] = value;
-        values[3] = value;
-        values[4] = value;
-        values[5] = value;
-        values[6] = value;
-        values[7] = value;
+      if (block) {
+        values[0] = select_voxel_value(block->data(base_coord + stride * interp_offsets[0], scale));
+        values[1] = select_voxel_value(block->data(base_coord + stride * interp_offsets[1], scale));
+        values[2] = select_voxel_value(block->data(base_coord + stride * interp_offsets[2], scale));
+        values[3] = select_voxel_value(block->data(base_coord + stride * interp_offsets[3], scale));
+        values[4] = select_voxel_value(block->data(base_coord + stride * interp_offsets[4], scale));
+        values[5] = select_voxel_value(block->data(base_coord + stride * interp_offsets[5], scale));
+        values[6] = select_voxel_value(block->data(base_coord + stride * interp_offsets[6], scale));
+        values[7] = select_voxel_value(block->data(base_coord + stride * interp_offsets[7], scale));
         return;
       }
-      values[0] = select_voxel_value(block->data(base_coord + stride * interp_offsets[0], scale));
-      values[1] = select_voxel_value(block->data(base_coord + stride * interp_offsets[1], scale));
-      values[2] = select_voxel_value(block->data(base_coord + stride * interp_offsets[2], scale));
-      values[3] = select_voxel_value(block->data(base_coord + stride * interp_offsets[3], scale));
-      values[4] = select_voxel_value(block->data(base_coord + stride * interp_offsets[4], scale));
-      values[5] = select_voxel_value(block->data(base_coord + stride * interp_offsets[5], scale));
-      values[6] = select_voxel_value(block->data(base_coord + stride * interp_offsets[6], scale));
-      values[7] = select_voxel_value(block->data(base_coord + stride * interp_offsets[7], scale));
+      Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[0];
+      ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+      values[0] = value;
+      values[1] = value;
+      values[2] = value;
+      values[3] = value;
+      values[4] = value;
+      values[5] = value;
+      values[6] = value;
+      values[7] = value;
       return;
     }
 
@@ -101,19 +101,19 @@ namespace se {
                          const unsigned int               offsets[4],
                          ValueT                           values[8]) {
 
-      if (!block) {
-        Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[offsets[0]];
-        ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
-        values[offsets[0]] = value;
-        values[offsets[1]] = value;
-        values[offsets[2]] = value;
-        values[offsets[3]] = value;
+      if (block) {
+        values[offsets[0]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[0]], scale));
+        values[offsets[1]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[1]], scale));
+        values[offsets[2]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[2]], scale));
+        values[offsets[3]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[3]], scale));
         return;
       }
-      values[offsets[0]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[0]], scale));
-      values[offsets[1]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[1]], scale));
-      values[offsets[2]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[2]], scale));
-      values[offsets[3]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[3]], scale));
+      Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[offsets[0]];
+      ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+      values[offsets[0]] = value;
+      values[offsets[1]] = value;
+      values[offsets[2]] = value;
+      values[offsets[3]] = value;
       return;
     }
 
@@ -134,16 +134,15 @@ namespace se {
                          const unsigned int               offsets[2],
                          ValueT                           values[8]) {
 
-      if (!block) {
-        Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[offsets[0]];
-        ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
-        values[offsets[0]] = value;
-        values[offsets[1]] = value;
+      if (block) {
+        values[offsets[0]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[0]], scale));
+        values[offsets[1]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[1]], scale));
         return;
       }
-
-      values[offsets[0]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[0]], scale));
-      values[offsets[1]] = select_voxel_value(block->data(base_coord + stride * interp_offsets[offsets[1]], scale));
+      Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[offsets[0]];
+      ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+      values[offsets[0]] = value;
+      values[offsets[1]] = value;
       return;
     }
 
@@ -319,10 +318,10 @@ namespace se {
               if (block && block->current_scale() > scale)
                 return block->current_scale();
 
-              if (!block) {
-                values[i] = select_node_value(octree.get(voxels_coord[i].x(), voxels_coord[i].y(), voxels_coord[i].z()));
-              } else {
+              if (block) {
                 values[i] = select_voxel_value(block->data(voxels_coord[i], scale));
+              } else {
+                values[i] = select_node_value(octree.get(voxels_coord[i].x(), voxels_coord[i].y(), voxels_coord[i].z()));
               }
             }
           }
