@@ -7,24 +7,25 @@
 
  */
 
-#ifndef DEFAULT_PARAMETERS_H_
-#define DEFAULT_PARAMETERS_H_
+#ifndef __DEFAULT_PARAMETERS_H
+#define __DEFAULT_PARAMETERS_H
 
-#include "se/str_utils.hpp"
-#include "se/utils/math_utils.h"
-#include <vector>
-#include <sstream>
 #include <getopt.h>
+#include <sstream>
+#include <vector>
 
-#include "se/constant_parameters.h"
-#include "se/config.h"
 #include <Eigen/Dense>
 
-////////////////////////// RUNTIME PARAMETERS //////////////////////
+#include "se/config.h"
+#include "se/constant_parameters.h"
+#include "se/str_utils.hpp"
+#include "se/utils/math_utils.h"
 
+
+
+// Default option values.
 #define DEFAULT_ITERATION_COUNT 3
 static const int default_iterations[DEFAULT_ITERATION_COUNT] = { 10, 5, 4 };
-
 const float default_mu = 0.1f;
 const bool default_blocking_read = false;
 const int default_fps = 0;
@@ -46,11 +47,12 @@ const std::string default_log_file = "";
 const std::string default_groundtruth_file = "";
 const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
 
+
+
 static std::string short_options = "bqc:d:f:g:G:i:l:m:k:o:p:r:s:t:v:y:z:F";
 
-static struct option long_options[] =
-{
-  {"block-read",                no_argument, 0, 'b'},
+static struct option long_options[] = {
+  {"block-read",                no_argument,       0, 'b'},
   {"image-downsampling-factor", required_argument, 0, 'c'},
   {"dump-volume",               required_argument, 0, 'd'},
   {"fps",                       required_argument, 0, 'f'},
@@ -67,14 +69,15 @@ static struct option long_options[] =
   {"map-size",                  required_argument, 0, 'v'},
   {"pyramid-levels",            required_argument, 0, 'y'},
   {"rendering-rate",            required_argument, 0, 'z'},
-  {"bilateral-filter",          no_argument, 0, 'F'},
+  {"bilateral-filter",          no_argument,       0, 'F'},
   {"ground-truth",              required_argument, 0, 'g'},
   {"gt-transform",              required_argument, 0, 'G'},
   {0, 0, 0, 0}
 };
 
-inline
-void print_arguments() {
+
+
+inline void print_arguments() {
   std::cerr << "-b  (--block-read)                        : default is False: Block on read " << std::endl;
   std::cerr << "-c  (--image-downsampling-factor)         : default is " << default_image_downsampling_factor << "   (same size)      " << std::endl;
   std::cerr << "-d  (--dump-volume) <filename>            : Output volume file              " << std::endl;
@@ -97,7 +100,9 @@ void print_arguments() {
   std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : Ground truth pose tranform (translation and/or rotation)" << std::endl;
 }
 
-inline Eigen::Vector3f atof3(char * optarg) {
+
+
+inline Eigen::Vector3f atof3(char* optarg) {
   Eigen::Vector3f res;
   std::istringstream dotargs(optarg);
   std::string s;
@@ -120,7 +125,9 @@ inline Eigen::Vector3f atof3(char * optarg) {
   return res;
 }
 
-inline Eigen::Vector3i atoi3(char * optarg) {
+
+
+inline Eigen::Vector3i atoi3(char* optarg) {
   Eigen::Vector3i res;
   std::istringstream dotargs(optarg);
   std::string s;
@@ -143,7 +150,9 @@ inline Eigen::Vector3i atoi3(char * optarg) {
   return res;
 }
 
-inline Eigen::Vector4f atof4(char * optarg) {
+
+
+inline Eigen::Vector4f atof4(char* optarg) {
   Eigen::Vector4f res;
   std::istringstream dotargs(optarg);
   std::string s;
@@ -174,7 +183,9 @@ inline Eigen::Vector4f atof4(char * optarg) {
   return res;
 }
 
-Configuration parseArgs(unsigned int argc, char ** argv) {
+
+
+Configuration parseArgs(unsigned int argc, char** argv) {
 
   Configuration config;
 
@@ -220,6 +231,7 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
         config.blocking_read = true;
         std::cerr << "activate blocking read" << std::endl;
         break;
+
       case 'c':  //   -c  (--image-downsampling-factor)
         config.image_downsampling_factor = atoi(optarg);
         if ((config.image_downsampling_factor != 1)
@@ -232,9 +244,11 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
           flagErr++;
         }
         break;
+
       case 'd':
         config.dump_volume_file = optarg;
         break;
+
       case 'f':  //   -f  (--fps)
         config.fps = atoi(optarg);
         std::cerr << "update fps to " << config.fps << std::endl;
@@ -245,9 +259,11 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
           flagErr++;
         }
         break;
+
       case 'g': // -g (--ground-truth)
         config.groundtruth_file = optarg;
         break;
+
       case 'G': // -G (--gt-transform)
         // Split argument into substrings
         tokens = split_string(optarg, ',');
@@ -284,6 +300,7 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
             break;
         }
         break;
+
       case 'i':    //   -i  (--input-file)
         config.input_file = optarg;
         struct stat st;
@@ -293,6 +310,7 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
           flagErr++;
         }
         break;
+
       case 'k':    //   -k  (--camera)
         config.camera = atof4(optarg);
         config.camera_overrided = true;
@@ -301,85 +319,100 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
           std::cerr << "update to left hand coordinate system" << std::endl;
         }
         break;
+
       case 'o':    //   -o  (--log-file)
         config.log_file = optarg;
         break;
+
       case 'l':  //   -l (--icp-threshold)
         config.icp_threshold = atof(optarg);
         break;
+
       case 'm':   // -m  (--mu)
         config.mu = atof(optarg);
         break;
+
       case 'p':    //   -p  (--init-pose)
         config.t_MW_factor = atof3(optarg);
         break;
+
       case 'q':
         config.no_gui = true;
         break;
+
       case 'r':    //   -r  (--integration-rate)
         config.integration_rate = atoi(optarg);
         if (config.integration_rate < 1) {
           std::cerr
-            << "ERROR: --integration-rate (-r) must >= 1 (was "
-            << optarg << ")\n";
+              << "ERROR: --integration-rate (-r) must >= 1 (was "
+              << optarg << ")\n";
           flagErr++;
         }
         break;
+
       case 's':    //   -s  (--map-size)
         config.map_dim = atof3(optarg);
-        if ((config.map_dim.x() <= 0) || (config.map_dim.y() <= 0)
+        if (   (config.map_dim.x() <= 0)
+            || (config.map_dim.y() <= 0)
             || (config.map_dim.z() <= 0)) {
           std::cerr
-            << "ERROR: --map-dim (-s) all dimensions must > 0 (was "
-            << optarg << ")\n";
+              << "ERROR: --map-dim (-s) all dimensions must > 0 (was "
+              << optarg << ")\n";
           flagErr++;
         }
         break;
+
       case 't':    //   -t  (--tracking-rate)
         config.tracking_rate = atof(optarg);
         break;
+
       case 'z':    //   -z  (--rendering-rate)
         config.rendering_rate = atof(optarg);
         break;
+
       case 'v':    //   -v  (--map-size)
         config.map_size = atoi3(optarg);
-        if ((config.map_size.x() <= 0)
+        if (   (config.map_size.x() <= 0)
             || (config.map_size.y() <= 0)
             || (config.map_size.z() <= 0)) {
           std::cerr
-            << "ERROR: --map-size (-s) all dimensions must > 0 (was "
-            << optarg << ")\n";
+              << "ERROR: --map-size (-s) all dimensions must > 0 (was "
+              << optarg << ")\n";
           flagErr++;
         }
 
         break;
-      case 'y': {
-                  std::istringstream dotargs(optarg);
-                  std::string s;
-                  config.pyramid.clear();
-                  while (getline(dotargs, s, ',')) {
-                    config.pyramid.push_back(atof(s.c_str()));
-                  }
-                }
-                break;
+
+      case 'y':
+        {
+          std::istringstream dotargs(optarg);
+          std::string s;
+          config.pyramid.clear();
+          while (getline(dotargs, s, ',')) {
+            config.pyramid.push_back(atof(s.c_str()));
+          }
+        }
+        break;
+
       case 'F':
-                config.bilateral_filter = true;
-                break;
+        config.bilateral_filter = true;
+        break;
+
       case 0:
       case '?':
-                std::cerr << "Unknown option character -" << char(optopt)
-                  << " or bad usage.\n";
-                print_arguments();
-                exit(0);
+        std::cerr << "Unknown option character -" << char(optopt)
+            << " or bad usage.\n";
+        print_arguments();
+        exit(0);
       default:
-                std::cerr << "GetOpt abort.";
-                flagErr = true;
+        std::cerr << "GetOpt abort.";
+        flagErr = true;
     }
 
   if (flagErr) {
     std::cerr << "Exited due to " << flagErr << " error"
-      << (flagErr == 1 ? "" : "s")
-      << " in command line options\n";
+        << (flagErr == 1 ? "" : "s")
+        << " in command line options\n";
     exit(1);
   }
 
@@ -387,4 +420,5 @@ Configuration parseArgs(unsigned int argc, char ** argv) {
   return config;
 }
 
-#endif /* DEFAULT_PARAMETERS_H_ */
+#endif
+
