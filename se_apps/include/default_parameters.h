@@ -50,13 +50,14 @@ const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
 
 
 
-static std::string short_options = "bqc:d:f:g:G:i:l:m:k:o:p:r:s:t:v:y:z:F";
+static std::string short_options = "bqc:d:f:g:G:hi:l:m:k:o:p:r:s:t:v:y:z:F?";
 
 static struct option long_options[] = {
   {"block-read",                no_argument,       0, 'b'},
   {"image-downsampling-factor", required_argument, 0, 'c'},
   {"dump-volume",               required_argument, 0, 'd'},
   {"fps",                       required_argument, 0, 'f'},
+  {"help",                      no_argument,       0, 'h'},
   {"input-file",                required_argument, 0, 'i'},
   {"camera",                    required_argument, 0, 'k'},
   {"icp-threshold",             required_argument, 0, 'l'},
@@ -73,6 +74,7 @@ static struct option long_options[] = {
   {"bilateral-filter",          no_argument,       0, 'F'},
   {"ground-truth",              required_argument, 0, 'g'},
   {"gt-transform",              required_argument, 0, 'G'},
+  {"",                          no_argument,       0, '?'},
   {0, 0, 0, 0}
 };
 
@@ -99,6 +101,7 @@ inline void print_arguments() {
   std::cerr << "-z  (--rendering-rate)                    : default is " << default_rendering_rate << std::endl;
   std::cerr << "-g  (--ground-truth) <filename>           : Ground truth file" << std::endl;
   std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : Ground truth pose tranform (translation and/or rotation)" << std::endl;
+  std::cerr << "-h  (--help)                              : show this help message" << std::endl;
 }
 
 
@@ -299,6 +302,11 @@ Configuration parseArgs(unsigned int argc, char** argv) {
             exit(EXIT_FAILURE);
         }
         break;
+
+      case '?':    //   -?
+      case 'h':    //   -h  (--help)
+        print_arguments();
+        exit(EXIT_SUCCESS);
 
       case 'i':    //   -i  (--input-file)
         config.input_file = optarg;
