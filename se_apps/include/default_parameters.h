@@ -51,19 +51,23 @@ static const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
 
 
 
-static std::string short_options = "bqc:d:f:g:G:hi:l:m:k:o:p:r:s:t:v:y:z:F?";
+// Put colons after options with arguments
+static std::string short_options = "bc:d:f:Fg:G:hi:k:l:m:o:p:qr:s:t:v:y:z:?";
 
 static struct option long_options[] = {
   {"block-read",                no_argument,       0, 'b'},
   {"image-downsampling-factor", required_argument, 0, 'c'},
   {"dump-volume",               required_argument, 0, 'd'},
   {"fps",                       required_argument, 0, 'f'},
+  {"bilateral-filter",          no_argument,       0, 'F'},
+  {"ground-truth",              required_argument, 0, 'g'},
+  {"gt-transform",              required_argument, 0, 'G'},
   {"help",                      no_argument,       0, 'h'},
   {"input-file",                required_argument, 0, 'i'},
   {"camera",                    required_argument, 0, 'k'},
   {"icp-threshold",             required_argument, 0, 'l'},
-  {"log-file",                  required_argument, 0, 'o'},
   {"mu",                        required_argument, 0, 'm'},
+  {"log-file",                  required_argument, 0, 'o'},
   {"init-pose",                 required_argument, 0, 'p'},
   {"no-gui",                    no_argument,       0, 'q'},
   {"integration-rate",          required_argument, 0, 'r'},
@@ -72,9 +76,6 @@ static struct option long_options[] = {
   {"map-size",                  required_argument, 0, 'v'},
   {"pyramid-levels",            required_argument, 0, 'y'},
   {"rendering-rate",            required_argument, 0, 'z'},
-  {"bilateral-filter",          no_argument,       0, 'F'},
-  {"ground-truth",              required_argument, 0, 'g'},
-  {"gt-transform",              required_argument, 0, 'G'},
   {"",                          no_argument,       0, '?'},
   {0, 0, 0, 0}
 };
