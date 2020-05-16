@@ -208,8 +208,9 @@ struct Configuration {
    */
   float fps;
 
-  /*
-   * TODO
+  /**
+   * Skip processing frames that could not be processed in time. Only has an
+   * effect if se::Configuration::fps is greater than 0.
    * <br>\em Default: false
    */
   bool drop_frames;
@@ -278,6 +279,10 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "Tracking rate:                   " << config.tracking_rate << "\n";
   out << "Rendering rate:                  " << config.rendering_rate << "\n";
   out << "FPS:                             " << config.fps << "\n";
+  out << "Drop frames:                     " << (config.drop_frames
+                                                 ? "true" : "false") << "\n";
+  out << "Max frame:                       " << ((config.max_frame == -1)
+                                                 ? "full dataset" : std::to_string(config.max_frame)) << "\n";
   out << "\n";
 
   out << "ICP pyramid levels:              ";
@@ -288,10 +293,6 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "ICP threshold:                   " << config.icp_threshold << "\n";
   out << "Render volume full-size:         " << (config.render_volume_fullsize
                                                  ? "true" : "false") << "\n";
-  out << "Drop frames:                     " << (config.drop_frames
-                                                 ? "true" : "false") << "\n";
-  out << "Max frame:                       " << ((config.max_frame == -1)
-                                                 ? "full dataset" : std::to_string(config.max_frame)) << "\n";
   out << "\n";
 
   out << "==========     MAP    ========== " << "\n";

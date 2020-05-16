@@ -108,10 +108,8 @@ class DepthReader {
 
       double tpf = 1.0 / _fps;
       double ttw = ((double) _frame * tpf - current_frame + first_frame);
-      if (_drop_frames) {
-        if (ttw > 0)
-          usleep(1000000.0 * ttw);
-      }
+      if (ttw > 0)
+        usleep(1000000.0 * ttw);
 
     }
 
@@ -159,7 +157,6 @@ class DepthReader {
     int _frame;
     size_t _pose_num;
     float _fps;
-    bool _drop_frames;
     std::string _data_path;
     std::string _groundtruth_path;
     std::ifstream _gt_file;
@@ -198,7 +195,6 @@ class SceneDepthReader: public DepthReader {
           cameraActive = true;
           _frame = -1;
           _fps = fps;
-          _drop_frames = drop_frames;
         } else {
           std::cerr << "No such directory " << dir << std::endl;
           cameraOpen = false;
@@ -323,7 +319,6 @@ class RawDepthReader: public DepthReader {
           cameraActive = true;
           _frame = -1;
           _fps = config.fps;
-          _drop_frames = config.drop_frames;
           fseeko(_rawFilePtr, 0, SEEK_SET);
         }
       };
@@ -347,7 +342,6 @@ class RawDepthReader: public DepthReader {
           cameraActive = true;
           _frame = -1;
           _fps = fps;
-          _drop_frames = drop_frames;
           fseeko(_rawFilePtr, 0, SEEK_SET);
         }
       };
@@ -705,7 +699,6 @@ class OpenNIDepthReader: public DepthReader {
         cameraActive =true;
         _frame=-1;
         _fps = fps;
-        _drop_frames = drop_frames;
 
       };
 

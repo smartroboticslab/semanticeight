@@ -59,12 +59,12 @@ static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.0f);
 static constexpr int          default_tracking_rate = 1;
 
 // Put colons after options with arguments
-static std::string short_options = "b:B:c:f:F:g:G:h:i:k:l:m:M:n:N:o:p:q:Q:r:s:S:t:v:V:y:Y:z:?";
+static std::string short_options = "B:c:df:Fg:G:hi:k:l:m:M:n:N:o:p:qQr:s:S:t:v:V:y:Y:z:?";
 
 static struct option long_options[] = {
-  {"drop-frames",                no_argument,       0, 'b'},
   {"benchmark",                  optional_argument, 0, 'B'},
   {"sensor-downsampling-factor", required_argument, 0, 'c'},
+  {"drop-frames",                no_argument,       0, 'd'},
   {"fps",                        required_argument, 0, 'f'},
   {"bilateral-filter",           no_argument,       0, 'F'},
   {"ground-truth",               required_argument, 0, 'g'},
@@ -97,9 +97,9 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
-  std::cerr << "-b  (--drop-frames)                        : default is false: don't drop frames\n";
   std::cerr << "-B  (--benchmark) <blank, =filename, =dir> : default is autogen benchmark filename\n";
   std::cerr << "-c  (--sensor-downsampling-factor)         : default is " << default_sensor_downsampling_factor << " (same size)\n";
+  std::cerr << "-d  (--drop-frames)                        : default is false: don't drop frames\n";
   std::cerr << "-f  (--fps)                                : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                    : default is disabled\n";
   std::cerr << "-g  (--ground-truth) <filename>            : ground truth file\n";
@@ -453,10 +453,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
           &option_index)) != -1) {
     switch (c) {
-      case 'b': // drop-frames
-        config.drop_frames = true;
-        break;
-
       case 'B': // benchmark
         config.benchmark = true;
         if (optarg) {
@@ -474,6 +470,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
               << "or 8  (was " << optarg << ")\n";
           exit(EXIT_FAILURE);
         }
+        break;
+
+      case 'd': // drop-frames
+        config.drop_frames = true;
         break;
 
       case 'f': // fps
@@ -563,7 +563,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       case 'M': // output-mesh-file
         config.output_mesh_file = optarg;
         break;
-        
+
       case 'n': // near-plane
         config.near_plane = atof(optarg);
         break;
