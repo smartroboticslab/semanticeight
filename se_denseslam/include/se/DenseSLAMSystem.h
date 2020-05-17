@@ -138,10 +138,6 @@ class DenseSLAMSystem {
                     std::vector<int> &     pyramid,
                     const Configuration&   config_);
 
-    ~DenseSLAMSystem() {
-        delete render_T_MC_;
-    }
-
     /**
      * Preprocess a single depth frame and add it to the pipeline.
      * This is the first stage of the pipeline.
