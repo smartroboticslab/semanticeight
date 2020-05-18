@@ -30,7 +30,7 @@ static constexpr int default_iteration_count = 3;
 static constexpr int default_iterations[default_iteration_count] = { 10, 5, 4 };
 static constexpr float default_mu = 0.1f;
 static constexpr bool default_blocking_read = false;
-static constexpr int default_fps = 0;
+static constexpr float default_fps = 0.0f;
 static constexpr bool default_left_hand_frame = false;
 static constexpr float default_icp_threshold = 1e-5;
 static constexpr int default_image_downsampling_factor = 1;
@@ -266,7 +266,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         break;
 
       case 'f': // fps
-        config.fps = atoi(optarg);
+        config.fps = atof(optarg);
         if (config.fps < 0) {
           std::cerr << "Error: --fps (-f) must be >= 0 (was " << optarg << ")\n";
           exit(EXIT_FAILURE);
