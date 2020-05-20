@@ -257,13 +257,29 @@ int processAll(se::Reader*    reader,
       : Eigen::Vector2i(640, 480);
   const Eigen::Vector2i image_res
       = input_image_res / config->sensor_downsampling_factor;
+
+  const Eigen::VectorXf elevation_angles = (Eigen::VectorXf(64) <<
+      17.74400, 17.12000, 16.53600, 15.98200, 15.53000, 14.93600, 14.37300, 13.82300,
+      13.37300, 12.78600, 12.23000, 11.68700, 11.24100, 10.67000, 10.13200, 9.57400,
+      9.13800, 8.57700, 8.02300, 7.47900, 7.04600, 6.48100, 5.94400, 5.39500, 4.96300,
+      4.40100, 3.85900, 3.31900, 2.87100, 2.32400, 1.78300, 1.23800, 0.78600, 0.24500,
+      -0.29900, -0.84900, -1.28800, -1.84100, -2.27500, -2.92600, -3.37800, -3.91000,
+      -4.45700, -5.00400, -5.46000, -6.00200, -6.53700, -7.09600, -7.55200, -8.09000,
+      -8.62900, -9.19600, -9.65700, -10.18300, -10.73200, -11.28900, -11.77000, -12.29700,
+      -12.85400, -13.41500, -13.91600, -14.44200, -14.99700, -15.59500).finished();
+  const Eigen::VectorXf azimuth_angles = (Eigen::VectorXf(64) <<
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0).finished();
   const SensorImpl sensor({image_res.x(), image_res.y(), config->left_hand_frame,
                            config->near_plane, config->far_plane,
                            config->sensor_intrinsics[0] / config->sensor_downsampling_factor,
                            config->sensor_intrinsics[1] / config->sensor_downsampling_factor,
                            config->sensor_intrinsics[2] / config->sensor_downsampling_factor,
                            config->sensor_intrinsics[3] / config->sensor_downsampling_factor,
-                           Eigen::VectorXf(0), Eigen::VectorXf(0)});
+                           azimuth_angles, elevation_angles});
 
   static se::Image<float> input_depth_image (input_image_res.x(), input_image_res.y());
   static se::Image<uint32_t> input_rgba_image (input_image_res.x(), input_image_res.y());
