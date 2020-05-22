@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(se-apps)
 
+set(CMAKE_CXX_STANDARD 17)
+
 
 
 # Fucntion to create the executables given the name of one of the compiled
