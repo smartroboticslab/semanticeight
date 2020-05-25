@@ -21,6 +21,7 @@ add_library(${PROJECT_NAME} STATIC
   src/image_utils.cpp
   src/sensor.cpp
   src/str_utils.cpp
+  src/point_cloud_utils.cpp
 )
 
 # Add an alias so that the library can be used inside the build tree, e.g.
