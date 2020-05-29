@@ -21,10 +21,10 @@ se::PinholeCamera::PinholeCamera(const SensorConfig& c)
   assert(c.near_plane >= 0.f);
   assert(c.far_plane > c.near_plane);
   assert(c.mu > 0.f);
-  assert(!isnan(c.fx));
-  assert(!isnan(c.fy));
-  assert(!isnan(c.cx));
-  assert(!isnan(c.cy));
+  assert(!std::isnan(c.fx));
+  assert(!std::isnan(c.fy));
+  assert(!std::isnan(c.cx));
+  assert(!std::isnan(c.cy));
 }
 
 se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
