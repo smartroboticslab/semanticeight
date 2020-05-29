@@ -123,14 +123,14 @@ namespace se {
     KernelImage::Pixel poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const;
 
     size_t width() const {return image_width_;};
-    size_t height() const {return image_height;};
+    size_t height() const {return image_height_;};
     Value  maxValue() const {return image_max_value_;};
     size_t maxLevel() const {return image_max_level_;}
-    
+
   private:
     size_t    image_max_level_;
     size_t    image_width_;
-    size_t    image_height;
+    size_t    image_height_;
     Pyramid  pyramid_image_;
     Value   image_max_value_;
   };

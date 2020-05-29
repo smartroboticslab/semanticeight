@@ -32,15 +32,15 @@
 
 namespace se {
   KernelImage::KernelImage(const se::Image<float>& depth_map) :
-      image_width_(depth_map.width()), image_height(depth_map.height()) {
-    size_t image_max_dim = std::max(image_width_, image_height);
+      image_width_(depth_map.width()), image_height_(depth_map.height()) {
+    size_t image_max_dim = std::max(image_width_, image_height_);
     image_max_level_ = size_t(log2((image_max_dim - 1) / 4) + 2) - 1;
 
     for (size_t l = 0; l <= image_max_level_; l++)
-      pyramid_image_.emplace_back(image_width_ * image_height);
+      pyramid_image_.emplace_back(image_width_ * image_height_);
 
     // Initalize image frame at single pixel resolution
-    for (int v = 0; v < image_height; v++) {
+    for (int v = 0; v < image_height_; v++) {
 #pragma omp parallel for
       for (int u = 0; u < image_width_; u++) {
         Value pixel_depth = (depth_map.data())[u + v * image_width_];
@@ -55,22 +55,22 @@ namespace se {
       }
     }
 
-    size_t num_pixel = image_width_ * image_height;
+    size_t num_pixel = image_width_ * image_height_;
     Img default_image = std::vector<Pixel>(num_pixel, Pixel::crossingKnownPixel()); // state_1 := crossing (1); state_2 := known (0)
 
     // Initalize first pixel batch at 3x3 batch resolution
-    for (int y = 0; y < image_height; y++) {
+    for (int y = 0; y < image_height_; y++) {
 #pragma omp parallel for
       for (int x = 0; x < image_width_; x++) {
         Pixel& pixel = pyramid_image_[1][x + image_width_ * y];
 
-        if (y >= 1 && y < image_height - 1 && x >= 1 && x < image_width_ - 1) {
+        if (y >= 1 && y < image_height_ - 1 && x >= 1 && x < image_width_ - 1) {
           pixel.status_crossing = Pixel::statusCrossing::inside; // inside (0)
         }
 
 
         int top    = (y > 0) ? y - 1 : 0;
-        int bottom = (y < image_height - 1 ? y + 1 : image_height - 1);
+        int bottom = (y < image_height_ - 1 ? y + 1 : image_height_ - 1);
         int left   = (x > 0) ? x - 1 : 0;
         int right  = (x < image_width_ - 1 ? x + 1 : image_width_ - 1);
 
@@ -99,7 +99,7 @@ namespace se {
     for (size_t l = 2, s = 2; l <= image_max_level_; ++l, (s <<= 1U)) {
       pyramid_image_[l] = default_image;
       int s_half = s / 2;
-      for (int y = 0; y < image_height; y++) {
+      for (int y = 0; y < image_height_; y++) {
 #pragma omp parallel for
         for (int x = 0; x < image_width_; x++) {
           Pixel& pixel = pyramid_image_[l][x + y * image_width_];
@@ -126,8 +126,8 @@ namespace se {
             top = y - s_half;
           }
 
-          if ((y + s_half) >= image_height) {
-            bottom = image_height - 1;
+          if ((y + s_half) >= image_height_) {
+            bottom = image_height_ - 1;
             pixel.status_crossing = Pixel::statusCrossing::crossing; // crossing (1)
           } else {
             bottom = y + s_half;
@@ -161,7 +161,7 @@ namespace se {
           else if (unknown_factor > 0) // Some pixel are unknown
             pixel.status_known = Pixel::statusKnown::part_known; // paritally known (1) - else known (0) - see initialization value;
 
-          if (y >= s && y < image_height - s && x >= s && x < image_width_ - s) {
+          if (y >= s && y < image_height_ - s && x >= s && x < image_width_ - s) {
             pixel.status_crossing = Pixel::statusCrossing::inside; // inside (0)
           }
         }
@@ -173,9 +173,9 @@ namespace se {
     image_max_value_ = 0;
     for (int v = s; true ; v += 2 * s)
     {
-      if (v > image_height - s - 1)
+      if (v > image_height_ - s - 1)
       {
-        v = image_height - s - 1;
+        v = image_height_ - s - 1;
       }
       for (int u = s; true ; u += 2 * s)
       {
@@ -191,7 +191,7 @@ namespace se {
           break;
         }
       }
-      if (v == image_height - s - 1) {
+      if (v == image_height_ - s - 1) {
         break;
       }
     }
@@ -199,7 +199,7 @@ namespace se {
 
   bool KernelImage::inImage(const int u, const int v) const {
     if (   u >= 0 && u < static_cast<Value>(image_width_)
-        && v >= 0 && v < static_cast<Value>(image_height)) {
+        && v >= 0 && v < static_cast<Value>(image_height_)) {
       return true;
     }
     return false;
@@ -237,13 +237,13 @@ namespace se {
       v_min = 0;
       if(v_max < Value(0))
         v_out = true;
-    } else if(v_min > static_cast<Value>(image_height - 1U)) {
+    } else if(v_min > static_cast<Value>(image_height_ - 1U)) {
         v_out = true;
     }
 
-    if(v_max > static_cast<Value>(image_height - 1U)) {
+    if(v_max > static_cast<Value>(image_height_ - 1U)) {
       v_in = false;
-      v_max = static_cast<Value>(image_height - 1U);
+      v_max = static_cast<Value>(image_height_ - 1U);
     }
 
     // Check if the pixel batch is entirely outside the image
