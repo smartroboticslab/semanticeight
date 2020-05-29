@@ -75,8 +75,11 @@ public:
 
   virtual ~Node(){};
 
-  Node*& child(const int x, const int y,
-      const int z) {
+  Node*& child(const int x, const int y, const int z) {
+    return child_ptr_[x + y * 2 + z * 4];
+  };
+
+  const Node* child(const int x, const int y, const int z) const {
     return child_ptr_[x + y * 2 + z * 4];
   };
 
@@ -84,7 +87,15 @@ public:
     return child_ptr_[child_idx];
   }
 
+  const Node* child(const int child_idx ) const {
+    return child_ptr_[child_idx];
+  }
+
   Node*& parent() {
+    return parent_ptr_;
+  }
+
+  const Node* parent() const {
     return parent_ptr_;
   }
 
