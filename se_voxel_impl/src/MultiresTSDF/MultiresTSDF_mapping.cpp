@@ -85,7 +85,7 @@ namespace se {
                 voxel_data = MultiresTSDF::VoxelType::initData();
               }
               voxel_data.delta_y = 0;
-              block->data(voxel_coord, voxel_scale + 1, voxel_data);
+              block->setData(voxel_coord, voxel_scale + 1, voxel_data);
             }
       }
     }
@@ -167,13 +167,13 @@ namespace se {
                       voxel_data.y = fminf(voxel_data.y + parent_data.delta_y, max_weight);
                       voxel_data.delta_y = parent_data.delta_y;
                     }
-                    block->data(voxel_coord, voxel_scale - 1, voxel_data);
+                    block->setData(voxel_coord, voxel_scale - 1, voxel_data);
                   }
                 }
               }
               parent_data.x_last = parent_data.x;
               parent_data.delta_y = 0;
-              block->data(parent_coord, voxel_scale, parent_data);
+              block->setData(parent_coord, voxel_scale, parent_data);
             }
       }
     }
@@ -231,7 +231,7 @@ namespace se {
 
                   Eigen::Vector2f pixel_f;
                   if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
-                    block->data(voxel_coord, voxel_scale, voxel_data);
+                    block->setData(voxel_coord, voxel_scale, voxel_data);
                     continue;
                   }
                   const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
@@ -241,7 +241,7 @@ namespace se {
                   const float depth_value = depth_image(pixel.x(), pixel.y());
                   // continue on invalid depth measurement
                   if (depth_value <= 0) {
-                    block->data(voxel_coord, voxel_scale, voxel_data);
+                    block->setData(voxel_coord, voxel_scale, voxel_data);
                     continue;
                   }
 
@@ -258,13 +258,13 @@ namespace se {
                     voxel_data.y = fminf(voxel_data.y + 1, max_weight);
                     voxel_data.delta_y++;
                   }
-                  block->data(voxel_coord, voxel_scale, voxel_data);
+                  block->setData(voxel_coord, voxel_scale, voxel_data);
                 }
               }
             }
             parent_data.x_last = parent_data.x;
             parent_data.delta_y = 0;
-            block->data(parent_coord, parent_scale, parent_data);
+            block->setData(parent_coord, parent_scale, parent_data);
           }
         }
       }
@@ -354,7 +354,7 @@ namespace se {
                     -1.f, 1.f);
                 voxel_data.y = fminf(voxel_data.y + 1, max_weight);
                 voxel_data.delta_y++;
-                block->data(voxel_coord, scale, voxel_data);
+                block->setData(voxel_coord, scale, voxel_data);
               }
             }
           }

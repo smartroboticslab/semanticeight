@@ -143,13 +143,13 @@ class VoxelBlock: public Node<T> {
     void coordinates(const Eigen::Vector3i& block_coord){ coordinates_ = block_coord; }
 
     VoxelData data(const Eigen::Vector3i& voxel_coord) const;
-    void data(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+    void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
 
     VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const;
-    void data(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+    void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
 
     VoxelData data(const int voxel_idx) const;
-    void data(const int voxel_idx, const VoxelData& voxel_data);
+    void setData(const int voxel_idx, const VoxelData& voxel_data);
 
     int current_scale() const { return current_scale_; }
     void current_scale(const int s) { current_scale_ = s; }
@@ -212,14 +212,14 @@ VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord, const int scale) const {
 }
 
 template <typename T>
-inline void VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord,
+inline void VoxelBlock<T>::setData(const Eigen::Vector3i& voxel_coord,
                                 const VoxelData& voxel_data){
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
   voxel_block_[voxel_offset.x() + voxel_offset.y() * size + voxel_offset.z() * size_sq] = voxel_data;
 }
 
 template <typename T>
-inline void VoxelBlock<T>::data(const Eigen::Vector3i& voxel_coord, const int scale,
+inline void VoxelBlock<T>::setData(const Eigen::Vector3i& voxel_coord, const int scale,
                                 const VoxelData& voxel_data){
   Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
   int scale_offset = 0;
@@ -245,7 +245,7 @@ VoxelBlock<T>::data(const int voxel_idx) const {
 }
 
 template <typename T>
-inline void VoxelBlock<T>::data(const int voxel_idx, const VoxelData& voxel_data){
+inline void VoxelBlock<T>::setData(const int voxel_idx, const VoxelData& voxel_data){
   voxel_block_[voxel_idx] = voxel_data;
 }
 }

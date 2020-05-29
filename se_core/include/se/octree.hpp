@@ -409,7 +409,7 @@ inline void  Octree<T>::set(const int x,
     node = node_tmp;
   }
 
-  static_cast<VoxelBlock<T> *>(node)->data(Eigen::Vector3i(x, y, z), data);
+  static_cast<VoxelBlock<T> *>(node)->setData(Eigen::Vector3i(x, y, z), data);
 }
 
 template <typename T>

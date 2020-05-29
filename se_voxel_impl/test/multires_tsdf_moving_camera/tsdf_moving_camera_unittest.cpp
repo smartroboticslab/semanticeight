@@ -309,13 +309,13 @@ void propagateDown(se::VoxelBlock<T>* block, const int scale) {
                   voxel_data.y  =  fminf(voxel_data.y + parent_data.delta_y, MAX_WEIGHT);
                   voxel_data.delta_y = parent_data.delta_y;
                 }
-                block->data(voxel_coord, voxel_scale - 1, voxel_data);
+                block->setData(voxel_coord, voxel_scale - 1, voxel_data);
               }
             }
           }
           parent_data.x_last = parent_data.x;
           parent_data.delta_y = 0;
-          block->data(parent_coord, voxel_scale, parent_data);
+          block->setData(parent_coord, voxel_scale, parent_data);
         }
   }
 }
@@ -359,7 +359,7 @@ void propagateUp(se::VoxelBlock<T>* block, const int scale) {
             parent_data = MultiresTSDF::VoxelType::initData();
           }
           parent_data.delta_y = 0;
-          block->data(voxel_coord, voxel_scale + 1, parent_data);
+          block->setData(voxel_coord, voxel_scale + 1, parent_data);
         }
   }
 }
@@ -420,7 +420,7 @@ void foreach(float                                  voxel_dim,
             parent_data.delta_y++;
             parent_data.y = parent_data.y + 1;
 
-            block->data(voxel_coord, scale, parent_data);
+            block->setData(voxel_coord, scale, parent_data);
           }
         }
       }

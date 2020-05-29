@@ -196,7 +196,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
               voxel_data.frame = last_frame;
               if (observed_count == 8)
                 voxel_data.observed = true;
-              block->data(voxel_coord, voxel_scale + 1, voxel_data);
+              block->setData(voxel_coord, voxel_scale + 1, voxel_data);
             }
           }
         }
@@ -247,7 +247,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                     voxel_data.y_last   = data.y;
                     voxel_data.frame    = data.frame;
                     voxel_data.observed = true;
-                    block->data(voxel_coord, scale, voxel_data);
+                    block->setData(voxel_coord, scale, voxel_data);
                   }
                 } else {
                   float delta_y_curr = (delta_y + voxel_data.y > MultiresOFusion::max_weight) ? MultiresOFusion::max_weight - voxel_data.y : delta_y;
@@ -261,14 +261,14 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                   }
                   voxel_data.y = voxel_data.y + delta_y_curr;
                   voxel_data.x_max = se::math::clamp(voxel_data.x * voxel_data.y, MultiresOFusion::min_occupancy, MultiresOFusion::max_occupancy);
-                  block->data(voxel_coord, scale, voxel_data);
+                  block->setData(voxel_coord, scale, voxel_data);
                 }
 
                 const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ *
                     voxel_sample_coord_f).homogeneous()).head(3);
                 Eigen::Vector2f pixel_f;
                 if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
-                  block->data(voxel_coord, scale, voxel_data);
+                  block->setData(voxel_coord, scale, voxel_data);
                   continue;
                 }
                 const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
@@ -311,7 +311,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
           auto voxel_data = block->data(voxel_coord, scale);
           Eigen::Vector2f pixel_f;
           if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
-            block->data(voxel_coord, scale, voxel_data);
+            block->setData(voxel_coord, scale, voxel_data);
             continue;
           }
           const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
@@ -324,7 +324,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
           // Update the LogOdd
           sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(
               point_C.z(), depth_value, mu_, voxel_dim_, voxel_data, frame_, scale, proj_scale);
-          block->data(voxel_coord, scale, voxel_data);
+          block->setData(voxel_coord, scale, voxel_data);
         }
       }
     }
@@ -380,7 +380,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
           // Update the LogOdd
           sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(point_C.z(), depth_value, mu_,
               voxel_dim_, voxel_data, frame_, scale, proj_scale);
-          block->data(voxel_coord, scale, voxel_data);
+          block->setData(voxel_coord, scale, voxel_data);
         }
       }
     }

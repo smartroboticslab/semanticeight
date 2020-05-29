@@ -310,7 +310,7 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
           } else {
             voxel_data.y = 0;
           }
-          block->data(voxel_coord, 0, voxel_data);
+          block->setData(voxel_coord, 0, voxel_data);
         }
   };
 
