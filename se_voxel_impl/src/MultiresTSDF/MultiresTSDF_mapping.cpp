@@ -246,11 +246,11 @@ namespace se {
                   }
 
                   // Update the TSDF
-                  const float tsdf_value = (depth_value - point_C.z())
+                  const float sdf_value = (depth_value - point_C.z())
                                      * std::sqrt(1 + se::math::sq(point_C.x() / point_C.z()) +
                                                  se::math::sq(point_C.y() / point_C.z()));
-                  if (tsdf_value > -mu) {
-                    const float tsdf_value = fminf(1.f, tsdf_value / mu);
+                  if (sdf_value > -mu) {
+                    const float tsdf_value = fminf(1.f, sdf_value / mu);
                     voxel_data.x = se::math::clamp(
                         (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
                         (static_cast<float>(voxel_data.y) + 1.f),
