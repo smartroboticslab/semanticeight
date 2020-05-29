@@ -2,27 +2,7 @@
 Welcome to *supereight*: a high performance template octree library and a dense
 volumetric SLAM pipeline implementation.
 
-## Related publications
-This software implements the octree library and dense SLAM system presented in
-our paper
-[Efficient Octree-Based Volumetric SLAM Supporting Signed-Distance and
-Occupancy
-Mapping.](https://spiral.imperial.ac.uk/bitstream/10044/1/55715/2/EVespaRAL_final.pdf)
-If you publish work that relates to this software, please cite our paper as:
 
-``` bibtex
-@ARTICLE{VespaRAL18,
-  author  = {E. Vespa and N. Nikolov and M. Grimm and L. Nardi and P. H. J. Kelly and S. Leutenegger},
-  journal = {IEEE Robotics and Automation Letters},
-  title   = {Efficient Octree-Based Volumetric SLAM Supporting Signed-Distance and Occupancy Mapping},
-  year    = {2018},
-  volume  = {3},
-  number  = {2},
-  pages   = {1144--1151},
-  month   = {Apr},
-  doi     = {10.1109/LRA.2018.2792537},
-}
-```
 
 ## Project structure
 supereight is made of three main components:
@@ -43,6 +23,8 @@ supereight is made of three main components:
   given inputs or live camera.
 * `se_tools`: related tools and scripts (e.g. for converting datasets and
   evaluating the pipeline)
+
+
 
 ## Building
 Clone this repository using
@@ -144,6 +126,43 @@ Then it can be used as input to one of the apps
 
 ``` bash
 ./build/se_apps/se-denseslam-tsdf-main -i living_room_traj2_loop/scene.raw -s 4.8 -p 0.34,0.5,0.24 -z 4 -c 2 -r 1 -k 481.2,-480,320,240  > benchmark.log
+```
+
+
+
+## Related publications
+This software implements the octree library and dense SLAM system presented in
+our paper [Efficient Octree-Based Volumetric SLAM Supporting Signed-Distance
+and Occupancy
+Mapping.](https://spiral.imperial.ac.uk/bitstream/10044/1/55715/2/EVespaRAL_final.pdf)
+It also implements the multi-resolution TSDF mapping system described in our
+paper [Adaptive-Resolution Octree-Based Volumetric
+SLAM.](https://www.doc.ic.ac.uk/~sleutene/publications/Vespa_3DV19.pdf) If you
+publish work that relates to this software, please cite one of the following
+articles:
+
+``` bibtex
+@Article{VespaRAL18,
+  author  = {E. Vespa and N. Nikolov and M. Grimm and L. Nardi and P. H. J. Kelly and S. Leutenegger},
+  journal = {IEEE Robotics and Automation Letters},
+  title   = {Efficient Octree-Based Volumetric {SLAM} Supporting Signed-Distance and Occupancy Mapping},
+  year    = {2018},
+  volume  = {3},
+  number  = {2},
+  pages   = {1144--1151},
+  month   = {Apr},
+  doi     = {10.1109/LRA.2018.2792537},
+}
+
+@InProceedings{Vespa3DV19,
+  author    = {E. Vespa and N. Funk and P. H. J. Kelly and S. Leutenegger},
+  booktitle = {2019 International Conference on 3D Vision (3DV)},
+  title     = {Adaptive-Resolution Octree-Based Volumetric {SLAM}},
+  year      = {2019},
+  pages     = {654--662},
+  month     = {Sep},
+  doi       = {10.1109/3DV.2019.00077},
+}
 ```
 
 
