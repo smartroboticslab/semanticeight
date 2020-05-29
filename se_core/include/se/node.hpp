@@ -105,7 +105,7 @@ public:
   void active(const bool a){ active_ = a; }
   bool active() const { return active_; }
 
-  virtual bool isBlock() { return false; }
+  virtual bool isBlock() const { return false; }
 
 protected:
     Node* parent_ptr_;
@@ -137,7 +137,7 @@ class VoxelBlock: public Node<T> {
       }
     }
 
-    bool isBlock(){ return true; }
+    bool isBlock() const { return true; }
 
     Eigen::Vector3i coordinates() const { return coordinates_; }
     void coordinates(const Eigen::Vector3i& block_coord){ coordinates_ = block_coord; }
@@ -151,14 +151,14 @@ class VoxelBlock: public Node<T> {
     VoxelData data(const int voxel_idx) const;
     void data(const int voxel_idx, const VoxelData& voxel_data);
 
-    int current_scale() { return current_scale_; }
+    int current_scale() const { return current_scale_; }
     void current_scale(const int s) { current_scale_ = s; }
 
-    int min_scale() { return min_scale_; }
+    int min_scale() const { return min_scale_; }
     void min_scale(const int s) { min_scale_ = s; }
 
-    VoxelData* getBlockRawPtr(){ return voxel_block_; }
-    static constexpr int data_size(){ return sizeof(VoxelBlock<T>); }
+    VoxelData* getBlockRawPtr() { return voxel_block_; }
+    static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
 
   private:
     VoxelBlock(const VoxelBlock&) = delete;
