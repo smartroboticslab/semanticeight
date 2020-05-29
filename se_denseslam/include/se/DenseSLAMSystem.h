@@ -298,8 +298,8 @@ class DenseSLAMSystem {
     /*
      * TODO Document this.
      */
-    void getMap(std::shared_ptr<se::Octree<VoxelImpl::VoxelType> >& map) {
-      map = map_;
+    std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > getMap() {
+      return map_;
     }
 
     /**
