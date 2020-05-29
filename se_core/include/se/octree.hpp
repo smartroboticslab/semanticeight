@@ -447,7 +447,8 @@ inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
 
   const unsigned min_node_size = std::max((1 << scale), (int) block_size);
   unsigned node_size = size_ >> 1;
-  int child_idx;
+  // Initialize just to stop the compiler from complaining.
+  int child_idx = -1;
   for(; node_size >= min_node_size; node_size = node_size >> 1) {
     child_idx  = ((x & node_size) > 0) + 2 * ((y & node_size) > 0) + 4*((z & node_size) > 0);
     Node<T>* node_tmp = node->child(child_idx);
