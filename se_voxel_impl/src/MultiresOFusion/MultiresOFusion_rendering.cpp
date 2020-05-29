@@ -153,7 +153,7 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
   // Additional distance travelled in [voxel]
   float v_add   = 0;                     // TODO: I'll have to re-evaluate this value.
   const float v = 1 / voxel_dim * t;       // t in voxel coordinates
-  float v_near  = 1 / voxel_dim * t_near;  // t_near in voxel coordinates
+  //float v_near  = 1 / voxel_dim * t_near;  // t_near in voxel coordinates
   float v_far   = 1 / voxel_dim * t_far;   // t_far in voxel coordinates
   const Eigen::Vector3f ray_origin_coord_f = 1 / voxel_dim * ray_origin_M; // Origin in voxel coordinates
 
