@@ -70,8 +70,6 @@ class DenseSLAMSystem {
     Eigen::Vector3f map_dim_;
     Eigen::Vector3i map_size_;
     std::vector<int> iterations_;
-    bool tracked_;
-    bool integrated_;
     bool need_render_ = false;
     Configuration config_;
 
@@ -304,20 +302,6 @@ class DenseSLAMSystem {
       map = map_;
     }
 
-    /*
-     * TODO Document this.
-     */
-    bool getTracked() {
-      return (tracked_);
-    }
-
-    /*
-     * TODO Document this.
-     */
-    bool getIntegrated() {
-      return (integrated_);
-    }
-
     /**
      * Get the translation of the world frame to the map frame.
      *
@@ -530,12 +514,5 @@ class DenseSLAMSystem {
       return (image_res_);
     }
 };
-
-/**
- * Synchronize CPU and GPU.
- *
- * @note This function does nothing in the C++ implementation.
- */
-void synchroniseDevices();
 
 #endif
