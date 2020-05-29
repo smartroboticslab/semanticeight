@@ -111,7 +111,7 @@ public:
   inline int voxelDepth() const { return voxel_depth_; }
   inline int maxBlockScale() const { return max_block_scale_; }
   inline int blockDepth() const { return block_depth_; }
-  inline Node<T>* const root() const { return root_; }
+  inline Node<T>* root() const { return root_; }
 
   /*! \brief Sets voxel data at coordinates (x,y,z), if not present it
    * allocates it. This method is not thread safe.
