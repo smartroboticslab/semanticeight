@@ -54,7 +54,6 @@ Eigen::Vector4f MultiresTSDF::raycast(
     float step_size = large_step;
     Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
     const int scale = 0;
-    bool is_valid;
     auto interp_res = volume.interp(ray_pos_M, scale, select_node_dist, select_voxel_dist);
     float f_t = interp_res.first;
     float f_tt = 0;

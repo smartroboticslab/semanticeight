@@ -194,7 +194,6 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
 
   Eigen::Vector3f ray_coord_f = ray_origin_coord_f;
 
-  int iter_1 = 0;
   while ((v + v_add) < v_far) {
     if (scale <= 2) {
       t = voxel_dim * (v + v_add - 4);
@@ -278,9 +277,8 @@ Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, s
                                          float) {
   const int map_size = volume.size();              // map_size    := [voxel]
   const float voxel_dim = volume.dim() / map_size; // voxel_dim     := [m / voxel];
-  const float inverse_voxel_dim = 1.f / voxel_dim; // inv_voxel_dim := [voxel / m];
   // inv_voxel_dim := [m] to [voxel]; voxel_dim := [voxel] to [m]
-  float t_near = near_plane;                       // max travel distance in [m]
+  //float t_near = near_plane;                       // max travel distance in [m]
   float t_far  = far_plane;                        // min travel distance in [m]
 
   // Check if the ray origin is outside the map.

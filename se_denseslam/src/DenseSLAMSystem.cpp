@@ -201,7 +201,6 @@ bool DenseSLAMSystem::track(const SensorImpl& sensor,
 bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
                                 const unsigned     frame) {
 
-  const float voxel_dim = volume_.dim() / volume_.size();
   const int num_blocks_per_pixel = volume_.size()
     / ((se::VoxelBlock<VoxelImpl::VoxelType>::size));
   const size_t num_blocks_total = num_blocks_per_pixel

@@ -761,7 +761,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         auto& parent_data = block->parent()->data_[child_idx];
         parent_data = data;
 
-        auto test = block->parent()->data_[child_idx];
         if (data.observed &&
             data.x_max <= MultiresOFusion::min_occupancy + 0.01) { //&& data.x * data.y <= MultiresOFusion::min_occupancy
           pool_.deleteBlock(block, voxel_depth_);
