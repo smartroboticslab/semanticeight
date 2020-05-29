@@ -33,10 +33,10 @@
 namespace se {
   KernelImage::KernelImage(const se::Image<float>& depth_map) :
       image_width_(depth_map.width()), image_height_(depth_map.height()) {
-    size_t image_max_dim = std::max(image_width_, image_height_);
-    image_max_level_ = size_t(log2((image_max_dim - 1) / 4) + 2) - 1;
+    const int image_max_dim = std::max(image_width_, image_height_);
+    image_max_level_ = static_cast<int>(log2((image_max_dim - 1) / 4) + 2) - 1;
 
-    for (size_t l = 0; l <= image_max_level_; l++)
+    for (int l = 0; l <= image_max_level_; l++)
       pyramid_image_.emplace_back(image_width_ * image_height_);
 
     // Initalize image frame at single pixel resolution
@@ -96,7 +96,7 @@ namespace se {
       }
     }
     // Compute remaining pixel batch for remaining resolutions (5x5, 9x9, 17x17, 33x33, ...)
-    for (size_t l = 2, s = 2; l <= image_max_level_; ++l, (s <<= 1U)) {
+    for (int l = 2, s = 2; l <= image_max_level_; ++l, (s <<= 1U)) {
       pyramid_image_[l] = default_image;
       int s_half = s / 2;
       for (int y = 0; y < image_height_; y++) {
@@ -169,7 +169,7 @@ namespace se {
     }
 
     // Find max value at by iterating through coarsest kernel pixel batches touching each other
-    size_t s = 1 << (image_max_level_ - 1);
+    const int s = 1 << (image_max_level_ - 1);
     image_max_value_ = 0;
     for (int v = s; true ; v += 2 * s)
     {

@@ -85,7 +85,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   const Eigen::Vector3f& sample_offset_frac_;
   const size_t voxel_depth_;
   const float max_depth_value_;
-  const int frame_;
+  const unsigned frame_;
   Eigen::Matrix<float, 3, 8> corner_rel_steps_;
   const float zero_depth_band_;
   const float size_to_radius;
@@ -110,7 +110,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     int data_count = 0;
     int y_max    = 0;
     int observed_count = 0;
-    unsigned last_frame = 0;
+    int last_frame = 0;
     float x_max = 2 * MultiresOFusion::min_occupancy;
     for(int child_idx = 0; child_idx < 8; ++child_idx) {
       const auto& child_data = node->data_[child_idx];
@@ -164,7 +164,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
             float y_mean = 0;
             int data_count = 0;
             int observed_count = 0;
-            unsigned last_frame = 0;
+            int last_frame = 0;
             float x_max = MultiresOFusion::min_occupancy;
             for (int k = 0; k < stride; k += stride / 2)
               for (int j = 0; j < stride; j += stride / 2)
