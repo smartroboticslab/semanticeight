@@ -283,15 +283,16 @@ void downsampleImageKernel(const uint8_t*         input_RGB_image_data,
 
   TICK();
   // Check for correct image sizes.
-  assert((input_RGB_image_res.x() >= output_RGBA.width())
+  assert((input_RGB_image_res.x() >= output_RGBA_image.width())
       && "Error: input width must be greater than output width");
-  assert((input_RGB_image_res.y() >= output_RGBA.height())
+  assert((input_RGB_image_res.y() >= output_RGBA_image.height())
       && "Error: input height must be greater than output height");
-  assert((input_RGB_image_res.x() % output_RGBA.width() == 0)
+  assert((input_RGB_image_res.x() % output_RGBA_image.width() == 0)
       && "Error: input width must be an integer multiple of output width");
-  assert((input_RGB_image_res.y() % output_RGBA.height() == 0)
+  assert((input_RGB_image_res.y() % output_RGBA_image.height() == 0)
       && "Error: input height must be an integer multiple of output height");
-  assert((input_RGB_image_res.x() / output_RGBA.width() == input_RGB_image_res.y() / output_RGBA.height())
+  assert((input_RGB_image_res.x() / output_RGBA_image.width()
+      == input_RGB_image_res.y() / output_RGBA_image.height())
       && "Error: input and output width and height ratios must be the same");
 
   const int ratio = input_RGB_image_res.x() / output_RGBA_image.width();
