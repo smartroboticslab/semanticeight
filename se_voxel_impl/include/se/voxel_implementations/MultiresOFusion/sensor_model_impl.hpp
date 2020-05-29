@@ -57,7 +57,7 @@ public:
                          float depth_max,
                          float voxel_min_m,
                          float voxel_max_m,
-                         float mu) {
+                         float /* mu */) {
 
     // Assume worst case scenario -> no multiplication with projScale
     float diff_max = (voxel_max_m - depth_min); // * projScale;
@@ -88,8 +88,8 @@ public:
 
   inline static void updateBlock(float          pos_z,
                                  float          depth_sample,
-                                 float          mu,
-                                 float          voxel_dim,
+                                 float          /* mu */,
+                                 float          /* voxel_dim */,
                                  MultiresOFusion::VoxelType::VoxelData& field,
                                  const unsigned frame,
                                  const int      scale,

@@ -333,7 +333,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   /**
    * \brief Compute integration scale for a given voxel block and update all voxels that project into the image plane.
   */
-  void updateBlock(se::VoxelBlock<MultiresOFusion::VoxelType>* block, int min_scale = 0) {
+  void updateBlock(se::VoxelBlock<MultiresOFusion::VoxelType>* block, int /* min_scale = 0 */) {
     constexpr int block_size = se::VoxelBlock<MultiresOFusion::VoxelType>::size;
     const Eigen::Vector3i block_coord = block->coordinates();
     const Eigen::Vector3f block_sample_offset = (sample_offset_frac_.array().colwise() *

@@ -82,11 +82,11 @@ namespace se {
     OusterLidar(const OusterLidar& ouster_lidar,
                 const float        scaling_factor);
 
-    int computeIntegrationScale(const float dist,
-                                const float voxel_dim,
-                                const int   last_scale,
-                                const int   min_scale,
-                                const int   max_block_scale) const {return 0;};
+    int computeIntegrationScale(const float,
+                                const float,
+                                const int,
+                                const int,
+                                const int) const {return 0;};
 
 
 

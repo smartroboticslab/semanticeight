@@ -42,13 +42,12 @@ constexpr int   MultiresOFusion::fs_integr_scale;
 
 // Implement static member functions.
 size_t MultiresOFusion::buildAllocationList(
-    se::Octree<MultiresOFusion::VoxelType>& map,
-    const se::Image<float>&                 depth_image,
-    const Eigen::Matrix4f&                  T_MC,
-    const SensorImpl&                       sensor,
-    se::key_t*                              allocation_list,
-    size_t                                  reserved) {
-
+    se::Octree<MultiresOFusion::VoxelType>&,
+    const se::Image<float>&,
+    const Eigen::Matrix4f&,
+    const SensorImpl&,
+    se::key_t*,
+    size_t) {
   return 0;
-
 }
+
