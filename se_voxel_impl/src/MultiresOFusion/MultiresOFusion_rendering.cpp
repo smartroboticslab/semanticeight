@@ -145,7 +145,6 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
                 const Eigen::Vector3f& ray_origin_M,
                 const Eigen::Vector3f& ray_dir_M,
                 float&                 t,
-                const float&           t_near,
                 float&                 t_far,
                 const float&           voxel_dim,
                 int                    max_scale,
@@ -270,7 +269,7 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>* const map,
 Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, se::Octree>& volume,
                                          const Eigen::Vector3f&                             ray_origin_M,
                                          const Eigen::Vector3f&                             ray_dir_M,
-                                         float                                              near_plane,
+                                         float                                              ,
                                          float                                              far_plane,
                                          float,
                                          float,
@@ -294,7 +293,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, s
 
   const int max_scale = std::min(7, volume.octree_->voxelDepth() - 1); // Max possible free space skipped per iteration (node size = 2^max_scale)
 
-  advanceRay(volume.octree_, ray_origin_M, ray_dir_M, t, t_near, t_far, voxel_dim, max_scale, is_valid);
+  advanceRay(volume.octree_, ray_origin_M, ray_dir_M, t, t_far, voxel_dim, max_scale, is_valid);
 
   if (!is_valid) {
     // Ray passes only through free space or intersects with the map before t_near or after t_far.
