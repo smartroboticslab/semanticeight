@@ -89,7 +89,7 @@ cleanall :
 	rm -rf build
 	rm -rf living_room_traj*_loop livingRoom*.gt.freiburg living_room_traj*_loop.raw
 	rm -f *.log
-	rm -rf doc
+	rm -rf doc/html
 
 
 .PHONY : clean bench test all validate doc install uninstall
