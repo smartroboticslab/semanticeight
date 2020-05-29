@@ -90,7 +90,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   const float zero_depth_band_;
   const float size_to_radius;
 
-  static inline constexpr int max_block_scale_ =  se::math::log2_const(se::VoxelBlock<MultiresOFusion::VoxelType>::size);
+  static constexpr int max_block_scale_ =  se::math::log2_const(se::VoxelBlock<MultiresOFusion::VoxelType>::size);
 
   /**
    * \brief Propagate a summary of the eight nodes children to its parent
