@@ -34,12 +34,6 @@ se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
             left_hand_frame(pc.left_hand_frame), near_plane(pc.near_plane), far_plane(pc.far_plane), mu(pc.mu) {
 }
 
-/**
- * \brief Computes the scale corresponding to the back-projected pixel size
- * in voxel space
- * \param[in] depth distance from the camera to the voxel block centre
- * \param[out] scale scale from which propagate up voxel values
- */
 int se::PinholeCamera::computeIntegrationScale(const float dist,
                                                const float voxel_dim,
                                                const int   last_scale,
@@ -74,6 +68,7 @@ int se::PinholeCamera::computeIntegrationScale(const float dist,
     return scale;
   }
 }
+
 
 
 se::OusterLidar::OusterLidar(const SensorConfig& c)
