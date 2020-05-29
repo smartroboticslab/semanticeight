@@ -456,9 +456,9 @@ protected:
     depth_image_res_(640, 480),
     focal_length_mm_(1.95),
     pixel_dim_(0.006),
-    K_(depth_image_res_.x() / 2, depth_image_res_.y() / 2),
+    K_(525.f, 525.f, depth_image_res_.x() / 2, depth_image_res_.y() / 2),
     sensor_({depth_image_res_.x(), depth_image_res_.y(), false,
-             0, 0, 0,
+             0.f, 10.f, 0.1f,
              K_(0), K_(1), K_(2), K_(3),
              Eigen::VectorXf(0), Eigen::VectorXf(0)})
 
