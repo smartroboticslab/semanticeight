@@ -567,7 +567,12 @@ void Octree<T>::init(int size, float dim) {
   root_ = pool_.root();
   root_->size_ = size;
   reserved_ = 1024;
-  keys_at_depth_ = new key_t[reserved_];
+  if (keys_at_depth_ == nullptr) {
+    keys_at_depth_ = new key_t[reserved_];
+  } else {
+    delete[] keys_at_depth_;
+    keys_at_depth_ = new key_t[reserved_];
+  }
   std::memset(keys_at_depth_, 0, reserved_);
 }
 
