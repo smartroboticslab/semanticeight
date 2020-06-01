@@ -305,7 +305,7 @@ class KinectFusion(SLAMAlgorithm):
         args.extend(['--init-pose', str(self.init_pose)])
         args.extend(['--no-gui'])
         args.extend(['--integration-rate', str(self.integration_rate)])
-        args.extend(['--volume-size', str(self.map_dim)])
+        args.extend(['--map-dim', str(self.map_dim)])
         args.extend(['--tracking-rate', str(self.tracking_rate)])
         args.extend(['--map-size', str(self.map_size)])
         args.extend(['--pyramid-levels', str(self.pyramid_levels)])
@@ -315,13 +315,10 @@ class KinectFusion(SLAMAlgorithm):
                 str(self.dump_volume)])
         args.extend(['-k', str(self.camera)])
 
-        if self.quat:
-            args.extend(['-a', str(self.quat)])
-
         if self.bilateral_filter:
             args.extend(['-F', ''])
 
-        return [self.bin_path + 'se-denseslam-' + self.impl + '-main'] + (args)
+        return [self.bin_path + 'se-denseslam-' + self.impl + '-pinholecamera-main'] + (args)
 
     def _store_variables(self, res):
         res['image-downsampling-factor'] = str(self.image_downsampling_factor)
@@ -331,7 +328,7 @@ class KinectFusion(SLAMAlgorithm):
         res['mu'] = str(self.mu)
         res['init-pose'] = str(self.init_pose)
         res['integration-rate'] = str(self.integration_rate)
-        res['volume-size'] = str(self.map_dim)
+        res['map-dim'] = str(self.map_dim)
         res['tracking-rate'] = str(self.tracking_rate)
         res['map-size'] = str(self.map_size)
         res['pyramid-levels'] = str(self.pyramid_levels)
