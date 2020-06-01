@@ -144,9 +144,20 @@ int main(int argc, char** argv) {
   //temporary fix to test rendering fullsize
   config.render_volume_fullsize = false;
 
-  //The following runs the process loop for processing all the frames, if QT is specified use that, else use GLUT
-  //We can opt to not run the gui which would be faster
-  if (!config.no_gui) {
+#ifdef SE_BENCHMARK_APP
+  config.no_gui = true;
+#endif
+  // The following runs the process loop for processing all the frames, if Qt
+  // is specified use that, else use GLUT. We can opt to not run the gui which
+  // would be faster.
+  if (config.no_gui) {
+    if ((reader == nullptr) || (reader->cameraActive == false)) {
+      std::cerr << "No valid input file specified\n";
+      exit(1);
+    }
+    while (processAll(reader, true, false, &config, false) == 0) {
+    }
+  } else {
 #ifdef __QT__
     qtLinkKinectQt(argc,argv, &pipeline, &reader, &config,
         depth_render, track_render, volume_render, rgba_render);
@@ -164,14 +175,6 @@ int main(int argc, char** argv) {
 #endif
     }
 #endif
-  } else {
-    if ((reader == nullptr) || (reader->cameraActive == false)) {
-      std::cerr << "No valid input file specified\n";
-      exit(1);
-    }
-    while (processAll(reader, true, true, &config, false) == 0) {
-    }
-    std::cout << __LINE__ << std::endl;
   }
   // ==========     DUMP VOLUME      =========
 
@@ -224,6 +227,8 @@ int processAll(DepthReader*   reader,
   static bool first_frame = true;
   bool tracked = false;
   bool integrated = false;
+  const bool track = (config->groundtruth_file == "");
+  const bool raycast = (track || render_images);
   std::chrono::time_point<std::chrono::steady_clock> timings[7];
   int frame = 0;
   const Eigen::Vector2i input_image_res = (reader != nullptr)
@@ -282,7 +287,7 @@ int processAll(DepthReader*   reader,
 
     timings[2] = std::chrono::steady_clock::now();
 
-    if (config->groundtruth_file == "") {
+    if (track) {
       // No ground truth used, call track every tracking_rate frames.
       if (frame % config->tracking_rate == 0) {
         tracked = pipeline->track(sensor, config->icp_threshold);
@@ -300,14 +305,14 @@ int processAll(DepthReader*   reader,
     // Integrate only if tracking was successful every integration_rate frames
     // or it is one of the first 4 frames.
     if ((tracked && (frame % config->integration_rate == 0)) || frame <= 3) {
-        integrated = pipeline->integrate(sensor, frame);
+      integrated = pipeline->integrate(sensor, frame);
     } else {
       integrated = false;
     }
 
     timings[4] = std::chrono::steady_clock::now();
 
-    if (frame > 2) {
+    if (raycast && frame > 2) {
       pipeline->raycast(sensor);
     }
 
