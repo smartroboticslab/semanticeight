@@ -119,13 +119,13 @@ cd living_room_traj2_loop
 wget http://www.doc.ic.ac.uk/~ahanda/living_room_traj2_loop.tgz
 tar xzf living_room_traj2_loop.tgz
 cd ..
-build/se_tools/scene2raw living_room_traj2_loop living_room_traj2_loop/scene.raw
+./build/release/se_tools/scene2raw living_room_traj2_loop living_room_traj2_loop/scene.raw
 ```
 
 Then it can be used as input to one of the apps
 
 ``` bash
-./build/se_apps/se-denseslam-tsdf-main -i living_room_traj2_loop/scene.raw -s 4.8 -p 0.34,0.5,0.24 -z 4 -c 2 -r 1 -k 481.2,-480,320,240  > benchmark.log
+./build/release/se_apps/se-denseslam-tsdf-main -i living_room_traj2_loop/scene.raw -s 4.8 -p 0.34,0.5,0.24 -z 4 -c 2 -r 1 -k 481.2,-480,320,240  > benchmark.log
 ```
 
 
