@@ -47,7 +47,7 @@
 #include "se/rendering.hpp"
 
 
-extern PerfStats Stats;
+extern PerfStats stats;
 static bool print_kernel_timing = false;
 
 DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
