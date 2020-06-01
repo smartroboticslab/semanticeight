@@ -19,6 +19,20 @@ add_compile_options(
   -Wno-unused-function)
 option(WITH_OPENMP "Compile with OpenMP" ON)
 
+# Set the build type and warn if other than Release
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  message(WARNING "CMAKE_BUILD_TYPE not set to 'Release'. Performance may be terrible.")
+else()
+  message(STATUS "Building with build type '${CMAKE_BUILD_TYPE}'")
+endif()
+
 # Initialize the variables containing the built libraries and field types.
 set(SUPEREIGHT_SHARED_LIBS "")
 set(SUPEREIGHT_CORE_LIBS "")
