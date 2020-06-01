@@ -27,10 +27,8 @@
 #include "default_parameters.h"
 #include "interface.h"
 #include "PowerMonitor.h"
-#ifndef __QT__
-#ifndef SE_BENCHMARK_APP
+#ifdef SE_GLUT
 #include "draw.h"
-#endif
 #endif
 
 
@@ -133,18 +131,13 @@ int main(int argc, char** argv) {
     log_file_stream.open(config.log_file.c_str());
     log_stream = &log_file_stream;
   }
-
-#ifdef SE_BENCHMARK_APP
-  *log_stream << "frame\tacquisition\tpreprocessing\ttracking\tintegration"
-      << "\traycasting\trendering\tcomputation\ttotal    "
-      << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
-#endif
   log_stream->setf(std::ios::fixed, std::ios::floatfield);
 
   //temporary fix to test rendering fullsize
   config.render_volume_fullsize = false;
 
-#ifdef SE_BENCHMARK_APP
+#ifndef SE_GLUT
+  // Force no_gui if compiled without GUI support
   config.no_gui = true;
 #endif
   // The following runs the process loop for processing all the frames, if Qt
@@ -155,8 +148,10 @@ int main(int argc, char** argv) {
       std::cerr << "No valid input file specified\n";
       exit(1);
     }
-    while (processAll(reader, true, false, &config, false) == 0) {
-    }
+    *log_stream << "frame\tacquisition\tpreprocessing\ttracking\tintegration"
+        << "\traycasting\trendering\tcomputation\ttotal    "
+        << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
+    while (processAll(reader, true, false, &config, false) == 0) {}
   } else {
 #ifdef __QT__
     qtLinkKinectQt(argc,argv, &pipeline, &reader, &config,
@@ -167,7 +162,7 @@ int main(int argc, char** argv) {
       exit(1);
     }
     while (processAll(reader, true, true, &config, false) == 0) {
-#ifndef SE_BENCHMARK_APP
+#ifdef SE_GLUT
       drawthem(rgba_render,   image_res,
                depth_render,  image_res,
                track_render,  image_res,
@@ -187,27 +182,16 @@ int main(int argc, char** argv) {
         PerfStats::TIME);
   }
 
-#ifndef SE_BENCHMARK_APP
-  //if (config.log_file != "") {
-  //  std::ofstream logStream(config.log_file.c_str());
-  //  Stats.print_all_data(logStream);
-  //  logStream.close();
-  //}
-  //
   if (powerMonitor && powerMonitor->isActive()) {
     std::ofstream powerStream("power.rpt");
     powerMonitor->powerStats.print_all_data(powerStream);
     powerStream.close();
   }
   std::cout << "{";
-  //powerMonitor->powerStats.print_all_data(std::cout, false);
-  //std::cout << ",";
   Stats.print_all_data(std::cout, false);
-  std::cout << "}" << std::endl;
-#endif
+  std::cout << "}\n";
 
   //  =========  FREE BASIC BUFFERS  =========
-
   delete pipeline;
   delete input_depth_image_data;
   delete input_rgb_image_data;
@@ -331,31 +315,25 @@ int processAll(DepthReader*   reader,
   if (powerMonitor != nullptr && !first_frame)
     powerMonitor->sample();
 
-  const Eigen::Vector3f t_MC = pipeline->t_MC();
   const Eigen::Vector3f t_WC = pipeline->t_WC();
-  storeStats(frame, timings.data(), t_WC, tracked, integrated);
+  storeStats(frame, timings, t_WC, tracked, integrated);
 
-#ifdef SE_BENCHMARK_APP
-  *log_stream << frame << "\t"
-    << std::chrono::duration<double>(timings[1] - timings[0]).count() << "\t" // acquisition
-    << std::chrono::duration<double>(timings[2] - timings[1]).count() << "\t" // preprocessing
-    << std::chrono::duration<double>(timings[3] - timings[2]).count() << "\t" // tracking
-    << std::chrono::duration<double>(timings[4] - timings[3]).count() << "\t" // integration
-    << std::chrono::duration<double>(timings[5] - timings[4]).count() << "\t" // raycasting
-    << std::chrono::duration<double>(timings[6] - timings[5]).count() << "\t" // rendering
-    << std::chrono::duration<double>(timings[5] - timings[1]).count() << "\t" // computation
-    << std::chrono::duration<double>(timings[6] - timings[0]).count() << "\t" // total
-    << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" // position
-    << tracked << "        \t" << integrated // tracked and integrated flags
-    << "\n";
-#else
-  if (config->no_gui){
-    *log_stream << reader->getFrameNumber() << "\t" << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" << std::endl;
+  if (config->no_gui) {
+    const Eigen::Vector3f t_MC = pipeline->t_MC();
+    *log_stream << frame << "\t"
+        << std::chrono::duration<double>(timings[1] - timings[0]).count() << "\t" // acquisition
+        << std::chrono::duration<double>(timings[2] - timings[1]).count() << "\t" // preprocessing
+        << std::chrono::duration<double>(timings[3] - timings[2]).count() << "\t" // tracking
+        << std::chrono::duration<double>(timings[4] - timings[3]).count() << "\t" // integration
+        << std::chrono::duration<double>(timings[5] - timings[4]).count() << "\t" // raycasting
+        << std::chrono::duration<double>(timings[6] - timings[5]).count() << "\t" // rendering
+        << std::chrono::duration<double>(timings[5] - timings[1]).count() << "\t" // computation
+        << std::chrono::duration<double>(timings[6] - timings[0]).count() << "\t" // total
+        << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" // position
+        << tracked << "\t" << integrated // tracked and integrated flags
+        << std::endl;
   }
-#endif
 
-  //if (config->no_gui && (config->log_file == ""))
-  //  Stats.print();
   first_frame = false;
 
   return false;

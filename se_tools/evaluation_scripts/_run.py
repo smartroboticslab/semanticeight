@@ -43,6 +43,24 @@ def _get_next_res_file():
     _RES_COUNTER += 1
     return os.path.join(_RESULTS_DIR, str(_RES_COUNTER))
 
+def _generate_position_file(results_file):
+    """Generate a file with rows ID X Y Z from the --no-gui output"""
+    position_file = results_file + "_position"
+    with open(results_file, 'r') as fr, open(position_file, 'w') as fp:
+        for line in fr:
+            line = line.strip()
+            if line[0].isdigit():
+                cols = line.replace(",", " ").replace("\t", " ").split()
+                id = cols[0]
+                x = cols[9]
+                y = cols[10]
+                z = cols[11]
+                # TODO Remove the trailing tab once it's certain it does not
+                # break code.
+                fp.write(id + "\t" + x + "\t" + y + "\t" + z + "\t\n")
+    return position_file
+
+
 
 class SLAMAlgorithm:
     """ A general SLAM algorithm evaluator.
@@ -86,12 +104,13 @@ class SLAMAlgorithm:
         self._setup_from_dataset(dataset)
         self._run_internal(dataset.camera_file,
                            dataset.dataset_path, results_path)
+        position_file = _generate_position_file(results_path)
 
         if self.failed:
             return res
 
         self._calculate_ate(dataset.ground_truth,
-                            results_path, dataset.pre_assoc_file_path)
+                            position_file, dataset.pre_assoc_file_path)
 
         res = self._store_variables(res)
 
