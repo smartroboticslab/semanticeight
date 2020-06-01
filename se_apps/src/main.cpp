@@ -334,9 +334,6 @@ int processAll(DepthReader*   reader,
   const Eigen::Vector3f t_MC = pipeline->t_MC();
   const Eigen::Vector3f t_WC = pipeline->t_WC();
   storeStats(frame, timings, t_WC, tracked, integrated);
-  if (config->no_gui){
-    *log_stream << reader->getFrameNumber() << "\t" << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" << std::endl;
-  }
 
 #ifdef SE_BENCHMARK_APP
   *log_stream << frame << "\t"
@@ -351,6 +348,10 @@ int processAll(DepthReader*   reader,
     << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" // position
     << tracked << "        \t" << integrated // tracked and integrated flags
     << "\n";
+#else
+  if (config->no_gui){
+    *log_stream << reader->getFrameNumber() << "\t" << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" << std::endl;
+  }
 #endif
 
   //if (config->no_gui && (config->log_file == ""))
