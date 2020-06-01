@@ -229,7 +229,6 @@ int processAll(DepthReader*   reader,
   bool integrated = false;
   const bool track = (config->groundtruth_file == "");
   const bool raycast = (track || render_images);
-  std::chrono::time_point<std::chrono::steady_clock> timings[7];
   int frame = 0;
   const Eigen::Vector2i input_image_res = (reader != nullptr)
       ? Eigen::Vector2i(reader->getInputImageResolution().x, reader->getInputImageResolution().y)
@@ -253,7 +252,8 @@ int processAll(DepthReader*   reader,
   }
   Eigen::Matrix4f T_WC;
   Eigen::Matrix4f gt_T_WC;
-  timings[0] = std::chrono::steady_clock::now();
+  const std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+  std::vector<std::chrono::time_point<std::chrono::steady_clock> > timings (7, now);
 
   if (process_frame) {
 
@@ -325,15 +325,15 @@ int processAll(DepthReader*   reader,
     if (frame % config->rendering_rate == 0) {
       pipeline->renderVolume((unsigned char*)volume_render, pipeline->getImageResolution(), sensor);
     }
-    timings[6] = std::chrono::steady_clock::now();
   }
+  timings[6] = std::chrono::steady_clock::now();
 
   if (powerMonitor != nullptr && !first_frame)
     powerMonitor->sample();
 
   const Eigen::Vector3f t_MC = pipeline->t_MC();
   const Eigen::Vector3f t_WC = pipeline->t_WC();
-  storeStats(frame, timings, t_WC, tracked, integrated);
+  storeStats(frame, timings.data(), t_WC, tracked, integrated);
 
 #ifdef SE_BENCHMARK_APP
   *log_stream << frame << "\t"
