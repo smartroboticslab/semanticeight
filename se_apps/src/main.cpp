@@ -23,6 +23,7 @@
 
 #include "se/DenseSLAMSystem.h"
 #include "se/perfstats.h"
+#include "se/system_info.hpp"
 
 #include "default_parameters.h"
 #include "interface.h"
@@ -136,7 +137,7 @@ int main(int argc, char** argv) {
   //temporary fix to test rendering fullsize
   config.render_volume_fullsize = false;
 
-#ifndef SE_GLUT
+#if !defined(SE_GLUT) && !defined(__QT__)
   // Force no_gui if compiled without GUI support
   config.no_gui = true;
 #endif
@@ -149,7 +150,7 @@ int main(int argc, char** argv) {
       exit(1);
     }
     *log_stream << "frame\tacquisition\tpreprocessing\ttracking\tintegration"
-        << "\traycasting\trendering\tcomputation\ttotal    "
+        << "\traycasting\trendering\tcomputation\ttotal    \tRAM usage (MB)"
         << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
     while (processAll(reader, true, false, &config, false) == 0) {}
   } else {
@@ -328,6 +329,7 @@ int processAll(DepthReader*   reader,
         << std::chrono::duration<double>(timings[6] - timings[5]).count() << "\t" // rendering
         << std::chrono::duration<double>(timings[5] - timings[1]).count() << "\t" // computation
         << std::chrono::duration<double>(timings[6] - timings[0]).count() << "\t" // total
+        << se::ram_usage_self() / 1024.0 / 1024.0 << "\t" // RAM usage (MB)
         << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" // position
         << tracked << "\t" << integrated // tracked and integrated flags
         << std::endl;

@@ -52,9 +52,9 @@ def _generate_position_file(results_file):
             if line[0].isdigit():
                 cols = line.replace(",", " ").replace("\t", " ").split()
                 id = cols[0]
-                x = cols[9]
-                y = cols[10]
-                z = cols[11]
+                x = cols[10]
+                y = cols[11]
+                z = cols[12]
                 # TODO Remove the trailing tab once it's certain it does not
                 # break code.
                 fp.write(id + "\t" + x + "\t" + y + "\t" + z + "\t\n")
