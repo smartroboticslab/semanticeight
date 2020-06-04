@@ -299,8 +299,8 @@ Eigen::Vector4f MultiresOFusion::raycast(const VolumeTemplate<MultiresOFusion, s
     // Ray passes only through free space or intersects with the map before t_near or after t_far.
     return Eigen::Vector4f::Zero();
   }
-  auto select_node_occupancy = [](const auto& data){ return data.x; };
-  auto select_voxel_occupancy = [](const auto& data){ return data.x / data.y; };
+  auto select_node_occupancy = [](const auto& data){ return (data.y > 0.f) ? data.x / data.y : MultiresOFusion::VoxelType::initData().x; };
+  auto select_voxel_occupancy = [](const auto& data){ return data.x; };
 
   // first walk with largesteps until we found a hit
   float step_dim = voxel_dim / 2;
