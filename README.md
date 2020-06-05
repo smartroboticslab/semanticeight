@@ -1,32 +1,34 @@
 # supereight: a fast octree library for dense SLAM
+
 Welcome to *supereight*: a high performance template octree library and a dense
 volumetric SLAM pipeline implementation.
 
 
 
 ## Project structure
-supereight is made of three main components:
 
-* `se_core`: the main header only template octree library
-* `se_shared`: third party libraries and code required throughout supereight.
+* `se_core`: the main header only template octree library.
+* `se_shared`: code required for `se_voxel_impl`, `se_denseslam` and `se_apps`.
 * `se_voxel_impl`: classes intended to be used as template parameters for the
   `se_denseslam` pipeline. These classes define the data stored in the octree
   voxels and how new measurements are integrated into the octree.
-* `se_denseslam`: the volumetric SLAM pipelines presented in [1], which can be
-  compiled in a library and used in external projects. Notice that the pipeline
-  API exposes the discrete octree map via a `shared_ptr`. As the map is a
-  template class, it needs to be instantiated correctly. This is done by setting
-  the value of the `SE_VOXEL_IMPLEMENTATION` macro to the name of one of the
+* `se_denseslam`: the volumetric SLAM pipelines which can be compiled in a
+  library and used in external projects. Notice that the pipeline API exposes
+  the discrete octree map via an `std::shared_ptr`. As the map is a template
+  class, it needs to be instantiated correctly. This is done by setting the
+  value of the `SE_VOXEL_IMPLEMENTATION` macro to the name of one of the
   classes defined in `se_voxel_impl`. By default pipelines are created for each
   of the voxel implementations defined in `se_voxel_impl`.
 * `se_apps`: front-end applications which run the `se_denseslam` pipelines on
-  given inputs or live camera.
+  datasets or live camera.
 * `se_tools`: related tools and scripts (e.g. for converting datasets and
-  evaluating the pipeline)
+  evaluating the pipeline).
+* `third_party`: third party libraries.
 
 
 
 ## Building
+
 Clone this repository using
 
 ``` bash
@@ -40,6 +42,7 @@ git submodule update --init --recursive
 ```
 
 ### Installing the dependencies
+
 The following packages are required to build the `se-denseslam` library:
 
 * CMake >= 3.10
@@ -50,11 +53,11 @@ The following packages are required to build the `se-denseslam` library:
 
 The benchmarking and GUI apps additionally require:
 
-* GLut
 * OpenGL
-* OpenNI2
-* PkgConfig/Qt5
-* Python/Numpy (for evaluation scripts)
+* GLut (for the simple GUI)
+* PkgConfig/Qt5 (for the Qt GUI)
+* OpenNI2 (for Microsoft Kinect/Asus Xtion input)
+* Python2/Numpy (for the evaluation scripts)
 
 To install the dependencies on Debian/Ubuntu run
 
@@ -63,13 +66,24 @@ To install the dependencies on Debian/Ubuntu run
 ```
 
 ### Compiling
+
 From the project root run
 
 ``` bash
-make
+make -j 6
+```
+
+Alternatively, use the standard steps for compiling a CMake project (the
+Makefile is just a convenience wrapper):
+
+``` bash
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j 6
 ```
 
 ### Installing
+
 After building, supereight can be optionally installed as a system-wide library
 by running
 
@@ -87,6 +101,7 @@ variable.  More information about the variables defined by using
 [cmake/Config.cmake.in](cmake/Config.cmake.in).
 
 ### Running the unit tests
+
 The unit tests use googletest. It must be compiled with the same flags as
 supereight and the environment variable `GTEST_ROOT` set to the path which
 contains the googletest library. To compile and run the tests, assuming
@@ -97,6 +112,7 @@ GTEST_ROOT=~/googletest/googletest make test
 ```
 
 ### Generating the documentation
+
 To generate the Doxygen documentation in HTML format run
 
 ``` bash
@@ -108,8 +124,9 @@ Then open `doc/html/index.html` with a web browser.
 
 
 ## Usage example
-To run one of the apps in se_apps you need to first produce an input file. We
-use SLAMBench 1.0 file format (https://github.com/pamela-project/slambench).
+
+To run one of the apps in `se_apps` you need to first produce an input file. We
+use [SLAMBench 1.0](https://github.com/pamela-project/slambench) file format.
 The tool scene2raw can be used to produce an input sequence from the
 [ICL-NUIM](http://www.doc.ic.ac.uk/~ahanda/VaFRIC/iclnuim.html) dataset:
 
@@ -122,15 +139,22 @@ cd ..
 ./build/release/se_tools/scene2raw living_room_traj2_loop living_room_traj2_loop/scene.raw
 ```
 
-Then it can be used as input to one of the apps
+Then it can be used as input to one of the apps:
 
 ``` bash
-./build/release/se_apps/se-denseslam-tsdf-main -i living_room_traj2_loop/scene.raw -s 4.8 -p 0.34,0.5,0.24 -z 4 -c 2 -r 1 -k 481.2,-480,320,240  > benchmark.log
+./build/release/se_apps/se-denseslam-multirestsdf-pinholecamera-main --input-file living_room_traj2_loop/scene.raw --init-pose 0.34,0.5,0.3 --image-downsampling-factor 2 --integration-rate 1 --camera 481.2,-480,320,240 --map-dim 5.12 --map-size 256
+```
+
+To learn more about the command line options run:
+
+``` bash
+./build/release/se_apps/se-denseslam-multirestsdf-pinholecamera-main --help
 ```
 
 
 
 ## Related publications
+
 This software implements the octree library and dense SLAM system presented in
 our paper [Efficient Octree-Based Volumetric SLAM Supporting Signed-Distance
 and Occupancy
@@ -167,6 +191,7 @@ articles:
 
 
 ## Licence
+
 The core library is released under the BSD 3-clause licence. There are parts of
 this software that are released under the MIT licence, see individual files for
 which licence applies.
