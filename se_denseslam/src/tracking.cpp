@@ -270,7 +270,7 @@ void trackKernel(TrackData*                        output_data,
       const Eigen::Vector3f point_M = (T_MC * point_C.homogeneous()).head<3>();
 
       Eigen::Vector2f ref_pixel_f;
-      if (sensor.model.project(point_C, &ref_pixel_f) == srl::projection::ProjectionStatus::OutsideImage) {
+      if (sensor.model.project(point_C, &ref_pixel_f) != srl::projection::ProjectionStatus::Successful) {
         row.result = -2;
         continue;
       }
