@@ -41,7 +41,7 @@
 #include "se/voxel_block_ray_iterator.hpp"
 #include "se/algorithms/meshing.hpp"
 #include "se/geometry/octree_collision.hpp"
-#include "se/io/vtk-io.h"
+#include "se/io/vtk_io.h"
 #include "se/io/ply_io.hpp"
 #include "se/algorithms/balancing.hpp"
 #include "se/functors/for_each.hpp"
