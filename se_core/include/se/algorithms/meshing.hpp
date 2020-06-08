@@ -39,41 +39,95 @@ namespace se {
 template<typename T>
 using VoxelBlockType = typename T::VoxelBlockType;
 
+typedef struct Triangle {
+  Eigen::Vector3f vertexes[3];
+  Eigen::Vector3f vnormals[3];
+  Eigen::Vector3f normal;
+  float color;
+  float surface_area;
+
+  Triangle(){
+    vertexes[0] = Eigen::Vector3f::Constant(0);
+    vertexes[1] = Eigen::Vector3f::Constant(0);
+    vertexes[2] = Eigen::Vector3f::Constant(0);
+    normal = Eigen::Vector3f::Constant(0);
+    surface_area = -1.f;
+  }
+
+  inline bool iszero(const Eigen::Vector3f& v){
+    return !(v.array() == 0).all();
+  }
+
+  inline bool valid(){
+    return !(iszero(vertexes[0]) && iszero(vertexes[1]) && iszero(vertexes[2]));
+  }
+
+  inline void compute_normal(){
+    normal = (vertexes[1] - vertexes[0]).cross(vertexes[2] - vertexes[1]);
+  }
+
+  inline void compute_boundingbox(Eigen::Vector3f& minV, Eigen::Vector3f& maxV) const {
+    minV = vertexes[0];
+    maxV = vertexes[0];
+    minV = minV.cwiseMin(vertexes[0]);
+    minV = minV.cwiseMin(vertexes[1]);
+    minV = minV.cwiseMin(vertexes[2]);
+    maxV = maxV.cwiseMax(vertexes[0]);
+    maxV = maxV.cwiseMax(vertexes[1]);
+    maxV = maxV.cwiseMax(vertexes[2]);
+  }
+
+  inline float area() {
+    // Use the cached value if available
+    if(surface_area > 0) return surface_area;
+    Eigen::Vector3f a = vertexes[1] - vertexes[0];
+    Eigen::Vector3f b = vertexes[2] - vertexes[1];
+    Eigen::Vector3f v = a.cross(b);
+    surface_area = v.norm() / 2;
+    return surface_area;
+  }
+
+  Eigen::Vector3f* uniform_sample(int num){
+
+    Eigen::Vector3f* points = new Eigen::Vector3f[num];
+    for(int i = 0; i < num; ++i){
+      float u = ((float)rand()) / (float)RAND_MAX;
+      float v = ((float)rand()) / (float)RAND_MAX;
+      if(u + v > 1){
+        u = 1 - u;
+        v = 1 - v;
+      }
+      float w = 1 - (u + v);
+      points[i] = u * vertexes[0] + v * vertexes[1] + w * vertexes[2];
+    }
+
+    return points;
+  }
+
+  Eigen::Vector3f * uniform_sample(int num, unsigned int& seed) const {
+
+    Eigen::Vector3f * points = new Eigen::Vector3f[num];
+    for(int i = 0; i < num; ++i){
+      float u = ((float)rand_r(&seed)) / (float)RAND_MAX;
+      float v = ((float)rand_r(&seed)) / (float)RAND_MAX;
+      if(u + v > 1){
+        u = 1 - u;
+        v = 1 - v;
+      }
+      float w = 1 - (u + v);
+      points[i] = u * vertexes[0] + v * vertexes[1] + w * vertexes[2];
+    }
+    return points;
+  }
+
+} Triangle;
+
 namespace meshing {
   enum status : uint8_t {
     OUTSIDE = 0x0,
     UNKNOWN = 0xFE, // 254
     INSIDE = 0xFF, // 255
   };
-
-  void savePointCloudPly(const std::vector<Triangle>& mesh,
-      const char* filename, const Eigen::Matrix4f& T_WM) {
-    std::stringstream ss_points_W;
-    int point_count = 0;
-    for(size_t i = 0; i < mesh.size(); ++i ){
-      const Triangle& triangle_M = mesh[i];
-      for(int j = 0; j < 3; ++j) {
-        Eigen::Vector3f point_W = (T_WM * triangle_M.vertexes[j].homogeneous()).head(3);
-        ss_points_W << point_W.x() << " "
-                    << point_W.y() << " "
-                    << point_W.z() << std::endl;
-        point_count++;
-      }
-    }
-
-    std::ofstream f;
-    f.open(std::string(filename).c_str());
-
-    f << "ply" << std::endl;
-    f << "format ascii 1.0" << std::endl;
-    f << "comment octree structure" << std::endl;
-    f << "element vertex " << point_count <<  std::endl;
-    f << "property float x" << std::endl;
-    f << "property float y" << std::endl;
-    f << "property float z" << std::endl;
-    f << "end_header" << std::endl;
-    f << ss_points_W.str();
-  }
 
   template <typename OctreeT, typename FieldSelector>
     inline Eigen::Vector3f compute_intersection(const OctreeT& map, FieldSelector select,

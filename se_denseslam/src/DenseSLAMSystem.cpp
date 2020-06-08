@@ -43,6 +43,7 @@
 #include "se/geometry/octree_collision.hpp"
 #include "se/io/vtk_io.h"
 #include "se/io/ply_io.hpp"
+#include "se/io/meshing_io.hpp"
 #include "se/algorithms/balancing.hpp"
 #include "se/functors/for_each.hpp"
 #include "se/timings.h"
@@ -337,7 +338,7 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
 
     std::cout << "saving triangle mesh to file :" << filename  << std::endl;
 
-    std::vector<Triangle> mesh;
+    std::vector<se::Triangle> mesh;
     auto inside = [](const VoxelImpl::VoxelType::VoxelData& data) {
       return data.x < 0.f;
     };
