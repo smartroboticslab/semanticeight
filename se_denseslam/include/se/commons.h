@@ -304,24 +304,6 @@ inline void compareFloat(std::string str, float* l, float * r, unsigned int size
 	}
 }
 
-template<typename T>
-void writefile(std::string prefix, int idx, T* data, unsigned int size) {
-
-	std::string filename = prefix + NumberToString(idx);
-	FILE* pFile = fopen(filename.c_str(), "wb");
-
-	if (!pFile) {
-		std::cout << "File opening failed : " << filename << std::endl;
-		exit(1);
-	}
-
-	size_t write_cnt = fwrite(data, sizeof(T), size, pFile);
-
-	std::cout << "File " << filename << " of size " << write_cnt << std::endl;
-
-	fclose(pFile);
-}
-
 inline void writeVtkMesh(const char*                  filename,
                          const std::vector<Triangle>& mesh,
                          const Eigen::Matrix4f&       T_WM,
