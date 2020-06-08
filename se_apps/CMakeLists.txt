@@ -53,7 +53,7 @@ function(add_version lib_name libraries)
     )
     if(NOT APPLE)
       target_link_libraries(${lib_name}-main PUBLIC GL)
-    endif(APPLE)
+    endif(NOT APPLE)
   endif(GLUT_FOUND)
 
   #  ------ QT --------
