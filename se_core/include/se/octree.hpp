@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstring>
 #include <algorithm>
+#include <vector>
 #include "utils/math_utils.h"
 #include "octree_defines.h"
 #include "utils/morton_utils.hpp"
@@ -316,7 +317,7 @@ private:
   friend class node_iterator<T>;
 
   // Allocation specific variables
-  key_t* keys_at_depth_ = nullptr;
+  std::vector<key_t> keys_at_depth_;
   int reserved_ = 0;
 
   // Private implementation of cached methods
@@ -567,13 +568,7 @@ void Octree<T>::init(int size, float dim) {
   root_ = pool_.root();
   root_->size_ = size;
   reserved_ = 1024;
-  if (keys_at_depth_ == nullptr) {
-    keys_at_depth_ = new key_t[reserved_];
-  } else {
-    delete[] keys_at_depth_;
-    keys_at_depth_ = new key_t[reserved_];
-  }
-  std::memset(keys_at_depth_, 0, reserved_);
+  keys_at_depth_.resize(reserved_, 0);
 }
 
 template <typename T>
@@ -984,8 +979,7 @@ void Octree<T>::reserveBuffers(const int num_blocks){
 
   if(num_blocks > reserved_){
     // std::cout << "Reserving " << n << " entries in allocation buffers" << std::endl;
-    delete[] keys_at_depth_;
-    keys_at_depth_ = new key_t[num_blocks];
+    keys_at_depth_.resize(num_blocks);
     reserved_ = num_blocks;
   }
   pool_.reserveBlocks(num_blocks);
@@ -1009,9 +1003,9 @@ std::sort(keys, keys + num_elem);
   const unsigned int shift = MAX_BITS - voxel_depth_ - 1;
   for (int depth = 1; depth <= block_depth_; depth++){
     const key_t mask = MASK[depth + shift] | SCALE_MASK;
-    compute_prefix(keys, keys_at_depth_, num_elem, mask);
-    last_elem = algorithms::unique_multiscale(keys_at_depth_, num_elem);
-    success = allocate_depth(keys_at_depth_, last_elem, depth);
+    compute_prefix(keys, keys_at_depth_.data(), num_elem, mask);
+    last_elem = algorithms::unique_multiscale(keys_at_depth_.data(), num_elem);
+    success = allocate_depth(keys_at_depth_.data(), last_elem, depth);
   }
   return success;
 }
