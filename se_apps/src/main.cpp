@@ -194,12 +194,12 @@ int main(int argc, char** argv) {
 
   //  =========  FREE BASIC BUFFERS  =========
   delete pipeline;
-  delete input_depth_image_data;
-  delete input_rgb_image_data;
-  delete rgba_render;
-  delete depth_render;
-  delete track_render;
-  delete volume_render;
+  delete[] input_depth_image_data;
+  delete[] input_rgb_image_data;
+  delete[] rgba_render;
+  delete[] depth_render;
+  delete[] track_render;
+  delete[] volume_render;
 }
 
 int processAll(DepthReader*   reader,
