@@ -48,6 +48,7 @@ static const std::string default_input_file = "";
 static const std::string default_log_file = "";
 static const std::string default_groundtruth_file = "";
 static const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
+static const Eigen::Vector4f default_camera = Eigen::Vector4f::Zero();
 
 
 
@@ -229,6 +230,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.icp_threshold = default_icp_threshold;
   config.no_gui = default_no_gui;
   config.render_volume_fullsize = default_render_volume_fullsize;
+  config.camera = default_camera;
   config.camera_overrided = false;
   config.bilateral_filter = default_bilateral_filter;
 
