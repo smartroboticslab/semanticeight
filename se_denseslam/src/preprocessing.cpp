@@ -214,11 +214,11 @@ void mm2metersKernel(se::Image<float>&      m_depth_image,
 
   const int ratio = mm_depth_image_res.x() / m_depth_image.width();
 #pragma omp parallel for
-  for (int y_out = 0; y_out < m_depth_image.height(); y_out++)
+  for (int y_out = 0; y_out < m_depth_image.height(); y_out++) {
     for (int x_out = 0; x_out < m_depth_image.width(); x_out++) {
       size_t valid_count = 0;
       float pixel_value_sum = 0;
-      for (int b = 0; b < ratio; b++)
+      for (int b = 0; b < ratio; b++) {
         for (int a = 0; a < ratio; a++) {
           const int y_in = y_out * ratio + b;
           const int x_in = x_out * ratio + a;
@@ -227,9 +227,11 @@ void mm2metersKernel(se::Image<float>&      m_depth_image,
           pixel_value_sum += mm_depth_image_data[x_in + mm_depth_image_res.x() * y_in];
           valid_count++;
         }
+      }
       m_depth_image(x_out, y_out)
           = (valid_count > 0) ? pixel_value_sum / (valid_count * 1000.0f) : 0;
     }
+  }
   TOCK("mm2metersKernel", m_depth_image.width() * m_depth_image.height());
 }
 
