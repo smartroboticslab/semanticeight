@@ -18,6 +18,8 @@ add_compile_options(
   -Wno-unknown-pragmas
   -Wno-unused-function)
 option(WITH_OPENMP "Compile with OpenMP" ON)
+# Compile without measuring individual function times
+add_definitions(-DSE_ENABLE_TICKTOCK=0)
 
 # Set the build type and warn if other than Release
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
