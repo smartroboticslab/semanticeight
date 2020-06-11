@@ -963,7 +963,7 @@ void Octree<T>::load(const std::string& filename) {
   std::ifstream is (filename, std::ios::binary);
   int size;
   float dim;
-  const int block_size_cube = VoxelBlockType::size_cube;
+  const int block_size_cu = VoxelBlockType::size_cu;
 
   is.read(reinterpret_cast<char *>(&size), sizeof(size));
   is.read(reinterpret_cast<char *>(&dim), sizeof(dim));
@@ -994,7 +994,7 @@ void Octree<T>::load(const std::string& filename) {
       static_cast<VoxelBlockType *>(insert(block_coord.x(), block_coord.y(), block_coord.z(), keyops::depth(block.code_)));
     block_ptr->min_scale(block.min_scale());
     block_ptr->current_scale(block.current_scale());
-    std::memcpy(block_ptr->getBlockRawPtr(), block.getBlockRawPtr(), (block_size_cube + 64 + 8 + 1) * sizeof(*(block.getBlockRawPtr())));
+    std::memcpy(block_ptr->getBlockRawPtr(), block.getBlockRawPtr(), (block_size_cu + 64 + 8 + 1) * sizeof(*(block.getBlockRawPtr())));
   }
 }
 

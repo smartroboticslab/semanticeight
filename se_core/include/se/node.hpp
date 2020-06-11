@@ -130,9 +130,9 @@ public:
     min_scale_ = -1;
   };
 
-  static constexpr unsigned int size = BLOCK_SIZE;
-  static constexpr unsigned int size_sq = size * size;
-  static constexpr unsigned int size_cube = size * size * size;
+  static constexpr unsigned int size    = BLOCK_SIZE;
+  static constexpr unsigned int size_sq = se::math::sq(size);
+  static constexpr unsigned int size_cu = se::math::cu(size);
 
   bool isBlock() const { return true; }
 

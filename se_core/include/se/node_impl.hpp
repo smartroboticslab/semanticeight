@@ -49,7 +49,7 @@ VoxelBlockFull<T>::data(const Eigen::Vector3i& voxel_coord, const int scale) con
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   int scale_offset = 0;
   int scale_tmp = 0;
-  int num_voxels = VoxelBlock<T>::size_cube;
+  int num_voxels = VoxelBlock<T>::size_cu;
   while(scale_tmp < scale) {
     scale_offset += num_voxels;
     num_voxels /= 8;
@@ -75,7 +75,7 @@ inline void VoxelBlockFull<T>::setData(const Eigen::Vector3i& voxel_coord, const
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   int scale_offset = 0;
   int scale_tmp = 0;
-  int num_voxels = VoxelBlock<T>::size_cube;
+  int num_voxels = VoxelBlock<T>::size_cu;
   while(scale_tmp < scale) {
     scale_offset += num_voxels;
     num_voxels /= 8;

@@ -186,7 +186,7 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
     auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-    for(int voxel_idx = 0; voxel_idx < TestVoxelT::VoxelBlockType::size_cube; ++voxel_idx)
+    for(int voxel_idx = 0; voxel_idx < TestVoxelT::VoxelBlockType::size_cu; ++voxel_idx)
       block->setData(voxel_idx, dis(gen));
   }
 
@@ -199,7 +199,7 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
   auto& block_buffer_base = octree.pool().blockBuffer();
   auto& block_buffer_copy = octree_copy.pool().blockBuffer();
   for(int i = 0; i < block_buffer_base.size(); i++) {
-    for(int voxel_idx = 0; voxel_idx < TestVoxelT::VoxelBlockType::size_cube; voxel_idx++) {
+    for(int voxel_idx = 0; voxel_idx < TestVoxelT::VoxelBlockType::size_cu; voxel_idx++) {
       ASSERT_EQ(block_buffer_base[i]->data(voxel_idx), block_buffer_copy[i]->data(voxel_idx));
     }
   }
