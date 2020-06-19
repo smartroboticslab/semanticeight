@@ -21,5 +21,5 @@ cd "$sophus_dir/build" && make && make test && sudo make install
 
 # Optional dependencies
 sudo apt-get --yes install freeglut3-dev libopenni2-dev libpapi-dev \
-    qtbase5-dev python3 python3-numpy
+    qtbase5-dev python3 python3-numpy liboctomap-dev
 
