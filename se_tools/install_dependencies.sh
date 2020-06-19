@@ -8,7 +8,7 @@ set -eu
 IFS="$(printf '%b_' '\t\n')" ; IFS="${IFS%_}"
 
 # Required dependencies
-sudo apt-get --yes install build-essential git cmake libeigen3-dev libgtest-dev
+sudo apt-get --yes install build-essential git cmake libeigen3-dev libopencv-dev
 
 # Required source dependencies
 sophus_dir='/tmp/Sophus'
