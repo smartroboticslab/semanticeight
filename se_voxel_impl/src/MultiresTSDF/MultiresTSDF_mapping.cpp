@@ -300,14 +300,13 @@ namespace se {
 
         constexpr int block_size = MultiresTSDF::VoxelBlockType::size_li;
         const Eigen::Vector3i block_coord = block->coordinates();
-        const Eigen::Vector3f block_sample_offset = (sample_offset_frac.array().colwise() *
-            Eigen::Vector3f::Constant(block_size).array());
-        const float block_diff = (T_CM * (voxel_dim * (block_coord.cast<float>() +
-            block_sample_offset)).homogeneous()).head(3).z();
+        const Eigen::Vector3f block_centre_coord_f =
+            se::getSampleCoord(block_coord, block_size, Eigen::Vector3f::Constant(0.5f));
+        const float block_centre_point_C_z = (T_CM * (voxel_dim * block_centre_coord_f).homogeneous()).head(3).z();
         const int last_scale = block->current_scale();
 
         const int scale = std::max(sensor.computeIntegrationScale(
-            block_diff, voxel_dim, last_scale, block->min_scale(), map.maxBlockScale()), last_scale - 1);
+            block_centre_point_C_z, voxel_dim, last_scale, block->min_scale(), map.maxBlockScale()), last_scale - 1);
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
         if (last_scale > scale) {
           propagateUpdate(block, scale, map, depth_image, T_CM, sensor,
@@ -317,15 +316,14 @@ namespace se {
         bool is_visible = false;
         block->current_scale(scale);
         const int stride = 1 << scale;
-
-        const Eigen::Vector3f voxel_sample_offset = sample_offset_frac;
         for (unsigned int z = 0; z < block_size; z += stride) {
           for (unsigned int y = 0; y < block_size; y += stride) {
 #pragma omp simd
             for (unsigned int x = 0; x < block_size; x += stride) {
               const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y, z);
-              const Eigen::Vector3f point_C = (T_CM * (voxel_dim *
-                  (voxel_coord.cast<float>() + voxel_sample_offset)).homogeneous()).head(3);
+              const Eigen::Vector3f voxel_sample_coord_f =
+                  getSampleCoord(voxel_coord, stride, sample_offset_frac);
+              const Eigen::Vector3f point_C = (T_CM * (voxel_dim * voxel_sample_coord_f).homogeneous()).head(3);
 
               Eigen::Vector2f pixel_f;
               if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
