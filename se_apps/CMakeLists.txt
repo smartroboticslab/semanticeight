@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(se-apps)
 
 set(CMAKE_CXX_STANDARD 17)
-
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # Fucntion to create the executables given the name of one of the compiled
@@ -136,7 +136,7 @@ find_package(Qt5OpenGL)
 find_package(Qt5PrintSupport)
 
 # Set the common libraries to link.
-set(common_libraries stdc++ ${SUPEREIGHT_CORE_LIBS})
+set(common_libraries stdc++ stdc++fs ${SUPEREIGHT_CORE_LIBS})
 
 # Create the executables for each of the compiled se-denseslam libraries.
 foreach(lib_name ${SUPEREIGHT_DENSESLAM_LIBS})
