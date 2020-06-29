@@ -33,8 +33,8 @@
 namespace se {
   KernelImage::KernelImage(const se::Image<float>& depth_map) :
       image_width_(depth_map.width()), image_height_(depth_map.height()) {
-    const int image_max_dim = std::max(image_width_, image_height_);
-    image_max_level_ = static_cast<int>(log2((image_max_dim - 1) / 4) + 2) - 1;
+    const int image_max_dim = std::min(image_width_, image_height_);
+    image_max_level_ = static_cast<int>(log2((image_max_dim - 1) / 2) + 2) - 1;
 
     for (int l = 0; l <= image_max_level_; l++)
       pyramid_image_.emplace_back(image_width_ * image_height_);
