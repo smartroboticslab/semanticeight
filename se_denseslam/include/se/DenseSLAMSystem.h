@@ -258,9 +258,9 @@ class DenseSLAMSystem {
 
     /**
      * Render the current depth frame. The frame is rendered before
-     * preprocessing while taking into account the values of ::nearPlane and
-     * ::farPlane. Regions closer to the camera than ::nearPlane appear white
-     * and regions further than ::farPlane appear black.
+     * preprocessing while taking into account the values of Configuration::near_plane and
+     * Configuration::far_plane. Regions closer to the camera than Configuration::near_plane appear white
+     * and regions further than Configuration::far_plane appear black.
      *
      * \param[out] output_image_data A pointer to an array containing the rendered frame.
      * The array must be allocated before calling this function. The x, y and

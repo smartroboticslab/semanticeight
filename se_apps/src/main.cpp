@@ -221,7 +221,7 @@ int processAll(DepthReader*   reader,
   const Eigen::Vector2i image_res
       = input_image_res / config->image_downsampling_factor;
   const SensorImpl sensor({image_res.x(), image_res.y(), config->left_hand_frame,
-                           nearPlane, farPlane, config->mu,
+                           config->near_plane, config->far_plane, config->mu,
                            config->camera[0] / config->image_downsampling_factor,
                            config->camera[1] / config->image_downsampling_factor,
                            config->camera[2] / config->image_downsampling_factor,
