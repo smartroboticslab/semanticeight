@@ -33,11 +33,13 @@ se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
             left_hand_frame(pc.left_hand_frame), near_plane(pc.near_plane), far_plane(pc.far_plane) {
 }
 
-int se::PinholeCamera::computeIntegrationScale(const float dist,
-                                               const float voxel_dim,
-                                               const int   last_scale,
-                                               const int   min_scale,
-                                               const int   max_block_scale) const {
+int se::PinholeCamera::computeIntegrationScale(
+    const Eigen::Vector3f& block_centre,
+    const float            voxel_dim,
+    const int              last_scale,
+    const int              min_scale,
+    const int              max_block_scale) const {
+  const float dist = block_centre.z();
   int scale = 0;
   const float pv_ratio = dist * scaled_pixel / voxel_dim;
   if (pv_ratio < 1.5) {
@@ -51,18 +53,18 @@ int se::PinholeCamera::computeIntegrationScale(const float dist,
   }
   scale = std::min(scale, max_block_scale);
 
-  float dist_hyst = dist;
+  Eigen::Vector3f block_centre_hyst = block_centre;
   bool recompute = false;
   if (scale > last_scale && min_scale != -1) {
-    dist_hyst = dist - 0.25;
+    block_centre_hyst.z() -= 0.25;
     recompute = true;
   } else if (scale < last_scale && min_scale != -1) {
-    dist_hyst = dist + 0.25;
+    block_centre_hyst.z() += 0.25;
     recompute = true;
   }
 
   if (recompute) {
-    return computeIntegrationScale(dist_hyst, voxel_dim, last_scale, -1, max_block_scale);
+    return computeIntegrationScale(block_centre_hyst, voxel_dim, last_scale, -1, max_block_scale);
   } else {
     return scale;
   }
@@ -102,11 +104,13 @@ se::OusterLidar::OusterLidar(const OusterLidar& ol, const float sf)
             left_hand_frame(ol.left_hand_frame), near_plane(ol.near_plane), far_plane(ol.far_plane) {
 }
 
-int se::OusterLidar::computeIntegrationScale(const float dist,
-                                             const float voxel_dim,
-                                             const int   last_scale,
-                                             const int   min_scale,
-                                             const int   max_block_scale) const {
+int se::OusterLidar::computeIntegrationScale(
+    const Eigen::Vector3f& block_centre,
+    const float voxel_dim,
+    const int   last_scale,
+    const int   min_scale,
+    const int   max_block_scale) const {
+  const float dist = block_centre.norm();
   // Approximate the voxel by it's circumscribed sphere.
   const float voxel_radius = voxel_dim * std::sqrt(3) / 2.0f;
   // The radius of a sphere whose center is at the voxel's center and is
@@ -123,18 +127,18 @@ int se::OusterLidar::computeIntegrationScale(const float dist,
   // tangent_radius.
   scale = std::min(std::max(scale, 0), max_block_scale);
 
-  float dist_hyst = dist;
+  Eigen::Vector3f block_centre_hyst = block_centre;
   bool recompute = false;
   if (scale > last_scale && min_scale != -1) {
-    dist_hyst = dist - 0.25;
+    block_centre_hyst -= 0.25 * block_centre_hyst.normalized();
     recompute = true;
   } else if (scale < last_scale && min_scale != -1) {
-    dist_hyst = dist + 0.25;
+    block_centre_hyst += 0.25 * block_centre_hyst.normalized();
     recompute = true;
   }
 
   if (recompute) {
-    return computeIntegrationScale(dist_hyst, voxel_dim, last_scale, -1, max_block_scale);
+    return computeIntegrationScale(block_centre_hyst, voxel_dim, last_scale, -1, max_block_scale);
   } else {
     return scale;
   }

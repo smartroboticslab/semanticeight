@@ -208,7 +208,7 @@ struct MultiresTSDFUpdate {
   }
 
 
-  
+
   /**
    * Update a voxel block at a given scale by first propagating down the parent
    * values and then integrating the new measurement;
@@ -300,11 +300,11 @@ struct MultiresTSDFUpdate {
     const Eigen::Vector3i block_coord = block->coordinates();
     const Eigen::Vector3f block_centre_coord_f =
         se::get_sample_coord(block_coord, block_size, Eigen::Vector3f::Constant(0.5f));
-    const float block_centre_point_C_z = (T_CM_ * (voxel_dim_ * block_centre_coord_f).homogeneous()).head(3).z();
+    const Eigen::Vector3f block_centre_point_C = (T_CM_ * (voxel_dim_ * block_centre_coord_f).homogeneous()).head(3);
     const int last_scale = block->current_scale();
 
     const int scale = std::max(sensor_.computeIntegrationScale(
-        block_centre_point_C_z, voxel_dim_, last_scale, block->min_scale(), map_.maxBlockScale()), last_scale - 1);
+        block_centre_point_C, voxel_dim_, last_scale, block->min_scale(), map_.maxBlockScale()), last_scale - 1);
     block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
     if (last_scale > scale) {
       propagateUpdate(block, scale);

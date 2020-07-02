@@ -77,21 +77,23 @@ namespace se {
     /**
      * \brief Computes the scale corresponding to the back-projected pixel size
      * in voxel space
-     * \param[in] dist            Distance from the camera to the voxel
-     *                            block centre.
+     * \param[in] block_centre    The coordinates of the VoxelBlock
+     *                            centre in the camera frame.
      * \param[in] voxel_dim       The voxel edge length in meters.
      * \param[in] last_scale      Scale from which propagate up voxel
      *                            values.
-     * \param[in] min_scale
+     * \param[in] min_scale       Finest scale at which data has been
+     *                            integrated into the voxel block (-1 if no
+     *                            data has been integrated yet).
      * \param[in] max_block_scale The maximum allowed scale within a
      *                            VoxelBlock.
      * \return The scale that should be used for the integration.
      */
-    int computeIntegrationScale(const float dist,
-                                const float voxel_dim,
-                                const int   last_scale,
-                                const int   min_scale,
-                                const int   max_block_scale) const;
+    int computeIntegrationScale(const Eigen::Vector3f& block_centre,
+                                const float            voxel_dim,
+                                const int              last_scale,
+                                const int              min_scale,
+                                const int              max_block_scale) const;
 
     /**
      * \brief Return the minimum distance at which measurements are available
@@ -175,21 +177,23 @@ namespace se {
     /**
      * \brief Computes the scale corresponding to the back-projected pixel size
      * in voxel space
-     * \param[in] dist            Distance from the camera to the voxel
-     *                            block centre.
+     * \param[in] block_centre    The coordinates of the VoxelBlock
+     *                            centre in the camera frame.
      * \param[in] voxel_dim       The voxel edge length in meters.
      * \param[in] last_scale      Scale from which propagate up voxel
      *                            values.
-     * \param[in] min_scale
+     * \param[in] min_scale       Finest scale at which data has been
+     *                            integrated into the voxel block (-1 if no
+     *                            data has been integrated yet).
      * \param[in] max_block_scale The maximum allowed scale within a
      *                            VoxelBlock.
      * \return The scale that should be used for the integration.
      */
-    int computeIntegrationScale(const float dist,
-                                const float voxel_dim,
-                                const int last_scale,
-                                const int min_scale,
-                                const int max_block_scale) const;
+    int computeIntegrationScale(const Eigen::Vector3f& block_centre,
+                                const float            voxel_dim,
+                                const int              last_scale,
+                                const int              min_scale,
+                                const int              max_block_scale) const;
 
     /**
      * \brief Return the minimum distance at which measurements are available
