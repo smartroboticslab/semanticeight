@@ -172,11 +172,24 @@ namespace se {
       return true;
     }
 
-    int computeIntegrationScale(const float,
-                                const float,
-                                const int,
-                                const int,
-                                const int) const {return 0;};
+    /**
+     * \brief Computes the scale corresponding to the back-projected pixel size
+     * in voxel space
+     * \param[in] dist            Distance from the camera to the voxel
+     *                            block centre.
+     * \param[in] voxel_dim       The voxel edge length in meters.
+     * \param[in] last_scale      Scale from which propagate up voxel
+     *                            values.
+     * \param[in] min_scale
+     * \param[in] max_block_scale The maximum allowed scale within a
+     *                            VoxelBlock.
+     * \return The scale that should be used for the integration.
+     */
+    int computeIntegrationScale(const float dist,
+                                const float voxel_dim,
+                                const int last_scale,
+                                const int min_scale,
+                                const int max_block_scale) const;
 
     /**
      * \brief Return the minimum distance at which measurements are available
@@ -212,6 +225,7 @@ namespace se {
     bool  left_hand_frame;
     float near_plane;
     float far_plane;
+    float max_elevation_diff;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
