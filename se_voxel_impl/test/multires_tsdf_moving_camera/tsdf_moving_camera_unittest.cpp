@@ -445,7 +445,7 @@ std::vector<se::VoxelBlock<MultiresTSDF::VoxelType>*> buildActiveList(se::Octree
   std::vector<se::VoxelBlock<MultiresTSDF::VoxelType>*> active_list;
   auto in_frustum_predicate =
       std::bind(se::algorithms::in_frustum<se::VoxelBlock<MultiresTSDF::VoxelType>>,
-                std::placeholders::_1, voxel_dim, T_CM.matrix(), sensor);
+                std::placeholders::_1, voxel_dim, T_CM, sensor);
   se::algorithms::filter(active_list, block_buffer, in_frustum_predicate);
   return active_list;
 }
