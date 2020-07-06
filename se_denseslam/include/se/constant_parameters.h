@@ -35,4 +35,7 @@ constexpr float delta = 4.0f;
 const Eigen::Vector3f light{1, 1, -1.0};
 const Eigen::Vector3f ambient{ 0.1, 0.1, 0.1};
 
+// Ensure the parameter values are valid.
+static_assert(nearPlane < farPlane, "nearPlane must be smaller than farPlane");
+
 #endif /* CONSTANT_PARAMETERS_H_ */

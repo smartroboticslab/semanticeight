@@ -48,41 +48,39 @@ Eigen::Vector4f MultiresTSDF::raycast(
 
   auto select_node_dist = [](const auto&){ return MultiresTSDF::VoxelType::initData().x; };
   auto select_voxel_dist = [](const auto& data){ return data.x; };
-  if (near_plane < far_plane) {
-    // first walk with largesteps until we found a hit
-    float t = near_plane;
-    float step_size = large_step;
-    Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
-    const int scale = 0;
-    auto interp_res = volume.interp(ray_pos_M, scale, select_node_dist, select_voxel_dist);
-    float f_t = interp_res.first;
-    float f_tt = 0;
-    if (f_t > 0) { // ups, if we were already in it, then don't render anything here
-      for (; t < far_plane; t += step_size) {
-        auto data = volume.get(ray_pos_M, scale);
-        if (data.y == 0) {
-          step_size = large_step;
-          ray_pos_M += step_size * ray_dir_M;
-          continue;
-        }
-        f_tt = data.x;
-        if (f_tt <= 0.1 && f_tt >= -0.5f) {
-          interp_res = volume.interp(ray_pos_M, scale, select_node_dist, select_voxel_dist);
-          f_tt = interp_res.first;
-        }
-        if (f_tt < 0.f)                  // got it, jump out of inner loop
-          break;
-        step_size = fmaxf(f_tt * mu, step);
+  // first walk with largesteps until we found a hit
+  float t = near_plane;
+  float step_size = large_step;
+  Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
+  const int scale = 0;
+  auto interp_res = volume.interp(ray_pos_M, scale, select_node_dist, select_voxel_dist);
+  float f_t = interp_res.first;
+  float f_tt = 0;
+  if (f_t > 0) { // ups, if we were already in it, then don't render anything here
+    for (; t < far_plane; t += step_size) {
+      auto data = volume.get(ray_pos_M, scale);
+      if (data.y == 0) {
+        step_size = large_step;
         ray_pos_M += step_size * ray_dir_M;
-        f_t = f_tt;
+        continue;
       }
-      if (f_tt < 0.f) {
-        // got it, calculate accurate intersection
-        t = t + step_size * f_tt / (f_t - f_tt);
-        Eigen::Vector4f res = (ray_origin_M + ray_dir_M * t).homogeneous();
-        res.w() = interp_res.second;
-        return res;
+      f_tt = data.x;
+      if (f_tt <= 0.1 && f_tt >= -0.5f) {
+        interp_res = volume.interp(ray_pos_M, scale, select_node_dist, select_voxel_dist);
+        f_tt = interp_res.first;
       }
+      if (f_tt < 0.f)                  // got it, jump out of inner loop
+        break;
+      step_size = fmaxf(f_tt * mu, step);
+      ray_pos_M += step_size * ray_dir_M;
+      f_t = f_tt;
+    }
+    if (f_tt < 0.f) {
+      // got it, calculate accurate intersection
+      t = t + step_size * f_tt / (f_t - f_tt);
+      Eigen::Vector4f res = (ray_origin_M + ray_dir_M * t).homogeneous();
+      res.w() = interp_res.second;
+      return res;
     }
   }
   return Eigen::Vector4f::Constant(-1.f);
