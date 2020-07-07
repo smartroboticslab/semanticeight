@@ -37,14 +37,14 @@
 
 
 Eigen::Vector4f MultiresTSDF::raycast(
-    const VolumeTemplate<MultiresTSDF, se::Octree>& volume,
-    const Eigen::Vector3f&                          ray_origin_M,
-    const Eigen::Vector3f&                          ray_dir_M,
-    const float                                     t_near,
-    const float                                     t_far,
-    const float                                     mu,
-    const float                                     step,
-    const float                                     large_step) {
+    const se::Octree<MultiresTSDF::VoxelType>& map,
+    const Eigen::Vector3f&                     ray_origin_M,
+    const Eigen::Vector3f&                     ray_dir_M,
+    const float                                t_near,
+    const float                                t_far,
+    const float                                mu,
+    const float                                step,
+    const float                                large_step) {
 
   auto select_node_tsdf = [](const auto&){ return MultiresTSDF::VoxelType::initData().x; };
   auto select_voxel_tsdf = [](const auto& data){ return data.x; };
@@ -53,12 +53,12 @@ Eigen::Vector4f MultiresTSDF::raycast(
   float step_size = large_step;
   Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
   const int scale = 0;
-  auto interp_res = volume.interp(ray_pos_M, scale, select_node_tsdf, select_voxel_tsdf);
+  auto interp_res = map.interpAtPoint(ray_pos_M, select_node_tsdf, select_voxel_tsdf, scale);
   float f_t = interp_res.first;
   float f_tt = 0;
   if (f_t > 0) { // ups, if we were already in it, then don't render anything here
     for (; t < t_far; t += step_size) {
-      auto data = volume.get(ray_pos_M, scale);
+      auto data = map.get_fine(ray_pos_M, scale);
       if (data.y == 0) {
         step_size = large_step;
         ray_pos_M += step_size * ray_dir_M;
@@ -66,7 +66,7 @@ Eigen::Vector4f MultiresTSDF::raycast(
       }
       f_tt = data.x;
       if (f_tt <= 0.1 && f_tt >= -0.5f) {
-        interp_res = volume.interp(ray_pos_M, scale, select_node_tsdf, select_voxel_tsdf);
+        interp_res = map.interpAtPoint(ray_pos_M, select_node_tsdf, select_voxel_tsdf, scale);
         f_tt = interp_res.first;
       }
       if (f_tt < 0.f)                  // got it, jump out of inner loop

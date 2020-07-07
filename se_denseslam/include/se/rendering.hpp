@@ -40,18 +40,15 @@
 #include <cstdint>
 
 #include "se/utils/math_utils.h"
+#include "se/octree.hpp"
 #include "se/commons.h"
 #include "lodepng.h"
 #include "se/timings.h"
-#include "se/continuous/volume_template.hpp"
 #include "se/image/image.hpp"
 #include "se/voxel_block_ray_iterator.hpp"
 
 #include "voxel_implementations.hpp"
 #include "se/sensor_implementation.hpp"
-
-template <typename T>
-using Volume = VolumeTemplate<T, se::Octree>;
 
 
 
@@ -76,13 +73,13 @@ namespace se {
 
 
 template<typename T>
-void raycastKernel(const Volume<T>&            volume,
-                   se::Image<Eigen::Vector3f>& surface_point_cloud_M,
-                   se::Image<Eigen::Vector3f>& surface_normals_M,
-                   const Eigen::Matrix4f&      T_MC,
-                   const SensorImpl&           sensor,
-                   const float                 step,
-                   const float                 large_step) {
+void raycastKernel(const se::Octree<typename T::VoxelType>& map,
+                   se::Image<Eigen::Vector3f>&              surface_point_cloud_M,
+                   se::Image<Eigen::Vector3f>&              surface_normals_M,
+                   const Eigen::Matrix4f&                   T_MC,
+                   const SensorImpl&                        sensor,
+                   const float                              step,
+                   const float                              large_step) {
 
   TICK();
 #pragma omp parallel for
@@ -99,21 +96,21 @@ void raycastKernel(const Volume<T>&            volume,
       const Eigen::Vector3f t_MC = se::math::to_translation(T_MC);
 
       if (std::is_same<T, MultiresOFusion>::value) {
-        surface_intersection_M = T::raycast(volume, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
+        surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
       } else {
-        se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_MC, ray_dir_M,
+        se::VoxelBlockRayIterator<typename T::VoxelType> ray(map, t_MC, ray_dir_M,
             sensor.near_plane, sensor.far_plane);
         ray.next();
         const float t_min = ray.tmin(); /* Get distance to the first intersected block */
         surface_intersection_M = t_min > 0.f
-              ? T::raycast(volume, t_MC, ray_dir_M, t_min, ray.tmax(), sensor.mu, step, large_step)
+              ? T::raycast(map, t_MC, ray_dir_M, t_min, ray.tmax(), sensor.mu, step, large_step)
               : Eigen::Vector4f::Zero();
       }
       if (surface_intersection_M.w() >= 0.f) {
         surface_point_cloud_M[x + y * surface_point_cloud_M.width()] = surface_intersection_M.head<3>();
-        Eigen::Vector3f surface_normal = volume.grad(surface_intersection_M.head<3>(),
-            int(surface_intersection_M.w() + 0.5f),
-            [](const auto& data){ return data.x; });
+        Eigen::Vector3f surface_normal = map.gradAtPoint(surface_intersection_M.head<3>(),
+            [](const auto& data){ return data.x; },
+            static_cast<int>(surface_intersection_M.w() + 0.5f));
         se::internal::scale_image(x, y) = static_cast<int>(surface_intersection_M.w());
         if (surface_normal.norm() == 0.f) {
           surface_normals_M[pixel.x() + pixel.y() * surface_normals_M.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);
@@ -155,18 +152,18 @@ void renderTrackKernel(unsigned char*         tracking_RGBA_image_data,
 
 
 template <typename T>
-void renderVolumeKernel(const Volume<T>&                  volume,
-                        unsigned char*                    volume_RGBA_image_data, // RGBA packed
-                        const Eigen::Vector2i&            volume_RGBA_image_res,
-                        const Eigen::Matrix4f&            T_MC,
-                        const SensorImpl&                 sensor,
-                        const float                       step,
-                        const float                       large_step,
-                        const Eigen::Vector3f&            light_M,
-                        const Eigen::Vector3f&            ambient_M,
-                        bool                              do_view_raycast,
-                        const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
-                        const se::Image<Eigen::Vector3f>& surface_normals_M) {
+void renderVolumeKernel(const se::Octree<typename T::VoxelType>& map,
+                        unsigned char*                           volume_RGBA_image_data, // RGBA packed
+                        const Eigen::Vector2i&                   volume_RGBA_image_res,
+                        const Eigen::Matrix4f&                   T_MC,
+                        const SensorImpl&                        sensor,
+                        const float                              step,
+                        const float                              large_step,
+                        const Eigen::Vector3f&                   light_M,
+                        const Eigen::Vector3f&                   ambient_M,
+                        bool                                     do_view_raycast,
+                        const se::Image<Eigen::Vector3f>&        surface_point_cloud_M,
+                        const se::Image<Eigen::Vector3f>&        surface_normals_M) {
   TICK();
 #pragma omp parallel for
   for (int y = 0; y < volume_RGBA_image_res.y(); y++) {
@@ -186,20 +183,20 @@ void renderVolumeKernel(const Volume<T>&                  volume,
         const Eigen::Vector3f t_MC = T_MC.topRightCorner<3, 1>();
 
         if (std::is_same<T, MultiresOFusion>::value) {
-          surface_intersection_M = T::raycast(volume, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
+          surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
         } else {
-          se::VoxelBlockRayIterator<typename T::VoxelType> ray(*volume.octree_, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane);
+          se::VoxelBlockRayIterator<typename T::VoxelType> ray(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane);
           ray.next();
           const float t_min = ray.tmin(); /* Get distance to the first intersected block */
           surface_intersection_M = t_min > 0.f
-                ? T::raycast(volume, t_MC, ray_dir_M, t_min, ray.tmax(), sensor.mu, step, large_step)
+                ? T::raycast(map, t_MC, ray_dir_M, t_min, ray.tmax(), sensor.mu, step, large_step)
                 : Eigen::Vector4f::Zero();
         }
         if (surface_intersection_M.w() >= 0.f) {
           surface_point_M = surface_intersection_M.head<3>();
-          surface_normal_M = volume.grad(surface_intersection_M.head<3>(),
-              int(surface_intersection_M.w() + 0.5f),
-              [](const auto& data){ return data.x; });
+          surface_normal_M = map.gradAtPoint(surface_intersection_M.head<3>(),
+              [](const auto& data){ return data.x; },
+              static_cast<int>(surface_intersection_M.w() + 0.5f));
           se::internal::scale_image(x, y) = static_cast<int>(surface_intersection_M.w());
           if (surface_normal_M.norm() == 0.f) {
             surface_normal_M = Eigen::Vector3f(INVALID, 0.f, 0.f);
@@ -250,7 +247,7 @@ inline void printNormals(const se::Image<Eigen::Vector3f>& normals,
 // Find ALL the intersection along a ray till the far_plane.
 template <typename T>
 void raycast_full(
-    const Volume<T>&                                                         volume,
+    const se::Octree<typename T::VoxelType>&                                 map,
     std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f>>& surface_points_M,
     const Eigen::Vector3f&                                                   ray_origin_M,
     const Eigen::Vector3f&                                                   ray_dir_M,
@@ -260,15 +257,15 @@ void raycast_full(
 
   float t = 0;
   float step_size = large_step;
-  float f_t = volume.interp(ray_origin_M + ray_dir_M * t, [](const auto& data){ return data.x;}).first;
+  float f_t = map.interpAtPoint(ray_origin_M + ray_dir_M * t, [](const auto& data){ return data.x;}).first;
   t += step;
   float f_tt = 1.f;
 
   for (; t < far_plane; t += step_size) {
-    f_tt = volume.interp(ray_origin_M + ray_dir_M * t, [](const auto& data){ return data.x;}).first;
+    f_tt = map.interpAtPoint(ray_origin_M + ray_dir_M * t, [](const auto& data){ return data.x;}).first;
     if (f_tt < 0.f && f_t > 0.f && std::abs(f_tt - f_t) < 0.5f) {     // got it, jump out of inner loop
-      const auto data_t  = volume.get(ray_origin_M + ray_dir_M * (t - step_size));
-      const auto data_tt = volume.get(ray_origin_M + ray_dir_M * t);
+      const auto data_t  = map.get_fine(ray_origin_M + ray_dir_M * (t - step_size));
+      const auto data_tt = map.get_fine(ray_origin_M + ray_dir_M * t);
       if (f_t == 1.0 || f_tt == 1.0 || data_t.y == 0 || data_tt.y == 0 ) {
         f_t = f_tt;
         continue;

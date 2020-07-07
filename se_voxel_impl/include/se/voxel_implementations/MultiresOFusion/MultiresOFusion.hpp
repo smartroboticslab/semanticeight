@@ -32,7 +32,6 @@
 #define __MultiresOFusion_HPP
 
 #include <se/octree.hpp>
-#include <se/continuous/volume_template.hpp>
 #include <se/image/image.hpp>
 #include <se/voxel_implementations/MultiresOFusion/kernel_image.hpp>
 #include "se/sensor_implementation.hpp"
@@ -131,11 +130,11 @@ struct MultiresOFusion {
                         const unsigned                          frame);
 
   static Eigen::Vector4f raycast(
-      const VolumeTemplate<MultiresOFusion, se::Octree>& volume,
-      const Eigen::Vector3f&                             ray_origin_M,
-      const Eigen::Vector3f&                             ray_dir_M,
-      float                                              t_near,
-      float                                              t_far,
+      const se::Octree<MultiresOFusion::VoxelType>& map,
+      const Eigen::Vector3f&                        ray_origin_M,
+      const Eigen::Vector3f&                        ray_dir_M,
+      float                                         t_near,
+      float                                         t_far,
       float,
       float,
       float);

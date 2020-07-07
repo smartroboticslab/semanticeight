@@ -48,16 +48,12 @@
 #include "se/config.h"
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
-#include "se/continuous/volume_template.hpp"
 #include "se/sensor_implementation.hpp"
 #include "voxel_implementations.hpp"
 #include "preprocessing.hpp"
 #include "tracking.hpp"
 
 
-
-template <typename T>
-using Volume = VolumeTemplate<T, se::Octree>;
 
 class DenseSLAMSystem {
 
@@ -82,7 +78,6 @@ class DenseSLAMSystem {
 
     std::vector<se::key_t> allocation_list_;
     std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > map_;
-    Volume<VoxelImpl> volume_;
 
     // intra-frame
     std::vector<float> reduction_output_;

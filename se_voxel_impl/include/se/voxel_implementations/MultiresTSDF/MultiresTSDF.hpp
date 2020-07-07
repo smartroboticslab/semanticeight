@@ -32,7 +32,6 @@
 
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
-#include "se/continuous/volume_template.hpp"
 #include "se/sensor_implementation.hpp"
 
 
@@ -108,14 +107,14 @@ struct MultiresTSDF {
    * Cast a ray and return the point where the surface was hit.
    */
   static Eigen::Vector4f raycast(
-      const VolumeTemplate<MultiresTSDF, se::Octree>& volume,
-      const Eigen::Vector3f&                          ray_origin_M,
-      const Eigen::Vector3f&                          ray_dir_M,
-      const float                                     t_near,
-      const float                                     t_far,
-      const float                                     mu,
-      const float                                     step,
-      const float                                     large_step);
+      const se::Octree<MultiresTSDF::VoxelType>& map,
+      const Eigen::Vector3f&                     ray_origin_M,
+      const Eigen::Vector3f&                     ray_dir_M,
+      const float                                t_near,
+      const float                                t_far,
+      const float                                mu,
+      const float                                step,
+      const float                                large_step);
 };
 
 #endif

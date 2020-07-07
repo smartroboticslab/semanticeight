@@ -37,20 +37,20 @@
 
 
 Eigen::Vector4f OFusion::raycast(
-    const VolumeTemplate<OFusion, se::Octree>& volume,
-    const Eigen::Vector3f&                     ray_origin_M,
-    const Eigen::Vector3f&                     ray_dir_M,
-    const float                                t_near,
-    const float                                t_far,
-    const float                                ,
-    const float                                step,
-    const float                                ) {
+    const se::Octree<OFusion::VoxelType>& map,
+    const Eigen::Vector3f&                ray_origin_M,
+    const Eigen::Vector3f&                ray_dir_M,
+    const float                           t_near,
+    const float                           t_far,
+    const float                           ,
+    const float                           step,
+    const float                           ) {
 
   auto select_node_occupancy = [](const auto&){ return OFusion::VoxelType::initData().x; };
   auto select_voxel_occupancy = [](const auto& data){ return data.x; };
   float t = t_near;
   float step_size = step;
-  float f_t = volume.interp(ray_origin_M + ray_dir_M * t, select_node_occupancy, select_voxel_occupancy).first;
+  float f_t = map.interpAtPoint(ray_origin_M + ray_dir_M * t, select_node_occupancy, select_voxel_occupancy).first;
   float f_tt = 0;
   int scale = 0;
 
@@ -58,9 +58,9 @@ Eigen::Vector4f OFusion::raycast(
   if (f_t <= OFusion::surface_boundary) {
     for (; t < t_far; t += step_size) {
       const Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
-      OFusion::VoxelType::VoxelData voxel_data = volume.get(ray_pos_M);
+      OFusion::VoxelType::VoxelData voxel_data = map.get_fine(ray_pos_M);
       if (voxel_data.x > -100.f && voxel_data.y > 0.f) {
-        f_tt = volume.interp(ray_origin_M + ray_dir_M * t, select_node_occupancy, select_voxel_occupancy).first;
+        f_tt = map.interpAtPoint(ray_origin_M + ray_dir_M * t, select_node_occupancy, select_voxel_occupancy).first;
       }
       if (f_tt > OFusion::surface_boundary)
         break;

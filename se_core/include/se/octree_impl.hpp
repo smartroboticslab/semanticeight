@@ -604,6 +604,58 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
 
 
 template <typename T>
+template <typename ValueSelector>
+inline std::pair<float, int> Octree<T>::interpAtPoint(
+    const Eigen::Vector3f& point,
+    ValueSelector          select_value,
+    const int              min_scale) const {
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point;
+  return interp(voxel_coord_f, select_value, min_scale);
+}
+
+
+
+template <typename T>
+template <typename ValueSelector>
+inline std::pair<float, int> Octree<T>::interpAtPoint(
+    const Eigen::Vector3f& point,
+    ValueSelector          select_value,
+    const int              min_scale,
+    bool&                  is_valid) const {
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point;
+  return interp(voxel_coord_f, select_value, min_scale, is_valid);
+}
+
+
+
+template <typename T>
+template <typename NodeValueSelector, typename VoxelValueSelector>
+inline std::pair<float, int> Octree<T>::interpAtPoint(
+    const Eigen::Vector3f& point,
+    NodeValueSelector      select_node_value,
+    VoxelValueSelector     select_voxel_value,
+    const int              min_scale) const {
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point;
+  return interp(voxel_coord_f, select_node_value, select_voxel_value, min_scale);
+}
+
+
+
+template <typename T>
+template <typename NodeValueSelector, typename VoxelValueSelector>
+inline std::pair<float, int> Octree<T>::interpAtPoint(
+    const Eigen::Vector3f& point,
+    NodeValueSelector      select_node_value,
+    VoxelValueSelector     select_voxel_value,
+    const int              min_scale,
+    bool&                  is_valid) const {
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point;
+  return interp(voxel_coord_f, select_node_value, select_voxel_value, min_scale, is_valid);
+}
+
+
+
+template <typename T>
 template <typename FieldSelector>
 Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
                                 FieldSelector          select_value,

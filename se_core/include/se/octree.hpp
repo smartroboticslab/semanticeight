@@ -368,6 +368,75 @@ public:
                                const int              min_scale,
                                bool&                  is_valid) const;
 
+  /*! \brief Interpolate a voxel value at the supplied 3D point.
+   *
+   * \param[in] point        The coordinates of the point. Each component must
+   *                         be in the interval [0, dim).
+   * \param[in] select_value Lambda value to select the value to compute the
+   *                         gradient for from the voxel data.
+   * \param[in] min_scale    \TODO Document this
+   * \return The interpolated value.
+   */
+  template <typename ValueSelector>
+  std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point,
+                                      ValueSelector          select_value,
+                                      const int              min_scale = 0) const;
+
+  /*! \brief Interpolate a voxel value at the supplied 3D point.
+   *
+   * \param[in]  point        The coordinates of the point. Each component
+   *                          must be in the interval [0, dim).
+   * \param[in]  select_value Lambda value to select the value to compute the
+   *                          gradient for from the voxel data.
+   * \param[in]  min_scale    \TODO Document this
+   * \param[out] is_valid     False when the interpolation uses data from
+   *                          voxels which haven't been integrated into.
+   * \return The interpolated value.
+   */
+  template <typename ValueSelector>
+  std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point,
+                                      ValueSelector          select_value,
+                                      const int              min_scale,
+                                      bool&                  is_valid) const;
+
+  /*! \brief Interpolate a voxel value at the supplied 3D point.
+   *
+   * \param[in] point              The coordinates of the point. Each component
+   *                               must be in the interval [0, dim).
+   * \param[in] select_node_value  Lambda value to select the value to compute
+   *                               the gradient for from the voxel data.
+   * \param[in] select_voxel_value Lambda value to select the value to compute
+   *                               the gradient for from the node data.
+   * \param[in] min_scale          \TODO Document this
+   * \return The interpolated value.
+   */
+  template <typename NodeValueSelector, typename VoxelValueSelector>
+  std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point,
+                                      NodeValueSelector      select_node_value,
+                                      VoxelValueSelector     select_voxel_value,
+                                      const int              min_scale = 0) const;
+
+  /*! \brief Interpolate a voxel value at the supplied 3D point.
+   *
+   * \param[in]  point              The coordinates of the point. Each
+   *                                component must be in the interval [0, dim).
+   * \param[in]  select_node_value  Lambda value to select the value to compute
+   *                                the gradient for from the voxel data.
+   * \param[in]  select_voxel_value Lambda value to select the value to compute
+   *                                the gradient for from the node data.
+   * \param[in]  min_scale          \TODO Document this
+   * \param[out] is_valid           False when the interpolation uses data from
+   *                                voxels which haven't been integrated into.
+   * \return The interpolated value.
+   */
+  template <typename NodeValueSelector, typename VoxelValueSelector>
+  std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point,
+                                      NodeValueSelector      select_node_value,
+                                      VoxelValueSelector     select_voxel_value,
+                                      const int              min_scale,
+                                      bool&                  is_valid) const;
+
+
   /*! \brief Compute the gradient of a voxel value at the supplied voxel
    * coordinates.
    *

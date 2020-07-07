@@ -37,14 +37,14 @@
 
 
 Eigen::Vector4f TSDF::raycast(
-    const VolumeTemplate<TSDF, se::Octree>& volume,
-    const Eigen::Vector3f&                  ray_origin_M,
-    const Eigen::Vector3f&                  ray_dir_M,
-    const float                             t_near,
-    const float                             t_far,
-    const float                             mu,
-    const float                             step,
-    const float                             large_step) {
+    const se::Octree<TSDF::VoxelType>& map,
+    const Eigen::Vector3f&             ray_origin_M,
+    const Eigen::Vector3f&             ray_dir_M,
+    const float                        t_near,
+    const float                        t_far,
+    const float                        mu,
+    const float                        step,
+    const float                        large_step) {
 
   auto select_node_tsdf = [](const auto&){ return TSDF::VoxelType::initData().x; };
   auto select_voxel_tsdf = [](const auto& data){ return data.x; };
@@ -52,11 +52,11 @@ Eigen::Vector4f TSDF::raycast(
   float t = t_near;
   float step_size = large_step;
   Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
-  float f_t = volume.interp(ray_pos_M, select_node_tsdf, select_voxel_tsdf).first;
+  float f_t = map.interpAtPoint(ray_pos_M, select_node_tsdf, select_voxel_tsdf).first;
   float f_tt = 0;
   if (f_t > 0) { // ups, if we were already in it, then don't render anything here
     for (; t < t_far; t += step_size) {
-      TSDF::VoxelType::VoxelData data = volume.get(ray_pos_M);
+      TSDF::VoxelType::VoxelData data = map.get_fine(ray_pos_M);
       if (data.y == 0) {
         step_size = large_step;
         ray_pos_M += step_size * ray_dir_M;
@@ -64,7 +64,7 @@ Eigen::Vector4f TSDF::raycast(
       }
       f_tt = data.x;
       if (f_tt <= 0.1 && f_tt >= -0.5f) {
-        f_tt = volume.interp(ray_pos_M, select_node_tsdf, select_voxel_tsdf).first;
+        f_tt = map.interpAtPoint(ray_pos_M, select_node_tsdf, select_voxel_tsdf).first;
       }
       if (f_tt < 0)                  // got it, jump out of inner loop
         break;
