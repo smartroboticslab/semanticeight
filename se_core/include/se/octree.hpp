@@ -108,6 +108,8 @@ public:
 
   inline int size() const { return size_; }
   inline float dim() const { return dim_; }
+  inline float voxelDim() const { return voxel_dim_; }
+  inline float inverseVoxelDim() const { return inverse_voxel_dim_; }
   inline int numLevels() const { return num_levels_; }
   inline int voxelDepth() const { return voxel_depth_; }
   inline int maxBlockScale() const { return max_block_scale_; }
@@ -307,6 +309,8 @@ private:
   Node<T>* root_ = nullptr;
   int size_ = 0;
   float dim_ = 0.f;
+  float voxel_dim_ = 0.0f;
+  float inverse_voxel_dim_ = 0.0f;
   int num_levels_ = 0;
   int voxel_depth_ = 0;
   int max_block_scale_ = 0;
@@ -357,7 +361,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point
     int& scale, VoxelBlock<T>* cached) const {
 
   const Eigen::Vector3i voxel_coord = (point_M.homogeneous() *
-      Eigen::Vector4f::Constant(size_ / dim_)).template head<3>().template cast<int>();
+      Eigen::Vector4f::Constant(inverse_voxel_dim_)).template head<3>().template cast<int>();
 
   if(cached != NULL){
     Eigen::Vector3i lower_coord = cached->coordinates();
@@ -561,6 +565,8 @@ template <typename T>
 void Octree<T>::init(int size, float dim) {
   size_ = size;
   dim_ = dim;
+  voxel_dim_ = dim_ / size_;
+  inverse_voxel_dim_ = size_ / dim_;
   voxel_depth_ = log2(size);
   num_levels_ = voxel_depth_ + 1;
   max_block_scale_ = log2(block_size);
@@ -924,7 +930,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
     break;
   }
 
-  return (0.5f * dim_ / size_) * gradient;
+  return (0.5f * voxel_dim_) * gradient;
 }
 
 template <typename T>
