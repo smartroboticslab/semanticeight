@@ -299,51 +299,74 @@ public:
    */
   VoxelBlock<T>* insert(const int x, const int y, const int z);
 
-  /*! \brief Interp voxel value at voxel position  (x,y,z)
-   * \param voxel_coord_f three-dimensional coordinates in which each component belongs
-   * to the interval [0, size]
-   * \return signed distance function value at voxel position (x, y, z)
+  /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
+   *
+   * \param[in] voxel_coord_f The coordinates of the voxel. Each component must
+   *                          be in the interval [0, size).
+   * \param[in] select_value  Lambda value to select the value to compute the
+   *                          gradient for from the voxel data.
+   * \param[in] min_scale     \TODO Document this
+   * \return The interpolated value.
    */
   template <typename ValueSelector>
   std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               ValueSelector          select_value) const;
-
-  /*! \brief Interp voxel value at voxel position  (x,y,z)
-   * \param voxel_coord_f three-dimensional coordinates in which each component belongs
-   * to the interval [0, size]
-   * \param stride distance between neighbouring sampling point, in voxels
-   * \return signed distance function value at voxel position (x, y, z)
-   */
-
-  template <typename ValueSelector>
-  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               const int              min_scale,
-                               ValueSelector          select_value) const;
-
-  template <typename NodeValueSelector, typename VoxelValueSelector>
-  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               NodeValueSelector      select_node_value,
-                               VoxelValueSelector     select_voxel_value) const;
-
-  template <typename NodeValueSelector, typename VoxelValueSelector>
-  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               const int              min_scale,
-                               NodeValueSelector      select_node_value,
-                               VoxelValueSelector     select_voxel_value) const;
-
-  template <typename ValueSelector>
-  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               const int              min_scale,
                                ValueSelector          select_value,
+                               const int              min_scale = 0) const;
+
+  /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
+   *
+   * \param[in]  voxel_coord_f The coordinates of the voxel. Each component
+   *                           must be in the interval [0, size).
+   * \param[in]  select_value  Lambda value to select the value to compute the
+   *                           gradient for from the voxel data.
+   * \param[in]  min_scale     \TODO Document this
+   * \param[out] is_valid      False when the interpolation uses data from
+   *                           voxels which haven't been integrated into.
+   * \return The interpolated value.
+   */
+  template <typename ValueSelector>
+  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                               ValueSelector          select_value,
+                               const int              min_scale,
                                bool&                  is_valid) const;
 
+  /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
+   *
+   * \param[in] voxel_coord_f      The coordinates of the voxel. Each component
+   *                               must be in the interval [0, size).
+   * \param[in] select_node_value  Lambda value to select the value to compute
+   *                               the gradient for from the voxel data.
+   * \param[in] select_voxel_value Lambda value to select the value to compute
+   *                               the gradient for from the node data.
+   * \param[in] min_scale          \TODO Document this
+   * \return The interpolated value.
+   */
   template <typename NodeValueSelector, typename VoxelValueSelector>
   std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               const int              min_scale,
                                NodeValueSelector      select_node_value,
                                VoxelValueSelector     select_voxel_value,
-                               bool&                  is_valid) const;
+                               const int              min_scale = 0) const;
 
+  /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
+   *
+   * \param[in]  voxel_coord_f      The coordinates of the voxel. Each
+   *                                component must be in the interval [0,
+   *                                size).
+   * \param[in]  select_node_value  Lambda value to select the value to compute
+   *                                the gradient for from the voxel data.
+   * \param[in]  select_voxel_value Lambda value to select the value to compute
+   *                                the gradient for from the node data.
+   * \param[in]  min_scale          \TODO Document this
+   * \param[out] is_valid           False when the interpolation uses data from
+   *                                voxels which haven't been integrated into.
+   * \return The interpolated value.
+   */
+  template <typename NodeValueSelector, typename VoxelValueSelector>
+  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                               NodeValueSelector      select_node_value,
+                               VoxelValueSelector     select_voxel_value,
+                               const int              min_scale,
+                               bool&                  is_valid) const;
 
   /*! \brief Compute the gradient of a voxel value at the supplied voxel
    * coordinates.

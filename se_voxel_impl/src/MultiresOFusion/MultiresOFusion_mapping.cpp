@@ -235,9 +235,10 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 
                 const Eigen::Vector3f voxel_sample_coord_f =
                     se::getSampleCoord(voxel_coord, voxel_stride, sample_offset_frac_);
-                auto occupancy = map_.interp(voxel_sample_coord_f, scale + 1,
+                auto occupancy = map_.interp(voxel_sample_coord_f,
                     [](const auto &data) { return data.x/ data.y; },
-                    [](const auto &data) { return data.x; }, is_valid).first;
+                    [](const auto &data) { return data.x; },
+                    scale + 1, is_valid).first;
 
                 if (voxel_data.observed == false) {
                   if (is_valid) {

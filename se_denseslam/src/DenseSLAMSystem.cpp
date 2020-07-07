@@ -300,8 +300,8 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y , z);
           auto voxel_data = block->data(voxel_coord, 0);
           auto voxel_value = (this->volume_.octree_->interp(
-              se::getSampleCoord(voxel_coord, 1, sample_offset_frac), 0,
-              [](const auto& data) { return data.x; }, is_valid)).first;
+              se::getSampleCoord(voxel_coord, 1, sample_offset_frac),
+              [](const auto& data) { return data.x; }, 0, is_valid)).first;
           if(is_valid) {
             voxel_data.x = voxel_value;
             voxel_data.y = this->volume_.octree_->interp(

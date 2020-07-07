@@ -81,7 +81,7 @@ class VolumeTemplate {
                                  VoxelValueSelector     select_voxel_value) const {
       const float inverse_voxel_dim = size_ / dim_;
       Eigen::Vector3f voxel_coord_f = (inverse_voxel_dim * point_M);
-      return octree_->interp(voxel_coord_f, 0, select_node_value, select_voxel_value);
+      return octree_->interp(voxel_coord_f, select_node_value, select_voxel_value);
     }
 
     template <typename NodeValueSelector,
@@ -92,7 +92,7 @@ class VolumeTemplate {
                                  VoxelValueSelector     select_voxel_value) const {
       const float inverse_voxel_dim = size_ / dim_;
       Eigen::Vector3f voxel_coord_f = (inverse_voxel_dim * point_M);
-      return octree_->interp(voxel_coord_f, min_scale, select_node_value, select_voxel_value);
+      return octree_->interp(voxel_coord_f, select_node_value, select_voxel_value, min_scale);
     }
 
     /*! \brief Compute gradient at metric position  (x,y,z)

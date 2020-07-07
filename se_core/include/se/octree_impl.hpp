@@ -460,28 +460,36 @@ VoxelBlock<T>* Octree<T>::insert(const int x, const int y, const int z) {
   return static_cast<VoxelBlock<T> * >(insert(x, y, z, voxel_depth_));
 }
 
-template <typename T>
-template <typename FieldSelector>
-std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord,
-                                        FieldSelector          select_value) const {
-  return interp(voxel_coord, 0, select_value, select_value);
-}
+
 
 template <typename T>
 template <typename ValueSelector>
 std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord,
-                                        const int              min_scale,
-                                        ValueSelector          select_value) const {
-  return interp(voxel_coord, min_scale, select_value, select_value);
+                                        ValueSelector          select_value,
+                                        const int              min_scale) const {
+  return interp(voxel_coord, select_value, select_value, min_scale);
 }
+
+
+
+template <typename T>
+template <typename ValueSelector>
+std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
+                                        ValueSelector          select_value,
+                                        const int              min_scale,
+                                        bool&                  is_valid) const {
+  return interp(voxel_coord_f, select_value, select_value, min_scale, is_valid);
+}
+
+
 
 template <typename T>
 template <typename NodeValueSelector,
           typename VoxelValueSelector>
 std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
-                                        const int              min_scale,
                                         NodeValueSelector      select_node_value,
-                                        VoxelValueSelector     select_voxel_value) const {
+                                        VoxelValueSelector     select_voxel_value,
+                                        const int              min_scale) const {
 
   // The return type of the select_value() function. Since it can be a lambda
   // function, an argument needs to be passed to it before deducing the return
@@ -525,21 +533,14 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
           * factor.y()) * factor.z()), target_scale};
 }
 
-template <typename T>
-template <typename ValueSelector>
-std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
-                                        const int              min_scale,
-                                        ValueSelector          select_value,
-                                        bool&                  is_valid) const {
-  return interp(voxel_coord_f, min_scale, select_value, select_value, is_valid);
-}
+
 
 template <typename T>
 template <typename NodeValueSelector, typename VoxelValueSelector>
 std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
-                                        const int              min_scale,
                                         NodeValueSelector      select_node_value,
                                         VoxelValueSelector     select_voxel_value,
+                                        const int              min_scale,
                                         bool&                  is_valid) const {
 
   auto select_weight = [](const auto& data) { return data.y; };
