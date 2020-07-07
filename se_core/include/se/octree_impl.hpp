@@ -81,18 +81,22 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point
 }
 
 template <typename T>
-inline void  Octree<T>::set(const int x,
-    const int y, const int z, const VoxelData data) {
-
+inline void Octree<T>::set(const int        x,
+                           const int        y,
+                           const int        z,
+                           const VoxelData& data) {
   Node<T>* node = root_;
-  if(!node) {
+  if (!node) {
     return;
   }
 
   unsigned node_size = size_ >> 1;
-  for(; node_size >= block_size; node_size = node_size >> 1){
-    Node<T>* node_tmp = node->child((x & node_size) > 0, (y & node_size) > 0, (z & node_size) > 0);
-    if(!node_tmp){
+  for (; node_size >= block_size; node_size = node_size >> 1) {
+    Node<T>* node_tmp = node->child(
+        (x & node_size) > 0,
+        (y & node_size) > 0,
+        (z & node_size) > 0);
+    if (!node_tmp) {
       return;
     }
     node = node_tmp;
@@ -101,20 +105,39 @@ inline void  Octree<T>::set(const int x,
   static_cast<VoxelBlock<T> *>(node)->setData(Eigen::Vector3i(x, y, z), data);
 }
 
+
+
+template <typename T>
+inline void Octree<T>::set(const Eigen::Vector3i& voxel_coord,
+                           const VoxelData&       data) {
+  return set(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), data);
+}
+
+
+
+template <typename T>
+inline void Octree<T>::set(const Eigen::Vector3f& point,
+                           const VoxelData&       data) {
+  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point).cast<int>();
+  return set(voxel_coord, data);
+}
+
+
+
 template <typename T>
 inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
-    const int y, const int z) const {
-
+                                                    const int y,
+                                                    const int z) const {
   Node<T>* node = root_;
-  if(!node) {
+  if (!node) {
     return T::initData();
   }
 
   unsigned node_size = size_ >> 1;
-  for(; node_size >= block_size; node_size = node_size >> 1){
-    const int child_idx = ((x & node_size) > 0) +  2 * ((y & node_size) > 0) +  4*((z & node_size) > 0);
+  for (; node_size >= block_size; node_size = node_size >> 1) {
+    const int child_idx = ((x & node_size) > 0) + 2 * ((y & node_size) > 0) + 4 * ((z & node_size) > 0);
     Node<T>* node_tmp = node->child(child_idx);
-    if(!node_tmp){
+    if (!node_tmp) {
       return node->data_[child_idx];
     }
     node = node_tmp;
@@ -123,37 +146,77 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
   return static_cast<VoxelBlock<T> *>(node)->data(Eigen::Vector3i(x, y, z));
 }
 
+
+
 template <typename T>
-inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
-    const int y, const int z, const int scale) const {
+inline typename Octree<T>::VoxelData Octree<T>::get(
+    const Eigen::Vector3i& voxel_coord) const {
+  return get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+}
+
+
+
+template <typename T>
+inline typename Octree<T>::VoxelData Octree<T>::get(
+    const Eigen::Vector3f& point) const {
+  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point).cast<int>();
+  return get(voxel_coord);
+}
+
+
+
+template <typename T>
+inline typename Octree<T>::VoxelData Octree<T>::get_fine(
+    const int x,
+    const int y,
+    const int z,
+    const int scale) const {
   assert(scale < voxel_depth_);
 
   Node<T>* node = root_;
-  if(!node) {
+  if (!node) {
     return T::initData();
   }
-
 
   const unsigned min_node_size = std::max((1 << scale), (int) block_size);
   unsigned node_size = size_ >> 1;
   // Initialize just to stop the compiler from complaining.
   int child_idx = -1;
-  for(; node_size >= min_node_size; node_size = node_size >> 1) {
-    child_idx  = ((x & node_size) > 0) + 2 * ((y & node_size) > 0) + 4*((z & node_size) > 0);
+  for (; node_size >= min_node_size; node_size = node_size >> 1) {
+    child_idx  = ((x & node_size) > 0) + 2 * ((y & node_size) > 0) + 4 * ((z & node_size) > 0);
     Node<T>* node_tmp = node->child(child_idx);
-    if(!node_tmp){
+    if (!node_tmp) {
       auto& value = node->data_[child_idx];
       return value;
     }
     node = node_tmp;
   }
 
-  if(min_node_size == block_size) {
+  if (min_node_size == block_size) {
     auto block = static_cast<VoxelBlock<T> *>(node);
     return block->data(Eigen::Vector3i(x, y, z), std::max(scale, block->current_scale()));
   } else {
     return (node->parent())->data_[child_idx];
   }
+}
+
+
+
+template <typename T>
+inline typename Octree<T>::VoxelData Octree<T>::get_fine(
+    const Eigen::Vector3i& voxel_coord,
+    const int              scale) const {
+  return get_fine(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), scale);
+}
+
+
+
+template <typename T>
+inline typename Octree<T>::VoxelData Octree<T>::get_fine(
+    const Eigen::Vector3f& point,
+    const int              scale) const {
+  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point).cast<int>();
+  return get_fine(voxel_coord, scale);
 }
 
 
