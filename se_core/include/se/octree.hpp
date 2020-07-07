@@ -132,6 +132,38 @@ public:
   VoxelData get(const int x, const int y, const int z) const;
   VoxelData get_fine(const int x, const int y, const int z, const int scale = 0) const;
 
+  /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
+   * 3D point in metres.
+   *
+   * \param voxel_coord The voxel coordinates.
+   * \return The coordinates of the corresponding 3D point in metres.
+   */
+  inline Eigen::Vector3f voxelToPoint(const Eigen::Vector3i& voxel_coord) const;
+
+  /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
+   * 3D point in metres.
+   *
+   * \param voxel_coord The voxel coordinates.
+   * \return The coordinates of the corresponding 3D point in metres.
+   */
+  inline Eigen::Vector3f voxelToPoint(const Eigen::Vector3f& voxel_coord) const;
+
+  /*! \brief Convert 3D point coordinates in metres to the coordinates of the
+   * corresponding voxel.
+   *
+   * \param point The coordinates of the 3D point in metres.
+   * \return The corresponding int voxel coordinates.
+   */
+  inline Eigen::Vector3i pointToVoxel(const Eigen::Vector3f& point) const;
+
+  /*! \brief Convert 3D point coordinates in metres to the coordinates of the
+   * corresponding voxel.
+   *
+   * \param point The coordinates of the 3D point in metres.
+   * \return The corresponding float voxel coordinates.
+   */
+  inline Eigen::Vector3f pointToVoxelF(const Eigen::Vector3f& point) const;
+
   /*! \brief Retrieves voxel values for the neighbors of voxel at coordinates
    * (x,y,z)
    * If the safe template variable is true, then proper checks will be used so
@@ -471,6 +503,40 @@ inline typename Octree<T>::VoxelData Octree<T>::get_fine(const int x,
     return (node->parent())->data_[child_idx];
   }
 }
+
+
+
+template <typename T>
+inline Eigen::Vector3f Octree<T>::voxelToPoint(const Eigen::Vector3i& voxel_coord) const {
+  return voxelToPoint(voxel_coord.cast<float>());
+}
+
+
+
+template <typename T>
+inline Eigen::Vector3f Octree<T>::voxelToPoint(const Eigen::Vector3f& voxel_coord) const {
+  return voxel_coord * voxel_dim_;
+}
+
+
+
+template <typename T>
+inline Eigen::Vector3i Octree<T>::pointToVoxel(const Eigen::Vector3f& point) const {
+  // For some reason C++ doesn't like the cast being right after the function
+  // call.
+  const Eigen::Vector3f voxel_coord = pointToVoxelF(point);
+  return voxel_coord.cast<int>();
+}
+
+
+
+template <typename T>
+inline Eigen::Vector3f Octree<T>::pointToVoxelF(const Eigen::Vector3f& point) const {
+  return point * inverse_voxel_dim_;
+}
+
+
+
 template <typename T>
 template <bool safe>
 inline std::array<typename Octree<T>::VoxelData, 6> Octree<T>::get_face_neighbors(
