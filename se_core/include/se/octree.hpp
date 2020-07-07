@@ -345,24 +345,21 @@ public:
                                bool&                  is_valid) const;
 
 
-  /*! \brief Compute the gradient at voxel position  (x,y,z)
-   * \param voxel_coord_f three-dimensional coordinates in which each component belongs
-   * to the interval [0, size]
-   * \return gradient at voxel position pos
+  /*! \brief Compute the gradient of a voxel value at the supplied voxel
+   * coordinates.
+   *
+   * \param[in] voxel_coord_f The coordinates of the voxel. Each component must
+   *                          be in the interval [0, size).
+   * \param[in] select_value  Lambda value to select the value to compute the
+   *                          gradient for from the voxel data.
+   * \param[in] scale         \TODO Document this. Is it scale or init_scale?
+   *                          Must be at least 1.
+   * \return The gradient of the selected value.
    */
   template <typename FieldSelect>
-  Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f, FieldSelect select_value) const;
-
-  /*! \brief Compute gradient at voxel position  (x,y,z)
-   * \param voxel_coord_f three-dimensional coordinates in which each component belongs
-   * to the interval [0, _size]
-   * \param stride distance between neighbouring sampling point, in voxels.
-   * Must be >= 1
-   * \return signed distance function value at voxel position (x, y, z)
-   */
-  template <typename FieldSelect>
-  Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f, const int scale,
-      FieldSelect select_value) const;
+  Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
+                       FieldSelect            select_value,
+                       const int              scale = 1) const;
 
   /*! \brief Get the list of allocated block. If the active switch is set to
    * true then only the visible blocks are retrieved.

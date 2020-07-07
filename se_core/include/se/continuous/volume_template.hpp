@@ -108,7 +108,7 @@ class VolumeTemplate {
         FieldSelector select) const {
       const float inverse_voxel_dim = size_ / dim_;
       Eigen::Vector3f voxel_coord_f = inverse_voxel_dim * point_M;
-      return octree_->grad(voxel_coord_f, h, select);
+      return octree_->grad(voxel_coord_f, select, h);
     }
 
     unsigned int size() const { return size_; }

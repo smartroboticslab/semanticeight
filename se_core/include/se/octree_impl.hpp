@@ -604,15 +604,16 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
 
 template <typename T>
 template <typename FieldSelector>
-Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int init_scale,
-    FieldSelector select_value) const {
+Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
+                                FieldSelector          select_value,
+                                const int              init_scale) const {
 
   int iter = 0;
   int scale = init_scale;
   int last_scale = scale;
   Eigen::Vector3f factor = Eigen::Vector3f::Constant(0);
   Eigen::Vector3f gradient = Eigen::Vector3f::Constant(0);
-  while(iter < 3) {
+  while (iter < 3) {
     const int stride = 1 << scale;
     const Eigen::Vector3f scaled_voxel_coord_f = 1.f/stride * voxel_coord_f - sample_offset_frac_;
     factor =  math::fracf(scaled_voxel_coord_f);
@@ -649,7 +650,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
             + (select_value(get(upper_upper_coord.x(), upper_coord.y(), upper_coord.z(), scale, block))
               - select_value(get(lower_upper_coord.x(), upper_coord.y(), upper_coord.z(), scale, block)))
             * factor.x()) * factor.y()) * factor.z();
-    if(scale != last_scale) {
+    if (scale != last_scale) {
       last_scale = scale;
       iter++;
       continue;
@@ -676,7 +677,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
             + (select_value(get(upper_coord.x(), upper_upper_coord.y(), upper_coord.z(), scale, block))
               - select_value(get(upper_coord.x(), lower_upper_coord.y(), upper_coord.z(), scale, block)))
             * factor.x()) * factor.y()) * factor.z();
-    if(scale != last_scale) {
+    if (scale != last_scale) {
       last_scale = scale;
       iter++;
       continue;
@@ -703,7 +704,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
             + (select_value(get(upper_coord.x(), upper_coord.y(), upper_upper_coord.z(), scale, block))
               - select_value(get(upper_coord.x(), upper_coord.y(), lower_upper_coord.z(), scale, block)))
             * factor.x()) * factor.y()) * factor.z();
-    if(scale != last_scale) {
+    if (scale != last_scale) {
       last_scale = scale;
       iter++;
       continue;
@@ -714,11 +715,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, const int 
   return (0.5f * voxel_dim_) * gradient;
 }
 
-template <typename T>
-template <typename FieldSelector>
-Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f, FieldSelector select_value) const {
-  return grad(voxel_coord_f, 1, select_value);
-}
+
 
 template <typename T>
 int Octree<T>::blockCount(){
