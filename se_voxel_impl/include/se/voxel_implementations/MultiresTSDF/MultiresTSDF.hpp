@@ -111,8 +111,8 @@ struct MultiresTSDF {
       const VolumeTemplate<MultiresTSDF, se::Octree>& volume,
       const Eigen::Vector3f&                          ray_origin_M,
       const Eigen::Vector3f&                          ray_dir_M,
-      const float                                     near_plane,
-      const float                                     far_plane,
+      const float                                     t_near,
+      const float                                     t_far,
       const float                                     mu,
       const float                                     step,
       const float                                     large_step);

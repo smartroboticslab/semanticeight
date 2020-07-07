@@ -40,24 +40,24 @@ Eigen::Vector4f MultiresTSDF::raycast(
     const VolumeTemplate<MultiresTSDF, se::Octree>& volume,
     const Eigen::Vector3f&                          ray_origin_M,
     const Eigen::Vector3f&                          ray_dir_M,
-    const float                                     near_plane,
-    const float                                     far_plane,
+    const float                                     t_near,
+    const float                                     t_far,
     const float                                     mu,
     const float                                     step,
     const float                                     large_step) {
 
-  auto select_node_dist = [](const auto&){ return MultiresTSDF::VoxelType::initData().x; };
-  auto select_voxel_dist = [](const auto& data){ return data.x; };
+  auto select_node_tsdf = [](const auto&){ return MultiresTSDF::VoxelType::initData().x; };
+  auto select_voxel_tsdf = [](const auto& data){ return data.x; };
   // first walk with largesteps until we found a hit
-  float t = near_plane;
+  float t = t_near;
   float step_size = large_step;
   Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
   const int scale = 0;
-  auto interp_res = volume.interp(ray_pos_M, scale, select_node_dist, select_voxel_dist);
+  auto interp_res = volume.interp(ray_pos_M, scale, select_node_tsdf, select_voxel_tsdf);
   float f_t = interp_res.first;
   float f_tt = 0;
   if (f_t > 0) { // ups, if we were already in it, then don't render anything here
-    for (; t < far_plane; t += step_size) {
+    for (; t < t_far; t += step_size) {
       auto data = volume.get(ray_pos_M, scale);
       if (data.y == 0) {
         step_size = large_step;
@@ -66,7 +66,7 @@ Eigen::Vector4f MultiresTSDF::raycast(
       }
       f_tt = data.x;
       if (f_tt <= 0.1 && f_tt >= -0.5f) {
-        interp_res = volume.interp(ray_pos_M, scale, select_node_dist, select_voxel_dist);
+        interp_res = volume.interp(ray_pos_M, scale, select_node_tsdf, select_voxel_tsdf);
         f_tt = interp_res.first;
       }
       if (f_tt < 0.f)                  // got it, jump out of inner loop

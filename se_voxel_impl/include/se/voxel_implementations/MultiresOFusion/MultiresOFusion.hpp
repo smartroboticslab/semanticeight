@@ -134,8 +134,8 @@ struct MultiresOFusion {
       const VolumeTemplate<MultiresOFusion, se::Octree>& volume,
       const Eigen::Vector3f&                             ray_origin_M,
       const Eigen::Vector3f&                             ray_dir_M,
-      float                                              near_plane,
-      float                                              far_plane,
+      float                                              t_near,
+      float                                              t_far,
       float,
       float,
       float);

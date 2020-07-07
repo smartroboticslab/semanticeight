@@ -40,22 +40,22 @@ Eigen::Vector4f TSDF::raycast(
     const VolumeTemplate<TSDF, se::Octree>& volume,
     const Eigen::Vector3f&                  ray_origin_M,
     const Eigen::Vector3f&                  ray_dir_M,
-    const float                             near_plane,
-    const float                             far_plane,
+    const float                             t_near,
+    const float                             t_far,
     const float                             mu,
     const float                             step,
     const float                             large_step) {
 
-  auto select_node_dist = [](const auto&){ return TSDF::VoxelType::initData().x; };
-  auto select_voxel_dist = [](const auto& data){ return data.x; };
+  auto select_node_tsdf = [](const auto&){ return TSDF::VoxelType::initData().x; };
+  auto select_voxel_tsdf = [](const auto& data){ return data.x; };
   // first walk with largesteps until we found a hit
-  float t = near_plane;
+  float t = t_near;
   float step_size = large_step;
   Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
-  float f_t = volume.interp(ray_pos_M, select_node_dist, select_voxel_dist).first;
+  float f_t = volume.interp(ray_pos_M, select_node_tsdf, select_voxel_tsdf).first;
   float f_tt = 0;
   if (f_t > 0) { // ups, if we were already in it, then don't render anything here
-    for (; t < far_plane; t += step_size) {
+    for (; t < t_far; t += step_size) {
       TSDF::VoxelType::VoxelData data = volume.get(ray_pos_M);
       if (data.y == 0) {
         step_size = large_step;
@@ -64,7 +64,7 @@ Eigen::Vector4f TSDF::raycast(
       }
       f_tt = data.x;
       if (f_tt <= 0.1 && f_tt >= -0.5f) {
-        f_tt = volume.interp(ray_pos_M, select_node_dist, select_voxel_dist).first;
+        f_tt = volume.interp(ray_pos_M, select_node_tsdf, select_voxel_tsdf).first;
       }
       if (f_tt < 0)                  // got it, jump out of inner loop
         break;

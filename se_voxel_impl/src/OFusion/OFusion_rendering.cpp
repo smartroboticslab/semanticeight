@@ -40,15 +40,15 @@ Eigen::Vector4f OFusion::raycast(
     const VolumeTemplate<OFusion, se::Octree>& volume,
     const Eigen::Vector3f&                     ray_origin_M,
     const Eigen::Vector3f&                     ray_dir_M,
-    const float                                near_plane,
-    const float                                far_plane,
+    const float                                t_near,
+    const float                                t_far,
     const float                                ,
     const float                                step,
     const float                                ) {
 
   auto select_node_occupancy = [](const auto&){ return OFusion::VoxelType::initData().x; };
   auto select_voxel_occupancy = [](const auto& data){ return data.x; };
-  float t = near_plane;
+  float t = t_near;
   float step_size = step;
   float f_t = volume.interp(ray_origin_M + ray_dir_M * t, select_node_occupancy, select_voxel_occupancy).first;
   float f_tt = 0;
@@ -56,7 +56,7 @@ Eigen::Vector4f OFusion::raycast(
 
   // if we are not already in it
   if (f_t <= OFusion::surface_boundary) {
-    for (; t < far_plane; t += step_size) {
+    for (; t < t_far; t += step_size) {
       const Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
       OFusion::VoxelType::VoxelData voxel_data = volume.get(ray_pos_M);
       if (voxel_data.x > -100.f && voxel_data.y > 0.f) {
