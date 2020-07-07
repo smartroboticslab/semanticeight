@@ -352,14 +352,30 @@ public:
    *                          be in the interval [0, size).
    * \param[in] select_value  Lambda value to select the value to compute the
    *                          gradient for from the voxel data.
-   * \param[in] scale         \TODO Document this. Is it scale or init_scale?
-   *                          Must be at least 1.
+   * \param[in] min_scale     The minimum scale at which the gradient is
+   *                          computed. Must be at least 1 because the gradient
+   *                          can't be computed from a single point.
    * \return The gradient of the selected value.
    */
   template <typename FieldSelect>
   Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
                        FieldSelect            select_value,
-                       const int              scale = 1) const;
+                       const int              min_scale = 1) const;
+
+  /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
+   *
+   * \param[in] point_M       The coordinates of the 3D point in metres.
+   * \param[in] select_value  Lambda value to select the value to compute the
+   *                          gradient for from the voxel data.
+   * \param[in] min_scale     The minimum scale at which the gradient is
+   *                          computed. Must be at least 1 because the gradient
+   *                          can't be computed from a single point.
+   * \return The gradient of the selected value.
+   */
+  template <typename FieldSelect>
+  Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
+                              FieldSelect            select_value,
+                              const int              min_scale = 1) const;
 
   /*! \brief Get the list of allocated block. If the active switch is set to
    * true then only the visible blocks are retrieved.

@@ -606,10 +606,10 @@ template <typename T>
 template <typename FieldSelector>
 Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
                                 FieldSelector          select_value,
-                                const int              init_scale) const {
+                                const int              min_scale) const {
 
   int iter = 0;
-  int scale = init_scale;
+  int scale = min_scale;
   int last_scale = scale;
   Eigen::Vector3f factor = Eigen::Vector3f::Constant(0);
   Eigen::Vector3f gradient = Eigen::Vector3f::Constant(0);
@@ -713,6 +713,17 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
   }
 
   return (0.5f * voxel_dim_) * gradient;
+}
+
+
+
+template <typename T>
+template <typename FieldSelect>
+inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
+                                              FieldSelect            select_value,
+                                              const int              min_scale) const {
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  return grad(voxel_coord_f, select_value, min_scale);
 }
 
 
