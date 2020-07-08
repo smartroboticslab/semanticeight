@@ -141,59 +141,23 @@ void renderTrackKernel(unsigned char*         tracking_RGBA_image_data,
 
 
 template <typename T>
-void renderVolumeKernel(const se::Octree<typename T::VoxelType>& map,
-                        unsigned char*                           volume_RGBA_image_data, // RGBA packed
-                        const Eigen::Vector2i&                   volume_RGBA_image_res,
-                        const Eigen::Matrix4f&                   T_MC,
-                        const SensorImpl&                        sensor,
-                        const float                              step,
-                        const float                              large_step,
-                        const Eigen::Vector3f&                   light_M,
-                        const Eigen::Vector3f&                   ambient_M,
-                        bool                                     do_view_raycast,
-                        const se::Image<Eigen::Vector3f>&        surface_point_cloud_M,
-                        const se::Image<Eigen::Vector3f>&        surface_normals_M) {
+void renderVolumeKernel(unsigned char*                    volume_RGBA_image_data,
+                        const Eigen::Vector2i&            volume_RGBA_image_res,
+                        const Eigen::Vector3f&            light_M,
+                        const Eigen::Vector3f&            ambient_M,
+                        const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
+                        const se::Image<Eigen::Vector3f>& surface_normals_M) {
   TICK();
 #pragma omp parallel for
   for (int y = 0; y < volume_RGBA_image_res.y(); y++) {
 #pragma omp simd
     for (int x = 0; x < volume_RGBA_image_res.x(); x++) {
 
-      Eigen::Vector4f surface_intersection_M;
-      Eigen::Vector3f surface_point_M, surface_normal_M;
-      const int idx = (x + volume_RGBA_image_res.x() * y) * 4;
+      const size_t pixel_idx = x + volume_RGBA_image_res.x() * y;
+      const size_t idx = pixel_idx * 4;
 
-      if (do_view_raycast) {
-        const Eigen::Vector2i pixel(x, y);
-        const Eigen::Vector2f pixel_f = pixel.cast<float>();
-        Eigen::Vector3f ray_dir_C;
-        sensor.model.backProject(pixel_f, &ray_dir_C);
-        const Eigen::Vector3f ray_dir_M = (T_MC.topLeftCorner<3, 3>() * ray_dir_C.normalized()).head(3);
-        const Eigen::Vector3f t_MC = T_MC.topRightCorner<3, 1>();
-
-        surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, sensor.mu, step, large_step);
-        if (surface_intersection_M.w() >= 0.f) {
-          surface_point_M = surface_intersection_M.head<3>();
-          surface_normal_M = map.gradAtPoint(surface_intersection_M.head<3>(),
-              [](const auto& data){ return data.x; },
-              static_cast<int>(surface_intersection_M.w() + 0.5f));
-          se::internal::scale_image(x, y) = static_cast<int>(surface_intersection_M.w());
-          if (surface_normal_M.norm() == 0.f) {
-            surface_normal_M = Eigen::Vector3f(INVALID, 0.f, 0.f);
-          } else {
-            // Invert normals for TSDF representations.
-            surface_normal_M = T::invert_normals
-                ? (-1.f * surface_normal_M).normalized()
-                : surface_normal_M.normalized();
-          }
-        } else {
-          surface_point_M = Eigen::Vector3f::Zero();
-          surface_normal_M = Eigen::Vector3f(INVALID, 0.f, 0.f);
-        }
-      } else {
-        surface_point_M = surface_point_cloud_M[x + volume_RGBA_image_res.x() * y];
-        surface_normal_M = surface_normals_M[x + volume_RGBA_image_res.x() * y];
-      }
+      const Eigen::Vector3f surface_point_M = surface_point_cloud_M[pixel_idx];
+      const Eigen::Vector3f surface_normal_M = surface_normals_M[pixel_idx];
 
       if (surface_normal_M.x() != INVALID && surface_normal_M.norm() > 0.f) {
         const Eigen::Vector3f diff = (surface_point_M - light_M).normalized();

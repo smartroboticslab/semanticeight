@@ -35,6 +35,9 @@
  */
 
 #include "se/DenseSLAMSystem.h"
+
+#include <cstring>
+
 #include "se/voxel_block_ray_iterator.hpp"
 #include "se/algorithms/meshing.hpp"
 #include "se/geometry/octree_collision.hpp"
@@ -230,10 +233,9 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
 bool DenseSLAMSystem::raycast(const SensorImpl& sensor) {
 
   raycast_T_MC_ = T_MC_;
-  float step = map_dim_.x() / map_size_.x();
+  const float step = map_->voxelDim();
   raycastKernel<VoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_,
       raycast_T_MC_, sensor, step, step * BLOCK_SIZE);
-
   return true;
 }
 
@@ -247,11 +249,24 @@ void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBA_image_data
                                    const Eigen::Vector2i& volume_RGBA_image_res,
                                    const SensorImpl&      sensor) {
 
-  float step = map_dim_.x() / map_size_.x();
-  renderVolumeKernel<VoxelImpl>(*map_, volume_RGBA_image_data, volume_RGBA_image_res,
-      *this->render_T_MC_, sensor, step, step * BLOCK_SIZE,
-      se::math::to_translation(*this->render_T_MC_), ambient,
-      !(this->render_T_MC_->isApprox(raycast_T_MC_)), surface_point_cloud_M_, surface_normals_M_);
+  const float step = map_->voxelDim();
+  se::Image<Eigen::Vector3f> render_surface_point_cloud_M (image_res_.x(), image_res_.y());
+  se::Image<Eigen::Vector3f> render_surface_normals_M (image_res_.x(), image_res_.y());
+  if (render_T_MC_->isApprox(raycast_T_MC_)) {
+    // Copy the raycast from the camera viewpoint. Can't safely use memcpy with
+    // Eigen objects it seems.
+    for (size_t i = 0; i < surface_point_cloud_M_.size(); ++i) {
+      render_surface_point_cloud_M[i] = surface_point_cloud_M_[i];
+      render_surface_normals_M[i] = surface_normals_M_[i];
+    }
+  } else {
+    // Raycast the map from the render viewpoint.
+    raycastKernel<VoxelImpl>(*map_, render_surface_point_cloud_M,
+        render_surface_normals_M, *render_T_MC_, sensor, step, step * BLOCK_SIZE);
+  }
+  renderVolumeKernel<VoxelImpl>(volume_RGBA_image_data, volume_RGBA_image_res,
+      se::math::to_translation(*render_T_MC_), ambient,
+      render_surface_point_cloud_M, render_surface_normals_M);
 }
 
 void DenseSLAMSystem::renderTrack(unsigned char*         tracking_RGBA_image_data,
