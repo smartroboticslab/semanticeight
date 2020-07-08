@@ -32,6 +32,7 @@
 #include "se/voxel_implementations/OFusion/OFusion.hpp"
 
 #include "se/utils/math_utils.h"
+#include "se/voxel_block_ray_iterator.hpp"
 #include <type_traits>
 
 
@@ -46,9 +47,18 @@ Eigen::Vector4f OFusion::raycast(
     const float                           step,
     const float                           ) {
 
+  se::VoxelBlockRayIterator<OFusion::VoxelType> ray(map, ray_origin_M, ray_dir_M,
+      t_near, t_far);
+  ray.next();
+  const float t_min = ray.tmin(); /* Get distance to the first intersected block */
+  if (t_min <= 0.f) {
+    return Eigen::Vector4f::Zero();
+  }
+  const float t_max = ray.tmax();
+
   auto select_node_occupancy = [](const auto&){ return OFusion::VoxelType::initData().x; };
   auto select_voxel_occupancy = [](const auto& data){ return data.x; };
-  float t = t_near;
+  float t = t_min;
   float step_size = step;
   float f_t = map.interpAtPoint(ray_origin_M + ray_dir_M * t, select_node_occupancy, select_voxel_occupancy).first;
   float f_tt = 0;
@@ -56,7 +66,7 @@ Eigen::Vector4f OFusion::raycast(
 
   // if we are not already in it
   if (f_t <= OFusion::surface_boundary) {
-    for (; t < t_far; t += step_size) {
+    for (; t < t_max; t += step_size) {
       const Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
       OFusion::VoxelType::VoxelData voxel_data = map.getFineAtPoint(ray_pos_M);
       if (voxel_data.x > -100.f && voxel_data.y > 0.f) {

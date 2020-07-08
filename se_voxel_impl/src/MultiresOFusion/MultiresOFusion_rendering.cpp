@@ -270,7 +270,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const se::Octree<MultiresOFusion::Voxel
                                          const Eigen::Vector3f&                        ray_origin_M,
                                          const Eigen::Vector3f&                        ray_dir_M,
                                          float,
-                                         float                                         far_plane,
+                                         float                                         t_far,
                                          float,
                                          float,
                                          float) {
@@ -278,7 +278,6 @@ Eigen::Vector4f MultiresOFusion::raycast(const se::Octree<MultiresOFusion::Voxel
   const float voxel_dim = map.dim() / map_size; // voxel_dim     := [m / voxel];
   // inv_voxel_dim := [m] to [voxel]; voxel_dim := [voxel] to [m]
   //float t_near = near_plane;                       // max travel distance in [m]
-  float t_far  = far_plane;                        // min travel distance in [m]
 
   // Check if the ray origin is outside the map.
   // If so, compute the first point of contact with the map.

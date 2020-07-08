@@ -45,7 +45,6 @@
 #include "lodepng.h"
 #include "se/timings.h"
 #include "se/image/image.hpp"
-#include "se/voxel_block_ray_iterator.hpp"
 
 #include "voxel_implementations.hpp"
 #include "se/sensor_implementation.hpp"
@@ -95,17 +94,7 @@ void raycastKernel(const se::Octree<typename T::VoxelType>& map,
       const Eigen::Vector3f ray_dir_M = (se::math::to_rotation(T_MC) * ray_dir_C.normalized()).head(3);
       const Eigen::Vector3f t_MC = se::math::to_translation(T_MC);
 
-      if (std::is_same<T, MultiresOFusion>::value) {
-        surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
-      } else {
-        se::VoxelBlockRayIterator<typename T::VoxelType> ray(map, t_MC, ray_dir_M,
-            sensor.near_plane, sensor.far_plane);
-        ray.next();
-        const float t_min = ray.tmin(); /* Get distance to the first intersected block */
-        surface_intersection_M = t_min > 0.f
-              ? T::raycast(map, t_MC, ray_dir_M, t_min, ray.tmax(), sensor.mu, step, large_step)
-              : Eigen::Vector4f::Zero();
-      }
+      surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, sensor.mu, step, large_step);
       if (surface_intersection_M.w() >= 0.f) {
         surface_point_cloud_M[x + y * surface_point_cloud_M.width()] = surface_intersection_M.head<3>();
         Eigen::Vector3f surface_normal = map.gradAtPoint(surface_intersection_M.head<3>(),
@@ -182,16 +171,7 @@ void renderVolumeKernel(const se::Octree<typename T::VoxelType>& map,
         const Eigen::Vector3f ray_dir_M = (T_MC.topLeftCorner<3, 3>() * ray_dir_C.normalized()).head(3);
         const Eigen::Vector3f t_MC = T_MC.topRightCorner<3, 1>();
 
-        if (std::is_same<T, MultiresOFusion>::value) {
-          surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, 0, 0, 0);
-        } else {
-          se::VoxelBlockRayIterator<typename T::VoxelType> ray(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane);
-          ray.next();
-          const float t_min = ray.tmin(); /* Get distance to the first intersected block */
-          surface_intersection_M = t_min > 0.f
-                ? T::raycast(map, t_MC, ray_dir_M, t_min, ray.tmax(), sensor.mu, step, large_step)
-                : Eigen::Vector4f::Zero();
-        }
+        surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.near_plane, sensor.far_plane, sensor.mu, step, large_step);
         if (surface_intersection_M.w() >= 0.f) {
           surface_point_M = surface_intersection_M.head<3>();
           surface_normal_M = map.gradAtPoint(surface_intersection_M.head<3>(),

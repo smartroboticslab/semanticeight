@@ -32,6 +32,7 @@
 #include "se/voxel_implementations/MultiresTSDF/MultiresTSDF.hpp"
 
 #include "se/utils/math_utils.h"
+#include "se/voxel_block_ray_iterator.hpp"
 #include <type_traits>
 
 
@@ -46,10 +47,19 @@ Eigen::Vector4f MultiresTSDF::raycast(
     const float                                step,
     const float                                large_step) {
 
+  se::VoxelBlockRayIterator<MultiresTSDF::VoxelType> ray(map, ray_origin_M, ray_dir_M,
+      t_near, t_far);
+  ray.next();
+  const float t_min = ray.tmin(); /* Get distance to the first intersected block */
+  if (t_min <= 0.f) {
+    return Eigen::Vector4f::Zero();
+  }
+  const float t_max = ray.tmax();
+
   auto select_node_tsdf = [](const auto&){ return MultiresTSDF::VoxelType::initData().x; };
   auto select_voxel_tsdf = [](const auto& data){ return data.x; };
   // first walk with largesteps until we found a hit
-  float t = t_near;
+  float t = t_min;
   float step_size = large_step;
   Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
   const int scale = 0;
@@ -57,7 +67,7 @@ Eigen::Vector4f MultiresTSDF::raycast(
   float f_t = interp_res.first;
   float f_tt = 0;
   if (f_t > 0) { // ups, if we were already in it, then don't render anything here
-    for (; t < t_far; t += step_size) {
+    for (; t < t_max; t += step_size) {
       auto data = map.getFineAtPoint(ray_pos_M, scale);
       if (data.y == 0) {
         step_size = large_step;
