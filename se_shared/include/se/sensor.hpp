@@ -62,6 +62,36 @@ namespace se {
                                 const int   min_scale,
                                 const int   max_block_scale) const;
 
+    /**
+     * \brief Return the minimum distance at which measurements are available
+     * along the ray passing through pixels x and y.
+     *
+     * This differs from the PinholeCamera::near_plane since the near_plane is
+     * a z-value while nearDist is a distance along a ray.
+     *
+     * \param[in] ray_C The ray starting from the camera center and expressed
+     *                  in the camera frame along which nearDist
+     *                  will be computed.
+     * \return The minimum distance along the ray through the pixel at which
+     *         valid measurements may be encountered.
+     */
+    float nearDist(const Eigen::Vector3f& ray_C) const;
+
+    /**
+     * \brief Return the maximum distance at which measurements are available
+     * along the ray passing through pixels x and y.
+     *
+     * This differs from the PinholeCamera::far_plane since the far_plane is a
+     * z-value while farDist is a distance along a ray.
+     *
+     * \param[in] ray_C The ray starting from the camera center and expressed
+     *                  in the camera frame along which nearDist
+     *                  will be computed.
+     * \return The maximum distance along the ray through the pixel at which
+     *         valid measurements may be encountered.
+     */
+    float farDist(const Eigen::Vector3f& ray_C) const;
+
 
 
     srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
@@ -87,6 +117,34 @@ namespace se {
                                 const int,
                                 const int,
                                 const int) const {return 0;};
+
+    /**
+     * \brief Return the minimum distance at which measurements are available
+     * along the ray passing through pixels x and y.
+     *
+     * This function just returns OusterLidar::near_plane.
+     *
+     * \param[in] ray_C The ray starting from the camera center and expressed
+     *                  in the camera frame along which nearDist
+     *                  will be computed.
+     * \return The minimum distance along the ray through the pixel at which
+     *         valid measurements may be encountered.
+     */
+    float nearDist(const Eigen::Vector3f& ray_C) const;
+
+    /**
+     * \brief Return the maximum distance at which measurements are available
+     * along the ray passing through pixels x and y.
+     *
+     * This function just returns OusterLidar::far_plane.
+     *
+     * \param[in] ray_C The ray starting from the camera center and expressed
+     *                  in the camera frame along which nearDist
+     *                  will be computed.
+     * \return The maximum distance along the ray through the pixel at which
+     *         valid measurements may be encountered.
+     */
+    float farDist(const Eigen::Vector3f& ray_C) const;
 
 
 

@@ -69,6 +69,14 @@ int se::PinholeCamera::computeIntegrationScale(const float dist,
   }
 }
 
+float se::PinholeCamera::nearDist(const Eigen::Vector3f& ray_C) const {
+  return near_plane / ray_C.normalized().z();
+}
+
+float se::PinholeCamera::farDist(const Eigen::Vector3f& ray_C) const {
+  return far_plane / ray_C.normalized().z();
+}
+
 
 
 se::OusterLidar::OusterLidar(const SensorConfig& c)
@@ -88,4 +96,13 @@ se::OusterLidar::OusterLidar(const OusterLidar& ol, const float sf)
             ol.model.beamAzimuthAngles(), ol.model.beamElevationAngles()), // TODO: Does the beam need to be scaled too?
             left_hand_frame(ol.left_hand_frame), near_plane(ol.near_plane), far_plane(ol.far_plane), mu(ol.mu) {
 }
+
+float se::OusterLidar::nearDist(const Eigen::Vector3f&) const {
+  return near_plane;
+}
+
+float se::OusterLidar::farDist(const Eigen::Vector3f&) const {
+  return far_plane;
+}
+
 
