@@ -89,6 +89,7 @@ class SEStats:
         # Create a new subplot only if an existing one wasn't provided.
         if axes is None:
             _, axes = plt.subplots(2, 1)
+            axes = np.append(axes, axes[1].twinx())
 
         # Compute the basename of the file the data came from.
         file_basename = os.path.basename(self.filename)
@@ -118,9 +119,9 @@ class SEStats:
         axes[1].set_title('Resource usage')
 
         time_colour = 'tab:green'
-        axes = np.append(axes, axes[1].twinx())
         axes[2].plot(self.frames, [1000 * x for x in self.total_time], color=time_colour)
         axes[2].set_ylabel('Computation time (ms)', color=time_colour)
+        return axes
 
 
 
@@ -137,8 +138,30 @@ def parse_arguments():
                 'FILE or when FILE is -, read standard input. If multiple '
                 'files are provided the results for all files are shown in a '
                 'single window.'))
+    parser.add_argument('-A', '--no-equalize-axes', action='store_false',
+            dest='equalize_axes',
+            help=('Don\'t equalize the vertical axes of subplots.'))
     args = parser.parse_args()
     return args
+
+
+
+def equalize_y_axes(axes) -> None:
+    # Equalize each row
+    for row in axes:
+        y_min = float('inf');
+        y_max = float('-inf');
+        # Find the largest y axis limits
+        for ax in row:
+            b, t = ax.get_ylim()
+            if b < y_min:
+                y_min = b
+            if t > y_max:
+                y_max = t
+        # Apply the largest y axis limits
+        for ax in row:
+            #ax.set_xlim(x_min, x_max)
+            ax.set_ylim(y_min, y_max)
 
 
 
@@ -153,11 +176,19 @@ if __name__ == "__main__":
             for line in fileinput.input(file):
                 data[-1].append_line(line)
 
-        # Plot the data
+        # Plot the data.
         fig, axes = plt.subplots(2, len(data), constrained_layout=True)
+        # Add a second y axis to each lower subplot.
+        axes = axes.reshape(2, len(data))
+        axes = np.vstack((axes, np.zeros([1, len(data)])))
+        for i in range(len(data)):
+            axes[2, i] = axes[1, i].twinx()
+        # Plot the data from each file.
         for i, d in enumerate(data):
-            data_axes = [axes[0][i], axes[1][i]]
-            d.plot(data_axes)
+            d.plot(axes[:, i])
+        # Equalize all y axes.
+        if args.equalize_axes:
+            equalize_y_axes(axes)
         with warnings.catch_warnings():
             # Hide warnings due to the multiline title in SEStats.plot()
             warnings.simplefilter('ignore', category=UserWarning)
