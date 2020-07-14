@@ -11,6 +11,7 @@ import argparse
 import fileinput
 import os
 import sys
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +20,8 @@ import numpy as np
 
 class SEStats:
     """Statistics for a single run of supereight"""
-    def __init__(self) -> None:
+    def __init__(self, filename: str="") -> None:
+        self.filename = filename
         self.frames = []
         self.acquisition_time = []
         self.preprocessing_time = []
@@ -64,7 +66,7 @@ class SEStats:
 
     def last_frame(self) -> 'SEStats':
         # Create an SEStats object containing the data of the last frame
-        d = SEStats()
+        d = SEStats(self.filename)
         if d.frames:
             d.frames.append(self.frames[-1])
             d.acquisition_time.append(self.acquisition_time[-1])
@@ -83,8 +85,13 @@ class SEStats:
             d.integrated.append(self.integrated[-1])
         return d
 
-    def plot(self) -> None:
-        fig, axes = plt.subplots(2, 1)
+    def plot(self, axes=None) -> None:
+        # Create a new subplot only if an existing one wasn't provided.
+        if axes is None:
+            _, axes = plt.subplots(2, 1)
+
+        # Compute the basename of the file the data came from.
+        file_basename = os.path.basename(self.filename)
 
         timing_labels=['Acquisition', 'Preprocessing', 'Tracking',
                 'Integration', 'Raycasting', 'Rendering']
@@ -99,7 +106,10 @@ class SEStats:
         axes[0].legend(loc='upper left')
         axes[0].set_xlabel('Frame')
         axes[0].set_ylabel('Time (ms)')
-        axes[0].set_title('Computation time')
+        if file_basename:
+            axes[0].set_title(file_basename + '\n\nComputation time')
+        else:
+            axes[0].set_title('Computation time')
 
         ram_colour = 'tab:blue'
         axes[1].stackplot(self.frames, self.ram_usage, color=ram_colour)
@@ -112,9 +122,6 @@ class SEStats:
         axes[2].plot(self.frames, [1000 * x for x in self.total_time], color=time_colour)
         axes[2].set_ylabel('Computation time (ms)', color=time_colour)
 
-        plt.tight_layout()
-        plt.show()
-
 
 
 def parse_arguments():
@@ -125,26 +132,36 @@ def parse_arguments():
                 'se-denseslam-tsdf-pinholecamera-main --no-gui ... > log.txt '
                 'and plot the data using '
                 './se_tools/plot_stats.py log.txt'))
-    parser.add_argument(
-            'input_file',
-            nargs='?',
-            type=str,
-            metavar='FILE',
-            help=('a text file containing the output of supereight. With no '
-                'FILE or when FILE is -, read standard input'))
+    parser.add_argument('files', nargs='*', metavar='FILE', default=['-'],
+            help=('A text file containing the output of supereight. With no '
+                'FILE or when FILE is -, read standard input. If multiple '
+                'files are provided the results for all files are shown in a '
+                'single window.'))
     args = parser.parse_args()
-    if not args.input_file:
-        args.input_file = '-'
     return args
 
 
 
 if __name__ == "__main__":
-    args = parse_arguments()
+    try:
+        args = parse_arguments()
 
-    data = SEStats()
-    for line in fileinput.input(args.input_file):
-        data.append_line(line)
+        # Read the data
+        data = []
+        for file in args.files:
+            data.append(SEStats(file))
+            for line in fileinput.input(file):
+                data[-1].append_line(line)
 
-    data.plot()
+        # Plot the data
+        fig, axes = plt.subplots(2, len(data), constrained_layout=True)
+        for i, d in enumerate(data):
+            data_axes = [axes[0][i], axes[1][i]]
+            d.plot(data_axes)
+        with warnings.catch_warnings():
+            # Hide warnings due to the multiline title in SEStats.plot()
+            warnings.simplefilter('ignore', category=UserWarning)
+            plt.show()
+    except KeyboardInterrupt:
+        pass
 
