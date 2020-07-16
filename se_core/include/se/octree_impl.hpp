@@ -35,13 +35,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace se {
 
 template <typename T>
-inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point_M,
+inline typename Octree<T>::VoxelData Octree<T>::getAtPoint(const Eigen::Vector3f& point_M,
     VoxelBlock<T>* cached) const {
   return get(point_M, 0, cached);
 }
 
 template <typename T>
-inline typename Octree<T>::VoxelData Octree<T>::get(const Eigen::Vector3f& point_M,
+inline typename Octree<T>::VoxelData Octree<T>::getAtPoint(const Eigen::Vector3f& point_M,
     int& scale, VoxelBlock<T>* cached) const {
 
   const Eigen::Vector3i voxel_coord = (point_M.homogeneous() *

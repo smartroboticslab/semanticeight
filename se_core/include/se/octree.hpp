@@ -555,11 +555,11 @@ private:
 
   // Private implementation of cached methods
   VoxelData get(const int x, const int y, const int z, VoxelBlock<T>* cached) const;
-  VoxelData get(const Eigen::Vector3f& voxel_coord_f, VoxelBlock<T>* cached) const;
+  VoxelData getAtPoint(const Eigen::Vector3f& point_M, VoxelBlock<T>* cached) const;
 
   VoxelData get(const int x, const int y, const int z,
      int&  scale, VoxelBlock<T>* cached) const;
-  VoxelData get(const Eigen::Vector3f& voxel_coord_f, int& scale,
+  VoxelData getAtPoint(const Eigen::Vector3f& point_M, int& scale,
       VoxelBlock<T>* cached) const;
 
   // Parallel allocation of a given tree depth for a set of input keys.
