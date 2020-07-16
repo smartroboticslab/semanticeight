@@ -229,25 +229,25 @@ inline Eigen::Vector3f Octree<T>::voxelToPoint(const Eigen::Vector3i& voxel_coor
 
 
 template <typename T>
-inline Eigen::Vector3f Octree<T>::voxelToPoint(const Eigen::Vector3f& voxel_coord) const {
-  return voxel_coord * voxel_dim_;
+inline Eigen::Vector3f Octree<T>::voxelToPoint(const Eigen::Vector3f& voxel_coord_f) const {
+  return voxel_coord_f * voxel_dim_;
 }
 
 
 
 template <typename T>
-inline Eigen::Vector3i Octree<T>::pointToVoxel(const Eigen::Vector3f& point) const {
+inline Eigen::Vector3i Octree<T>::pointToVoxel(const Eigen::Vector3f& point_M) const {
   // For some reason C++ doesn't like the cast being right after the function
   // call.
-  const Eigen::Vector3f voxel_coord = pointToVoxelF(point);
+  const Eigen::Vector3f voxel_coord = pointToVoxelF(point_M);
   return voxel_coord.cast<int>();
 }
 
 
 
 template <typename T>
-inline Eigen::Vector3f Octree<T>::pointToVoxelF(const Eigen::Vector3f& point) const {
-  return point * inverse_voxel_dim_;
+inline Eigen::Vector3f Octree<T>::pointToVoxelF(const Eigen::Vector3f& point_M) const {
+  return point_M * inverse_voxel_dim_;
 }
 
 

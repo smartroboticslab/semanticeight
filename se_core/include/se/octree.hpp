@@ -220,26 +220,26 @@ public:
   /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
    * 3D point in metres.
    *
-   * \param voxel_coord The voxel coordinates.
+   * \param voxel_coord_f The voxel coordinates.
    * \return The coordinates of the corresponding 3D point in metres.
    */
-  inline Eigen::Vector3f voxelToPoint(const Eigen::Vector3f& voxel_coord) const;
+  inline Eigen::Vector3f voxelToPoint(const Eigen::Vector3f& voxel_coord_f) const;
 
   /*! \brief Convert 3D point coordinates in metres to the coordinates of the
    * corresponding voxel.
    *
-   * \param point The coordinates of the 3D point in metres.
+   * \param point_M The coordinates of the 3D point in metres.
    * \return The corresponding int voxel coordinates.
    */
-  inline Eigen::Vector3i pointToVoxel(const Eigen::Vector3f& point) const;
+  inline Eigen::Vector3i pointToVoxel(const Eigen::Vector3f& point_M) const;
 
   /*! \brief Convert 3D point coordinates in metres to the coordinates of the
    * corresponding voxel.
    *
-   * \param point The coordinates of the 3D point in metres.
+   * \param point_M The coordinates of the 3D point in metres.
    * \return The corresponding float voxel coordinates.
    */
-  inline Eigen::Vector3f pointToVoxelF(const Eigen::Vector3f& point) const;
+  inline Eigen::Vector3f pointToVoxelF(const Eigen::Vector3f& point_M) const;
 
   /*! \brief Retrieves voxel values for the neighbors of voxel at coordinates
    * (x,y,z)
