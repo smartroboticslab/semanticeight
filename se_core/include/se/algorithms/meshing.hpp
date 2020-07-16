@@ -77,8 +77,8 @@ namespace meshing {
       const float voxel_dim = map.dim() / map.size();
       Eigen::Vector3f s = Eigen::Vector3f(source.x() * voxel_dim, source.y() * voxel_dim, source.z() * voxel_dim);
       Eigen::Vector3f d = Eigen::Vector3f(dest.x() * voxel_dim, dest.y() * voxel_dim, dest.z() * voxel_dim);
-      float value_0 = select(map.get_fine(source.x(), source.y(), source.z()));
-      float value_1 = select(map.get_fine(dest.x(), dest.y(), dest.z()));
+      float value_0 = select(map.getFine(source.x(), source.y(), source.z()));
+      float value_1 = select(map.getFine(dest.x(), dest.y(), dest.z()));
       return s + (0.0 - value_0) * (d - s) / (value_1 - value_0);
     }
 
@@ -131,14 +131,14 @@ namespace meshing {
   template <typename FieldType, template <typename FieldT> class OctreeT, typename PointT>
   inline void gather_data(const OctreeT<FieldType>& map, PointT data[8],
                  const int x, const int y, const int z) {
-               data[0] = map.get_fine(x, y, z);
-               data[1] = map.get_fine(x + 1, y, z);
-               data[2] = map.get_fine(x + 1, y, z + 1);
-               data[3] = map.get_fine(x, y, z + 1);
-               data[4] = map.get_fine(x, y + 1, z);
-               data[5] = map.get_fine(x + 1, y + 1, z);
-               data[6] = map.get_fine(x + 1, y + 1, z + 1);
-               data[7] = map.get_fine(x, y + 1, z + 1);
+               data[0] = map.getFine(x, y, z);
+               data[1] = map.getFine(x + 1, y, z);
+               data[2] = map.getFine(x + 1, y, z + 1);
+               data[3] = map.getFine(x, y, z + 1);
+               data[4] = map.getFine(x, y + 1, z);
+               data[5] = map.getFine(x + 1, y + 1, z);
+               data[6] = map.getFine(x + 1, y + 1, z + 1);
+               data[7] = map.getFine(x, y + 1, z + 1);
              }
 
   template <typename FieldType, template <typename FieldT> class OctreeT,

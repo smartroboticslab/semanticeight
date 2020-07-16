@@ -185,10 +185,10 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>& map,
   v_far = std::min(std::min(std::min(v_map.x(), v_map.y()), v_map.z()) + v, v_far); // [voxel]
   t_far = voxel_dim * v_far;                                                          // [m]
 
-  auto value = map.get_fine(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), max_scale);
+  auto value = map.getFine(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), max_scale);
   while (value.x_max > -0.2f && scale > 2) {
     scale -= 1;
-    value = map.get_fine(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), scale);
+    value = map.getFine(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), scale);
   }
 
   Eigen::Vector3f ray_coord_f = ray_origin_coord_f;
@@ -235,16 +235,16 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>& map,
     v_add += V_min + 0.01;
     ray_coord_f = (v + v_add) * ray_dir_M + ray_origin_coord_f;
 
-    value = map.get_fine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), scale);
+    value = map.getFine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), scale);
 
     if (value.x_max > -0.2f) {
       while (value.x_max > -0.2f && scale > 2) {
         scale -= 1;
-        value = map.get_fine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), scale);
+        value = map.getFine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), scale);
       }
     } else {
       for (int s = scale + 1; s <= max_scale; s++) {
-        value = map.get_fine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), s);
+        value = map.getFine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), s);
 
         if (value.x_max > -0.2f)
           break;
@@ -315,7 +315,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const se::Octree<MultiresOFusion::Voxel
     for (; t < t_far; t += step_dim) {
       ray_pos_M =  ray_origin_M + ray_dir_M * t;
 
-      auto data = map.get_fine(ray_pos_M, scale);
+      auto data = map.getFineAtPoint(ray_pos_M, scale);
 
       if (data.x > -0.2f && data.frame > 0.f) {
         interp_res = map.interpAtPoint(ray_pos_M, select_node_occupancy, select_voxel_occupancy, scale);

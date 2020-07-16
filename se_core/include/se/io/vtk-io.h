@@ -87,7 +87,7 @@ void save3DSlice(const OctreeT& in, const Eigen::Vector3i& lower_coord,
   for(int z = lower_coord.z(); z < upper_coord.z(); z += stride)
     for(int y = lower_coord.y(); y < upper_coord.y(); y += stride)
       for(int x = lower_coord.x(); x < upper_coord.x(); x += stride) {
-        const auto value = select_value(in.get_fine(x, y, z, scale));
+        const auto value = select_value(in.getFine(x, y, z, scale));
         ss_scalars << value  << std::endl;
       }
 

@@ -58,7 +58,7 @@ Eigen::Vector4f OFusion::raycast(
   if (f_t <= OFusion::surface_boundary) {
     for (; t < t_far; t += step_size) {
       const Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
-      OFusion::VoxelType::VoxelData voxel_data = map.get_fine(ray_pos_M);
+      OFusion::VoxelType::VoxelData voxel_data = map.getFineAtPoint(ray_pos_M);
       if (voxel_data.x > -100.f && voxel_data.y > 0.f) {
         f_tt = map.interpAtPoint(ray_origin_M + ray_dir_M * t, select_node_occupancy, select_voxel_occupancy).first;
       }

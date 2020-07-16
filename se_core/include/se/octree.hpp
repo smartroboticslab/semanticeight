@@ -138,11 +138,11 @@ public:
   /*! \brief Set the data at the supplied 3D point.
    * If the voxel hasn't been allocated, no action is performed.
    *
-   * \param[in] point The coordinates of the point. Each component must be in
-   *                  the interval [0, dim).
+   * \param[in] point_M The coordinates of the point. Each component must be in
+   *                    the interval [0, dim).
    * \param[in] data The data to store in the voxel.
    */
-  void set(const Eigen::Vector3f& point, const VoxelData& data);
+  void setAtPoint(const Eigen::Vector3f& point_M, const VoxelData& data);
 
   /*! \brief Return the data at the supplied voxel coordinates.
    *
@@ -167,13 +167,13 @@ public:
 
   /*! \brief Return the data at the supplied 3D point.
    *
-   * \param[in] point The coordinates of the point. Each component must be in
-   *                  the interval [0, dim).
+   * \param[in] point_M The coordinates of the point. Each component must be in
+   *                    the interval [0, dim).
    * \return The data contained in the corresponding voxel. If the octree
    *         hasn't been allocated up to the voxel level at this region return
    *         the value stored at the lowest allocated octant.
    */
-  VoxelData get(const Eigen::Vector3f& point) const;
+  VoxelData getAtPoint(const Eigen::Vector3f& point_M) const;
 
   /*! \brief Return the data at the supplied voxel coordinates and scale.
    *
@@ -182,10 +182,10 @@ public:
    * \param[in] z     The voxel z coordinate in the interval [0, size).
    * \param[in] scale The octree scale to get the data at.
    * \return The data contained in the voxel. If the octree hasn't been
-   *         allocated up to the supplied scale, return the data lowest
+   *         allocated up to the supplied scale, return the data at the lowest
    *         allocated scale.
    */
-  VoxelData get_fine(const int x, const int y, const int z, const int scale = 0) const;
+  VoxelData getFine(const int x, const int y, const int z, const int scale = 0) const;
 
   /*! \brief Return the data at the supplied voxel coordinates and scale.
    *
@@ -193,21 +193,21 @@ public:
    *                        be in the interval [0, size).
    * \param[in] scale The octree scale to get the data at.
    * \return The data contained in the voxel. If the octree hasn't been
-   *         allocated up to the supplied scale, return the data lowest
+   *         allocated up to the supplied scale, return the data at the lowest
    *         allocated scale.
    */
-  VoxelData get_fine(const Eigen::Vector3i& voxel_coord, const int scale = 0) const;
+  VoxelData getFine(const Eigen::Vector3i& voxel_coord, const int scale = 0) const;
 
   /*! \brief Return the data at the supplied 3D point and scale.
    *
-   * \param[in] point The coordinates of the point. Each component must be in
-   *                  the interval [0, dim).
-   * \param[in] scale The octree scale to get the data at.
+   * \param[in] point_M The coordinates of the point. Each component must be in
+   *                    the interval [0, dim).
+   * \param[in] scale   The octree scale to get the data at.
    * \return The data contained in corresponding the voxel. If the octree
    *         hasn't been allocated up to the supplied scale, return the data
-   *         lowest allocated scale.
+   *         at the lowest allocated scale.
    */
-  VoxelData get_fine(const Eigen::Vector3f& point, const int scale = 0) const;
+  VoxelData getFineAtPoint(const Eigen::Vector3f& point_M, const int scale = 0) const;
 
   /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
    * 3D point in metres.

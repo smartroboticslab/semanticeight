@@ -116,9 +116,9 @@ inline void Octree<T>::set(const Eigen::Vector3i& voxel_coord,
 
 
 template <typename T>
-inline void Octree<T>::set(const Eigen::Vector3f& point,
-                           const VoxelData&       data) {
-  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point).cast<int>();
+inline void Octree<T>::setAtPoint(const Eigen::Vector3f& point_M,
+                                  const VoxelData&       data) {
+  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point_M).cast<int>();
   return set(voxel_coord, data);
 }
 
@@ -157,16 +157,16 @@ inline typename Octree<T>::VoxelData Octree<T>::get(
 
 
 template <typename T>
-inline typename Octree<T>::VoxelData Octree<T>::get(
-    const Eigen::Vector3f& point) const {
-  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point).cast<int>();
+inline typename Octree<T>::VoxelData Octree<T>::getAtPoint(
+    const Eigen::Vector3f& point_M) const {
+  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point_M).cast<int>();
   return get(voxel_coord);
 }
 
 
 
 template <typename T>
-inline typename Octree<T>::VoxelData Octree<T>::get_fine(
+inline typename Octree<T>::VoxelData Octree<T>::getFine(
     const int x,
     const int y,
     const int z,
@@ -203,20 +203,20 @@ inline typename Octree<T>::VoxelData Octree<T>::get_fine(
 
 
 template <typename T>
-inline typename Octree<T>::VoxelData Octree<T>::get_fine(
+inline typename Octree<T>::VoxelData Octree<T>::getFine(
     const Eigen::Vector3i& voxel_coord,
     const int              scale) const {
-  return get_fine(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), scale);
+  return getFine(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), scale);
 }
 
 
 
 template <typename T>
-inline typename Octree<T>::VoxelData Octree<T>::get_fine(
-    const Eigen::Vector3f& point,
+inline typename Octree<T>::VoxelData Octree<T>::getFineAtPoint(
+    const Eigen::Vector3f& point_M,
     const int              scale) const {
-  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point).cast<int>();
-  return get_fine(voxel_coord, scale);
+  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point_M).cast<int>();
+  return getFine(voxel_coord, scale);
 }
 
 
@@ -272,14 +272,14 @@ inline std::array<typename Octree<T>::VoxelData, 6> Octree<T>::get_face_neighbor
          and (neighbor_y >= 0) and (neighbor_y < size())
          and (neighbor_z >= 0) and (neighbor_z < size())) {
         // The neighbor voxel is inside the map, get its value.
-        neighbor_data[i] = get_fine(neighbor_x, neighbor_y, neighbor_z);
+        neighbor_data[i] = getFine(neighbor_x, neighbor_y, neighbor_z);
       } else {
         // The neighbor voxel is outside the map, set the value to empty.
         neighbor_data[i] = T::invalid();
       }
     } else {
       // Get the value of the neighbor voxel.
-      neighbor_data[i] = get_fine(neighbor_x, neighbor_y, neighbor_z);
+      neighbor_data[i] = getFine(neighbor_x, neighbor_y, neighbor_z);
     }
   }
 

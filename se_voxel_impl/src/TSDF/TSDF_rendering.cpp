@@ -56,7 +56,7 @@ Eigen::Vector4f TSDF::raycast(
   float f_tt = 0;
   if (f_t > 0) { // ups, if we were already in it, then don't render anything here
     for (; t < t_far; t += step_size) {
-      TSDF::VoxelType::VoxelData data = map.get_fine(ray_pos_M);
+      TSDF::VoxelType::VoxelData data = map.getFineAtPoint(ray_pos_M);
       if (data.y == 0) {
         step_size = large_step;
         ray_pos_M += step_size * ray_dir_M;
