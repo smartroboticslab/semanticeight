@@ -212,7 +212,7 @@ int processAll(DepthReader*   reader,
   static bool first_frame = true;
   bool tracked = false;
   bool integrated = false;
-  const bool track = (config->groundtruth_file == "");
+  const bool track = (config->ground_truth_file == "");
   const bool raycast = (track || render_images);
   int frame = 0;
   const Eigen::Vector2i input_image_res = (reader != nullptr)
@@ -243,7 +243,7 @@ int processAll(DepthReader*   reader,
 
     // Read frames and ground truth data if set
     bool read_ok;
-    if (config->groundtruth_file == "") {
+    if (config->ground_truth_file == "") {
       read_ok = reader->readNextDepthFrame(input_rgb_image_data, input_depth_image_data);
     } else {
       read_ok = reader->readNextData(input_rgb_image_data, input_depth_image_data, gt_T_WC);

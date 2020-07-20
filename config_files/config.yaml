@@ -3,7 +3,7 @@ general:
   sequence_name:              ""                            # e.g. "cow-and-lady"; No impact on pipeline.
                                                             # Parameter only helps name log files.
   sequence_path:              "/PATH/TO/scene.raw"
-  groundtruth_file:           "/PATH/TO/association.txt"
+  ground_truth_file:          "/PATH/TO/association.txt"
   output_mesh_file:           ""
   log_file:                   ""
 

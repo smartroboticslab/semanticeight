@@ -153,7 +153,7 @@ struct Configuration {
    * not adhere to this assumption then the ground truth transformation
    * Configuration::T_BC should be set appropriately.
    */
-  std::string groundtruth_file;
+  std::string ground_truth_file;
 
   /**
    * A 4x4 transformation matrix post-multiplied with all poses read from the
@@ -276,7 +276,7 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   }
   out << "\n";
   out << "ICP threshold:                   " << config.icp_threshold << "\n";
-  out << "Ground truth file:               " << config.groundtruth_file << "\n";
+  out << "Ground truth file:               " << config.ground_truth_file << "\n";
   out << "Ground truth T_BC:\n"              << config.T_BC << "\n";
   out << "Output mesh file:                " << config.output_mesh_file << "\n";
   out << "Log file:                        " << config.log_file << "\n";

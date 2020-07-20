@@ -161,7 +161,7 @@ DepthReader *createReader(Configuration *config, std::string filename) {
   reader_config.fps = config->fps;
   reader_config.drop_frames = config->drop_frames;
   reader_config.data_path = config->sequence_path;
-  reader_config.groundtruth_path = config->groundtruth_file;
+  reader_config.groundtruth_path = config->ground_truth_file;
   reader_config.transform = config->T_BC;
 
   struct stat st;

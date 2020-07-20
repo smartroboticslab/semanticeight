@@ -48,7 +48,7 @@ static const std::string default_output_mesh_file = "";
 static const std::string default_sequence_name = "";
 static const std::string default_sequence_path = "";
 static const std::string default_log_file = "";
-static const std::string default_groundtruth_file = "";
+static const std::string default_ground_truth_file = "";
 static const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
 static const Eigen::Vector4f default_sensor_intrinsics = Eigen::Vector4f::Zero();
 
@@ -265,8 +265,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       ? yaml_general_config["sequence_path"].as<std::string>() : default_sequence_path;
 
   // Ground truth file path
-  config.groundtruth_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["groundtruth_file"])
-      ? yaml_general_config["groundtruth_file"].as<std::string>() : default_groundtruth_file;
+  config.ground_truth_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["ground_truth_file"])
+      ? yaml_general_config["ground_truth_file"].as<std::string>() : default_ground_truth_file;
 
   // Output mesh file path
   config.output_mesh_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["output_mesh_file"])
@@ -402,7 +402,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         break;
 
       case 'g': // ground-truth
-        config.groundtruth_file = optarg;
+        config.ground_truth_file = optarg;
         break;
 
       case 'G': // gt-transform
