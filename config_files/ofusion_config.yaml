@@ -45,5 +45,4 @@ voxel_impl:
   type:                       "ofusion"
   mu:                         0.1
   surface_boundary:           0.0
-  max_occupancy:              100
-  min_occupancy:              -100
+  occupancy_min_max:          [-100, 100]

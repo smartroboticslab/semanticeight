@@ -93,6 +93,7 @@ struct TSDF {
     out << "Invert normals:                  " << (TSDF::invert_normals
                                                    ? "true" : "false") << "\n";
     out << "Max weight:                      " << TSDF::max_weight << "\n";
+    out << "\n";
     return out;
   }
   /**

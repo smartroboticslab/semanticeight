@@ -104,11 +104,14 @@ struct OFusion {
         ? yaml_config["surface_boundary"].as<float>() : default_surface_boundary;
     tau               = (yaml_config["tau"])
         ? yaml_config["tau"].as<float>() : default_tau;
-    max_occupancy     = (yaml_config["max_occupancy"])
-                        ? yaml_config["max_occupancy"].as<float>() : default_max_occupancy;
-    min_occupancy     = (yaml_config["min_occupancy"])
-                        ? yaml_config["min_occupancy"].as<float>() : default_min_occupancy;
-
+    if (yaml_config["occupancy_min_max"]) {
+      std::vector<float> occupancy_min_max = yaml_config["occupancy_min_max"].as<std::vector<float>>();
+      min_occupancy = occupancy_min_max[0];
+      max_occupancy = occupancy_min_max[1];
+    } else {
+      min_occupancy = default_min_occupancy;
+      max_occupancy = default_max_occupancy;
+    }
   };
 
   /**
@@ -128,6 +131,7 @@ struct OFusion {
     out << "Tau:                             " << OFusion::tau << "\n";
     out << "Max occupancy:                   " << OFusion::max_occupancy << "\n";
     out << "Min occupancy:                   " << OFusion::min_occupancy << "\n";
+    out << "\n";
     return out;
   }
   /**

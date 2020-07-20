@@ -96,6 +96,7 @@ struct MultiresTSDF {
     out << "Invert normals:                  " << (MultiresTSDF::invert_normals
                                                    ? "true" : "false") << "\n";
     out << "Max weight:                      " << MultiresTSDF::max_weight << "\n";
+    out << "\n";
     return out;
   }
 

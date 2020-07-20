@@ -163,32 +163,48 @@ struct MultiresOFusion {
   static void configure(YAML::Node yaml_config) {
     surface_boundary  = (yaml_config["surface_boundary"])
         ? yaml_config["surface_boundary"].as<float>() : default_surface_boundary;
-    max_occupancy     = (yaml_config["max_occupancy"])
-        ? yaml_config["max_occupancy"].as<float>() : default_max_occupancy;
-    min_occupancy     = (yaml_config["min_occupancy"])
-        ? yaml_config["min_occupancy"].as<float>() : default_min_occupancy;
+    if (yaml_config["occupancy_min_max"]) {
+      std::vector<float> occupancy_min_max = yaml_config["occupancy_min_max"].as<std::vector<float>>();
+      min_occupancy = occupancy_min_max[0];
+      max_occupancy = occupancy_min_max[1];
+    } else {
+      min_occupancy = default_min_occupancy;
+      max_occupancy = default_max_occupancy;
+    }
     max_weight        = (yaml_config["max_weight"])
         ? yaml_config["max_weight"].as<float>() : default_max_weight;
     fs_integr_scale   = (yaml_config["free_space_integr_scale"])
         ? yaml_config["free_space_integr_scale"].as<int>() : default_fs_integr_scale; // Minimum integration scale for free-space
-    log_odd_min       = (yaml_config["log_odd_min"])
-        ? yaml_config["log_odd_min"].as<float>() : default_log_odd_min;
-    log_odd_max       = (yaml_config["log_odd_max"])
-        ? yaml_config["log_odd_max"].as<float>() : default_log_odd_max;
+    if (yaml_config["log_odd_min_max"]) {
+      std::vector<float> log_odd_min_max = yaml_config["log_odd_min_max"].as<std::vector<float>>();
+      log_odd_min = log_odd_min_max[0];
+      log_odd_max = log_odd_min_max[1];
+    } else {
+      log_odd_min = default_log_odd_min;
+      log_odd_max = default_log_odd_max;
+    }
     const_surface_thickness = (yaml_config["const_surface_thickness"])
                         ? yaml_config["const_surface_thickness"].as<bool>() : default_const_surface_thickness;
-    tau_max           = (yaml_config["tau_max"])
-        ? yaml_config["tau_max"].as<float>() : default_tau_max;
-    tau_min           = (yaml_config["tau_min"])
-        ? yaml_config["tau_min"].as<float>() : default_tau_min;
+    if (yaml_config["tau_min_max"]) {
+      std::vector<float> tau_min_max = yaml_config["tau_min_max"].as<std::vector<float>>();
+      tau_min = tau_min_max[0];
+      tau_max = tau_min_max[1];
+    } else {
+      tau_min = default_tau_min;
+      tau_max = default_tau_max;
+    }
     k_tau           = (yaml_config["k_tau"])
         ? yaml_config["k_tau"].as<float>() : default_k_tau;
     uncertainty_model = (yaml_config["uncertainty_model"])
         ? stringToModel.find(yaml_config["uncertainty_model"].as<std::string>())->second : default_uncertainty_model;
-    sigma_max         = (yaml_config["sigma_max"])
-        ? yaml_config["sigma_max"].as<float>() : default_sigma_max;
-    sigma_min         = (yaml_config["sigma_min"])
-        ? yaml_config["sigma_min"].as<float>() : default_sigma_min;
+    if (yaml_config["sigma_min_max"]) {
+      std::vector<float> sigma_min_max = yaml_config["sigma_min_max"].as<std::vector<float>>();
+      sigma_min = sigma_min_max[0];
+      sigma_max = sigma_min_max[1];
+    } else {
+      sigma_min = default_sigma_min;
+      sigma_max = default_sigma_max;
+    }
     k_sigma           = (yaml_config["k_sigma"])
                     ? yaml_config["k_sigma"].as<float>() : default_k_sigma;
     factor = (max_weight - 1) / max_weight;
@@ -231,15 +247,15 @@ struct MultiresOFusion {
     if (MultiresOFusion::const_surface_thickness) {
     out << "Tau:                             " << MultiresOFusion::tau_max << "\n";
     } else {
-    out << "Tau max:                         " << MultiresOFusion::tau_max << "\n";
     out << "Tau min:                         " << MultiresOFusion::tau_min << "\n";
+    out << "Tau max:                         " << MultiresOFusion::tau_max << "\n";
     out << "k tau:                           " << MultiresOFusion::k_tau << "\n";
     }
     out << "Uncertainty model:               " << modelToString.find(MultiresOFusion::uncertainty_model)->second << "\n";
-    out << "Sigma max:                       " << MultiresOFusion::sigma_max << "\n";
     out << "Sigma min:                       " << MultiresOFusion::sigma_min << "\n";
+    out << "Sigma max:                       " << MultiresOFusion::sigma_max << "\n";
     out << "k sigma:                         " << MultiresOFusion::k_sigma << "\n";
-
+    out << "\n";
     return out;
   }
 
