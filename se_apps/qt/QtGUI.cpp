@@ -87,7 +87,7 @@ static void newDenseSLAMSystem(bool resetPose) {
 		delete *pipeline_pp;
 	if (!resetPose) {
 		*pipeline_pp = new DenseSLAMSystem(
-				Eigen::Vector2i(640 / config->image_downsampling_factor, 480 / config->image_downsampling_factor),
+				Eigen::Vector2i(640 / config->sensor_downsampling_factor, 480 / config->sensor_downsampling_factor),
 				config->map_size, config->map_dim, T_MW, config->pyramid, *config);
   } else {
     Eigen::Matrix<float, 6, 1> twist;
@@ -98,15 +98,15 @@ static void newDenseSLAMSystem(bool resetPose) {
 		rot = Sophus::SE3<float>();
     Eigen::Vector3f t_MW = config->t_MW_factor.cwiseProduct(config->map_dim);
 		*pipeline_pp = new DenseSLAMSystem(
-				Eigen::Vector2i(640 / config->image_downsampling_factor,
-						480 / config->image_downsampling_factor),
+				Eigen::Vector2i(640 / config->sensor_downsampling_factor,
+						480 / config->sensor_downsampling_factor),
 				config->map_size,
 				config->map_dim,
         t_MW,
         config->pyramid, *config);
 	}
-	appWindow->viewers->setBufferSize(640 / config->image_downsampling_factor,
-			480 / config->image_downsampling_factor);
+	appWindow->viewers->setBufferSize(640 / config->sensor_downsampling_factor,
+			480 / config->sensor_downsampling_factor);
 	reset = true;
 }
 static void continueWithNewDenseSLAMSystem() {
@@ -140,10 +140,10 @@ CameraState setEnableCamera(CameraState state, string inputFile) {
 				}
 				oldReader = reader;
 				reader = NULL;
-				oldInputFile = config->input_file;
+				oldInputFile = config->sequence_path;
 			}
 			if (reader == NULL) {
-				config->input_file = inputFile;
+				config->sequence_path = inputFile;
 				reader = createReader(config);
 
 				appWindow->updateChoices();
@@ -162,7 +162,7 @@ CameraState setEnableCamera(CameraState state, string inputFile) {
 					if (inputFile == "") {
 						appWindow->errorBox("Unable to open a depth camera");
 						isLive = false;
-						config->input_file = oldInputFile;
+						config->sequence_path = oldInputFile;
 						*reader_pp = oldReader;
 						if (reader != NULL) {
 							reader = *reader_pp;
@@ -246,7 +246,7 @@ void qtIdle(void) {
 			((*reader_pp == NULL) || !((*reader_pp)->cameraActive)) ?
 					CAMERA_CLOSED :
 					((*reader_pp)->cameraOpen ?
-							((config->input_file == "") ?
+							((config->sequence_path == "") ?
 									CAMERA_LIVE : CAMERA_RUNNING) :
 							CAMERA_PAUSED));
 }
@@ -320,7 +320,7 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 	//Rotate controls are disabled in this release
 	appWindow->setRotPointer(&rot);
 	appWindow->setRenderModelPointer(&forceRender);
-	appWindow->setFilenamePointer(&(config->input_file));
+	appWindow->setFilenamePointer(&(config->sequence_path));
 
 	//Function to call to dump volume model (also enable dump on file menu)
 	appWindow->setDumpFunction("Save Volume", &dump_volume);
@@ -340,7 +340,7 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 
   appWindow	->addButtonChoices("Compute Res",
 			{ "640x480", "320x240", "160x120", "80x60" }, { 1, 2, 4, 8 },
-			&(config->image_downsampling_factor), continueWithNewDenseSLAMSystem);
+			&(config->sensor_downsampling_factor), continueWithNewDenseSLAMSystem);
 	appWindow->addButtonChoices("Vol. Size", { "4.0mx4.0mx4.0m",
 			"2.0mx2.0mx2.0m", "1.0mx1.0mx1.0m" }, { 4.0, 2.0, 1.0 },
 			(float *) (&(config->map_dim.x())), continueWithNewDenseSLAMSystem);
@@ -357,10 +357,10 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 
 	int cwidth = (
 			((*reader_pp) == NULL) ? 640 : ((*reader_pp)->getInputImageResolution()).x)
-			/ config->image_downsampling_factor;
+			/ config->sensor_downsampling_factor;
 	int cheight = (
 			((*reader_pp) == NULL) ? 480 : ((*reader_pp)->getInputImageResolution()).y)
-			/ config->image_downsampling_factor;
+			/ config->sensor_downsampling_factor;
 	int width =
 			(((*reader_pp) == NULL) ? 640 : ((*reader_pp)->getInputImageResolution()).x);
 	int height = (

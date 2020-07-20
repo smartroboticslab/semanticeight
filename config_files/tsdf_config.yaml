@@ -32,7 +32,7 @@ sensor:
   type:                       ""                              # e.g. "pinholecamera"; No impact on pipeline.
                                                               # Parameter only helps name log files.
   intrinsics:                 [525,525,319.5,239.5]
-  image_downsampling_factor:  4
+  downsampling_factor:  4
   left_hand_frame:            false
   T_BC:                       [1, 0, 0, 0,
                                0, 1, 0, 0,

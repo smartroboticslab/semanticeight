@@ -34,7 +34,7 @@ static constexpr bool default_blocking_read = false;
 static constexpr float default_fps = 0.0f;
 static constexpr bool default_left_hand_frame = false;
 static constexpr float default_icp_threshold = 1e-5;
-static constexpr int default_image_downsampling_factor = 1;
+static constexpr int default_sensor_downsampling_factor = 1;
 static constexpr int default_integration_rate = 2;
 static constexpr int default_rendering_rate = 4;
 static constexpr int default_tracking_rate = 1;
@@ -58,31 +58,31 @@ static const Eigen::Vector4f default_sensor_intrinsics = Eigen::Vector4f::Zero()
 static std::string short_options = "bc:d:f:Fg:G:hi:k:l:n:N:Y:o:p:qr:s:S:t:v:y:z:?";
 
 static struct option long_options[] = {
-  {"block-read",                no_argument,       0, 'b'},
-  {"image-downsampling-factor", required_argument, 0, 'c'},
-  {"dump-volume",               required_argument, 0, 'd'},
-  {"fps",                       required_argument, 0, 'f'},
-  {"bilateral-filter",          no_argument,       0, 'F'},
-  {"ground-truth",              required_argument, 0, 'g'},
-  {"gt-transform",              required_argument, 0, 'G'},
-  {"help",                      no_argument,       0, 'h'},
-  {"sequence-name",             required_argument, 0, 'S'},
+  {"block-read",                 no_argument,       0, 'b'},
+  {"sensor-downsampling-factor", required_argument, 0, 'c'},
+  {"dump-volume",                required_argument, 0, 'd'},
+  {"fps",                        required_argument, 0, 'f'},
+  {"bilateral-filter",           no_argument,       0, 'F'},
+  {"ground-truth",               required_argument, 0, 'g'},
+  {"gt-transform",               required_argument, 0, 'G'},
+  {"help",                       no_argument,       0, 'h'},
+  {"sequence-name",              required_argument, 0, 'S'},
   {"sequence-path",              required_argument, 0, 'i'},
-  {"sensor-intrinsics",         required_argument, 0, 'k'},
-  {"icp-threshold",             required_argument, 0, 'l'},
-  {"near-plane",                required_argument, 0, 'n'},
-  {"far-plane",                 required_argument, 0, 'N'},
-  {"yaml-file",                 required_argument, 0, 'Y'},
-  {"log-file",                  required_argument, 0, 'o'},
-  {"init-pose",                 required_argument, 0, 'p'},
-  {"no-gui",                    no_argument,       0, 'q'},
-  {"integration-rate",          required_argument, 0, 'r'},
-  {"map-dim",                   required_argument, 0, 's'},
-  {"tracking-rate",             required_argument, 0, 't'},
-  {"map-size",                  required_argument, 0, 'v'},
-  {"pyramid-levels",            required_argument, 0, 'y'},
-  {"rendering-rate",            required_argument, 0, 'z'},
-  {"",                          no_argument,       0, '?'},
+  {"sensor-intrinsics",          required_argument, 0, 'k'},
+  {"icp-threshold",              required_argument, 0, 'l'},
+  {"near-plane",                 required_argument, 0, 'n'},
+  {"far-plane",                  required_argument, 0, 'N'},
+  {"yaml-file",                  required_argument, 0, 'Y'},
+  {"log-file",                   required_argument, 0, 'o'},
+  {"init-pose",                  required_argument, 0, 'p'},
+  {"no-gui",                     no_argument,       0, 'q'},
+  {"integration-rate",           required_argument, 0, 'r'},
+  {"map-dim",                    required_argument, 0, 's'},
+  {"tracking-rate",              required_argument, 0, 't'},
+  {"map-size",                   required_argument, 0, 'v'},
+  {"pyramid-levels",             required_argument, 0, 'y'},
+  {"rendering-rate",             required_argument, 0, 'z'},
+  {"",                           no_argument,       0, '?'},
   {0, 0, 0, 0}
 };
 
@@ -91,7 +91,7 @@ static struct option long_options[] = {
 inline void print_arguments() {
   std::cerr << "-Y  (--yaml-file)                         : YAML file\n";
   std::cerr << "-b  (--block-read)                        : default is false: don't block reading\n";
-  std::cerr << "-c  (--image-downsampling-factor)         : default is " << default_image_downsampling_factor << " (same size)\n";
+  std::cerr << "-c  (--sensor-downsampling-factor)        : default is " << default_sensor_downsampling_factor << " (same size)\n";
   std::cerr << "-d  (--dump-volume) <filename>            : output mesh file\n";
   std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
@@ -338,9 +338,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   }
   // Sensor overrided
   config.sensor_intrinsics_overrided = false;
-  // Image downsamling factor
-  config.image_downsampling_factor = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["image_downsampling_factor"])
-                                     ? yaml_sensor_config["image_downsampling_factor"].as<int>() : default_image_downsampling_factor;
+  // Sensor downsamling factor
+  config.sensor_downsampling_factor = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["downsampling_factor"])
+      ? yaml_sensor_config["downsampling_factor"].as<int>() : default_sensor_downsampling_factor;
   // Left hand coordinate frame
   config.left_hand_frame = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["left_hand_frame"])
       ? yaml_sensor_config["left_hand_frame"].as<bool>() : default_left_hand_frame;
@@ -377,13 +377,13 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.blocking_read = true;
         break;
 
-      case 'c': // image-downsampling-factor
-        config.image_downsampling_factor = atoi(optarg);
-        if (   (config.image_downsampling_factor != 1)
-            && (config.image_downsampling_factor != 2)
-            && (config.image_downsampling_factor != 4)
-            && (config.image_downsampling_factor != 8)) {
-          std::cerr << "Error: --image-resolution-ratio (-c) must be 1, 2 ,4 "
+      case 'c': // sensor-downsampling-factor
+        config.sensor_downsampling_factor = atoi(optarg);
+        if (   (config.sensor_downsampling_factor != 1)
+            && (config.sensor_downsampling_factor != 2)
+            && (config.sensor_downsampling_factor != 4)
+            && (config.sensor_downsampling_factor != 8)) {
+          std::cerr << "Error: --sensor-downsampling-factor (-c) must be 1, 2 ,4 "
               << "or 8  (was " << optarg << ")\n";
           exit(EXIT_FAILURE);
         }

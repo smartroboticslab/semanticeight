@@ -60,7 +60,7 @@ struct Configuration {
    * before processing. Valid values are 1, 2, 4 and 8.
    * <br>\em Default: 1
    */
-  int image_downsampling_factor;
+  int sensor_downsampling_factor;
 
   /**
    * Perform tracking on a frame every tracking_rate frames.
@@ -257,7 +257,7 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "World to map translation factor: " << config.t_MW_factor.x() << " "
                                              << config.t_MW_factor.y() << " "
                                              << config.t_MW_factor.z() << "\n";
-  out << "Image downsampling-factor:       " << config.image_downsampling_factor << "\n";
+  out << "Sensor downsampling factor:      " << config.sensor_downsampling_factor << "\n";
   out << "Sensor intrinsics:               " << config.sensor_intrinsics.x() << " "
                                              << config.sensor_intrinsics.y() << " "
                                              << config.sensor_intrinsics.z() << " "
