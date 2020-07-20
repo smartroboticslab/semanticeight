@@ -42,6 +42,5 @@ sensor:
   far_plane:                  4.0
 
 voxel_impl:
-  type:                       "tsdf"
   mu:                         0.1
   max_weight:                 100

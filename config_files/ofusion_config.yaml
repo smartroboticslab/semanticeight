@@ -42,7 +42,6 @@ sensor:
   far_plane:                  4.0
 
 voxel_impl:
-  type:                       "ofusion"
   surface_boundary:           0.0
   occupancy_min_max:          [-100, 100]
   tau:                        4
