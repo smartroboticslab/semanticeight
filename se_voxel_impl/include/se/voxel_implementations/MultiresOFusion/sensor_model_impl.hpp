@@ -49,7 +49,7 @@ public:
 
       return MultiresOFusion::tau_max; // Livingroom dataset
 
-    } else if (MultiresOFusion::uncertainty_model == UncertaintyModel::quadratic) {
+    } else {
 
       return se::math::clamp(MultiresOFusion::k_tau * depth_sample, MultiresOFusion::tau_min, MultiresOFusion::tau_max);
 

@@ -175,8 +175,7 @@ struct MultiresOFusion {
         ? yaml_config["log_odd_min"].as<float>() : default_log_odd_min;
     log_odd_max       = (yaml_config["log_odd_max"])
         ? yaml_config["log_odd_max"].as<float>() : default_log_odd_max;
-    // TODO:
-    const_surface_thickness        = (yaml_config["const_surface_thickness"])
+    const_surface_thickness = (yaml_config["const_surface_thickness"])
                         ? yaml_config["const_surface_thickness"].as<bool>() : default_const_surface_thickness;
     tau_max           = (yaml_config["tau_max"])
         ? yaml_config["tau_max"].as<float>() : default_tau_max;
@@ -206,8 +205,7 @@ struct MultiresOFusion {
     fs_integr_scale   = default_fs_integr_scale; // Minimum integration scale for free-space
     log_odd_min       = default_log_odd_min;
     log_odd_max       = default_log_odd_max;
-    // TODO:
-    const_surface_thickness        = default_const_surface_thickness;
+    const_surface_thickness = default_const_surface_thickness;
     tau_max           = default_tau_max;
     tau_min           = default_tau_min;
     k_tau             = default_k_tau;
