@@ -55,7 +55,7 @@ static const Eigen::Vector4f default_sensor_intrinsics = Eigen::Vector4f::Zero()
 
 
 // Put colons after options with arguments
-static std::string short_options = "bc:d:f:Fg:G:hi:k:l:n:N:Y:o:p:qr:s:S:t:v:y:z:?";
+static std::string short_options = "b:c:d:f:F:g:G:h:i:k:l:n:N:o:p:q:r:s:S:t:v:y:Y:z:?";
 
 static struct option long_options[] = {
   {"drop-frames",                no_argument,       0, 'b'},
@@ -71,7 +71,6 @@ static struct option long_options[] = {
   {"icp-threshold",              required_argument, 0, 'l'},
   {"near-plane",                 required_argument, 0, 'n'},
   {"far-plane",                  required_argument, 0, 'N'},
-  {"yaml-file",                  required_argument, 0, 'Y'},
   {"log-file",                   required_argument, 0, 'o'},
   {"init-pose",                  required_argument, 0, 'p'},
   {"no-gui",                     no_argument,       0, 'q'},
@@ -81,6 +80,7 @@ static struct option long_options[] = {
   {"tracking-rate",              required_argument, 0, 't'},
   {"map-size",                   required_argument, 0, 'v'},
   {"pyramid-levels",             required_argument, 0, 'y'},
+  {"yaml-file",                  required_argument, 0, 'Y'},
   {"rendering-rate",             required_argument, 0, 'z'},
   {"",                           no_argument,       0, '?'},
   {0, 0, 0, 0}
@@ -89,13 +89,15 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
-  std::cerr << "-Y  (--yaml-file)                         : YAML file\n";
   std::cerr << "-b  (--drop-frames)                       : default is false: don't drop frames\n";
   std::cerr << "-c  (--sensor-downsampling-factor)        : default is " << default_sensor_downsampling_factor << " (same size)\n";
   std::cerr << "-d  (--output-mesh-file) <filename>       : output mesh file\n";
   std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
-  std::cerr << "-i  (--sequence-path) <filename>             : sequence path\n";
+  std::cerr << "-g  (--ground-truth) <filename>           : ground truth file\n";
+  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : T_BC (translation and/or rotation)\n";
+  std::cerr << "-h  (--help)                              : show this help message\n";
+  std::cerr << "-i  (--sequence-path) <filename>          : sequence path\n";
   std::cerr << "-k  (--sensor-intrinsics)                 : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
   std::cerr << "-o  (--log-file) <filename>               : default is stdout\n";
@@ -109,10 +111,8 @@ inline void print_arguments() {
   std::cerr << "-t  (--tracking-rate)                     : default is " << default_tracking_rate << "\n";
   std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
   std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4\n";
+  std::cerr << "-Y  (--yaml-file)                         : YAML file\n";
   std::cerr << "-z  (--rendering-rate)                    : default is " << default_rendering_rate << "\n";
-  std::cerr << "-g  (--ground-truth) <filename>           : ground truth file\n";
-  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : T_BC (translation and/or rotation)\n";
-  std::cerr << "-h  (--help)                              : show this help message\n";
 }
 
 
