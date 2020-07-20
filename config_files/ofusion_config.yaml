@@ -1,5 +1,7 @@
 general:
   # File path
+  sequence_name:              ""                            # e.g. "cow-and-lady"; No impact on pipeline.
+                                                            # Parameter only helps name log files.
   input_file:                 "/PATH/TO/scene.raw"
   groundtruth_file:           "/PATH/TO/association.txt"
   dump_volume_file:           ""
@@ -27,7 +29,9 @@ map:
   t_MW_factor:                [0.501, 0.501, 0.501]
 
 sensor:
-  camera:
+  type:                       ""                              # e.g. "pinholecamera"; No impact on pipeline.
+                                                              # Parameter only helps name log files.
+  camera:                     [525,525,319.5,239.5]
   image_downsampling_factor:  4
   left_hand_frame:            false
   T_BC:                       [1, 0, 0, 0,
@@ -38,6 +42,7 @@ sensor:
   far_plane:                  4.0
 
 voxel_impl:
+  type:                       "ofusion"
   mu:                         0.1
   surface_boundary:           0.0
   max_occupancy:              100

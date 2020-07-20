@@ -46,9 +46,13 @@ struct Configuration {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   //
-  // KFusion configuration parameters
+  // Pipeline configuration parameters
   // Command line arguments are parsed in default_parameters.h
   //
+
+  std::string sensor_type;
+  std::string voxel_impl_type;
+  std::string sequence_name;
 
   /**
    * The ratio of the input frame size over the frame size used internally.
@@ -240,6 +244,9 @@ struct Configuration {
 
 
 static std::ostream& operator<<(std::ostream& out, const Configuration& config) {
+  out << "Sequence name:                   " << config.sequence_name << "\n";
+  out << "Sensor type:                     " << config.sensor_type << "\n";
+  out << "Voxel impl type:                 " << config.voxel_impl_type << "\n";
   out << "Input file:                      " << config.input_file << "\n";
   out << "Map dim:                         " << config.map_dim.x() << "x"
                                              << config.map_dim.y() << "x"

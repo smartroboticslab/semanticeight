@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include <Eigen/Dense>
 #include <yaml-cpp/yaml.h>
@@ -45,6 +46,7 @@ static constexpr bool default_no_gui = false;
 static constexpr bool default_render_volume_fullsize = false;
 static constexpr bool default_bilateral_filter = false;
 static const std::string default_dump_volume_file = "";
+static const std::string default_sequence_name = "";
 static const std::string default_input_file = "";
 static const std::string default_log_file = "";
 static const std::string default_groundtruth_file = "";
@@ -54,7 +56,7 @@ static const Eigen::Vector4f default_camera = Eigen::Vector4f::Zero();
 
 
 // Put colons after options with arguments
-static std::string short_options = "bc:d:f:Fg:G:hi:k:l:m:n:N:Y:o:p:qr:s:t:v:y:z:?";
+static std::string short_options = "bc:d:f:Fg:G:hi:k:l:m:n:N:Y:o:p:qr:s:S:t:v:y:z:?";
 
 static struct option long_options[] = {
   {"block-read",                no_argument,       0, 'b'},
@@ -65,6 +67,7 @@ static struct option long_options[] = {
   {"ground-truth",              required_argument, 0, 'g'},
   {"gt-transform",              required_argument, 0, 'G'},
   {"help",                      no_argument,       0, 'h'},
+  {"sequence-name",             required_argument, 0, 'S'},
   {"input-file",                required_argument, 0, 'i'},
   {"camera",                    required_argument, 0, 'k'},
   {"icp-threshold",             required_argument, 0, 'l'},
@@ -94,6 +97,7 @@ inline void print_arguments() {
   std::cerr << "-d  (--dump-volume) <filename>            : output mesh file\n";
   std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
+  std::cerr << "-S  (--sequence-name)                     : name of sequence\n";
   std::cerr << "-i  (--input-file) <filename>             : input file\n";
   std::cerr << "-k  (--camera)                            : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
@@ -109,7 +113,7 @@ inline void print_arguments() {
   std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
   std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4\n";
   std::cerr << "-z  (--rendering-rate)                    : default is " << default_rendering_rate << "\n";
-  std::cerr << "-g  (--ground-truth) <filename>           : Ground truth file\n";
+  std::cerr << "-g  (--ground-truth) <filename>           : ground truth file\n";
   std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : T_BC (translation and/or rotation)\n";
   std::cerr << "-h  (--help)                              : show this help message\n";
 }
@@ -223,6 +227,17 @@ Eigen::Matrix4f TvtoT(std::vector<float> T_v) {
 Configuration parseArgs(unsigned int argc, char** argv) {
   Configuration config;
 
+  std::stringstream executable_ss;
+  executable_ss << argv[0];
+  std::string voxel_impl_type;
+  std::string sensor_type;
+
+  while(std::getline(executable_ss, voxel_impl_type, '-')) {
+    if (voxel_impl_type == "denseslam") break;
+  }
+  std::getline(executable_ss, voxel_impl_type, '-');
+  std::getline(executable_ss, sensor_type, '-');
+
   int c;
   int option_index = 0;
   YAML::Node yaml_general_config = YAML::Load("");
@@ -243,6 +258,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // No GUI
   config.no_gui = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["no_gui"])
                   ? yaml_general_config["no_gui"].as<bool>() : default_no_gui;
+
+  // Sequence name
+  config.sequence_name = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["sequence_name"])
+                        ? yaml_general_config["sequence_name"].as<std::string>() : default_sequence_name;
 
   // Input file path
   config.input_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["input_file"])
@@ -311,6 +330,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
   // CONFIGURE SENSOR
 
+  // Sensor type
+  config.sensor_type = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["type"])
+                       ? yaml_sensor_config["type"].as<std::string>() : sensor_type;
   // Sensor intrinsics
   if (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["camera"]) {
     config.camera = Eigen::Vector4f((yaml_sensor_config["camera"].as<std::vector<float>>()).data());
@@ -337,10 +359,13 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
 
   // CONFIGURE VOXEL IMPL
-  (yaml_voxel_impl_config.Type() != YAML::NodeType::Null) ? VoxelImpl::configure(yaml_voxel_impl_config) : VoxelImpl::configure();;
+  // Voxel impl type
+  config.voxel_impl_type = (yaml_voxel_impl_config.Type() != YAML::NodeType::Null && yaml_voxel_impl_config["type"])
+                            ? yaml_voxel_impl_config["type"].as<std::string>() : voxel_impl_type;
   // Mu
   config.mu = (yaml_voxel_impl_config.Type() != YAML::NodeType::Null && yaml_voxel_impl_config["mu"])
               ? yaml_voxel_impl_config["mu"].as<float>() : default_mu;
+  (yaml_voxel_impl_config.Type() != YAML::NodeType::Null) ? VoxelImpl::configure(yaml_voxel_impl_config) : VoxelImpl::configure();;
 
   // Reset getopt_long state to start parsing from the beginning
   optind = 1;
@@ -494,6 +519,12 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         }
         break;
 
+      case 'S': // sequence-name
+        {
+          config.sequence_name = optarg;
+        }
+        break;
+
       case 't': // tracking-rate
         config.tracking_rate = atof(optarg);
         break;
@@ -534,6 +565,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
   }
+
+  std::replace(config.sequence_name.begin(), config.sequence_name.end(), ' ', '_');
 
   // Ensure the parameter values are valid.
   if (config.near_plane >= config.far_plane) {
