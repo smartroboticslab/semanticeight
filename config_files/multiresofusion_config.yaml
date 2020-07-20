@@ -43,7 +43,6 @@ sensor:
 
 voxel_impl:
   type:                       "multiresofusion"
-  mu:                         0.1
   surface_boundary:           0.0
   occupancy_min_max:          [-100, 100]
   max_weight:                 100

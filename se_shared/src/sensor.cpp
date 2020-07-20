@@ -15,12 +15,11 @@ const srl::projection::NoDistortion _distortion;
 
 se::PinholeCamera::PinholeCamera(const SensorConfig& c)
     : model(c.width, c.height, c.fx, c.fy, c.cx, c.cy, _distortion),
-      left_hand_frame(c.left_hand_frame), near_plane(c.near_plane), far_plane(c.far_plane), mu(c.mu), scaled_pixel(1 / c.fx) {
+      left_hand_frame(c.left_hand_frame), near_plane(c.near_plane), far_plane(c.far_plane), scaled_pixel(1 / c.fx) {
   assert(c.width  > 0);
   assert(c.height > 0);
   assert(c.near_plane >= 0.f);
   assert(c.far_plane > c.near_plane);
-  assert(c.mu > 0.f);
   assert(!std::isnan(c.fx));
   assert(!std::isnan(c.fy));
   assert(!std::isnan(c.cx));
@@ -31,7 +30,7 @@ se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
     : model(pc.model.imageWidth() * sf, pc.model.imageHeight() * sf,
             pc.model.focalLengthU() * sf, pc.model.focalLengthV() * sf,
             pc.model.imageCenterU() * sf, pc.model.imageCenterV() * sf, _distortion),
-            left_hand_frame(pc.left_hand_frame), near_plane(pc.near_plane), far_plane(pc.far_plane), mu(pc.mu) {
+            left_hand_frame(pc.left_hand_frame), near_plane(pc.near_plane), far_plane(pc.far_plane) {
 }
 
 int se::PinholeCamera::computeIntegrationScale(const float dist,
@@ -81,12 +80,11 @@ float se::PinholeCamera::farDist(const Eigen::Vector3f& ray_C) const {
 
 se::OusterLidar::OusterLidar(const SensorConfig& c)
     : model(c.width, c.height, c.beam_azimuth_angles, c.beam_elevation_angles),
-      left_hand_frame(c.left_hand_frame), near_plane(c.near_plane), far_plane(c.far_plane), mu(c.mu) {
+      left_hand_frame(c.left_hand_frame), near_plane(c.near_plane), far_plane(c.far_plane) {
   assert(c.width  > 0);
   assert(c.height > 0);
   assert(c.near_plane >= 0.f);
   assert(c.far_plane > c.near_plane);
-  assert(c.mu > 0.f);
   assert(c.beam_azimuth_angles.size()   > 0);
   assert(c.beam_elevation_angles.size() > 0);
 }
@@ -94,7 +92,7 @@ se::OusterLidar::OusterLidar(const SensorConfig& c)
 se::OusterLidar::OusterLidar(const OusterLidar& ol, const float sf)
     : model(ol.model.imageWidth() * sf, ol.model.imageHeight() * sf,
             ol.model.beamAzimuthAngles(), ol.model.beamElevationAngles()), // TODO: Does the beam need to be scaled too?
-            left_hand_frame(ol.left_hand_frame), near_plane(ol.near_plane), far_plane(ol.far_plane), mu(ol.mu) {
+            left_hand_frame(ol.left_hand_frame), near_plane(ol.near_plane), far_plane(ol.far_plane) {
 }
 
 float se::OusterLidar::nearDist(const Eigen::Vector3f&) const {

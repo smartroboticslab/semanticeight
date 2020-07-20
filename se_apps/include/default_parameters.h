@@ -28,7 +28,6 @@
 // Default option values.
 static constexpr int default_iteration_count = 3;
 static constexpr int default_iterations[default_iteration_count] = { 10, 5, 4 };
-static constexpr float default_mu = 0.1f;
 static constexpr float default_near_plane = 0.4f;
 static constexpr float default_far_plane = 4.0f;
 static constexpr bool default_blocking_read = false;
@@ -56,7 +55,7 @@ static const Eigen::Vector4f default_camera = Eigen::Vector4f::Zero();
 
 
 // Put colons after options with arguments
-static std::string short_options = "bc:d:f:Fg:G:hi:k:l:m:n:N:Y:o:p:qr:s:S:t:v:y:z:?";
+static std::string short_options = "bc:d:f:Fg:G:hi:k:l:n:N:Y:o:p:qr:s:S:t:v:y:z:?";
 
 static struct option long_options[] = {
   {"block-read",                no_argument,       0, 'b'},
@@ -71,7 +70,6 @@ static struct option long_options[] = {
   {"input-file",                required_argument, 0, 'i'},
   {"camera",                    required_argument, 0, 'k'},
   {"icp-threshold",             required_argument, 0, 'l'},
-  {"mu",                        required_argument, 0, 'm'},
   {"near-plane",                required_argument, 0, 'n'},
   {"far-plane",                 required_argument, 0, 'N'},
   {"yaml-file",                 required_argument, 0, 'Y'},
@@ -102,7 +100,6 @@ inline void print_arguments() {
   std::cerr << "-k  (--camera)                            : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
   std::cerr << "-o  (--log-file) <filename>               : default is stdout\n";
-  std::cerr << "-m  (--mu)                                : default is " << default_mu << "\n";
   std::cerr << "-n  (--near-plane)                        : default is " << default_near_plane << "\n";
   std::cerr << "-N  (--far-plane)                         : default is " << default_far_plane << "\n";
   std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
@@ -362,9 +359,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Voxel impl type
   config.voxel_impl_type = (yaml_voxel_impl_config.Type() != YAML::NodeType::Null && yaml_voxel_impl_config["type"])
                             ? yaml_voxel_impl_config["type"].as<std::string>() : voxel_impl_type;
-  // Mu
-  config.mu = (yaml_voxel_impl_config.Type() != YAML::NodeType::Null && yaml_voxel_impl_config["mu"])
-              ? yaml_voxel_impl_config["mu"].as<float>() : default_mu;
   (yaml_voxel_impl_config.Type() != YAML::NodeType::Null) ? VoxelImpl::configure(yaml_voxel_impl_config) : VoxelImpl::configure();;
 
   // Reset getopt_long state to start parsing from the beginning
@@ -477,10 +471,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'l': // icp-threshold
         config.icp_threshold = atof(optarg);
-        break;
-
-      case 'm': // mu
-        config.mu = atof(optarg);
         break;
 
       case 'n': // near-plane

@@ -272,7 +272,6 @@ Eigen::Vector4f MultiresOFusion::raycast(const se::Octree<MultiresOFusion::Voxel
                                          float,
                                          float                                         t_far,
                                          float,
-                                         float,
                                          float) {
   const int map_size = map.size();              // map_size    := [voxel]
   const float voxel_dim = map.dim() / map_size; // voxel_dim     := [m / voxel];

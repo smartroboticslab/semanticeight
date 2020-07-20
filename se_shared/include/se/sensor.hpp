@@ -22,7 +22,6 @@ namespace se {
     bool left_hand_frame = false;
     float near_plane = 0.f;
     float far_plane = INFINITY;
-    float mu = 0.1f;
     // Pinhole camera
     float fx = nan("");
     float fy = nan("");
@@ -98,7 +97,6 @@ namespace se {
     bool  left_hand_frame;
     float near_plane;
     float far_plane;
-    float mu;
     float scaled_pixel;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -152,7 +150,6 @@ namespace se {
     bool  left_hand_frame;
     float near_plane;
     float far_plane;
-    float mu;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };

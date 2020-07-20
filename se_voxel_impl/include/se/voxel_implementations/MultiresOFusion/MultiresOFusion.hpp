@@ -245,15 +245,15 @@ struct MultiresOFusion {
     out << "Const surface thickness:         " << (MultiresOFusion::const_surface_thickness
                                                    ? "true" : "false") << "\n";
     if (MultiresOFusion::const_surface_thickness) {
-    out << "Tau:                             " << MultiresOFusion::tau_max << "\n";
+    out << "tau:                             " << MultiresOFusion::tau_max << "\n";
     } else {
-    out << "Tau min:                         " << MultiresOFusion::tau_min << "\n";
-    out << "Tau max:                         " << MultiresOFusion::tau_max << "\n";
+    out << "tau min:                         " << MultiresOFusion::tau_min << "\n";
+    out << "tau max:                         " << MultiresOFusion::tau_max << "\n";
     out << "k tau:                           " << MultiresOFusion::k_tau << "\n";
     }
     out << "Uncertainty model:               " << modelToString.find(MultiresOFusion::uncertainty_model)->second << "\n";
-    out << "Sigma min:                       " << MultiresOFusion::sigma_min << "\n";
-    out << "Sigma max:                       " << MultiresOFusion::sigma_max << "\n";
+    out << "sigma min:                       " << MultiresOFusion::sigma_min << "\n";
+    out << "sigma max:                       " << MultiresOFusion::sigma_max << "\n";
     out << "k sigma:                         " << MultiresOFusion::k_sigma << "\n";
     out << "\n";
     return out;
@@ -288,7 +288,6 @@ struct MultiresOFusion {
       const Eigen::Vector3f&                        ray_dir_M,
       float                                         t_near,
       float                                         t_far,
-      float,
       float,
       float);
 };

@@ -249,8 +249,8 @@ namespace se {
                   const float sdf_value = (depth_value - point_C.z())
                                      * std::sqrt(1 + se::math::sq(point_C.x() / point_C.z()) +
                                                  se::math::sq(point_C.y() / point_C.z()));
-                  if (sdf_value > -mu) {
-                    const float tsdf_value = fminf(1.f, sdf_value / mu);
+                  if (sdf_value > -MultiresTSDF::mu) {
+                    const float tsdf_value = fminf(1.f, sdf_value / MultiresTSDF::mu);
                     voxel_data.x = se::math::clamp(
                         (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
                         (static_cast<float>(voxel_data.y) + 1.f),
@@ -286,8 +286,7 @@ namespace se {
           sensor(sensor),
           voxel_dim(voxel_dim),
           max_weight(max_weight),
-          sample_offset_frac(map.sample_offset_frac_),
-          mu(sensor.mu) {}
+          sample_offset_frac(map.sample_offset_frac_) {}
 
       const se::Octree<MultiresTSDF::VoxelType>& map;
       const se::Image<float>& depth_image;
@@ -296,7 +295,6 @@ namespace se {
       const float voxel_dim;
       const int max_weight;
       const Eigen::Vector3f& sample_offset_frac;
-      const float mu;
 
       void operator()(se::VoxelBlock<MultiresTSDF::VoxelType>* block) {
 
@@ -313,7 +311,7 @@ namespace se {
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
         if (last_scale > scale) {
           propagateUpdate(block, scale, map, depth_image, T_CM, sensor,
-              voxel_dim, max_weight, sample_offset_frac, mu);
+              voxel_dim, max_weight, sample_offset_frac, MultiresTSDF::mu);
           return;
         }
         bool is_visible = false;
@@ -345,8 +343,8 @@ namespace se {
               const float point_dist = (depth_value - point_C.z())
                                  * std::sqrt(1 + se::math::sq(point_C.x() / point_C.z()) +
                                              se::math::sq(point_C.y() / point_C.z()));
-              if (point_dist > -mu) {
-                const float tsdf_value = fminf(1.f, point_dist / mu);
+              if (point_dist > -MultiresTSDF::mu) {
+                const float tsdf_value = fminf(1.f, point_dist / MultiresTSDF::mu);
                 auto voxel_data = block->data(voxel_coord, scale);
                 voxel_data.x = se::math::clamp(
                     (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /

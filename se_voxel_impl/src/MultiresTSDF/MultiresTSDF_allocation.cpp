@@ -62,7 +62,7 @@ size_t MultiresTSDF::buildAllocationList(
   const int map_size = map.size();
   const float voxel_dim = map.dim() / map_size;
   const float inverse_voxel_dim = 1.f / voxel_dim;
-  const float band = 2.f * sensor.mu;
+  const float band = 2.f * MultiresTSDF::mu;
 
 
 

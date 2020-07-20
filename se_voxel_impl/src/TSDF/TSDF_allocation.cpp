@@ -61,9 +61,7 @@ size_t TSDF::buildAllocationList(
   const float inverse_voxel_dim = 1.f / voxel_dim;
   const int map_size = map.size();
   const unsigned block_depth = map.blockDepth();
-  const float band = 2.f * sensor.mu;
-
-
+  const float band = 2.f * TSDF::mu;
 
 #ifdef _OPENMP
   std::atomic<unsigned int> voxel_count (0);

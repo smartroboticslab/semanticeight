@@ -59,9 +59,8 @@ public:
   inline static int lowVariance(float depth_min,
                                 float depth_max,
                                 float voxel_min_m,
-                                float voxel_max_m,
-                                float mu) {
-    return Derived::lowVariance(depth_min, depth_max, voxel_min_m, voxel_max_m, mu);
+                                float voxel_max_m) {
+    return Derived::lowVariance(depth_min, depth_max, voxel_min_m, voxel_max_m);
   }
 
   /**
@@ -77,13 +76,11 @@ public:
    */
   inline static void updateBlock(float          pos_z,
                                  float          depth_sample,
-                                 float          sigma,
-                                 float          voxel_dim,
                                  MultiresOFusion::VoxelType::VoxelData& field,
                                  const unsigned frame,
                                  const int      scale,
                                  const float    proj_scale = 1) {
-    Derived::updateBlock(pos_z, depth_sample, sigma, voxel_dim, field, frame, scale, proj_scale);
+    Derived::updateBlock(pos_z, depth_sample, field, frame, scale, proj_scale);
   }
 
 

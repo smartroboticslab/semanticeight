@@ -42,13 +42,11 @@
 
 struct tsdf_update {
   const se::Image<float>& depth_image;
-  float mu;
 
 
 
-  tsdf_update(const se::Image<float>& depth_image,
-              float                   mu)
-    : depth_image(depth_image), mu(mu) {};
+  tsdf_update(const se::Image<float>& depth_image)
+    : depth_image(depth_image) {};
 
 
 
@@ -68,8 +66,8 @@ struct tsdf_update {
     const float point_dist = (depth_value - point_C.z())
       * std::sqrt(1 + se::math::sq(point_C.x() / point_C.z())
       + se::math::sq(point_C.y() / point_C.z()));
-    if (point_dist > -mu) {
-      const float tsdf = fminf(1.f, point_dist / mu);
+    if (point_dist > -TSDF::mu) {
+      const float tsdf = fminf(1.f, point_dist / TSDF::mu);
       auto data = handler.get();
       data.x = (data.y * data.x + tsdf) / (data.y + 1.f);
       data.x = se::math::clamp(data.x, -1.f, 1.f);
@@ -89,7 +87,7 @@ void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
 
   const Eigen::Vector2i depth_image_res(depth_image.width(), depth_image.height());
 
-  struct tsdf_update funct(depth_image, sensor.mu);
+  struct tsdf_update funct(depth_image);
 
   se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image_res, funct);
 }

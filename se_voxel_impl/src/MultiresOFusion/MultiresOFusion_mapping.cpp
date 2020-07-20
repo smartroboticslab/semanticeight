@@ -58,7 +58,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                          kernel_depth_image_(kernel_depth_image),
                          sensor_(sensor),
                          T_CM_(T_CM),
-                         mu_(sensor.mu),
                          voxel_dim_(voxel_dim),
                          sample_offset_frac_(sample_offset_frac),
                          voxel_depth_(voxel_depth),
@@ -80,7 +79,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   const se::KernelImage* const kernel_depth_image_;
   SensorImpl sensor_;
   const Eigen::Matrix4f& T_CM_;
-  const float mu_;
   const float voxel_dim_;
   const Eigen::Vector3f& sample_offset_frac_;
   const size_t voxel_depth_;
@@ -280,8 +278,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                                                     se::math::sq(point_C.y() / point_C.z()));
 
                 // Update the LogOdd
-                sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(point_C.z(), depth_value, mu_,
-                                                                                               voxel_dim_, voxel_data, frame_, scale, proj_scale);
+                sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(
+                    point_C.z(), depth_value, voxel_data, frame_, scale, proj_scale);
               }
             }
           }
@@ -324,7 +322,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 
           // Update the LogOdd
           sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(
-              point_C.z(), depth_value, mu_, voxel_dim_, voxel_data, frame_, scale, proj_scale);
+              point_C.z(), depth_value, voxel_data, frame_, scale, proj_scale);
           block->setData(voxel_coord, scale, voxel_data);
         }
       }
@@ -379,8 +377,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                                               se::math::sq(point_C.y() / point_C.z()));
 
           // Update the LogOdd
-          sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(point_C.z(), depth_value, mu_,
-              voxel_dim_, voxel_data, frame_, scale, proj_scale);
+          sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::updateBlock(
+              point_C.z(), depth_value, voxel_data, frame_, scale, proj_scale);
           block->setData(voxel_coord, scale, voxel_data);
         }
       }
@@ -640,7 +638,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         }
 
         low_variance = sensor_model<OFusionModel<MultiresOFusion::VoxelType>>::lowVariance(
-            kernel_pixel.min, kernel_pixel.max, node_dist_min, node_dist_max, mu_);
+            kernel_pixel.min, kernel_pixel.max, node_dist_min, node_dist_max);
 
         const se::key_t node_key = se::keyops::encode(
             node_coord.x(), node_coord.y(), node_coord.z(), depth, voxel_depth_);

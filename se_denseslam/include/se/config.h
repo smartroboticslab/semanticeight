@@ -263,7 +263,6 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
                                              << config.camera.z() << " "
                                              << config.camera.w() << "\n";
   out << "Left hand frame:                 " << config.left_hand_frame << "\n";
-  out << "Mu:                              " << config.mu << "\n";
   out << "Near plane:                      " << config.near_plane << "\n";
   out << "Far plane:                       " << config.far_plane << "\n";
   out << "Filter depth:                    " << (config.bilateral_filter

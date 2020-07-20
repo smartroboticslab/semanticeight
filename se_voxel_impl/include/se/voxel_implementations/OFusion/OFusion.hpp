@@ -69,18 +69,11 @@ struct OFusion {
   static constexpr bool invert_normals = false;
 
   /**
-   * The value of the time constant tau in equation (10) from \cite
-   * VespaRAL18.
+   * The surface is considered to be where the log-odds occupancy probability
+   * crosses this value.
    */
-  static float tau;
-  static constexpr float default_tau = 4;
-
-  /**
-   * Stored occupancy probabilities in log-odds are clamped to never be greater
-   * than this value.
-   */
-  static float max_occupancy;
-  static constexpr float default_max_occupancy = 1000;
+  static float surface_boundary;
+  static constexpr float default_surface_boundary = 0.f;
 
   /**
    * Stored occupancy probabilities in log-odds are clamped to never be lower
@@ -90,11 +83,25 @@ struct OFusion {
   static constexpr float default_min_occupancy = -1000;
 
   /**
-   * The surface is considered to be where the log-odds occupancy probability
-   * crosses this value.
+   * Stored occupancy probabilities in log-odds are clamped to never be greater
+   * than this value.
    */
-  static float surface_boundary;
-  static constexpr float default_surface_boundary = 0.f;
+  static float max_occupancy;
+
+  static constexpr float default_max_occupancy = 1000;
+
+  /**
+   * The value of the time constant tau in equation (10) from \cite
+   * VespaRAL18.
+   */
+  static float tau;
+  static constexpr float default_tau = 4;
+
+  /**
+   * Grow rate factor of uncertainty
+   */
+  static float k_sigma;
+  static constexpr float default_k_sigma = 0.01;
 
   /**
    * Configure the OFusion parameters
@@ -102,8 +109,6 @@ struct OFusion {
   static void configure(YAML::Node yaml_config) {
     surface_boundary  = (yaml_config["surface_boundary"])
         ? yaml_config["surface_boundary"].as<float>() : default_surface_boundary;
-    tau               = (yaml_config["tau"])
-        ? yaml_config["tau"].as<float>() : default_tau;
     if (yaml_config["occupancy_min_max"]) {
       std::vector<float> occupancy_min_max = yaml_config["occupancy_min_max"].as<std::vector<float>>();
       min_occupancy = occupancy_min_max[0];
@@ -112,6 +117,10 @@ struct OFusion {
       min_occupancy = default_min_occupancy;
       max_occupancy = default_max_occupancy;
     }
+    tau               = (yaml_config["tau"])
+        ? yaml_config["tau"].as<float>() : default_tau;
+    k_sigma           = (yaml_config["k_sigma"])
+        ? yaml_config["k_sigma"].as<float>() : default_k_sigma;
   };
 
   /**
@@ -119,18 +128,20 @@ struct OFusion {
    */
   static void configure() {
     surface_boundary  = default_surface_boundary;
-    tau               = default_tau;
-    max_occupancy     = default_max_occupancy;
     min_occupancy     = default_min_occupancy;
+    max_occupancy     = default_max_occupancy;
+    tau               = default_tau;
+    k_sigma           = default_k_sigma;
   };
 
   static std::ostream& print_config(std::ostream& out) {
     out << "Invert normals:                  " << (OFusion::invert_normals
                                                    ? "true" : "false") << "\n";
     out << "Surface boundary:                " << OFusion::surface_boundary << "\n";
-    out << "Tau:                             " << OFusion::tau << "\n";
-    out << "Max occupancy:                   " << OFusion::max_occupancy << "\n";
     out << "Min occupancy:                   " << OFusion::min_occupancy << "\n";
+    out << "Max occupancy:                   " << OFusion::max_occupancy << "\n";
+    out << "tau:                             " << OFusion::tau << "\n";
+    out << "k sigma:                         " << OFusion::k_sigma << "\n";
     out << "\n";
     return out;
   }
@@ -169,9 +180,8 @@ struct OFusion {
       const Eigen::Vector3f&                ray_dir_M,
       const float                           t_near,
       const float                           t_far,
-      const float                           mu,
       const float                           step,
-      const float                           large_step);
+      const float                           );
 };
 
 #endif

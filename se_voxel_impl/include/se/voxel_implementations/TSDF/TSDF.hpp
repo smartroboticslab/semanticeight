@@ -69,6 +69,12 @@ struct TSDF {
   static constexpr bool invert_normals = true;
 
   /**
+   * The width of the truncation band value, i.e. the maximum value of TSDF::VoxelType::VoxelData::x.
+   */
+  static float mu;
+  static constexpr int default_mu = 0.1;
+
+  /**
    * The maximum value of the weight factor TSDF::VoxelType::VoxelData::y.
    */
   static float max_weight;
@@ -78,6 +84,8 @@ struct TSDF {
    * Configure the TSDF parameters
    */
   static void configure(YAML::Node yaml_config) {
+    mu                = (yaml_config["mu"])
+                        ? yaml_config["mu"].as<float>() : default_mu;
     max_weight        = (yaml_config["max_weight"])
                         ? yaml_config["max_weight"].as<float>() : default_max_weight;
   };
@@ -92,6 +100,7 @@ struct TSDF {
   static std::ostream& print_config(std::ostream& out) {
     out << "Invert normals:                  " << (TSDF::invert_normals
                                                    ? "true" : "false") << "\n";
+    out << "Mu:                              " << TSDF::mu << "\n";
     out << "Max weight:                      " << TSDF::max_weight << "\n";
     out << "\n";
     return out;
@@ -130,7 +139,6 @@ struct TSDF {
       const Eigen::Vector3f&             ray_dir_M,
       const float                        t_near,
       const float                        t_far,
-      const float                        mu,
       const float                        step,
       const float                        large_step);
 };

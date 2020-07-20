@@ -35,5 +35,6 @@
 
 // Initialize static data members.
 constexpr bool TSDF::invert_normals;
+float TSDF::mu;
 float TSDF::max_weight;
 

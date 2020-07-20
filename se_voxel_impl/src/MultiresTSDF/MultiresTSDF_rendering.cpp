@@ -43,7 +43,6 @@ Eigen::Vector4f MultiresTSDF::raycast(
     const Eigen::Vector3f&                     ray_dir_M,
     const float                                t_near,
     const float                                t_far,
-    const float                                mu,
     const float                                step,
     const float                                large_step) {
 
@@ -81,7 +80,7 @@ Eigen::Vector4f MultiresTSDF::raycast(
       }
       if (f_tt < 0.f)                  // got it, jump out of inner loop
         break;
-      step_size = fmaxf(f_tt * mu, step);
+      step_size = fmaxf(f_tt * MultiresTSDF::mu, step);
       ray_pos_M += step_size * ray_dir_M;
       f_t = f_tt;
     }

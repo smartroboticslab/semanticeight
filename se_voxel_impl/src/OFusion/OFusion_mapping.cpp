@@ -112,18 +112,15 @@ static inline float ofusion_apply_window(const float occupancy,
  */
 struct bfusion_update {
   const se::Image<float>& depth_image;
-  float mu;
   float timestamp;
   float voxel_dim;
 
 
 
   bfusion_update(const se::Image<float>& depth_image,
-                 float                   mu,
                  float                   timestamp,
                  float                   voxel_dim)
-    : depth_image(depth_image), mu(mu),
-      timestamp(timestamp), voxel_dim(voxel_dim) {};
+    : depth_image(depth_image), timestamp(timestamp), voxel_dim(voxel_dim) {};
 
 
 
@@ -141,7 +138,7 @@ struct bfusion_update {
 
     // Compute the occupancy probability for the current measurement.
     const float diff = (point_C.z() - depth_value);
-    const float sigma = se::math::clamp(mu * se::math::sq(point_C.z()),
+    const float sigma = se::math::clamp(OFusion::k_sigma * se::math::sq(point_C.z()),
         2 * voxel_dim, 0.05f);
     float sample = ofusion_H(diff / sigma, point_C.z());
     if (sample == 0.5f)
@@ -174,7 +171,7 @@ void OFusion::integrate(se::Octree<OFusion::VoxelType>& map,
   const float voxel_dim =  map.dim() / map.size();
   const Eigen::Vector2i depth_image_res(depth_image.width(), depth_image.height());
 
-  struct bfusion_update funct(depth_image, sensor.mu, timestamp, voxel_dim);
+  struct bfusion_update funct(depth_image, timestamp, voxel_dim);
 
   se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image_res, funct);
 }

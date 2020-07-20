@@ -71,6 +71,12 @@ struct MultiresTSDF {
   static constexpr bool invert_normals = true;
 
   /**
+ * The width of the truncation band value, i.e. the maximum value of MultiresTSDF::VoxelType::VoxelData::x.
+ */
+  static float mu;
+  static constexpr int default_mu = 0.1;
+
+  /**
    * The maximum value of the weight factor
    * MultiresTSDF::VoxelType::VoxelData::y.
    */
@@ -81,6 +87,8 @@ struct MultiresTSDF {
    * Configure the MultiresTSDF parameters
    */
   static void configure(YAML::Node yaml_config) {
+    mu                = (yaml_config["mu"])
+                        ? yaml_config["mu"].as<float>() : default_mu;
     max_weight        = (yaml_config["max_weight"])
                         ? yaml_config["max_weight"].as<float>() : default_max_weight;
   };
@@ -95,6 +103,7 @@ struct MultiresTSDF {
   static std::ostream& print_config(std::ostream& out) {
     out << "Invert normals:                  " << (MultiresTSDF::invert_normals
                                                    ? "true" : "false") << "\n";
+    out << "Mu:                              " << MultiresTSDF::mu << "\n";
     out << "Max weight:                      " << MultiresTSDF::max_weight << "\n";
     out << "\n";
     return out;
@@ -134,7 +143,6 @@ struct MultiresTSDF {
       const Eigen::Vector3f&                     ray_dir_M,
       const float                                t_near,
       const float                                t_far,
-      const float                                mu,
       const float                                step,
       const float                                large_step);
 };

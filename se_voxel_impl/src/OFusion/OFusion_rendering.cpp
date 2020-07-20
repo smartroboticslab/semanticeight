@@ -43,7 +43,6 @@ Eigen::Vector4f OFusion::raycast(
     const Eigen::Vector3f&                ray_dir_M,
     const float                           t_near,
     const float                           t_far,
-    const float                           ,
     const float                           step,
     const float                           ) {
 
