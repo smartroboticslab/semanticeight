@@ -224,16 +224,7 @@ Eigen::Matrix4f TvtoT(std::vector<float> T_v) {
 Configuration parseArgs(unsigned int argc, char** argv) {
   Configuration config;
 
-  std::stringstream executable_ss;
-  executable_ss << argv[0];
-  std::string voxel_impl_type;
-  std::string sensor_type;
 
-  while(std::getline(executable_ss, voxel_impl_type, '-')) {
-    if (voxel_impl_type == "denseslam") break;
-  }
-  std::getline(executable_ss, voxel_impl_type, '-');
-  std::getline(executable_ss, sensor_type, '-');
 
   int c;
   int option_index = 0;
@@ -244,10 +235,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
                           &option_index)) != -1) {
     if (c == 'Y')  {
-      yaml_general_config = YAML::LoadFile(optarg)["general"];
-      yaml_map_config = YAML::LoadFile(optarg)["map"];
-      yaml_sensor_config = YAML::LoadFile(optarg)["sensor"];
-      yaml_voxel_impl_config = YAML::LoadFile(optarg)["voxel_impl"];
+      if (YAML::LoadFile(optarg)["general"])    yaml_general_config = YAML::LoadFile(optarg)["general"];
+      if (YAML::LoadFile(optarg)["map"])        yaml_map_config = YAML::LoadFile(optarg)["map"];
+      if (YAML::LoadFile(optarg)["sensor"])     yaml_sensor_config = YAML::LoadFile(optarg)["sensor"];
+      if (YAML::LoadFile(optarg)["voxel_impl"]) yaml_voxel_impl_config = YAML::LoadFile(optarg)["voxel_impl"];
     }
   }
 
@@ -326,10 +317,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
 
   // CONFIGURE SENSOR
-
   // Sensor type
-  config.sensor_type = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["type"])
-      ? yaml_sensor_config["type"].as<std::string>() : sensor_type;
+  config.sensor_type = SensorImpl::type();
   // Sensor intrinsics
   if (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["intrinsics"]) {
     config.sensor_intrinsics = Eigen::Vector4f((yaml_sensor_config["intrinsics"].as<std::vector<float>>()).data());
@@ -356,10 +345,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
 
   // CONFIGURE VOXEL IMPL
-  // Voxel impl type
-  config.voxel_impl_type = (yaml_voxel_impl_config.Type() != YAML::NodeType::Null && yaml_voxel_impl_config["type"])
-      ? yaml_voxel_impl_config["type"].as<std::string>() : voxel_impl_type;
-  (yaml_voxel_impl_config.Type() != YAML::NodeType::Null) ? VoxelImpl::configure(yaml_voxel_impl_config) : VoxelImpl::configure();;
+  config.voxel_impl_type = VoxelImpl::type();
+  VoxelImpl::configure(yaml_voxel_impl_config);
 
   // Reset getopt_long state to start parsing from the beginning
   optind = 1;

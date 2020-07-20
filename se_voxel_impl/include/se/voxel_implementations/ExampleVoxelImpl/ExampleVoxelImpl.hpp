@@ -116,17 +116,22 @@ struct ExampleVoxelImpl {
   // Make sure to also define them in the respective .cpp file
   // se_voxel_impl/src/ExampleVoxelImpl.cpp.
 
-  /**
-   * Configure the ExampleVoxelImpl parameters
-   */
-  static void configure(YAML::Node yaml_config) {
-  };
+  static std::string type() { return "examplevoxelimpl"; }
 
   /**
    * Configure the ExampleVoxelImpl parameters
    */
-  static void configure() {
+  static void configure(YAML::Node yaml_config) {
+    if (yaml_config.Type() == YAML::NodeType::Null) {
+      configure()
+    } else {
+//       set to default value if parameter key not available in yaml
+    }
   };
+
+  static void configure() {
+
+  }
 
   static std::ostream& print_config(std::ostream& out) {
     out << "========== VOXEL IMPL ========== " << "\n";

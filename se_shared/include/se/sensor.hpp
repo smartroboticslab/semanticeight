@@ -91,7 +91,7 @@ namespace se {
      */
     float farDist(const Eigen::Vector3f& ray_C) const;
 
-
+    static std::string type() { return "pinholecamera"; }
 
     srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
     bool  left_hand_frame;
@@ -144,7 +144,7 @@ namespace se {
      */
     float farDist(const Eigen::Vector3f& ray_C) const;
 
-
+    static std::string type() { return "ousterlidar"; }
 
     srl::projection::OusterLidar model;
     bool  left_hand_frame;

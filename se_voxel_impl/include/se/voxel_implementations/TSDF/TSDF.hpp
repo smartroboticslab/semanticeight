@@ -72,7 +72,7 @@ struct TSDF {
    * The width of the truncation band value, i.e. the maximum value of TSDF::VoxelType::VoxelData::x.
    */
   static float mu;
-  static constexpr int default_mu = 0.1;
+  static constexpr float default_mu = 0.1;
 
   /**
    * The maximum value of the weight factor TSDF::VoxelType::VoxelData::y.
@@ -80,22 +80,26 @@ struct TSDF {
   static float max_weight;
   static constexpr int default_max_weight = 100;
 
-  /**
-   * Configure the TSDF parameters
-   */
-  static void configure(YAML::Node yaml_config) {
-    mu                = (yaml_config["mu"])
-                        ? yaml_config["mu"].as<float>() : default_mu;
-    max_weight        = (yaml_config["max_weight"])
-                        ? yaml_config["max_weight"].as<float>() : default_max_weight;
-  };
+  static std::string type() { return "tsdf"; }
 
   /**
    * Configure the TSDF parameters
    */
-  static void configure() {
-    max_weight        = default_max_weight;
+  static void configure(YAML::Node yaml_config) {
+    if (yaml_config.IsNull()) {
+      configure();
+    } else {
+      mu                = (yaml_config["mu"])
+                          ? yaml_config["mu"].as<float>() : default_mu;
+      max_weight        = (yaml_config["max_weight"])
+                          ? yaml_config["max_weight"].as<float>() : default_max_weight;
+    }
   };
+
+  static void configure() {
+    mu                = default_mu;
+    max_weight        = default_max_weight;
+  }
 
   static std::ostream& print_config(std::ostream& out) {
     out << "========== VOXEL IMPL ========== " << "\n";

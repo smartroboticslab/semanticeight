@@ -103,39 +103,43 @@ struct OFusion {
   static float k_sigma;
   static constexpr float default_k_sigma = 0.01;
 
+  static std::string type() { return "ofusion"; }
+
   /**
    * Configure the OFusion parameters
    */
   static void configure(YAML::Node yaml_config) {
-    surface_boundary  = (yaml_config["surface_boundary"])
-        ? yaml_config["surface_boundary"].as<float>() : default_surface_boundary;
-    if (yaml_config["occupancy_min_max"]) {
-      std::vector<float> occupancy_min_max = yaml_config["occupancy_min_max"].as<std::vector<float>>();
-      min_occupancy = occupancy_min_max[0];
-      max_occupancy = occupancy_min_max[1];
+    if (yaml_config.IsNull()) {
+      configure();
     } else {
-      min_occupancy = default_min_occupancy;
-      max_occupancy = default_max_occupancy;
+      surface_boundary  = (yaml_config["surface_boundary"])
+                          ? yaml_config["surface_boundary"].as<float>() : default_surface_boundary;
+      if (yaml_config["occupancy_min_max"]) {
+        std::vector<float> occupancy_min_max = yaml_config["occupancy_min_max"].as<std::vector<float>>();
+        min_occupancy = occupancy_min_max[0];
+        max_occupancy = occupancy_min_max[1];
+      } else {
+        min_occupancy = default_min_occupancy;
+        max_occupancy = default_max_occupancy;
+      }
+      tau               = (yaml_config["tau"])
+                          ? yaml_config["tau"].as<float>() : default_tau;
+      k_sigma           = (yaml_config["k_sigma"])
+                          ? yaml_config["k_sigma"].as<float>() : default_k_sigma;
     }
-    tau               = (yaml_config["tau"])
-        ? yaml_config["tau"].as<float>() : default_tau;
-    k_sigma           = (yaml_config["k_sigma"])
-        ? yaml_config["k_sigma"].as<float>() : default_k_sigma;
   };
 
-  /**
-   * Configure the OFusion parameters
-   */
   static void configure() {
-    surface_boundary  = default_surface_boundary;
-    min_occupancy     = default_min_occupancy;
-    max_occupancy     = default_max_occupancy;
-    tau               = default_tau;
-    k_sigma           = default_k_sigma;
-  };
+    surface_boundary = default_surface_boundary;
+    min_occupancy = default_min_occupancy;
+    max_occupancy = default_max_occupancy;
+    tau = default_tau;
+    k_sigma = default_k_sigma;
+  }
 
   static std::ostream& print_config(std::ostream& out) {
     out << "========== VOXEL IMPL ========== " << "\n";
+
     out << "Invert normals:                  " << (OFusion::invert_normals
                                                    ? "true" : "false") << "\n";
     out << "Surface boundary:                " << OFusion::surface_boundary << "\n";

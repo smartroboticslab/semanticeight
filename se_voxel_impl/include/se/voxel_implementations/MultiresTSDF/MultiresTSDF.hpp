@@ -74,7 +74,7 @@ struct MultiresTSDF {
  * The width of the truncation band value, i.e. the maximum value of MultiresTSDF::VoxelType::VoxelData::x.
  */
   static float mu;
-  static constexpr int default_mu = 0.1;
+  static constexpr float default_mu = 0.1;
 
   /**
    * The maximum value of the weight factor
@@ -83,20 +83,24 @@ struct MultiresTSDF {
   static int max_weight;
   static constexpr int default_max_weight = 100;
 
-  /**
-   * Configure the MultiresTSDF parameters
-   */
-  static void configure(YAML::Node yaml_config) {
-    mu                = (yaml_config["mu"])
-                        ? yaml_config["mu"].as<float>() : default_mu;
-    max_weight        = (yaml_config["max_weight"])
-                        ? yaml_config["max_weight"].as<float>() : default_max_weight;
-  };
+  static std::string type() { return "multirestsdf"; }
 
   /**
    * Configure the MultiresTSDF parameters
    */
+  static void configure(YAML::Node yaml_config) {
+    if (yaml_config.IsNull()) {
+      configure();
+    } else {
+      mu                = (yaml_config["mu"])
+                          ? yaml_config["mu"].as<float>() : default_mu;
+      max_weight        = (yaml_config["max_weight"])
+                          ? yaml_config["max_weight"].as<float>() : default_max_weight;
+    }
+  };
+
   static void configure() {
+    mu                = default_mu;
     max_weight        = default_max_weight;
   };
 
