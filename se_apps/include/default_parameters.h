@@ -553,7 +553,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   }
 
   std::cout << config;
-  VoxelImpl::print_config(std::cout);
+  std::cout << VoxelImpl::print_config();
   return config;
 }
 

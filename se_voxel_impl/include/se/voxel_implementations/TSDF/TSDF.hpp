@@ -103,14 +103,15 @@ struct TSDF {
     max_weight        = 100;
   }
 
-  static std::ostream& print_config(std::ostream& out) {
-    out << "========== VOXEL IMPL ========== " << "\n";
-    out << "Invert normals:                  " << (TSDF::invert_normals
+  static std::string print_config() {
+    std::stringstream ss;
+    ss << "========== VOXEL IMPL ========== " << "\n";
+    ss << "Invert normals:                  " << (TSDF::invert_normals
                                                    ? "true" : "false") << "\n";
-    out << "Mu:                              " << TSDF::mu << "\n";
-    out << "Max weight:                      " << TSDF::max_weight << "\n";
-    out << "\n";
-    return out;
+    ss << "Mu:                              " << TSDF::mu << "\n";
+    ss << "Max weight:                      " << TSDF::max_weight << "\n";
+    ss << "\n";
+    return ss.str();
   }
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the

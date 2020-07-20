@@ -132,11 +132,12 @@ struct ExampleVoxelImpl {
     // set to default values
   }
 
-  static std::ostream& print_config(std::ostream& out) {
-    out << "========== VOXEL IMPL ========== " << "\n";
-    out << "Invert normals:                  " << (ExampleVoxelImpl::invert_normals
+  static std::string print_config() {
+    std::stringstream ss;
+    ss << "========== VOXEL IMPL ========== " << "\n";
+    ss << "Invert normals:                  " << (ExampleVoxelImpl::invert_normals
                                                    ? "true" : "false") << "\n";
-    return out;
+    return ss.str();
   }
 
   /**

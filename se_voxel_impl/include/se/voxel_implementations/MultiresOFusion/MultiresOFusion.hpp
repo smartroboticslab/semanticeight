@@ -213,32 +213,33 @@ struct MultiresOFusion {
     factor = (max_weight - 1) / max_weight;
   }
 
-  static std::ostream& print_config(std::ostream& out) {
-    out << "========== VOXEL IMPL ========== " << "\n";
-    out << "Invert normals:                  " << (MultiresOFusion::invert_normals
+  static std::string print_config() {
+    std::stringstream ss;
+    ss << "========== VOXEL IMPL ========== " << "\n";
+    ss << "Invert normals:                  " << (MultiresOFusion::invert_normals
                                                    ? "true" : "false") << "\n";
-    out << "Surface boundary:                " << MultiresOFusion::surface_boundary << "\n";
-    out << "Min occupancy:                   " << MultiresOFusion::min_occupancy << "\n";
-    out << "Max occupancy:                   " << MultiresOFusion::max_occupancy << "\n";
-    out << "Max weight:                      " << MultiresOFusion::max_weight << "\n";
-    out << "Free-space integration scale:    " << MultiresOFusion::fs_integr_scale << "\n";
-    out << "Log-odd min per integration:     " << MultiresOFusion::log_odd_min << "\n";
-    out << "Log-odd max per integration:     " << MultiresOFusion::log_odd_max << "\n";
-    out << "Const surface thickness:         " << (MultiresOFusion::const_surface_thickness
+    ss << "Surface boundary:                " << MultiresOFusion::surface_boundary << "\n";
+    ss << "Min occupancy:                   " << MultiresOFusion::min_occupancy << "\n";
+    ss << "Max occupancy:                   " << MultiresOFusion::max_occupancy << "\n";
+    ss << "Max weight:                      " << MultiresOFusion::max_weight << "\n";
+    ss << "Free-space integration scale:    " << MultiresOFusion::fs_integr_scale << "\n";
+    ss << "Log-odd min per integration:     " << MultiresOFusion::log_odd_min << "\n";
+    ss << "Log-odd max per integration:     " << MultiresOFusion::log_odd_max << "\n";
+    ss << "Const surface thickness:         " << (MultiresOFusion::const_surface_thickness
                                                    ? "true" : "false") << "\n";
     if (MultiresOFusion::const_surface_thickness) {
-    out << "tau:                             " << MultiresOFusion::tau_max << "\n";
+    ss << "tau:                             " << MultiresOFusion::tau_max << "\n";
     } else {
-    out << "tau min:                         " << MultiresOFusion::tau_min << "\n";
-    out << "tau max:                         " << MultiresOFusion::tau_max << "\n";
-    out << "k tau:                           " << MultiresOFusion::k_tau << "\n";
+    ss << "tau min:                         " << MultiresOFusion::tau_min << "\n";
+    ss << "tau max:                         " << MultiresOFusion::tau_max << "\n";
+    ss << "k tau:                           " << MultiresOFusion::k_tau << "\n";
     }
-    out << "Uncertainty model:               " << modelToString.find(MultiresOFusion::uncertainty_model)->second << "\n";
-    out << "sigma min:                       " << MultiresOFusion::sigma_min << "\n";
-    out << "sigma max:                       " << MultiresOFusion::sigma_max << "\n";
-    out << "k sigma:                         " << MultiresOFusion::k_sigma << "\n";
-    out << "\n";
-    return out;
+    ss << "Uncertainty model:               " << modelToString.find(MultiresOFusion::uncertainty_model)->second << "\n";
+    ss << "sigma min:                       " << MultiresOFusion::sigma_min << "\n";
+    ss << "sigma max:                       " << MultiresOFusion::sigma_max << "\n";
+    ss << "k sigma:                         " << MultiresOFusion::k_sigma << "\n";
+    ss << "\n";
+    return ss.str();
   }
 
   /**

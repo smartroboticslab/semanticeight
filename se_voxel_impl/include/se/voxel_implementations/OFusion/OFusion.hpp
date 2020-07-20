@@ -131,18 +131,19 @@ struct OFusion {
     k_sigma           = 0.01;
   }
 
-  static std::ostream& print_config(std::ostream& out) {
-    out << "========== VOXEL IMPL ========== " << "\n";
+  static std::string print_config() {
+    std::stringstream ss;
+    ss << "========== VOXEL IMPL ========== " << "\n";
 
-    out << "Invert normals:                  " << (OFusion::invert_normals
+    ss << "Invert normals:                  " << (OFusion::invert_normals
                                                    ? "true" : "false") << "\n";
-    out << "Surface boundary:                " << OFusion::surface_boundary << "\n";
-    out << "Min occupancy:                   " << OFusion::min_occupancy << "\n";
-    out << "Max occupancy:                   " << OFusion::max_occupancy << "\n";
-    out << "tau:                             " << OFusion::tau << "\n";
-    out << "k sigma:                         " << OFusion::k_sigma << "\n";
-    out << "\n";
-    return out;
+    ss << "Surface boundary:                " << OFusion::surface_boundary << "\n";
+    ss << "Min occupancy:                   " << OFusion::min_occupancy << "\n";
+    ss << "Max occupancy:                   " << OFusion::max_occupancy << "\n";
+    ss << "tau:                             " << OFusion::tau << "\n";
+    ss << "k sigma:                         " << OFusion::k_sigma << "\n";
+    ss << "\n";
+    return ss.str();
   }
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
