@@ -147,8 +147,8 @@ struct Configuration {
    * comments.
    * <br>\em Default: ""
    *
-   * \note It is assumed that the ground truth poses are the camera frame C
-   * expressed in the world frame W. The camera frame is assumed to be z
+   * \note It is assumed that the ground truth poses are the sensor frame C
+   * expressed in the world frame W. The sensor frame is assumed to be z
    * forward, x right with respect to the image. If the ground truth poses do
    * not adhere to this assumption then the ground truth transformation
    * Configuration::T_BC should be set appropriately.
@@ -158,27 +158,27 @@ struct Configuration {
   /**
    * A 4x4 transformation matrix post-multiplied with all poses read from the
    * ground truth file. It is used if the ground truth poses are in some frame
-   * B other than the camera frame C.
+   * B other than the sensor frame C.
    * <br>\em Default: Eigen::Matrix4f::Identity()
    */
   Eigen::Matrix4f T_BC;
 
   /**
-   * The intrinsic camera parameters. camera.x, camera.y, camera.z and
-   * camera.w are the x-axis focal length, y-axis focal length, horizontal
+   * The intrinsic sensor parameters. sensor_intrinsics.x, sensor_intrinsics.y, sensor_intrinsics.z and
+   * sensor_intrinsics.w are the x-axis focal length, y-axis focal length, horizontal
    * resolution (pixels) and vertical resolution (pixels) respectively.
    */
-  Eigen::Vector4f camera;
+  Eigen::Vector4f sensor_intrinsics;
 
   /**
-   * Indicates if the camera uses a left hand coordinate system
+   * Indicates if the sensor uses a left hand coordinate system
    */
   bool left_hand_frame;
 
   /**
-   * Whether the default intrinsic camera parameters have been overriden.
+   * Whether the default intrinsic sensor parameters have been overriden.
    */
-  bool camera_overrided;
+  bool sensor_intrinsics_overrided;
 
   /**
    * The TSDF truncation bound. Values of the TSDF are assumed to be in the
@@ -258,10 +258,10 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
                                              << config.t_MW_factor.y() << " "
                                              << config.t_MW_factor.z() << "\n";
   out << "Image downsampling-factor:       " << config.image_downsampling_factor << "\n";
-  out << "Camera parameters:               " << config.camera.x() << " "
-                                             << config.camera.y() << " "
-                                             << config.camera.z() << " "
-                                             << config.camera.w() << "\n";
+  out << "Sensor intrinsics:               " << config.sensor_intrinsics.x() << " "
+                                             << config.sensor_intrinsics.y() << " "
+                                             << config.sensor_intrinsics.z() << " "
+                                             << config.sensor_intrinsics.w() << "\n";
   out << "Left hand frame:                 " << config.left_hand_frame << "\n";
   out << "Near plane:                      " << config.near_plane << "\n";
   out << "Far plane:                       " << config.far_plane << "\n";

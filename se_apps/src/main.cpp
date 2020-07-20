@@ -222,10 +222,10 @@ int processAll(DepthReader*   reader,
       = input_image_res / config->image_downsampling_factor;
   const SensorImpl sensor({image_res.x(), image_res.y(), config->left_hand_frame,
                            config->near_plane, config->far_plane,
-                           config->camera[0] / config->image_downsampling_factor,
-                           config->camera[1] / config->image_downsampling_factor,
-                           config->camera[2] / config->image_downsampling_factor,
-                           config->camera[3] / config->image_downsampling_factor,
+                           config->sensor_intrinsics[0] / config->image_downsampling_factor,
+                           config->sensor_intrinsics[1] / config->image_downsampling_factor,
+                           config->sensor_intrinsics[2] / config->image_downsampling_factor,
+                           config->sensor_intrinsics[3] / config->image_downsampling_factor,
                            Eigen::VectorXf(0), Eigen::VectorXf(0)});
 
   if (reset) {

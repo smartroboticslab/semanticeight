@@ -123,18 +123,18 @@ DepthReader *createReader(Configuration *config, std::string filename) {
           if (key == "camera") {
             std::vector<std::string> dims = split_string(value, ',');
             if (dims.size() == 4) {
-              config->camera.x() = ::atof(dims[0].c_str());
-              config->camera.y() = ::atof(dims[1].c_str());
-              config->camera.z() = ::atof(dims[2].c_str());
-              config->camera.w() = ::atof(dims[3].c_str());
-              config->camera_overrided = true;
-              std::cout << "camera: " << config->camera.x() << ","
-                << config->camera.y() << ","
-                << config->camera.z() << ","
-                << config->camera.w() << std::endl;
+              config->sensor_intrinsics.x() = ::atof(dims[0].c_str());
+              config->sensor_intrinsics.y() = ::atof(dims[1].c_str());
+              config->sensor_intrinsics.z() = ::atof(dims[2].c_str());
+              config->sensor_intrinsics.w() = ::atof(dims[3].c_str());
+              config->sensor_intrinsics_overrided = true;
+              std::cout << "sensor_intrinsics: " << config->sensor_intrinsics.x() << ","
+                << config->sensor_intrinsics.y() << ","
+                << config->sensor_intrinsics.z() << ","
+                << config->sensor_intrinsics.w() << std::endl;
             } else {
               std::cerr
-                << "ERROR: camera specified with incorrect data. (was "
+                << "ERROR: sensor_intrinsics specified with incorrect data. (was "
                 << value << ") Should be \"x, y, z, w\""
                 << std::endl;
             }

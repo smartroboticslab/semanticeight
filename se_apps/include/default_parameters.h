@@ -50,7 +50,7 @@ static const std::string default_input_file = "";
 static const std::string default_log_file = "";
 static const std::string default_groundtruth_file = "";
 static const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
-static const Eigen::Vector4f default_camera = Eigen::Vector4f::Zero();
+static const Eigen::Vector4f default_sensor_intrinsics = Eigen::Vector4f::Zero();
 
 
 
@@ -68,7 +68,7 @@ static struct option long_options[] = {
   {"help",                      no_argument,       0, 'h'},
   {"sequence-name",             required_argument, 0, 'S'},
   {"input-file",                required_argument, 0, 'i'},
-  {"camera",                    required_argument, 0, 'k'},
+  {"sensor-intrinsics",         required_argument, 0, 'k'},
   {"icp-threshold",             required_argument, 0, 'l'},
   {"near-plane",                required_argument, 0, 'n'},
   {"far-plane",                 required_argument, 0, 'N'},
@@ -97,7 +97,7 @@ inline void print_arguments() {
   std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
   std::cerr << "-S  (--sequence-name)                     : name of sequence\n";
   std::cerr << "-i  (--input-file) <filename>             : input file\n";
-  std::cerr << "-k  (--camera)                            : default is defined by input\n";
+  std::cerr << "-k  (--sensor-intrinsics)                 : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
   std::cerr << "-o  (--log-file) <filename>               : default is stdout\n";
   std::cerr << "-n  (--near-plane)                        : default is " << default_near_plane << "\n";
@@ -331,13 +331,13 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.sensor_type = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["type"])
                        ? yaml_sensor_config["type"].as<std::string>() : sensor_type;
   // Sensor intrinsics
-  if (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["camera"]) {
-    config.camera = Eigen::Vector4f((yaml_sensor_config["camera"].as<std::vector<float>>()).data());
+  if (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["intrinsics"]) {
+    config.sensor_intrinsics = Eigen::Vector4f((yaml_sensor_config["intrinsics"].as<std::vector<float>>()).data());
   } else {
-    config.camera = default_camera;
+    config.sensor_intrinsics = default_sensor_intrinsics;
   }
   // Sensor overrided
-  config.camera_overrided = false;
+  config.sensor_intrinsics_overrided = false;
   // Image downsamling factor
   config.image_downsampling_factor = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["image_downsampling_factor"])
                                      ? yaml_sensor_config["image_downsampling_factor"].as<int>() : default_image_downsampling_factor;
@@ -456,10 +456,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         }
         break;
 
-      case 'k': // camera
-        config.camera = atof4(optarg);
-        config.camera_overrided = true;
-        if (config.camera.y() < 0) {
+      case 'k': // sensor-intrinsics
+        config.sensor_intrinsics = atof4(optarg);
+        config.sensor_intrinsics_overrided = true;
+        if (config.sensor_intrinsics.y() < 0) {
           config.left_hand_frame = true;
           std::cerr << "update to left hand coordinate system" << std::endl;
         }
