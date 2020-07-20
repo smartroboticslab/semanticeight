@@ -146,101 +146,10 @@ struct MultiresOFusion {
   /**
    * Configure the MultiresOFusion parameters
    */
-  static void configure(YAML::Node yaml_config) {
-    configure();
-    if (yaml_config.IsNull()) return;
+  static void configure();
+  static void configure(YAML::Node yaml_config);
 
-    if (yaml_config["surface_boundary"]) {
-      surface_boundary  = yaml_config["surface_boundary"].as<float>();
-    }
-    if (yaml_config["occupancy_min_max"]) {
-        std::vector<float> occupancy_min_max = yaml_config["occupancy_min_max"].as<std::vector<float>>();
-        min_occupancy = occupancy_min_max[0];
-        max_occupancy = occupancy_min_max[1];
-    }
-    if (yaml_config["max_weight"]) {
-      max_weight = yaml_config["max_weight"].as<float>();
-    }
-    if ((yaml_config["free_space_integr_scale"])) {
-      fs_integr_scale = yaml_config["free_space_integr_scale"].as<int>(); // Minimum integration scale for free-space
-    }
-    if (yaml_config["log_odd_min_max"]) {
-      std::vector<float> log_odd_min_max = yaml_config["log_odd_min_max"].as<std::vector<float>>();
-      log_odd_min = log_odd_min_max[0];
-      log_odd_max = log_odd_min_max[1];
-    }
-    if (yaml_config["const_surface_thickness"]) {
-      const_surface_thickness = yaml_config["const_surface_thickness"].as<bool>();
-    }
-    if (yaml_config["tau_min_max"]) {
-      std::vector<float> tau_min_max = yaml_config["tau_min_max"].as<std::vector<float>>();
-      tau_min = tau_min_max[0];
-      tau_max = tau_min_max[1];
-    }
-    if (yaml_config["uncertainty_model"]) {
-      stringToModel.find(yaml_config["uncertainty_model"].as<std::string>())->second;
-    }
-    if (yaml_config["k_tau"]) {
-      k_tau = yaml_config["k_tau"].as<float>();
-    }
-    if (yaml_config["sigma_min_max"]) {
-      std::vector<float> sigma_min_max = yaml_config["sigma_min_max"].as<std::vector<float>>();
-      sigma_min = sigma_min_max[0];
-      sigma_max = sigma_min_max[1];
-    }
-    if (yaml_config["k_sigma"]) {
-      k_sigma = yaml_config["k_sigma"].as<float>();
-    }
-    factor = (max_weight - 1) / max_weight;
-  };
-
-  static void configure() {
-    surface_boundary  = 0;
-    min_occupancy     = -50;
-    max_occupancy     = 50;
-    max_weight        = 100;
-    fs_integr_scale   = 0; // Minimum integration scale for free-space
-    log_odd_min       = -5.015;
-    log_odd_max       = 5.015;
-    const_surface_thickness = false;
-    tau_min           = 0.06f;
-    tau_max           = 0.16f;
-    k_tau             = 0.052;
-    uncertainty_model = UncertaintyModel::linear;
-    sigma_min         = 0.02;
-    sigma_max         = 0.045;
-    k_sigma           = 0.0016;
-    factor = (max_weight - 1) / max_weight;
-  }
-
-  static std::string print_config() {
-    std::stringstream ss;
-    ss << "========== VOXEL IMPL ========== " << "\n";
-    ss << "Invert normals:                  " << (MultiresOFusion::invert_normals
-                                                   ? "true" : "false") << "\n";
-    ss << "Surface boundary:                " << MultiresOFusion::surface_boundary << "\n";
-    ss << "Min occupancy:                   " << MultiresOFusion::min_occupancy << "\n";
-    ss << "Max occupancy:                   " << MultiresOFusion::max_occupancy << "\n";
-    ss << "Max weight:                      " << MultiresOFusion::max_weight << "\n";
-    ss << "Free-space integration scale:    " << MultiresOFusion::fs_integr_scale << "\n";
-    ss << "Log-odd min per integration:     " << MultiresOFusion::log_odd_min << "\n";
-    ss << "Log-odd max per integration:     " << MultiresOFusion::log_odd_max << "\n";
-    ss << "Const surface thickness:         " << (MultiresOFusion::const_surface_thickness
-                                                   ? "true" : "false") << "\n";
-    if (MultiresOFusion::const_surface_thickness) {
-    ss << "tau:                             " << MultiresOFusion::tau_max << "\n";
-    } else {
-    ss << "tau min:                         " << MultiresOFusion::tau_min << "\n";
-    ss << "tau max:                         " << MultiresOFusion::tau_max << "\n";
-    ss << "k tau:                           " << MultiresOFusion::k_tau << "\n";
-    }
-    ss << "Uncertainty model:               " << modelToString.find(MultiresOFusion::uncertainty_model)->second << "\n";
-    ss << "sigma min:                       " << MultiresOFusion::sigma_min << "\n";
-    ss << "sigma max:                       " << MultiresOFusion::sigma_max << "\n";
-    ss << "k sigma:                         " << MultiresOFusion::k_sigma << "\n";
-    ss << "\n";
-    return ss.str();
-  }
+  static std::string print_config();
 
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the

@@ -89,33 +89,10 @@ struct MultiresTSDF {
   /**
    * Configure the MultiresTSDF parameters
    */
-  static void configure(YAML::Node yaml_config) {
-    configure();
-    if (yaml_config.IsNull()) return;
+  static void configure();
+  static void configure(YAML::Node yaml_config);
 
-    if (yaml_config["mu"]) {
-      mu = yaml_config["mu"].as<float>();
-    }
-    if (yaml_config["max_weight"]) {
-      max_weight = yaml_config["max_weight"].as<float>();
-    }
-  };
-
-  static void configure() {
-    mu                = 0.1;
-    max_weight        = 100;
-  }
-
-  static std::string print_config() {
-    std::stringstream ss;
-    ss << "========== VOXEL IMPL ========== " << "\n";
-    ss << "Invert normals:                  " << (MultiresTSDF::invert_normals
-                                                   ? "true" : "false") << "\n";
-    ss << "Mu:                              " << MultiresTSDF::mu << "\n";
-    ss << "Max weight:                      " << MultiresTSDF::max_weight << "\n";
-    ss << "\n";
-    return ss.str();
-  }
+  static std::string print_config();
 
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the

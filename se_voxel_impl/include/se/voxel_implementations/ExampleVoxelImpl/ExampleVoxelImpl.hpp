@@ -121,24 +121,10 @@ struct ExampleVoxelImpl {
   /**
    * Configure the ExampleVoxelImpl parameters
    */
-  static void configure(YAML::Node yaml_config) {
-    configure()
-    if (yaml_config.IsNull()) return;
+  static void configure();
+  static void configure(YAML::Node yaml_config);
 
-    // set yaml value if parameter key is available
-  };
-
-  static void configure() {
-    // set to default values
-  }
-
-  static std::string print_config() {
-    std::stringstream ss;
-    ss << "========== VOXEL IMPL ========== " << "\n";
-    ss << "Invert normals:                  " << (ExampleVoxelImpl::invert_normals
-                                                   ? "true" : "false") << "\n";
-    return ss.str();
-  }
+  static std::string print_config();
 
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the

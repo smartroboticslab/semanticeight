@@ -35,7 +35,24 @@
 // Initialize static data members.
 constexpr bool invert_normals = false;
 
+void ExampleVoxelImpl::configure() {
+  // set to default values
+}
 
+void ExampleVoxelImpl::configure(YAML::Node yaml_config) {
+  configure()
+  if (yaml_config.IsNull()) return;
+
+  // set yaml value if parameter key is available
+};
+
+std::string ExampleVoxelImpl::print_config() {
+  std::stringstream ss;
+  ss << "========== VOXEL IMPL ========== " << "\n";
+  ss << "Invert normals:                  " << (ExampleVoxelImpl::invert_normals
+                                                ? "true" : "false") << "\n";
+  return ss.str();
+}
 
 // Implement static member functions.
 size_t ExampleVoxelImpl::buildAllocationList(

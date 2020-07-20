@@ -86,33 +86,11 @@ struct TSDF {
   /**
    * Configure the TSDF parameters
    */
-  static void configure(YAML::Node yaml_config) {
-    configure();
-    if (yaml_config.IsNull()) return;
+  static void configure();
+  static void configure(YAML::Node yaml_config);
 
-    if (yaml_config["mu"]) {
-      mu = yaml_config["mu"].as<float>();
-    }
-    if (yaml_config["max_weight"]) {
-      max_weight = yaml_config["max_weight"].as<float>();
-    }
-  };
+  static std::string print_config();
 
-  static void configure() {
-    mu                = 0.1;
-    max_weight        = 100;
-  }
-
-  static std::string print_config() {
-    std::stringstream ss;
-    ss << "========== VOXEL IMPL ========== " << "\n";
-    ss << "Invert normals:                  " << (TSDF::invert_normals
-                                                   ? "true" : "false") << "\n";
-    ss << "Mu:                              " << TSDF::mu << "\n";
-    ss << "Max weight:                      " << TSDF::max_weight << "\n";
-    ss << "\n";
-    return ss.str();
-  }
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
    * camera pose.
