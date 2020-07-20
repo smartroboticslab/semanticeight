@@ -35,7 +35,7 @@
 #include "se/image/image.hpp"
 #include "se/sensor_implementation.hpp"
 
-
+#include <yaml-cpp/yaml.h>
 
 /**
  * Minimal example of the structure of a potential voxel implementation. All
@@ -116,7 +116,23 @@ struct ExampleVoxelImpl {
   // Make sure to also define them in the respective .cpp file
   // se_voxel_impl/src/ExampleVoxelImpl.cpp.
 
+  /**
+   * Configure the ExampleVoxelImpl parameters
+   */
+  static void configure(YAML::Node yaml_config) {
+  };
 
+  /**
+   * Configure the ExampleVoxelImpl parameters
+   */
+  static void configure() {
+  };
+
+  static std::ostream& print_config(std::ostream& out) {
+    out << "Invert normals:                  " << (ExampleVoxelImpl::invert_normals
+                                                   ? "true" : "false") << "\n";
+    return out;
+  }
 
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the

@@ -35,5 +35,5 @@
 
 // Initialize static data members.
 constexpr bool MultiresTSDF::invert_normals;
-constexpr int  MultiresTSDF::max_weight;
+int  MultiresTSDF::max_weight;
 

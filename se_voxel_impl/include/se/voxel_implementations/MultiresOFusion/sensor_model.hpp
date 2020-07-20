@@ -64,10 +64,6 @@ public:
     return Derived::lowVariance(depth_min, depth_max, voxel_min_m, voxel_max_m, mu);
   }
 
-  inline static float computeSigma() {
-    return Derived::computeSigma();
-  }
-
   /**
    * @brief Update a field with a new measurement, a weighting of 1 is considered for the new measurement.\
    * @param pos_z         Depth of the voxel to be updated

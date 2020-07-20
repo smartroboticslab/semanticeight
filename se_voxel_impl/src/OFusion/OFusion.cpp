@@ -35,9 +35,9 @@
 
 
 // Initialize static data members.
-constexpr bool  OFusion::invert_normals;
-constexpr float OFusion::tau;
-constexpr float OFusion::max_occupancy;
-constexpr float OFusion::min_occupancy;
-constexpr float OFusion::surface_boundary;
+constexpr bool OFusion::invert_normals;
+float OFusion::tau;
+float OFusion::max_occupancy;
+float OFusion::min_occupancy;
+float OFusion::surface_boundary;
 

@@ -33,7 +33,7 @@
 #include "se/image/image.hpp"
 #include "se/sensor_implementation.hpp"
 
-
+#include <yaml-cpp/yaml.h>
 
 /**
  * Occupancy mapping voxel implementation.
@@ -72,28 +72,64 @@ struct OFusion {
    * The value of the time constant tau in equation (10) from \cite
    * VespaRAL18.
    */
-  static constexpr float tau = 4.f;
+  static float tau;
+  static constexpr float default_tau = 4;
 
   /**
    * Stored occupancy probabilities in log-odds are clamped to never be greater
    * than this value.
    */
-  static constexpr float max_occupancy =  1000.f;
+  static float max_occupancy;
+  static constexpr float default_max_occupancy = 1000;
 
   /**
    * Stored occupancy probabilities in log-odds are clamped to never be lower
    * than this value.
    */
-  static constexpr float min_occupancy = -1000.f;
+  static float min_occupancy;
+  static constexpr float default_min_occupancy = -1000;
 
   /**
    * The surface is considered to be where the log-odds occupancy probability
    * crosses this value.
    */
-  static constexpr float surface_boundary = 0.f;
+  static float surface_boundary;
+  static constexpr float default_surface_boundary = 0.f;
 
+  /**
+   * Configure the OFusion parameters
+   */
+  static void configure(YAML::Node yaml_config) {
+    surface_boundary  = (yaml_config["surface_boundary"])
+        ? yaml_config["surface_boundary"].as<float>() : default_surface_boundary;
+    tau               = (yaml_config["tau"])
+        ? yaml_config["tau"].as<float>() : default_tau;
+    max_occupancy     = (yaml_config["max_occupancy"])
+                        ? yaml_config["max_occupancy"].as<float>() : default_max_occupancy;
+    min_occupancy     = (yaml_config["min_occupancy"])
+                        ? yaml_config["min_occupancy"].as<float>() : default_min_occupancy;
 
+  };
 
+  /**
+   * Configure the OFusion parameters
+   */
+  static void configure() {
+    surface_boundary  = default_surface_boundary;
+    tau               = default_tau;
+    max_occupancy     = default_max_occupancy;
+    min_occupancy     = default_min_occupancy;
+  };
+
+  static std::ostream& print_config(std::ostream& out) {
+    out << "Invert normals:                  " << (OFusion::invert_normals
+                                                   ? "true" : "false") << "\n";
+    out << "Surface boundary:                " << OFusion::surface_boundary << "\n";
+    out << "Tau:                             " << OFusion::tau << "\n";
+    out << "Max occupancy:                   " << OFusion::max_occupancy << "\n";
+    out << "Min occupancy:                   " << OFusion::min_occupancy << "\n";
+    return out;
+  }
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
    * camera pose.

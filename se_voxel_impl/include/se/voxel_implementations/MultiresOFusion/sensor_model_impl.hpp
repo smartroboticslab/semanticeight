@@ -32,14 +32,29 @@ template <typename FieldType>
 class OFusionModel : public sensor_model<OFusionModel<MultiresOFusion::VoxelType>>
 {
 public:
-//#define tau 0.32
-#define log_odd_min_ -5.015
-#define log_odd_max_ 5.015
+  inline static float computeSigma(float depth_sample) {
+    if (MultiresOFusion::uncertainty_model == UncertaintyModel::linear) {
 
-#define tau_max_ 0.16;
-//#define tau_max_ 0.2 // Cases: 10cm res
-//#define k_tau_ 0.052f // Cases: 1cm res + x0.25 image sampling, 2cm res + x0.25 image sampling
-#define k_tau_ 0.026f // Cases: 1cm res + x0.5 image sampling, 2cm res + x0.5 image sampling
+      return 3 * se::math::clamp(MultiresOFusion::k_sigma * depth_sample, MultiresOFusion::sigma_min, MultiresOFusion::sigma_max); // Livingroom dataset
+
+    } else if (MultiresOFusion::uncertainty_model == UncertaintyModel::quadratic) {
+
+      return 3 * se::math::clamp(MultiresOFusion::k_sigma * depth_sample * depth_sample, MultiresOFusion::sigma_min, MultiresOFusion::sigma_max); // Cow and lady
+
+    }
+  }
+
+  inline static float computeTau(float depth_sample) {
+    if (MultiresOFusion::const_surface_thickness == true) {
+
+      return MultiresOFusion::tau_max; // Livingroom dataset
+
+    } else if (MultiresOFusion::uncertainty_model == UncertaintyModel::quadratic) {
+
+      return se::math::clamp(MultiresOFusion::k_tau * depth_sample, MultiresOFusion::tau_min, MultiresOFusion::tau_max);
+
+    }
+  }
 
   /**
    * @brief Return a conservative meassure of the expected variance of a sensor model inside a voxel
@@ -63,14 +78,9 @@ public:
     float diff_max = (voxel_max_m - depth_min); // * projScale;
     float diff_min = (voxel_min_m - depth_max); // * projScale;
 
-    // TODO: if 10cm
-//    const float tau_max   =     tau_max_; // Case: 10cm res
-    // TODO: if <10cm
-    const float tau_max   =     se::math::clamp(k_tau_ * depth_max, 0.06f, 0.16f);
+    float tau_max   = computeTau(depth_max);
+    float sigma_min = computeSigma(depth_max);
 
-    // TODO: CHANGE FOR DATASET
-//    const float sigma_min = se::math::clamp(k_tau_ * depth_min, 0.045f, 0.18f); // Livingroom dataset
-    const float sigma_min = 3 * std::max(0.0016f * depth_max * depth_max, 0.02f); // Cow and lady
 
     if (diff_min > tau_max) { // behind of surface
       return  1;
@@ -79,11 +89,6 @@ public:
     } else {
       return  0;
     }
-  }
-
-  inline static float computeSigma() {
-    // Return tau in this case
-    return tau_max_;
   }
 
   inline static void updateBlock(float          pos_z,
@@ -96,22 +101,16 @@ public:
                                  const float    proj_scale) {
     const float diff = (pos_z - depth_sample) * proj_scale;
 
-    // TODO: if 10cm
-//    const float tau   =     tau_max_; // Case: 10cm res
-    // TODO: if <10cm
-    const float tau   =     se::math::clamp(k_tau_ * depth_sample, 0.06f, 0.16f);
-
-    // TODO: CHANGE FOR DATASET
-//    const float sigma = se::math::clamp(k_tau_ * depth_sample, 0.045f, 0.18f); // Livingroom dataset
-    const float sigma = 3 * std::max(0.0016f * depth_sample * depth_sample, 0.02f); // Cow and lady
+    float tau   = computeTau(depth_sample);
+    float sigma = computeSigma(depth_sample);
 
     float sample;
     if (diff < -sigma) {
-      sample = log_odd_min_;
+      sample = MultiresOFusion::log_odd_min;
     } else if (diff < tau / 2) {
-      sample = std::min(log_odd_min_ - log_odd_min_ / sigma * (diff + sigma), log_odd_max_);
+      sample = std::min(MultiresOFusion::log_odd_min - MultiresOFusion::log_odd_min / sigma * (diff + sigma), MultiresOFusion::log_odd_max);
     } else if (diff < tau) {
-      sample = std::min(-log_odd_min_ * tau / (2 * sigma), log_odd_max_);
+      sample = std::min(-MultiresOFusion::log_odd_min * tau / (2 * sigma), MultiresOFusion::log_odd_max);
     } else {
       return;
     }
@@ -121,12 +120,12 @@ public:
   inline static void freeBlock(MultiresOFusion::VoxelType::VoxelData& field,
                                const unsigned frame,
                                const int      scale) {
-    field_operations::addValueToBlock(field, log_odd_min_, frame, scale);
+    field_operations::addValueToBlock(field, MultiresOFusion::log_odd_min, frame, scale);
   }
 
   inline static void freeNode(MultiresOFusion::VoxelType::VoxelData& field,
                               const unsigned frame) {
-    field_operations::addValueToNode(field, log_odd_min_, frame);
+    field_operations::addValueToNode(field, MultiresOFusion::log_odd_min, frame);
   }
 
   inline static bool isOccupied(const MultiresOFusion::VoxelType::VoxelData& field,

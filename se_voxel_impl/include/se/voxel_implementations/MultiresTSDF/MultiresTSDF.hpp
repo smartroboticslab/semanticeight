@@ -34,7 +34,7 @@
 #include "se/image/image.hpp"
 #include "se/sensor_implementation.hpp"
 
-
+#include <yaml-cpp/yaml.h>
 
 /** Kinect Fusion Truncated Signed Distance Function voxel implementation for
  * integration at multiple scales. */
@@ -74,9 +74,30 @@ struct MultiresTSDF {
    * The maximum value of the weight factor
    * MultiresTSDF::VoxelType::VoxelData::y.
    */
-  static constexpr int max_weight = 100;
+  static int max_weight;
+  static constexpr int default_max_weight = 100;
 
+  /**
+   * Configure the MultiresTSDF parameters
+   */
+  static void configure(YAML::Node yaml_config) {
+    max_weight        = (yaml_config["max_weight"])
+                        ? yaml_config["max_weight"].as<float>() : default_max_weight;
+  };
 
+  /**
+   * Configure the MultiresTSDF parameters
+   */
+  static void configure() {
+    max_weight        = default_max_weight;
+  };
+
+  static std::ostream& print_config(std::ostream& out) {
+    out << "Invert normals:                  " << (MultiresTSDF::invert_normals
+                                                   ? "true" : "false") << "\n";
+    out << "Max weight:                      " << MultiresTSDF::max_weight << "\n";
+    return out;
+  }
 
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the

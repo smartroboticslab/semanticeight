@@ -630,8 +630,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         kernel_pixel = kernel_depth_image_->conservativeQuery(image_bb_min, image_bb_max);
 
         // CASE 0.3 (OUT OF BOUNDS): The node is behind surface
-        if (approx_depth_value_min > kernel_pixel.max +
-            sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::computeSigma()) {
+        if (approx_depth_value_min > kernel_pixel.max + MultiresOFusion::tau_max) {
           return;
         }
 
@@ -799,8 +798,7 @@ void MultiresOFusion::integrate(se::Octree<MultiresOFusion::VoxelType>& map,
   // Create min/map depth pooling image for different bounding box sizes
   const std::unique_ptr<se::KernelImage> kernel_depth_image(new se::KernelImage(depth_image));
 
-  const float max_depth_value = std::min(sensor.far_plane, kernel_depth_image->maxValue() +
-      sensor_model<OFusionModel<MultiresOFusion::VoxelType::VoxelData>>::computeSigma());
+  const float max_depth_value = std::min(sensor.far_plane, kernel_depth_image->maxValue() + MultiresOFusion::tau_max);
   const float voxel_dim = map.dim() / map.size();
   const Eigen::Vector3f sample_offset_frac = se::Octree<MultiresOFusion::VoxelType>::sample_offset_frac_;
 

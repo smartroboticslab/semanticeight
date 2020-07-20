@@ -33,12 +33,23 @@
 
 
 // Initialize static data members.
-constexpr bool  MultiresOFusion::invert_normals;
-constexpr float MultiresOFusion::surface_boundary;
-constexpr float MultiresOFusion::min_occupancy;
-constexpr float MultiresOFusion::max_occupancy;
-constexpr float MultiresOFusion::max_weight;
-constexpr int   MultiresOFusion::fs_integr_scale;
+constexpr bool   MultiresOFusion::invert_normals;
+float            MultiresOFusion::surface_boundary;
+float            MultiresOFusion::min_occupancy;
+float            MultiresOFusion::max_occupancy;
+float            MultiresOFusion::max_weight;
+int              MultiresOFusion::fs_integr_scale;
+float            MultiresOFusion::factor;
+float            MultiresOFusion::log_odd_min;
+float            MultiresOFusion::log_odd_max;
+bool             MultiresOFusion::const_surface_thickness;
+float            MultiresOFusion::tau_min;
+float            MultiresOFusion::tau_max;
+float            MultiresOFusion::k_tau;
+UncertaintyModel MultiresOFusion::uncertainty_model;
+float            MultiresOFusion::sigma_min;
+float            MultiresOFusion::sigma_max;
+float            MultiresOFusion::k_sigma;
 
 // Implement static member functions.
 size_t MultiresOFusion::buildAllocationList(

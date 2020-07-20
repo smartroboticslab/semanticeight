@@ -33,10 +33,7 @@
 
 using MultiresOFusionData = MultiresOFusion::VoxelType::VoxelData;
 
-namespace field_operations
-{
-  static constexpr float factor = (MultiresOFusion::max_weight - 1) / MultiresOFusion::max_weight;
-
+namespace field_operations {
   inline bool hasInformation(const MultiresOFusionData& field) { return field.observed; }
 
   inline float value(const MultiresOFusionData& field) { return field.x; }
@@ -56,7 +53,7 @@ namespace field_operations
                             float                value,
                             const unsigned       /* frame */) {
     if (field.y == MultiresOFusion::max_weight) {
-      field.x_max    = std::max(std::min(factor * field.x_max + value, MultiresOFusion::max_occupancy), MultiresOFusion::min_occupancy);
+      field.x_max    = std::max(std::min(MultiresOFusion::factor * field.x_max + value, MultiresOFusion::max_occupancy), MultiresOFusion::min_occupancy);
     } else {
       field.x_max    = std::max(std::min(field.x_max + value, MultiresOFusion::max_occupancy), MultiresOFusion::min_occupancy);
     }

@@ -211,7 +211,7 @@ inline Eigen::Vector4f atof4(char* arg) {
 }
 
 // Transformation std::vector(16) to transformation Eigen::Matrix4f
-Eigen::Matrix4f TvtoT(std::vector<float>& T_v) {
+Eigen::Matrix4f TvtoT(std::vector<float> T_v) {
   Eigen::Matrix4f T;
   T << T_v[0],  T_v[1],  T_v[2],  T_v[3],
        T_v[4],  T_v[5],  T_v[6],  T_v[7],
@@ -337,6 +337,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
 
   // CONFIGURE VOXEL IMPL
+  (yaml_voxel_impl_config.Type() != YAML::NodeType::Null) ? VoxelImpl::configure(yaml_voxel_impl_config) : VoxelImpl::configure();;
   // Mu
   config.mu = (yaml_voxel_impl_config.Type() != YAML::NodeType::Null && yaml_voxel_impl_config["mu"])
               ? yaml_voxel_impl_config["mu"].as<float>() : default_mu;
@@ -542,6 +543,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   }
 
   std::cout << config;
+  VoxelImpl::print_config(std::cout);
   return config;
 }
 

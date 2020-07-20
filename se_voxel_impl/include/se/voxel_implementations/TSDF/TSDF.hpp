@@ -33,7 +33,7 @@
 #include "se/image/image.hpp"
 #include "se/sensor_implementation.hpp"
 
-
+#include <yaml-cpp/yaml.h>
 
 /**
  * Kinect Fusion Truncated Signed Distance Function voxel implementation.
@@ -71,10 +71,30 @@ struct TSDF {
   /**
    * The maximum value of the weight factor TSDF::VoxelType::VoxelData::y.
    */
-  static constexpr float max_weight = 100.f;
+  static float max_weight;
+  static constexpr int default_max_weight = 100;
 
+  /**
+   * Configure the TSDF parameters
+   */
+  static void configure(YAML::Node yaml_config) {
+    max_weight        = (yaml_config["max_weight"])
+                        ? yaml_config["max_weight"].as<float>() : default_max_weight;
+  };
 
+  /**
+   * Configure the TSDF parameters
+   */
+  static void configure() {
+    max_weight        = default_max_weight;
+  };
 
+  static std::ostream& print_config(std::ostream& out) {
+    out << "Invert normals:                  " << (TSDF::invert_normals
+                                                   ? "true" : "false") << "\n";
+    out << "Max weight:                      " << TSDF::max_weight << "\n";
+    return out;
+  }
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
    * camera pose.
