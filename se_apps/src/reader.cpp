@@ -22,7 +22,7 @@
 DepthReader *createReader(Configuration *config, std::string filename) {
   DepthReader *reader = NULL;
   if (filename == "")
-    filename = config->input_file;
+    filename = config->sequence_path;
   if ((filename.length() > 4)
       && (filename.substr(filename.length() - 4, 4) == ".scf")) {
     std::cerr << "====== Opening scene configuration file " << filename
@@ -145,9 +145,9 @@ DepthReader *createReader(Configuration *config, std::string filename) {
             if (value.substr(0, 1) != "/") {
               value = rpath + value;
             }
-            config->input_file = value;
+            config->sequence_path = value;
             filename = value;
-            std::cout << "input-file: " << config->input_file
+            std::cout << "sequence-path: " << config->sequence_path
               << std::endl;
             continue;
           }
@@ -160,7 +160,7 @@ DepthReader *createReader(Configuration *config, std::string filename) {
   ReaderConfiguration reader_config;
   reader_config.fps = config->fps;
   reader_config.blocking_read = config->blocking_read;
-  reader_config.data_path = config->input_file;
+  reader_config.data_path = config->sequence_path;
   reader_config.groundtruth_path = config->groundtruth_file;
   reader_config.transform = config->T_BC;
 

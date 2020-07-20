@@ -46,7 +46,7 @@ static constexpr bool default_render_volume_fullsize = false;
 static constexpr bool default_bilateral_filter = false;
 static const std::string default_dump_volume_file = "";
 static const std::string default_sequence_name = "";
-static const std::string default_input_file = "";
+static const std::string default_sequence_path = "";
 static const std::string default_log_file = "";
 static const std::string default_groundtruth_file = "";
 static const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
@@ -67,7 +67,7 @@ static struct option long_options[] = {
   {"gt-transform",              required_argument, 0, 'G'},
   {"help",                      no_argument,       0, 'h'},
   {"sequence-name",             required_argument, 0, 'S'},
-  {"input-file",                required_argument, 0, 'i'},
+  {"sequence-path",              required_argument, 0, 'i'},
   {"sensor-intrinsics",         required_argument, 0, 'k'},
   {"icp-threshold",             required_argument, 0, 'l'},
   {"near-plane",                required_argument, 0, 'n'},
@@ -96,7 +96,7 @@ inline void print_arguments() {
   std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
   std::cerr << "-S  (--sequence-name)                     : name of sequence\n";
-  std::cerr << "-i  (--input-file) <filename>             : input file\n";
+  std::cerr << "-i  (--sequence-path) <filename>             : sequence path\n";
   std::cerr << "-k  (--sensor-intrinsics)                 : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
   std::cerr << "-o  (--log-file) <filename>               : default is stdout\n";
@@ -254,53 +254,53 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // CONFIGURE GENERAL
   // No GUI
   config.no_gui = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["no_gui"])
-                  ? yaml_general_config["no_gui"].as<bool>() : default_no_gui;
+      ? yaml_general_config["no_gui"].as<bool>() : default_no_gui;
 
   // Sequence name
   config.sequence_name = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["sequence_name"])
-                        ? yaml_general_config["sequence_name"].as<std::string>() : default_sequence_name;
+      ? yaml_general_config["sequence_name"].as<std::string>() : default_sequence_name;
 
   // Input file path
-  config.input_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["input_file"])
-                      ? yaml_general_config["input_file"].as<std::string>() : default_input_file;
+  config.sequence_path = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["sequence_path"])
+      ? yaml_general_config["sequence_path"].as<std::string>() : default_sequence_path;
 
   // Ground truth file path
   config.groundtruth_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["groundtruth_file"])
-                      ? yaml_general_config["groundtruth_file"].as<std::string>() : default_groundtruth_file;
+      ? yaml_general_config["groundtruth_file"].as<std::string>() : default_groundtruth_file;
 
   // Mesh file path
   config.dump_volume_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["dump_volume_file"])
                             ? yaml_general_config["dump_volume_file"].as<std::string>() : default_dump_volume_file;
   // Log file path
   config.log_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["log_file"])
-                    ? yaml_general_config["log_file"].as<std::string>() : default_dump_volume_file;
+      ? yaml_general_config["log_file"].as<std::string>() : default_dump_volume_file;
 
   // Integration rate
   config.integration_rate = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["integration_rate"])
-                            ? yaml_general_config["integration_rate"].as<int>() : default_integration_rate;
+      ? yaml_general_config["integration_rate"].as<int>() : default_integration_rate;
   // Tracking rate
   config.tracking_rate = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["tracking_rate"])
-                         ? yaml_general_config["tracking_rate"].as<int>() : default_tracking_rate;
+      ? yaml_general_config["tracking_rate"].as<int>() : default_tracking_rate;
   // Rendering rate
   config.rendering_rate = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["rendering_rate"])
-                          ? yaml_general_config["rendering_rate"].as<int>() : default_rendering_rate;
+      ? yaml_general_config["rendering_rate"].as<int>() : default_rendering_rate;
   // Frames per second
   config.fps = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["fps"])
-               ? yaml_general_config["fps"].as<float>() : default_fps;
+      ? yaml_general_config["fps"].as<float>() : default_fps;
 
   // Blocking read
   config.blocking_read = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["blocking_read"])
-                         ? yaml_general_config["blocking_read"].as<bool>() : default_blocking_read;
+      ? yaml_general_config["blocking_read"].as<bool>() : default_blocking_read;
 
   // ICP threshold
   config.icp_threshold = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["icp_threshold"])
-                         ? yaml_general_config["icp_threshold"].as<float>() : default_icp_threshold;
+      ? yaml_general_config["icp_threshold"].as<float>() : default_icp_threshold;
   // Render volume fullsize
   config.render_volume_fullsize = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["render_volume_fullsize"])
-                                  ? yaml_general_config["render_volume_fullsize"].as<bool>() : default_render_volume_fullsize;
+      ? yaml_general_config["render_volume_fullsize"].as<bool>() : default_render_volume_fullsize;
   // Bilateral filter
   config.bilateral_filter = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["bilateral_filter"])
-                            ? yaml_general_config["bilateral_filter"].as<bool>() : default_bilateral_filter;
+      ? yaml_general_config["bilateral_filter"].as<bool>() : default_bilateral_filter;
 
   config.pyramid.clear();
   if (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["pyramid"]) {
@@ -316,20 +316,20 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
   // Map size
   config.map_size = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["map_size"])
-                    ? Eigen::Vector3i::Constant(yaml_map_config["map_size"].as<int>()) : default_map_size;
+      ? Eigen::Vector3i::Constant(yaml_map_config["map_size"].as<int>()) : default_map_size;
   // Map dimension
   config.map_dim = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["map_dim"])
-                   ? Eigen::Vector3f::Constant(yaml_map_config["map_dim"].as<float>()) : default_map_dim;
+      ? Eigen::Vector3f::Constant(yaml_map_config["map_dim"].as<float>()) : default_map_dim;
   // World to Map frame translation
   config.t_MW_factor = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["t_MW_factor"])
-                       ? Eigen::Vector3f(yaml_map_config["t_MW_factor"].as<std::vector<float>>().data()) : default_t_MW_factor;
+      ? Eigen::Vector3f(yaml_map_config["t_MW_factor"].as<std::vector<float>>().data()) : default_t_MW_factor;
 
 
   // CONFIGURE SENSOR
 
   // Sensor type
   config.sensor_type = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["type"])
-                       ? yaml_sensor_config["type"].as<std::string>() : sensor_type;
+      ? yaml_sensor_config["type"].as<std::string>() : sensor_type;
   // Sensor intrinsics
   if (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["intrinsics"]) {
     config.sensor_intrinsics = Eigen::Vector4f((yaml_sensor_config["intrinsics"].as<std::vector<float>>()).data());
@@ -343,22 +343,22 @@ Configuration parseArgs(unsigned int argc, char** argv) {
                                      ? yaml_sensor_config["image_downsampling_factor"].as<int>() : default_image_downsampling_factor;
   // Left hand coordinate frame
   config.left_hand_frame = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["left_hand_frame"])
-                           ? yaml_sensor_config["left_hand_frame"].as<bool>() : default_left_hand_frame;
+      ? yaml_sensor_config["left_hand_frame"].as<bool>() : default_left_hand_frame;
   // Camera to Body frame transformation
   config.T_BC = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["T_BC"])
-                ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_gt_transform;
+      ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_gt_transform;
   // Near plane
   config.near_plane = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["near_plane"])
-                      ? yaml_sensor_config["near_plane"].as<float>() : default_near_plane;
+      ? yaml_sensor_config["near_plane"].as<float>() : default_near_plane;
   // Far plane
   config.far_plane = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["far_plane"])
-                     ? yaml_sensor_config["far_plane"].as<float>() : default_far_plane;
+      ? yaml_sensor_config["far_plane"].as<float>() : default_far_plane;
 
 
   // CONFIGURE VOXEL IMPL
   // Voxel impl type
   config.voxel_impl_type = (yaml_voxel_impl_config.Type() != YAML::NodeType::Null && yaml_voxel_impl_config["type"])
-                            ? yaml_voxel_impl_config["type"].as<std::string>() : voxel_impl_type;
+      ? yaml_voxel_impl_config["type"].as<std::string>() : voxel_impl_type;
   (yaml_voxel_impl_config.Type() != YAML::NodeType::Null) ? VoxelImpl::configure(yaml_voxel_impl_config) : VoxelImpl::configure();;
 
   // Reset getopt_long state to start parsing from the beginning
@@ -446,12 +446,12 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         print_arguments();
         exit(EXIT_SUCCESS);
 
-      case 'i': // input-file
-        config.input_file = optarg;
+      case 'i': // sequence-path
+        config.sequence_path = optarg;
         struct stat st;
-        if (stat(config.input_file.c_str(), &st) != 0) {
-          std::cerr << "Error: --input-file (-i) does not exist (was "
-              << config.input_file << ")\n";
+        if (stat(config.sequence_path.c_str(), &st) != 0) {
+          std::cerr << "Error: --sequence-path (-i) does not exist (was "
+              << config.sequence_path << ")\n";
           exit(EXIT_FAILURE);
         }
         break;

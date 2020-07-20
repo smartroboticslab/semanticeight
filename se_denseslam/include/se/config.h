@@ -128,7 +128,7 @@ struct Configuration {
    * TODO
    * <br>\em Default: ""
    */
-  std::string input_file;
+  std::string sequence_path;
 
   /*
    * TODO
@@ -244,10 +244,10 @@ struct Configuration {
 
 
 static std::ostream& operator<<(std::ostream& out, const Configuration& config) {
-  out << "Sequence name:                   " << config.sequence_name << "\n";
   out << "Sensor type:                     " << config.sensor_type << "\n";
   out << "Voxel impl type:                 " << config.voxel_impl_type << "\n";
-  out << "Input file:                      " << config.input_file << "\n";
+  out << "Sequence name:                   " << config.sequence_name << "\n";
+  out << "Sequence path:                   " << config.sequence_path << "\n";
   out << "Map dim:                         " << config.map_dim.x() << "x"
                                              << config.map_dim.y() << "x"
                                              << config.map_dim.z() << " meters\n";
