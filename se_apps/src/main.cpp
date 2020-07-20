@@ -174,9 +174,9 @@ int main(int argc, char** argv) {
   }
 
   // ==========     DUMP VOLUME      =========
-  if (config.dump_volume_file != "") {
+  if (config.output_mesh_file != "") {
     const auto start = std::chrono::steady_clock::now();
-    pipeline->dump_mesh(config.dump_volume_file.c_str());
+    pipeline->dump_mesh(config.output_mesh_file.c_str());
     const auto end = std::chrono::steady_clock::now();
     stats.sample("meshing",
         std::chrono::duration<double>(end - start).count(),

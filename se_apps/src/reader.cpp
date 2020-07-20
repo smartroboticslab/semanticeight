@@ -159,7 +159,7 @@ DepthReader *createReader(Configuration *config, std::string filename) {
   // Create reader configuration from general configuration.
   ReaderConfiguration reader_config;
   reader_config.fps = config->fps;
-  reader_config.blocking_read = config->blocking_read;
+  reader_config.drop_frames = config->drop_frames;
   reader_config.data_path = config->sequence_path;
   reader_config.groundtruth_path = config->groundtruth_file;
   reader_config.transform = config->T_BC;

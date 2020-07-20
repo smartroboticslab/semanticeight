@@ -35,7 +35,7 @@ enum ReaderType {
 struct ReaderConfiguration {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   float fps;
-  bool blocking_read;
+  bool drop_frames;
   std::string data_path;
   std::string groundtruth_path;
   Eigen::Matrix4f transform;
@@ -108,7 +108,7 @@ class DepthReader {
 
       double tpf = 1.0 / _fps;
       double ttw = ((double) _frame * tpf - current_frame + first_frame);
-      if (_blocking_read) {
+      if (_drop_frames) {
         if (ttw > 0)
           usleep(1000000.0 * ttw);
       }
@@ -159,7 +159,7 @@ class DepthReader {
     int _frame;
     size_t _pose_num;
     float _fps;
-    bool _blocking_read;
+    bool _drop_frames;
     std::string _data_path;
     std::string _groundtruth_path;
     std::ifstream _gt_file;
@@ -186,9 +186,9 @@ class SceneDepthReader: public DepthReader {
     ~SceneDepthReader() { };
 
     SceneDepthReader(const ReaderConfiguration& config)
-      : SceneDepthReader(config.data_path, config.fps, config.blocking_read){ }
+      : SceneDepthReader(config.data_path, config.fps, config.drop_frames){ }
 
-    SceneDepthReader(std::string dir, float fps, bool blocking_read) :
+    SceneDepthReader(std::string dir, float fps, bool drop_frames) :
       DepthReader(), _dir(dir), _inSize(make_uint2(640, 480)) {
         std::cerr << "No such directory " << dir << std::endl;
         struct stat st;
@@ -198,7 +198,7 @@ class SceneDepthReader: public DepthReader {
           cameraActive = true;
           _frame = -1;
           _fps = fps;
-          _blocking_read = blocking_read;
+          _drop_frames = drop_frames;
         } else {
           std::cerr << "No such directory " << dir << std::endl;
           cameraOpen = false;
@@ -323,7 +323,7 @@ class RawDepthReader: public DepthReader {
           cameraActive = true;
           _frame = -1;
           _fps = config.fps;
-          _blocking_read = config.blocking_read;
+          _drop_frames = config.drop_frames;
           fseeko(_rawFilePtr, 0, SEEK_SET);
         }
       };
@@ -333,7 +333,7 @@ class RawDepthReader: public DepthReader {
      *
      * @deprecated Might be removed in the future.
      */
-    RawDepthReader(std::string filename, float fps, bool blocking_read) :
+    RawDepthReader(std::string filename, float fps, bool drop_frames) :
       DepthReader(), _rawFilePtr(fopen(filename.c_str(), "rb")) {
 
         size_t res = fread(&(_inSize), sizeof(_inSize), 1, _rawFilePtr);
@@ -347,7 +347,7 @@ class RawDepthReader: public DepthReader {
           cameraActive = true;
           _frame = -1;
           _fps = fps;
-          _blocking_read = blocking_read;
+          _drop_frames = drop_frames;
           fseeko(_rawFilePtr, 0, SEEK_SET);
         }
       };
@@ -575,9 +575,9 @@ class OpenNIDepthReader: public DepthReader {
     }
 
     OpenNIDepthReader(const ReaderConfiguration& config)
-      : OpenNIDepthReader(config.data_path, config.fps, config.blocking_read){ }
+      : OpenNIDepthReader(config.data_path, config.fps, config.drop_frames){ }
 
-    OpenNIDepthReader(std::string filename, float fps, bool blocking_read) :
+    OpenNIDepthReader(std::string filename, float fps, bool drop_frames) :
       DepthReader(), _pFile(fopen(filename.c_str(), "rb")) {
 
         cameraActive = false;
@@ -705,7 +705,7 @@ class OpenNIDepthReader: public DepthReader {
         cameraActive =true;
         _frame=-1;
         _fps = fps;
-        _blocking_read = blocking_read;
+        _drop_frames = drop_frames;
 
       };
 
@@ -780,7 +780,7 @@ class OpenNIDepthReader: public DepthReader {
 class OpenNIDepthReader: public DepthReader {
   public:
     OpenNIDepthReader(const ReaderConfiguration& config)
-      : OpenNIDepthReader(config.data_path, config.fps, config.blocking_read){ }
+      : OpenNIDepthReader(config.data_path, config.fps, config.drop_frames){ }
 
     OpenNIDepthReader(std::string, int, bool) {
       std::cerr << "OpenNI Library Not found." << std::endl;

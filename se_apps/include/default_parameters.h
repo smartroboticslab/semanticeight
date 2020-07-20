@@ -30,7 +30,7 @@ static constexpr int default_iteration_count = 3;
 static constexpr int default_iterations[default_iteration_count] = { 10, 5, 4 };
 static constexpr float default_near_plane = 0.4f;
 static constexpr float default_far_plane = 4.0f;
-static constexpr bool default_blocking_read = false;
+static constexpr bool default_drop_frames = false;
 static constexpr float default_fps = 0.0f;
 static constexpr bool default_left_hand_frame = false;
 static constexpr float default_icp_threshold = 1e-5;
@@ -44,7 +44,7 @@ static const Eigen::Vector3f default_t_MW_factor(0.5f, 0.5f, 0.0f);
 static constexpr bool default_no_gui = false;
 static constexpr bool default_render_volume_fullsize = false;
 static constexpr bool default_bilateral_filter = false;
-static const std::string default_dump_volume_file = "";
+static const std::string default_output_mesh_file = "";
 static const std::string default_sequence_name = "";
 static const std::string default_sequence_path = "";
 static const std::string default_log_file = "";
@@ -58,9 +58,9 @@ static const Eigen::Vector4f default_sensor_intrinsics = Eigen::Vector4f::Zero()
 static std::string short_options = "bc:d:f:Fg:G:hi:k:l:n:N:Y:o:p:qr:s:S:t:v:y:z:?";
 
 static struct option long_options[] = {
-  {"block-read",                 no_argument,       0, 'b'},
+  {"drop-frames",                no_argument,       0, 'b'},
   {"sensor-downsampling-factor", required_argument, 0, 'c'},
-  {"dump-volume",                required_argument, 0, 'd'},
+  {"output-mesh-file",           required_argument, 0, 'd'},
   {"fps",                        required_argument, 0, 'f'},
   {"bilateral-filter",           no_argument,       0, 'F'},
   {"ground-truth",               required_argument, 0, 'g'},
@@ -90,9 +90,9 @@ static struct option long_options[] = {
 
 inline void print_arguments() {
   std::cerr << "-Y  (--yaml-file)                         : YAML file\n";
-  std::cerr << "-b  (--block-read)                        : default is false: don't block reading\n";
+  std::cerr << "-b  (--drop-frames)                       : default is false: don't drop frames\n";
   std::cerr << "-c  (--sensor-downsampling-factor)        : default is " << default_sensor_downsampling_factor << " (same size)\n";
-  std::cerr << "-d  (--dump-volume) <filename>            : output mesh file\n";
+  std::cerr << "-d  (--output-mesh-file) <filename>       : output mesh file\n";
   std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
   std::cerr << "-S  (--sequence-name)                     : name of sequence\n";
@@ -260,7 +260,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.sequence_name = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["sequence_name"])
       ? yaml_general_config["sequence_name"].as<std::string>() : default_sequence_name;
 
-  // Input file path
+  // Sequence path
   config.sequence_path = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["sequence_path"])
       ? yaml_general_config["sequence_path"].as<std::string>() : default_sequence_path;
 
@@ -268,12 +268,12 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.groundtruth_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["groundtruth_file"])
       ? yaml_general_config["groundtruth_file"].as<std::string>() : default_groundtruth_file;
 
-  // Mesh file path
-  config.dump_volume_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["dump_volume_file"])
-                            ? yaml_general_config["dump_volume_file"].as<std::string>() : default_dump_volume_file;
+  // Output mesh file path
+  config.output_mesh_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["output_mesh_file"])
+                            ? yaml_general_config["output_mesh_file"].as<std::string>() : default_output_mesh_file;
   // Log file path
   config.log_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["log_file"])
-      ? yaml_general_config["log_file"].as<std::string>() : default_dump_volume_file;
+      ? yaml_general_config["log_file"].as<std::string>() : default_output_mesh_file;
 
   // Integration rate
   config.integration_rate = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["integration_rate"])
@@ -288,9 +288,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.fps = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["fps"])
       ? yaml_general_config["fps"].as<float>() : default_fps;
 
-  // Blocking read
-  config.blocking_read = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["blocking_read"])
-      ? yaml_general_config["blocking_read"].as<bool>() : default_blocking_read;
+  // Drop frames
+  config.drop_frames = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["drop_frames"])
+      ? yaml_general_config["drop_frames"].as<bool>() : default_drop_frames;
 
   // ICP threshold
   config.icp_threshold = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["icp_threshold"])
@@ -315,11 +315,11 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // CONFIGURE MAP
 
   // Map size
-  config.map_size = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["map_size"])
-      ? Eigen::Vector3i::Constant(yaml_map_config["map_size"].as<int>()) : default_map_size;
+  config.map_size = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["size"])
+      ? Eigen::Vector3i::Constant(yaml_map_config["size"].as<int>()) : default_map_size;
   // Map dimension
-  config.map_dim = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["map_dim"])
-      ? Eigen::Vector3f::Constant(yaml_map_config["map_dim"].as<float>()) : default_map_dim;
+  config.map_dim = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["dim"])
+      ? Eigen::Vector3f::Constant(yaml_map_config["dim"].as<float>()) : default_map_dim;
   // World to Map frame translation
   config.t_MW_factor = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["t_MW_factor"])
       ? Eigen::Vector3f(yaml_map_config["t_MW_factor"].as<std::vector<float>>().data()) : default_t_MW_factor;
@@ -374,7 +374,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         break;
 
       case 'b': // blocking-read
-        config.blocking_read = true;
+        config.drop_frames = true;
         break;
 
       case 'c': // sensor-downsampling-factor
@@ -389,8 +389,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         }
         break;
 
-      case 'd': // dump-volume
-        config.dump_volume_file = optarg;
+      case 'd': // output-mesh-file
+        config.output_mesh_file = optarg;
         break;
 
       case 'f': // fps

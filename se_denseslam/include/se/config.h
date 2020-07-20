@@ -122,7 +122,7 @@ struct Configuration {
    * TODO
    * <br>\em Default: ""
    */
-  std::string dump_volume_file;
+  std::string output_mesh_file;
 
   /*
    * TODO
@@ -212,7 +212,7 @@ struct Configuration {
    * TODO
    * <br>\em Default: false
    */
-  bool blocking_read;
+  bool drop_frames;
 
   /**
    * The ICP convergence threshold.
@@ -278,11 +278,11 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "ICP threshold:                   " << config.icp_threshold << "\n";
   out << "Ground truth file:               " << config.groundtruth_file << "\n";
   out << "Ground truth T_BC:\n"              << config.T_BC << "\n";
-  out << "Output mesh file:                " << config.dump_volume_file << "\n";
+  out << "Output mesh file:                " << config.output_mesh_file << "\n";
   out << "Log file:                        " << config.log_file << "\n";
   out << "Hide GUI:                        " << (config.no_gui
                                         ? "true" : "false") << "\n";
-  out << "Blocking read:                   " << (config.blocking_read
+  out << "Drop frames:                     " << (config.drop_frames
                                         ? "true" : "false") << "\n";
   out << "FPS:                             " << config.fps << "\n";
   return out;
