@@ -17,13 +17,12 @@
 #include <vector>
 
 #include <Eigen/Dense>
+#include <yaml-cpp/yaml.h>
 
 #include "se/config.h"
 #include "se/constant_parameters.h"
 #include "se/str_utils.hpp"
 #include "se/utils/math_utils.h"
-
-
 
 // Default option values.
 static constexpr int default_iteration_count = 3;
@@ -55,7 +54,7 @@ static const Eigen::Vector4f default_camera = Eigen::Vector4f::Zero();
 
 
 // Put colons after options with arguments
-static std::string short_options = "bc:d:f:Fg:G:hi:k:l:m:n:N:o:p:qr:s:t:v:y:z:?";
+static std::string short_options = "bc:d:f:Fg:G:hi:k:l:m:n:N:Y:o:p:qr:s:t:v:y:z:?";
 
 static struct option long_options[] = {
   {"block-read",                no_argument,       0, 'b'},
@@ -72,6 +71,7 @@ static struct option long_options[] = {
   {"mu",                        required_argument, 0, 'm'},
   {"near-plane",                required_argument, 0, 'n'},
   {"far-plane",                 required_argument, 0, 'N'},
+  {"yaml-file",                 required_argument, 0, 'Y'},
   {"log-file",                  required_argument, 0, 'o'},
   {"init-pose",                 required_argument, 0, 'p'},
   {"no-gui",                    no_argument,       0, 'q'},
@@ -88,6 +88,7 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
+  std::cerr << "-Y  (--yaml-file)                         : YAML file\n";
   std::cerr << "-b  (--block-read)                        : default is false: don't block reading\n";
   std::cerr << "-c  (--image-downsampling-factor)         : default is " << default_image_downsampling_factor << " (same size)\n";
   std::cerr << "-d  (--dump-volume) <filename>            : output mesh file\n";
@@ -209,52 +210,149 @@ inline Eigen::Vector4f atof4(char* arg) {
   return res;
 }
 
-
+// Transformation std::vector(16) to transformation Eigen::Matrix4f
+Eigen::Matrix4f TvtoT(std::vector<float>& T_v) {
+  Eigen::Matrix4f T;
+  T << T_v[0],  T_v[1],  T_v[2],  T_v[3],
+       T_v[4],  T_v[5],  T_v[6],  T_v[7],
+       T_v[8],  T_v[9],  T_v[10], T_v[11],
+       T_v[12], T_v[13], T_v[14], T_v[15];
+  return T;
+}
 
 Configuration parseArgs(unsigned int argc, char** argv) {
-
   Configuration config;
-
-  config.image_downsampling_factor = default_image_downsampling_factor;
-  config.left_hand_frame = default_left_hand_frame;
-  config.integration_rate = default_integration_rate;
-  config.tracking_rate = default_tracking_rate;
-  config.rendering_rate = default_rendering_rate;
-  config.map_size = default_map_size;
-  config.map_dim = default_map_dim;
-  config.t_MW_factor = default_t_MW_factor;
-
-  config.dump_volume_file = default_dump_volume_file;
-  config.input_file = default_input_file;
-  config.log_file = default_log_file;
-  config.groundtruth_file = default_groundtruth_file;
-  config.T_BC = default_gt_transform;
-
-  config.mu = default_mu;
-  config.near_plane = default_near_plane;
-  config.far_plane = default_far_plane;
-  config.fps = default_fps;
-  config.blocking_read = default_blocking_read;
-  config.icp_threshold = default_icp_threshold;
-  config.no_gui = default_no_gui;
-  config.render_volume_fullsize = default_render_volume_fullsize;
-  config.camera = default_camera;
-  config.camera_overrided = false;
-  config.bilateral_filter = default_bilateral_filter;
-
-  config.pyramid.clear();
-  for (int i = 0; i < default_iteration_count; i++) {
-    config.pyramid.push_back(default_iterations[i]);
-  }
 
   int c;
   int option_index = 0;
+  YAML::Node yaml_general_config = YAML::Load("");
+  YAML::Node yaml_map_config = YAML::Load("");
+  YAML::Node yaml_sensor_config = YAML::Load("");
+  YAML::Node yaml_voxel_impl_config = YAML::Load("");
+  while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
+                          &option_index)) != -1) {
+    if (c == 'Y')  {
+      yaml_general_config = YAML::LoadFile(optarg)["general"];
+      yaml_map_config = YAML::LoadFile(optarg)["map"];
+      yaml_sensor_config = YAML::LoadFile(optarg)["sensor"];
+      yaml_voxel_impl_config = YAML::LoadFile(optarg)["voxel_impl"];
+    }
+  }
+
+  // CONFIGURE GENERAL
+  // No GUI
+  config.no_gui = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["no_gui"])
+                  ? yaml_general_config["no_gui"].as<bool>() : default_no_gui;
+
+  // Input file path
+  config.input_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["input_file"])
+                      ? yaml_general_config["input_file"].as<std::string>() : default_input_file;
+
+  // Ground truth file path
+  config.groundtruth_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["groundtruth_file"])
+                      ? yaml_general_config["groundtruth_file"].as<std::string>() : default_groundtruth_file;
+
+  // Mesh file path
+  config.dump_volume_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["dump_volume_file"])
+                            ? yaml_general_config["dump_volume_file"].as<std::string>() : default_dump_volume_file;
+  // Log file path
+  config.log_file = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["log_file"])
+                    ? yaml_general_config["log_file"].as<std::string>() : default_dump_volume_file;
+
+  // Integration rate
+  config.integration_rate = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["integration_rate"])
+                            ? yaml_general_config["integration_rate"].as<int>() : default_integration_rate;
+  // Tracking rate
+  config.tracking_rate = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["tracking_rate"])
+                         ? yaml_general_config["tracking_rate"].as<int>() : default_tracking_rate;
+  // Rendering rate
+  config.rendering_rate = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["rendering_rate"])
+                          ? yaml_general_config["rendering_rate"].as<int>() : default_rendering_rate;
+  // Frames per second
+  config.fps = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["fps"])
+               ? yaml_general_config["fps"].as<float>() : default_fps;
+
+  // Blocking read
+  config.blocking_read = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["blocking_read"])
+                         ? yaml_general_config["blocking_read"].as<bool>() : default_blocking_read;
+
+  // ICP threshold
+  config.icp_threshold = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["icp_threshold"])
+                         ? yaml_general_config["icp_threshold"].as<float>() : default_icp_threshold;
+  // Render volume fullsize
+  config.render_volume_fullsize = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["render_volume_fullsize"])
+                                  ? yaml_general_config["render_volume_fullsize"].as<bool>() : default_render_volume_fullsize;
+  // Bilateral filter
+  config.bilateral_filter = (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["bilateral_filter"])
+                            ? yaml_general_config["bilateral_filter"].as<bool>() : default_bilateral_filter;
+
+  config.pyramid.clear();
+  if (yaml_general_config.Type() != YAML::NodeType::Null && yaml_general_config["pyramid"]) {
+    config.pyramid = yaml_general_config["pyramid"].as<std::vector<int>>();
+  } else {
+    for (int i = 0; i < default_iteration_count; i++) {
+      config.pyramid.push_back(default_iterations[i]);
+    }
+  }
+
+
+  // CONFIGURE MAP
+
+  // Map size
+  config.map_size = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["map_size"])
+                    ? Eigen::Vector3i::Constant(yaml_map_config["map_size"].as<int>()) : default_map_size;
+  // Map dimension
+  config.map_dim = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["map_dim"])
+                   ? Eigen::Vector3f::Constant(yaml_map_config["map_dim"].as<float>()) : default_map_dim;
+  // World to Map frame translation
+  config.t_MW_factor = (yaml_map_config.Type() != YAML::NodeType::Null && yaml_map_config["t_MW_factor"])
+                       ? Eigen::Vector3f(yaml_map_config["t_MW_factor"].as<std::vector<float>>().data()) : default_t_MW_factor;
+
+
+  // CONFIGURE SENSOR
+
+  // Sensor intrinsics
+  if (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["camera"]) {
+    config.camera = Eigen::Vector4f((yaml_sensor_config["camera"].as<std::vector<float>>()).data());
+  } else {
+    config.camera = default_camera;
+  }
+  // Sensor overrided
+  config.camera_overrided = false;
+  // Image downsamling factor
+  config.image_downsampling_factor = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["image_downsampling_factor"])
+                                     ? yaml_sensor_config["image_downsampling_factor"].as<int>() : default_image_downsampling_factor;
+  // Left hand coordinate frame
+  config.left_hand_frame = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["left_hand_frame"])
+                           ? yaml_sensor_config["left_hand_frame"].as<bool>() : default_left_hand_frame;
+  // Camera to Body frame transformation
+  config.T_BC = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["T_BC"])
+                ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_gt_transform;
+  // Near plane
+  config.near_plane = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["near_plane"])
+                      ? yaml_sensor_config["near_plane"].as<float>() : default_near_plane;
+  // Far plane
+  config.far_plane = (yaml_sensor_config.Type() != YAML::NodeType::Null && yaml_sensor_config["far_plane"])
+                     ? yaml_sensor_config["far_plane"].as<float>() : default_far_plane;
+
+
+  // CONFIGURE VOXEL IMPL
+  // Mu
+  config.mu = (yaml_voxel_impl_config.Type() != YAML::NodeType::Null && yaml_voxel_impl_config["mu"])
+              ? yaml_voxel_impl_config["mu"].as<float>() : default_mu;
+
+  // Reset getopt_long state to start parsing from the beginning
+  optind = 1;
+  option_index = 0;
   std::vector<std::string> tokens;
   Eigen::Vector3f gt_transform_tran;
   Eigen::Quaternionf gt_transform_quat;
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
           &option_index)) != -1) {
     switch (c) {
+      case 'Y': // yaml-file
+        break;
+
       case 'b': // blocking-read
         config.blocking_read = true;
         break;

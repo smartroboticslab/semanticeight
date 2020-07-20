@@ -36,6 +36,7 @@ target_link_libraries(${PROJECT_NAME}
   PUBLIC
     LodePNG::lodepng
     SRL::Projection
+    yaml-cpp
 )
 
 ##############################################

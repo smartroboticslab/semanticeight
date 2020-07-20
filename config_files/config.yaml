@@ -1,0 +1,41 @@
+general:
+  # File path
+  input_file:                 "/PATH/TO/scene.raw"
+  groundtruth_file:           "/PATH/TO/association.txt"
+  dump_volume_file:           ""
+  log_file:                   ""
+
+  # Rates
+  tracking_rate:              1
+  integration_rate:           1
+  rendering_rate:             4
+  fps:                        0.0
+
+  # Other
+  blocking_read:              false
+  icp_threshold:              1e-5
+  bilateral_filter:           false
+  pyramid:                    [10, 5, 4]
+
+  # Visualisation
+  no_gui:                     false
+  render_volume_fullsize:     false
+
+map:
+  map_size:                   1024
+  map_dim:                    10.24
+  t_MW_factor:                [0.501, 0.501, 0.501]
+
+sensor:
+  camera:                     [525,525,319.5,239.5]
+  image_downsampling_factor:  4
+  left_hand_frame:            false
+  T_BC:                       [1, 0, 0, 0,
+                               0, 1, 0, 0,
+                               0, 0, 1, 0,
+                               0, 0, 0, 1]
+  near_plane:                 0.4
+  far_plane:                  4.0
+
+voxel_impl:
+  mu:                         0.1
