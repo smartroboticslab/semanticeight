@@ -24,8 +24,8 @@ general:
   render_volume_fullsize:     false
 
 map:
-  map_size:                   1024
-  map_dim:                    10.24
+  size:                       1024
+  dim:                        10.24
   t_MW_factor:                [0.501, 0.501, 0.501]
 
 sensor:
