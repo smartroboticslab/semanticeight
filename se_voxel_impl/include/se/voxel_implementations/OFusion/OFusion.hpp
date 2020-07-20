@@ -73,14 +73,12 @@ struct OFusion {
    * crosses this value.
    */
   static float surface_boundary;
-  static constexpr float default_surface_boundary = 0.f;
 
   /**
    * Stored occupancy probabilities in log-odds are clamped to never be lower
    * than this value.
    */
   static float min_occupancy;
-  static constexpr float default_min_occupancy = -1000;
 
   /**
    * Stored occupancy probabilities in log-odds are clamped to never be greater
@@ -88,20 +86,16 @@ struct OFusion {
    */
   static float max_occupancy;
 
-  static constexpr float default_max_occupancy = 1000;
-
   /**
    * The value of the time constant tau in equation (10) from \cite
    * VespaRAL18.
    */
   static float tau;
-  static constexpr float default_tau = 4;
 
   /**
    * Grow rate factor of uncertainty
    */
   static float k_sigma;
-  static constexpr float default_k_sigma = 0.01;
 
   static std::string type() { return "ofusion"; }
 
@@ -109,32 +103,32 @@ struct OFusion {
    * Configure the OFusion parameters
    */
   static void configure(YAML::Node yaml_config) {
-    if (yaml_config.IsNull()) {
-      configure();
-    } else {
-      surface_boundary  = (yaml_config["surface_boundary"])
-                          ? yaml_config["surface_boundary"].as<float>() : default_surface_boundary;
-      if (yaml_config["occupancy_min_max"]) {
-        std::vector<float> occupancy_min_max = yaml_config["occupancy_min_max"].as<std::vector<float>>();
-        min_occupancy = occupancy_min_max[0];
-        max_occupancy = occupancy_min_max[1];
-      } else {
-        min_occupancy = default_min_occupancy;
-        max_occupancy = default_max_occupancy;
-      }
-      tau               = (yaml_config["tau"])
-                          ? yaml_config["tau"].as<float>() : default_tau;
-      k_sigma           = (yaml_config["k_sigma"])
-                          ? yaml_config["k_sigma"].as<float>() : default_k_sigma;
+    configure();
+
+    if (yaml_config.IsNull()) return;
+
+    if (yaml_config["surface_boundary"]) {
+      surface_boundary = yaml_config["surface_boundary"].as<float>();
+    }
+    if (yaml_config["occupancy_min_max"]) {
+      std::vector<float> occupancy_min_max = yaml_config["occupancy_min_max"].as<std::vector<float>>();
+      min_occupancy = occupancy_min_max[0];
+      max_occupancy = occupancy_min_max[1];
+    }
+    if (yaml_config["tau"]) {
+      tau = yaml_config["tau"].as<float>();
+    }
+    if (yaml_config["k_sigma"]) {
+      k_sigma = yaml_config["k_sigma"].as<float>();
     }
   };
 
   static void configure() {
-    surface_boundary = default_surface_boundary;
-    min_occupancy = default_min_occupancy;
-    max_occupancy = default_max_occupancy;
-    tau = default_tau;
-    k_sigma = default_k_sigma;
+    surface_boundary  = 0.f;
+    min_occupancy     = -1000;
+    max_occupancy     =  1000;
+    tau               = 4;
+    k_sigma           = 0.01;
   }
 
   static std::ostream& print_config(std::ostream& out) {

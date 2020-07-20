@@ -351,9 +351,6 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 
 	appWindow->addButtonChoices("ICP threshold", { "1e-4", "1e-5", "1e-6" }, {
 			1e-4, 1e-5, 1e-6 }, (float *) &(config->icp_threshold));
-	appWindow->addButtonChoices("Mu", { "0.005", "0.011", "0.022", "0.045",
-			"0.090", "0.180", "0.360" }, { 0.005, 0.011, 0.022, 0.045, 0.09,
-			0.18, 0.36 }, (float *) &(config->mu), continueWithNewDenseSLAMSystem);
 
 	int cwidth = (
 			((*reader_pp) == NULL) ? 640 : ((*reader_pp)->getInputImageResolution()).x)

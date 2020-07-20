@@ -122,15 +122,14 @@ struct ExampleVoxelImpl {
    * Configure the ExampleVoxelImpl parameters
    */
   static void configure(YAML::Node yaml_config) {
-    if (yaml_config.Type() == YAML::NodeType::Null) {
-      configure()
-    } else {
-//       set to default value if parameter key not available in yaml
-    }
+    configure()
+    if (yaml_config.IsNull()) return;
+
+    // set yaml value if parameter key is available
   };
 
   static void configure() {
-
+    // set to default values
   }
 
   static std::ostream& print_config(std::ostream& out) {

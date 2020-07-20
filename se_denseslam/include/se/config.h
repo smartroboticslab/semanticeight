@@ -181,14 +181,6 @@ struct Configuration {
   bool sensor_intrinsics_overrided;
 
   /**
-   * The TSDF truncation bound. Values of the TSDF are assumed to be in the
-   * interval ±mu. See Section 3.3 of \cite NewcombeISMAR2011 for more
-   * details.
-   *  <br>\em Default: 0.1
-   */
-  float mu;
-
-  /**
    * Nearest z-distance to the sensor along the sensor frame z-axis, that voxels are updated.
    */
   float near_plane;
