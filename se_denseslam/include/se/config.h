@@ -244,47 +244,67 @@ struct Configuration {
 
 
 static std::ostream& operator<<(std::ostream& out, const Configuration& config) {
-  out << "Sensor type:                     " << config.sensor_type << "\n";
+  out << "==========   GENERAL  ========== " << "\n";
   out << "Voxel impl type:                 " << config.voxel_impl_type << "\n";
+  out << "Sensor type:                     " << config.sensor_type << "\n";
+  out << "\n";
+
   out << "Sequence name:                   " << config.sequence_name << "\n";
   out << "Sequence path:                   " << config.sequence_path << "\n";
-  out << "Map dim:                         " << config.map_dim.x() << "x"
-                                             << config.map_dim.y() << "x"
-                                             << config.map_dim.z() << " meters\n";
-  out << "Map size:                        " << config.map_size.x() << "x"
-                                             << config.map_size.y() << "x"
-                                             << config.map_size.z() << " voxels\n";
-  out << "World to map translation factor: " << config.t_MW_factor.x() << " "
-                                             << config.t_MW_factor.y() << " "
-                                             << config.t_MW_factor.z() << "\n";
-  out << "Sensor downsampling factor:      " << config.sensor_downsampling_factor << "\n";
-  out << "Sensor intrinsics:               " << config.sensor_intrinsics.x() << " "
-                                             << config.sensor_intrinsics.y() << " "
-                                             << config.sensor_intrinsics.z() << " "
-                                             << config.sensor_intrinsics.w() << "\n";
-  out << "Left hand frame:                 " << config.left_hand_frame << "\n";
-  out << "Near plane:                      " << config.near_plane << "\n";
-  out << "Far plane:                       " << config.far_plane << "\n";
-  out << "Filter depth:                    " << (config.bilateral_filter
-                                        ? "true" : "false") << "\n";
-  out << "Tracking rate:                   " << config.tracking_rate << "\n";
+  out << "Ground truth file:               " << config.ground_truth_file << "\n";
+  out << "Log file:                        " << config.log_file << "\n";
+  out << "Output mesh file:                " << config.output_mesh_file << "\n";
+  out << "\n";
+
   out << "Integration rate:                " << config.integration_rate << "\n";
+  out << "Tracking rate:                   " << config.tracking_rate << "\n";
   out << "Rendering rate:                  " << config.rendering_rate << "\n";
-  out << "ICP pyramid levels:              ";
+  out << "FPS:                             " << config.fps << "\n";
+  out << "\n";
+
+  out << "Hide GUI:                        " << (config.no_gui
+                                                 ? "true" : "false") << "\n";
+  out << "ICP pyramid levels:             ";
   for (const auto& level : config.pyramid) {
     out << " " << level;
   }
   out << "\n";
   out << "ICP threshold:                   " << config.icp_threshold << "\n";
-  out << "Ground truth file:               " << config.ground_truth_file << "\n";
-  out << "Ground truth T_BC:\n"              << config.T_BC << "\n";
-  out << "Output mesh file:                " << config.output_mesh_file << "\n";
-  out << "Log file:                        " << config.log_file << "\n";
-  out << "Hide GUI:                        " << (config.no_gui
-                                        ? "true" : "false") << "\n";
+  out << "Render volume full-size:         " << (config.render_volume_fullsize
+                                                 ? "true" : "false") << "\n";
   out << "Drop frames:                     " << (config.drop_frames
-                                        ? "true" : "false") << "\n";
-  out << "FPS:                             " << config.fps << "\n";
+                                                 ? "true" : "false") << "\n";
+  out << "\n";
+
+  out << "==========     MAP    ========== " << "\n";
+  out << "Map size:                        " << config.map_size.x() << "x"
+                                             << config.map_size.y() << "x"
+                                             << config.map_size.z() << " voxels\n";
+  out << "Map dim:                         " << config.map_dim.x() << "x"
+                                             << config.map_dim.y() << "x"
+                                             << config.map_dim.z() << " meters\n";
+  out << "World to map translation factor: " << config.t_MW_factor.x() << " "
+      << config.t_MW_factor.y() << " "
+      << config.t_MW_factor.z() << "\n";
+  out << "\n";
+
+  out << "==========   SENSOR   ========== " << "\n";
+  out << "Sensor intrinsics:               " << config.sensor_intrinsics.x() << " "
+                                             << config.sensor_intrinsics.y() << " "
+                                             << config.sensor_intrinsics.z() << " "
+                                             << config.sensor_intrinsics.w() << "\n";
+  out << "Left hand frame:                 " << config.left_hand_frame << "\n";
+  out << "Sensor downsampling factor:      " << config.sensor_downsampling_factor << "\n";
+  out << "Filter depth:                    " << (config.bilateral_filter
+                                                 ? "true" : "false") << "\n";
+  out << "Near plane:                      " << config.near_plane << " meters\n";
+  out << "Far plane:                       " << config.far_plane << " meters\n";
+  out << "Sensor to ground truth transform " << config.T_BC.row(0) << "\n";
+  out << "                                 " << config.T_BC.row(1) << "\n";
+  out << "                                 " << config.T_BC.row(2) << "\n";
+  out << "                                 " << config.T_BC.row(3) << "\n";
+  out << "\n";
+
   return out;
 }
 

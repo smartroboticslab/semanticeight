@@ -233,6 +233,7 @@ struct MultiresOFusion {
   };
 
   static std::ostream& print_config(std::ostream& out) {
+    out << "========== VOXEL IMPL ========== " << "\n";
     out << "Invert normals:                  " << (MultiresOFusion::invert_normals
                                                    ? "true" : "false") << "\n";
     out << "Surface boundary:                " << MultiresOFusion::surface_boundary << "\n";

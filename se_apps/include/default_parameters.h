@@ -66,7 +66,6 @@ static struct option long_options[] = {
   {"ground-truth",               required_argument, 0, 'g'},
   {"gt-transform",               required_argument, 0, 'G'},
   {"help",                       no_argument,       0, 'h'},
-  {"sequence-name",              required_argument, 0, 'S'},
   {"sequence-path",              required_argument, 0, 'i'},
   {"sensor-intrinsics",          required_argument, 0, 'k'},
   {"icp-threshold",              required_argument, 0, 'l'},
@@ -78,6 +77,7 @@ static struct option long_options[] = {
   {"no-gui",                     no_argument,       0, 'q'},
   {"integration-rate",           required_argument, 0, 'r'},
   {"map-dim",                    required_argument, 0, 's'},
+  {"sequence-name",              required_argument, 0, 'S'},
   {"tracking-rate",              required_argument, 0, 't'},
   {"map-size",                   required_argument, 0, 'v'},
   {"pyramid-levels",             required_argument, 0, 'y'},
@@ -95,7 +95,6 @@ inline void print_arguments() {
   std::cerr << "-d  (--output-mesh-file) <filename>       : output mesh file\n";
   std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
-  std::cerr << "-S  (--sequence-name)                     : name of sequence\n";
   std::cerr << "-i  (--sequence-path) <filename>             : sequence path\n";
   std::cerr << "-k  (--sensor-intrinsics)                 : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
@@ -106,6 +105,7 @@ inline void print_arguments() {
   std::cerr << "-q  (--no-gui)                            : default is to display gui\n";
   std::cerr << "-r  (--integration-rate)                  : default is " << default_integration_rate << "\n";
   std::cerr << "-s  (--map-dim)                           : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
+  std::cerr << "-S  (--sequence-name)                     : name of sequence\n";
   std::cerr << "-t  (--tracking-rate)                     : default is " << default_tracking_rate << "\n";
   std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
   std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4\n";

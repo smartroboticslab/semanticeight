@@ -135,6 +135,7 @@ struct OFusion {
   };
 
   static std::ostream& print_config(std::ostream& out) {
+    out << "========== VOXEL IMPL ========== " << "\n";
     out << "Invert normals:                  " << (OFusion::invert_normals
                                                    ? "true" : "false") << "\n";
     out << "Surface boundary:                " << OFusion::surface_boundary << "\n";
