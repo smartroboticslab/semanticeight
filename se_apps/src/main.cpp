@@ -48,8 +48,6 @@ static DenseSLAMSystem* pipeline = nullptr;
 static Eigen::Vector3f t_MW;
 static std::ostream* log_stream = &std::cout;
 static std::ofstream log_file_stream;
-static std::ostream* benchmark_stream = nullptr;
-static std::ofstream benchmark_file_stream;
 
 DepthReader* createReader(Configuration* config,
                           std::string    filename = "");
@@ -129,23 +127,14 @@ int main(int argc, char** argv) {
       Eigen::Vector3f::Constant(config.map_dim.x()),
       t_MW,
       config.pyramid, config);
-
+  
   if (config.log_file != "") {
     log_file_stream.open(config.log_file.c_str());
     log_stream = &log_file_stream;
   }
   log_stream->setf(std::ios::fixed, std::ios::floatfield);
-
-  if (config.benchmark) {
-    benchmark_file_stream.open(config.benchmark_file.c_str());
-    benchmark_stream = &benchmark_file_stream;
-    benchmark_stream->setf(std::ios::fixed, std::ios::floatfield);
-    *benchmark_stream << config;
-    *benchmark_stream << VoxelImpl::print_config() << std::endl;
-  } else {
-    *log_stream << config;
-    *log_stream << VoxelImpl::print_config() << std::endl;
-  }
+  *log_stream << config;
+  *log_stream << VoxelImpl::print_config() << std::endl;
 
   //temporary fix to test rendering fullsize
   config.render_volume_fullsize = false;
@@ -157,20 +146,15 @@ int main(int argc, char** argv) {
   // The following runs the process loop for processing all the frames, if Qt
   // is specified use that, else use GLUT. We can opt to not run the gui which
   // would be faster.
-  if (config.no_gui || config.benchmark) {
+  if (config.no_gui) {
     if ((reader == nullptr) || (reader->cameraActive == false)) {
       std::cerr << "No valid input file specified\n";
       exit(1);
     }
-    if (config.benchmark) {
-      *benchmark_stream << "frame\tacquisition\tpreprocessing\ttracking\tintegration"
-                        << "\traycasting\trendering\tcomputation\ttotal    \tRAM usage (MB)"
-                        << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
-    } else {
-      *log_stream << "frame\tacquisition\tpreprocessing\ttracking\tintegration"
-                  << "\traycasting\trendering\tcomputation\ttotal    \tRAM usage (MB)"
-                  << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
-    }
+    *log_stream << "frame\tacquisition\tpreprocessing\ttracking\tintegration"
+                      << "\traycasting\trendering\tcomputation\ttotal    \tRAM usage (MB)"
+                      << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
+
     while (processAll(reader, true, false, &config, false) == 0) {}
   } else {
 #ifdef __QT__
@@ -192,7 +176,7 @@ int main(int argc, char** argv) {
 #endif
   }
 
-  // ==========     DUMP VOLUME      =========
+  // ==========     DUMP MESH      =========
   if (config.output_mesh_file != "") {
     const auto start = std::chrono::steady_clock::now();
     pipeline->dump_mesh(config.output_mesh_file.c_str());
@@ -356,23 +340,6 @@ int processAll(DepthReader*   reader,
         << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" // position
         << tracked << "\t" << integrated // tracked and integrated flags
         << std::endl;
-  }
-
-  if (config->benchmark) {
-    const Eigen::Vector3f t_MC = pipeline->t_MC();
-    *benchmark_stream << frame << "\t"
-                      << std::chrono::duration<double>(timings[1] - timings[0]).count() << "\t" // acquisition
-                      << std::chrono::duration<double>(timings[2] - timings[1]).count() << "\t" // preprocessing
-                      << std::chrono::duration<double>(timings[3] - timings[2]).count() << "\t" // tracking
-                      << std::chrono::duration<double>(timings[4] - timings[3]).count() << "\t" // integration
-                      << std::chrono::duration<double>(timings[5] - timings[4]).count() << "\t" // raycasting
-                      << std::chrono::duration<double>(timings[6] - timings[5]).count() << "\t" // rendering
-                      << std::chrono::duration<double>(timings[5] - timings[1]).count() << "\t" // computation
-                      << std::chrono::duration<double>(timings[6] - timings[0]).count() << "\t" // total
-                      << se::ram_usage_self() / 1024.0 / 1024.0 << "\t" // RAM usage (MB)
-                      << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" // position
-                      << tracked << "\t" << integrated // tracked and integrated flags
-                      << std::endl;
   }
 
   first_frame = false;

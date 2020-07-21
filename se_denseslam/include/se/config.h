@@ -130,11 +130,6 @@ struct Configuration {
    */
   std::string sequence_path;
 
-  /*
-   * TODO
-   * <br>\em Default: ""
-   */
-  std::string log_file;
 
   /**
    * Whether to run the pipeline in benchmark mode. Hiding the GUI results in faster operation.
@@ -143,12 +138,11 @@ struct Configuration {
   bool benchmark;
 
   /**
-   * The file the benchmark results will be written to.
-   * <br>\em Default: "" if Configuration::benchmark is false
-   * <br>\em Default: autogen filename if the Configuration::benchmark argument is empty or a directory
+   * The log file the timing results will be written to.
+   * <br>\em Default: std::cout if Configuration::benchmark is blank (--benchmark) or Configuration::no_gui (--no-gui)
+   * <br>\em Default: autogen filename if the Configuration::benchmark argument is a directory (--benchmark=/PATH/TO/DIR)
    */
-  std::string benchmark_file;
-
+  std::string log_file;
 
   /**
    * The path to a text file containing the ground truth poses T_WC. Each line
@@ -265,12 +259,8 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "Ground truth file:               " << config.ground_truth_file << "\n";
   out << "Benchmark:                       " << (config.benchmark
                                                  ? "true" : "false") << "\n";
-  if (config.benchmark) {
-  out << "Benchmark file:                  " << config.benchmark_file << "\n";
-  } else {
   out << "Log file:                        " << (config.log_file == ""
                                                  ? "std::cout" : config.log_file) << "\n";
-  }
   if (config.output_mesh_file != "") {
   out << "Output mesh file:                " << config.output_mesh_file << "\n";
   }

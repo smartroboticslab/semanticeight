@@ -5,8 +5,7 @@ general:
   sequence_path:              "/PATH/TO/scene.raw"
   ground_truth_file:          "/PATH/TO/association.txt"
   benchmark:                  false
-  benchmark_path:             "/PATH/TO/RESULT_DIR" # or "PATH/TO/result.txt
-  log_file:                   ""
+  log_path:                   "PATH/TO/log.txt" # or "PATH/TO/LOG_DIR
   output_mesh_file:           ""
 
   # Rates
@@ -23,7 +22,7 @@ general:
   pyramid:                    [10, 5, 4]
 
   # Visualisation
-  no_gui:                     false
+  no_gui:                     false                           # Will be set true if benchmark is true
   render_volume_fullsize:     false
 
 map:

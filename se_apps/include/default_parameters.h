@@ -29,7 +29,6 @@
 
 // Default option values.
 static constexpr bool         default_benchmark = false;
-static const std::string      default_benchmark_path = "";
 static constexpr bool         default_bilateral_filter = false;
 static constexpr bool         default_drop_frames = false;
 static constexpr float        default_far_plane = 4.0f;
@@ -41,7 +40,7 @@ static constexpr int          default_integration_rate = 2;
 static constexpr int          default_iteration_count = 3;
 static constexpr int          default_iterations[default_iteration_count] = { 10, 5, 4 };
 static constexpr bool         default_left_hand_frame = false;
-static const std::string      default_log_file = "";
+static const std::string      default_log_path = "";
 static constexpr float        default_near_plane = 0.4f;
 static const Eigen::Vector3i  default_map_size(256, 256, 256);
 static const Eigen::Vector3f  default_map_dim(2.f, 2.f, 2.f);
@@ -78,7 +77,7 @@ static struct option long_options[] = {
   {"max-frame",                  required_argument, 0, 'm'},
   {"near-plane",                 required_argument, 0, 'n'},
   {"far-plane",                  required_argument, 0, 'N'},
-  {"log-file",                   required_argument, 0, 'o'},
+  {"log-path",                   required_argument, 0, 'o'},
   {"init-pose",                  required_argument, 0, 'p'},
   {"no-gui",                     no_argument,       0, 'q'},
   {"integration-rate",           required_argument, 0, 'r'},
@@ -96,32 +95,32 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
-  std::cerr << "-b  (--drop-frames)                       : default is false: don't drop frames\n";
-  std::cerr << "-B  (--benchmark)                         : default is autogen benchmark filename\n";
-  std::cerr << "-c  (--sensor-downsampling-factor)        : default is " << default_sensor_downsampling_factor << " (same size)\n";
-  std::cerr << "-d  (--output-mesh-file) <filename>       : output mesh file\n";
-  std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
-  std::cerr << "-F  (--bilateral-filter                   : default is disabled\n";
-  std::cerr << "-g  (--ground-truth) <filename>           : ground truth file\n";
-  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw : T_BC (translation and/or rotation)\n";
-  std::cerr << "-h  (--help)                              : show this help message\n";
-  std::cerr << "-i  (--sequence-path) <filename>          : sequence path\n";
-  std::cerr << "-k  (--sensor-intrinsics)                 : default is defined by input\n";
-  std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
-  std::cerr << "-o  (--log-file) <filename>               : default is stdout\n";
-  std::cerr << "-m  (--max-frame)                         : default is full dataset (-1)\n";
-  std::cerr << "-n  (--near-plane)                        : default is " << default_near_plane << "\n";
-  std::cerr << "-N  (--far-plane)                         : default is " << default_far_plane << "\n";
-  std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
-  std::cerr << "-q  (--no-gui)                            : default is to display gui\n";
-  std::cerr << "-r  (--integration-rate)                  : default is " << default_integration_rate << "\n";
-  std::cerr << "-s  (--map-dim)                           : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
-  std::cerr << "-S  (--sequence-name)                     : name of sequence\n";
-  std::cerr << "-t  (--tracking-rate)                     : default is " << default_tracking_rate << "\n";
-  std::cerr << "-v  (--map-size)                          : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
-  std::cerr << "-y  (--pyramid-levels)                    : default is 10,5,4\n";
-  std::cerr << "-Y  (--yaml-file)                         : YAML file\n";
-  std::cerr << "-z  (--rendering-rate)                    : default is " << default_rendering_rate << "\n";
+  std::cerr << "-b  (--drop-frames)                        : default is false: don't drop frames\n";
+  std::cerr << "-B  (--benchmark) <blank, =filename, =dir> : default is autogen benchmark filename\n";
+  std::cerr << "-c  (--sensor-downsampling-factor)         : default is " << default_sensor_downsampling_factor << " (same size)\n";
+  std::cerr << "-d  (--output-mesh-file) <filename>        : output mesh file\n";
+  std::cerr << "-f  (--fps)                                : default is " << default_fps << "\n";
+  std::cerr << "-F  (--bilateral-filter                    : default is disabled\n";
+  std::cerr << "-g  (--ground-truth) <filename>            : ground truth file\n";
+  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw  : T_BC (translation and/or rotation)\n";
+  std::cerr << "-h  (--help)                               : show this help message\n";
+  std::cerr << "-i  (--sequence-path) <filename>           : sequence path\n";
+  std::cerr << "-k  (--sensor-intrinsics)                  : default is defined by input\n";
+  std::cerr << "-l  (--icp-threshold)                      : default is " << default_icp_threshold << "\n";
+  std::cerr << "-o  (--log-path) <filename or dir>         : default is stdout\n";
+  std::cerr << "-m  (--max-frame)                          : default is full dataset (-1)\n";
+  std::cerr << "-n  (--near-plane)                         : default is " << default_near_plane << "\n";
+  std::cerr << "-N  (--far-plane)                          : default is " << default_far_plane << "\n";
+  std::cerr << "-p  (--init-pose)                          : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
+  std::cerr << "-q  (--no-gui)                             : default is to display gui\n";
+  std::cerr << "-r  (--integration-rate)                   : default is " << default_integration_rate << "\n";
+  std::cerr << "-s  (--map-dim)                            : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
+  std::cerr << "-S  (--sequence-name)                      : name of sequence\n";
+  std::cerr << "-t  (--tracking-rate)                      : default is " << default_tracking_rate << "\n";
+  std::cerr << "-v  (--map-size)                           : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
+  std::cerr << "-y  (--pyramid-levels)                     : default is 10,5,4\n";
+  std::cerr << "-Y  (--yaml-file)                          : YAML file\n";
+  std::cerr << "-z  (--rendering-rate)                     : default is " << default_rendering_rate << "\n";
 }
 
 
@@ -238,9 +237,9 @@ std::string adjustString(std::string s) {
   return s;
 }
 
-void generateBenchmarkFile(Configuration& config) {
-  stdfs::path benchmark_path = config.benchmark_file;
-  if (config.benchmark_file != "" && !stdfs::is_directory(benchmark_path)) {
+void generateLogFile(Configuration& config) {
+  stdfs::path log_path = config.log_file;
+  if (config.log_file == "" || !stdfs::is_directory(log_path)) {
     return;
   } else {
     if (config.sequence_name == "") {
@@ -261,8 +260,8 @@ void generateBenchmarkFile(Configuration& config) {
                                     "_size_"        << config.map_size.x()        <<
                                     "_dim_"         << config.map_dim.x()         <<
                                     "_down_sample_" << config.sensor_downsampling_factor;
-    benchmark_path /= adjustString(auto_benchmark_filename_ss.str()) + ".txt";
-    config.benchmark_file = benchmark_path;
+    log_path /= adjustString(auto_benchmark_filename_ss.str()) + ".txt";
+    config.log_file = log_path;
   }
 }
 
@@ -317,11 +316,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Benchmark and result file or directory path
   config.benchmark = (has_yaml_general_config && yaml_general_config["benchmark"])
       ? yaml_general_config["benchmark"].as<bool>() : default_benchmark;
-  config.benchmark_file = (has_yaml_general_config && yaml_general_config["benchmark_path"])
-      ? yaml_general_config["benchmark_path"].as<std::string>() : default_benchmark_path;
-  // Log file path
-  config.log_file = (has_yaml_general_config && yaml_general_config["log_file"])
-      ? yaml_general_config["log_file"].as<std::string>() : default_log_file;
+  // Log path
+  config.log_file = (has_yaml_general_config && yaml_general_config["log_path"])
+      ? yaml_general_config["log_path"].as<std::string>() : default_log_path;
 
   // Output mesh file path
   config.output_mesh_file = (has_yaml_general_config && yaml_general_config["output_mesh_file"])
@@ -431,7 +428,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       case 'B': // benchmark
         config.benchmark = true;
         if (optarg) {
-          config.benchmark_file = optarg;
+          config.log_file = optarg;
         }
         break;
 
@@ -543,7 +540,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.far_plane = atof(optarg);
         break;
 
-      case 'o': // log-file
+      case 'o': // log-path
         config.log_file = optarg;
         break;
 
@@ -629,9 +626,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   }
 
   if (config.benchmark) {
-    config.no_gui = false; // Turn log_file off
-    generateBenchmarkFile(config);
+    config.no_gui = true;
   }
+  // Autogenerate filename if only a directory is provided
+  generateLogFile(config);
 
   return config;
 }
