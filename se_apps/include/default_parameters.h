@@ -323,7 +323,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       ? yaml_general_config["benchmark_path"].as<std::string>() : default_benchmark_path;
   // Log file path
   config.log_file = (has_yaml_general_config && yaml_general_config["log_file"])
-      ? yaml_general_config["log_file"].as<std::string>() : default_output_mesh_file;
+      ? yaml_general_config["log_file"].as<std::string>() : default_log_file;
   // Output mesh file path
   config.output_mesh_file = (has_yaml_general_config && yaml_general_config["output_mesh_file"])
                             ? yaml_general_config["output_mesh_file"].as<std::string>() : default_output_mesh_file;
