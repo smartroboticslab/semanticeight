@@ -17,6 +17,7 @@ general:
 
   # Other
   drop_frames:                false
+  max_frame:                  -1
   icp_threshold:              1e-5
   bilateral_filter:           false
   pyramid:                    [10, 5, 4]

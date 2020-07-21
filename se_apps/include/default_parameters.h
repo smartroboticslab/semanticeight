@@ -45,6 +45,7 @@ static const std::string      default_log_file = "";
 static constexpr float        default_near_plane = 0.4f;
 static const Eigen::Vector3i  default_map_size(256, 256, 256);
 static const Eigen::Vector3f  default_map_dim(2.f, 2.f, 2.f);
+static const int              default_max_frame(-1);
 static constexpr bool         default_no_gui = false;
 static constexpr bool         default_render_volume_fullsize = false;
 static constexpr int          default_rendering_rate = 4;
@@ -59,7 +60,7 @@ static constexpr int          default_tracking_rate = 1;
 
 
 // Put colons after options with arguments
-static std::string short_options = "b:B:c:d:f:F:g:G:h:i:k:l:n:N:o:p:q:r:s:S:t:v:y:Y:z:?";
+static std::string short_options = "b:B:c:d:f:F:g:G:h:i:k:l:m:n:N:o:p:q:r:s:S:t:v:y:Y:z:?";
 
 static struct option long_options[] = {
   {"drop-frames",                no_argument,       0, 'b'},
@@ -74,6 +75,7 @@ static struct option long_options[] = {
   {"sequence-path",              required_argument, 0, 'i'},
   {"sensor-intrinsics",          required_argument, 0, 'k'},
   {"icp-threshold",              required_argument, 0, 'l'},
+  {"max-frame",                  required_argument, 0, 'm'},
   {"near-plane",                 required_argument, 0, 'n'},
   {"far-plane",                  required_argument, 0, 'N'},
   {"log-file",                   required_argument, 0, 'o'},
@@ -107,6 +109,7 @@ inline void print_arguments() {
   std::cerr << "-k  (--sensor-intrinsics)                 : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                     : default is " << default_icp_threshold << "\n";
   std::cerr << "-o  (--log-file) <filename>               : default is stdout\n";
+  std::cerr << "-m  (--max-frame)                         : default is full dataset (-1)\n";
   std::cerr << "-n  (--near-plane)                        : default is " << default_near_plane << "\n";
   std::cerr << "-N  (--far-plane)                         : default is " << default_far_plane << "\n";
   std::cerr << "-p  (--init-pose)                         : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
@@ -300,14 +303,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   }
 
   // CONFIGURE GENERAL
-  // No GUI
-  config.no_gui = (has_yaml_general_config && yaml_general_config["no_gui"])
-      ? yaml_general_config["no_gui"].as<bool>() : default_no_gui;
-
   // Sequence name
   config.sequence_name = (has_yaml_general_config && yaml_general_config["sequence_name"])
       ? yaml_general_config["sequence_name"].as<std::string>() : default_sequence_name;
-
   // Sequence path file or directory path
   config.sequence_path = (has_yaml_general_config && yaml_general_config["sequence_path"])
       ? yaml_general_config["sequence_path"].as<std::string>() : default_sequence_path;
@@ -324,6 +322,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Log file path
   config.log_file = (has_yaml_general_config && yaml_general_config["log_file"])
       ? yaml_general_config["log_file"].as<std::string>() : default_log_file;
+
   // Output mesh file path
   config.output_mesh_file = (has_yaml_general_config && yaml_general_config["output_mesh_file"])
                             ? yaml_general_config["output_mesh_file"].as<std::string>() : default_output_mesh_file;
@@ -344,6 +343,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Drop frames
   config.drop_frames = (has_yaml_general_config && yaml_general_config["drop_frames"])
       ? yaml_general_config["drop_frames"].as<bool>() : default_drop_frames;
+  // Max frame
+  config.max_frame = (has_yaml_general_config && yaml_general_config["max_frame"])
+      ? yaml_general_config["max_frame"].as<int>() : default_max_frame;
 
   // ICP threshold
   config.icp_threshold = (has_yaml_general_config && yaml_general_config["icp_threshold"])
@@ -363,6 +365,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       config.pyramid.push_back(default_iterations[i]);
     }
   }
+
+  // No GUI
+  config.no_gui = (has_yaml_general_config && yaml_general_config["no_gui"])
+                  ? yaml_general_config["no_gui"].as<bool>() : default_no_gui;
 
 
   // CONFIGURE MAP
@@ -523,6 +529,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'l': // icp-threshold
         config.icp_threshold = atof(optarg);
+        break;
+
+      case 'm': // max-frame
+        config.max_frame = atoi(optarg);
         break;
 
       case 'n': // near-plane

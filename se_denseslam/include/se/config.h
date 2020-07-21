@@ -221,6 +221,11 @@ struct Configuration {
   bool drop_frames;
 
   /**
+   * Last frame to be integrated
+   */
+  int max_frame;
+
+  /**
    * The ICP convergence threshold.
    * <br>\em Default: 1e-5
    */
@@ -289,6 +294,8 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
                                                  ? "true" : "false") << "\n";
   out << "Drop frames:                     " << (config.drop_frames
                                                  ? "true" : "false") << "\n";
+  out << "Max frame:                       " << ((config.max_frame == -1)
+                                                 ? "full dataset" : std::to_string(config.max_frame)) << "\n";
   out << "\n";
 
   out << "==========     MAP    ========== " << "\n";

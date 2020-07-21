@@ -279,6 +279,10 @@ int processAll(DepthReader*   reader,
 
     // Process read frames
     frame = reader->getFrameNumber() - frame_offset;
+    if (config->max_frame != -1 && frame > config->max_frame) {
+      timings[0] = std::chrono::steady_clock::now();
+      return true;
+    }
     if (power_monitor != nullptr && !first_frame)
       power_monitor->start();
 
