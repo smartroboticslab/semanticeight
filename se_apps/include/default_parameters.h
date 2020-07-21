@@ -16,9 +16,11 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #include <Eigen/Dense>
 #include <yaml-cpp/yaml.h>
+#include "filesystem.hpp"
 
 #include "se/config.h"
 #include "se/constant_parameters.h"
@@ -47,6 +49,8 @@ static constexpr bool default_bilateral_filter = false;
 static const std::string default_output_mesh_file = "";
 static const std::string default_sequence_name = "";
 static const std::string default_sequence_path = "";
+static constexpr bool default_benchmark = false;
+static const std::string default_benchmark_path = "";
 static const std::string default_log_file = "";
 static const std::string default_ground_truth_file = "";
 static const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
@@ -55,10 +59,11 @@ static const Eigen::Vector4f default_sensor_intrinsics = Eigen::Vector4f::Zero()
 
 
 // Put colons after options with arguments
-static std::string short_options = "b:c:d:f:F:g:G:h:i:k:l:n:N:o:p:q:r:s:S:t:v:y:Y:z:?";
+static std::string short_options = "b:B:c:d:f:F:g:G:h:i:k:l:n:N:o:p:q:r:s:S:t:v:y:Y:z:?";
 
 static struct option long_options[] = {
   {"drop-frames",                no_argument,       0, 'b'},
+  {"benchmark",                  optional_argument, 0, 'B'},
   {"sensor-downsampling-factor", required_argument, 0, 'c'},
   {"output-mesh-file",           required_argument, 0, 'd'},
   {"fps",                        required_argument, 0, 'f'},
@@ -90,6 +95,7 @@ static struct option long_options[] = {
 
 inline void print_arguments() {
   std::cerr << "-b  (--drop-frames)                       : default is false: don't drop frames\n";
+  std::cerr << "-B  (--benchmark)                         : default is autogen benchmark filename\n";
   std::cerr << "-c  (--sensor-downsampling-factor)        : default is " << default_sensor_downsampling_factor << " (same size)\n";
   std::cerr << "-d  (--output-mesh-file) <filename>       : output mesh file\n";
   std::cerr << "-f  (--fps)                               : default is " << default_fps << "\n";
@@ -221,6 +227,42 @@ Eigen::Matrix4f TvtoT(std::vector<float> T_v) {
   return T;
 }
 
+std::string adjustString(std::string s) {
+  std::replace(s.begin(), s.end(), '.', '_');
+  std::replace(s.begin(), s.end(), '-', '_');
+  std::replace(s.begin(), s.end(), ' ', '_');
+  std::transform(s.begin(), s.end(),s.begin(), ::tolower);
+  return s;
+}
+
+void generateBenchmarkFile(Configuration& config) {
+  stdfs::path benchmark_path = config.benchmark_file;
+  if (config.benchmark_file != "" && !stdfs::is_directory(benchmark_path)) {
+    return;
+  } else {
+    if (config.sequence_name == "") {
+      std::cout << "Please provide a sequence name to autogen benchmark file name.\n"
+                   "Options: \n"
+                   "  - Provide sequence name via terminal          (Type \"sequence_name\" + hit enter)\n"
+                   "  - Leave blank                                 (Hit enter)\n"
+                   "  - Provide full benchmark filename             (e.g. --benchmark=\"PATH/TO/result.txt\")\n"
+                   "  - Set sequence name via command line argument (-S \"sequence_name\")\n"
+                   "  - Set sequence name via YAML file             (sequence_name: \"sequence_name\") \n\n"
+                   "Provide sequence name (e.g. icl-nuim-livingroom_traj_02):" << std::endl;
+      std::getline(std::cin, config.sequence_name);
+    }
+    std::stringstream auto_benchmark_filename_ss;
+    auto_benchmark_filename_ss                      << config.voxel_impl_type     <<
+                                    "_"             << config.sensor_type         <<
+    ((config.sequence_name != "") ? "_"              + config.sequence_name : "") <<
+                                    "_size_"        << config.map_size.x()        <<
+                                    "_dim_"         << config.map_dim.x()         <<
+                                    "_down_sample_" << config.sensor_downsampling_factor;
+    benchmark_path /= adjustString(auto_benchmark_filename_ss.str()) + ".txt";
+    config.benchmark_file = benchmark_path;
+  }
+}
+
 Configuration parseArgs(unsigned int argc, char** argv) {
   Configuration config;
 
@@ -266,7 +308,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.sequence_name = (has_yaml_general_config && yaml_general_config["sequence_name"])
       ? yaml_general_config["sequence_name"].as<std::string>() : default_sequence_name;
 
-  // Sequence path
+  // Sequence path file or directory path
   config.sequence_path = (has_yaml_general_config && yaml_general_config["sequence_path"])
       ? yaml_general_config["sequence_path"].as<std::string>() : default_sequence_path;
 
@@ -274,12 +316,17 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.ground_truth_file = (has_yaml_general_config && yaml_general_config["ground_truth_file"])
       ? yaml_general_config["ground_truth_file"].as<std::string>() : default_ground_truth_file;
 
-  // Output mesh file path
-  config.output_mesh_file = (has_yaml_general_config && yaml_general_config["output_mesh_file"])
-                            ? yaml_general_config["output_mesh_file"].as<std::string>() : default_output_mesh_file;
+  // Benchmark and result file or directory path
+  config.benchmark = (has_yaml_general_config && yaml_general_config["benchmark"])
+      ? yaml_general_config["benchmark"].as<bool>() : default_benchmark;
+  config.benchmark_file = (has_yaml_general_config && yaml_general_config["benchmark_path"])
+      ? yaml_general_config["benchmark_path"].as<std::string>() : default_benchmark_path;
   // Log file path
   config.log_file = (has_yaml_general_config && yaml_general_config["log_file"])
       ? yaml_general_config["log_file"].as<std::string>() : default_output_mesh_file;
+  // Output mesh file path
+  config.output_mesh_file = (has_yaml_general_config && yaml_general_config["output_mesh_file"])
+                            ? yaml_general_config["output_mesh_file"].as<std::string>() : default_output_mesh_file;
 
   // Integration rate
   config.integration_rate = (has_yaml_general_config && yaml_general_config["integration_rate"])
@@ -319,7 +366,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
 
   // CONFIGURE MAP
-
   // Map size
   config.map_size = (has_yaml_map_config && yaml_map_config["size"])
       ? Eigen::Vector3i::Constant(yaml_map_config["size"].as<int>()) : default_map_size;
@@ -372,11 +418,15 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
           &option_index)) != -1) {
     switch (c) {
-      case 'Y': // yaml-file
+      case 'b': // drop-frames
+        config.drop_frames = true;
         break;
 
-      case 'b': // blocking-read
-        config.drop_frames = true;
+      case 'B': // benchmark
+        config.benchmark = true;
+        if (optarg) {
+          config.benchmark_file = optarg;
+        }
         break;
 
       case 'c': // sensor-downsampling-factor
@@ -401,6 +451,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
           std::cerr << "Error: --fps (-f) must be >= 0 (was " << optarg << ")\n";
           exit(EXIT_FAILURE);
         }
+        break;
+
+      case 'F': // bilateral-filter
+        config.bilateral_filter = true;
         break;
 
       case 'g': // ground-truth
@@ -467,10 +521,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         }
         break;
 
-      case 'o': // log-file
-        config.log_file = optarg;
-        break;
-
       case 'l': // icp-threshold
         config.icp_threshold = atof(optarg);
         break;
@@ -481,6 +531,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'N': // far-plane
         config.far_plane = atof(optarg);
+        break;
+
+      case 'o': // log-file
+        config.log_file = optarg;
         break;
 
       case 'p': // init-pose
@@ -548,8 +602,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         }
         break;
 
-      case 'F': // bilateral-filter
-        config.bilateral_filter = true;
+      case 'Y': // yaml-file
         break;
 
       default:
@@ -558,8 +611,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
     }
   }
 
-  std::replace(config.sequence_name.begin(), config.sequence_name.end(), ' ', '_');
-
   // Ensure the parameter values are valid.
   if (config.near_plane >= config.far_plane) {
     std::cerr << "Error: Near plane must be smaller than far plane ("
@@ -567,8 +618,11 @@ Configuration parseArgs(unsigned int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
 
-  std::cout << config;
-  std::cout << VoxelImpl::print_config();
+  if (config.benchmark) {
+    config.no_gui = false; // Turn log_file off
+    generateBenchmarkFile(config);
+  }
+
   return config;
 }
 

@@ -4,8 +4,10 @@ general:
                                                             # Parameter only helps name log files.
   sequence_path:              "/PATH/TO/scene.raw"
   ground_truth_file:          "/PATH/TO/association.txt"
-  output_mesh_file:           ""
+  benchmark:                  false
+  benchmark_path:             "/PATH/TO/RESULT_DIR" # or "PATH/TO/result.txt
   log_file:                   ""
+  output_mesh_file:           ""
 
   # Rates
   tracking_rate:              1

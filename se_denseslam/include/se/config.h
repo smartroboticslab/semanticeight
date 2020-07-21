@@ -137,6 +137,20 @@ struct Configuration {
   std::string log_file;
 
   /**
+   * Whether to run the pipeline in benchmark mode. Hiding the GUI results in faster operation.
+   * <br>\em Default: false
+   */
+  bool benchmark;
+
+  /**
+   * The file the benchmark results will be written to.
+   * <br>\em Default: "" if Configuration::benchmark is false
+   * <br>\em Default: autogen filename if the Configuration::benchmark argument is empty or a directory
+   */
+  std::string benchmark_file;
+
+
+  /**
    * The path to a text file containing the ground truth poses T_WC. Each line
    * of the file should correspond to a single pose. The pose should be encoded
    * in the format `tx ty tz qx qy qz qw` where `tx`, `ty` and `tz` are the
@@ -244,8 +258,17 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "Sequence name:                   " << config.sequence_name << "\n";
   out << "Sequence path:                   " << config.sequence_path << "\n";
   out << "Ground truth file:               " << config.ground_truth_file << "\n";
-  out << "Log file:                        " << config.log_file << "\n";
+  out << "Benchmark:                       " << (config.benchmark
+                                                 ? "true" : "false") << "\n";
+  if (config.benchmark) {
+  out << "Benchmark file:                  " << config.benchmark_file << "\n";
+  } else {
+  out << "Log file:                        " << (config.log_file == ""
+                                                 ? "std::cout" : config.log_file) << "\n";
+  }
+  if (config.output_mesh_file != "") {
   out << "Output mesh file:                " << config.output_mesh_file << "\n";
+  }
   out << "\n";
 
   out << "Integration rate:                " << config.integration_rate << "\n";
