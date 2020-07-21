@@ -28,33 +28,33 @@
 #include "se/utils/math_utils.h"
 
 // Default option values.
-static constexpr int default_iteration_count = 3;
-static constexpr int default_iterations[default_iteration_count] = { 10, 5, 4 };
-static constexpr float default_near_plane = 0.4f;
-static constexpr float default_far_plane = 4.0f;
-static constexpr bool default_drop_frames = false;
-static constexpr float default_fps = 0.0f;
-static constexpr bool default_left_hand_frame = false;
-static constexpr float default_icp_threshold = 1e-5;
-static constexpr int default_sensor_downsampling_factor = 1;
-static constexpr int default_integration_rate = 2;
-static constexpr int default_rendering_rate = 4;
-static constexpr int default_tracking_rate = 1;
-static const Eigen::Vector3i default_map_size(256, 256, 256);
-static const Eigen::Vector3f default_map_dim(2.f, 2.f, 2.f);
-static const Eigen::Vector3f default_t_MW_factor(0.5f, 0.5f, 0.0f);
-static constexpr bool default_no_gui = false;
-static constexpr bool default_render_volume_fullsize = false;
-static constexpr bool default_bilateral_filter = false;
-static const std::string default_output_mesh_file = "";
-static const std::string default_sequence_name = "";
-static const std::string default_sequence_path = "";
-static constexpr bool default_benchmark = false;
-static const std::string default_benchmark_path = "";
-static const std::string default_log_file = "";
-static const std::string default_ground_truth_file = "";
-static const Eigen::Matrix4f default_gt_transform = Eigen::Matrix4f::Identity();
-static const Eigen::Vector4f default_sensor_intrinsics = Eigen::Vector4f::Zero();
+static constexpr bool         default_benchmark = false;
+static const std::string      default_benchmark_path = "";
+static constexpr bool         default_bilateral_filter = false;
+static constexpr bool         default_drop_frames = false;
+static constexpr float        default_far_plane = 4.0f;
+static constexpr float        default_fps = 0.0f;
+static const std::string      default_ground_truth_file = "";
+static const Eigen::Matrix4f  default_gt_transform = Eigen::Matrix4f::Identity();
+static constexpr float        default_icp_threshold = 1e-5;
+static constexpr int          default_integration_rate = 2;
+static constexpr int          default_iteration_count = 3;
+static constexpr int          default_iterations[default_iteration_count] = { 10, 5, 4 };
+static constexpr bool         default_left_hand_frame = false;
+static const std::string      default_log_file = "";
+static constexpr float        default_near_plane = 0.4f;
+static const Eigen::Vector3i  default_map_size(256, 256, 256);
+static const Eigen::Vector3f  default_map_dim(2.f, 2.f, 2.f);
+static constexpr bool         default_no_gui = false;
+static constexpr bool         default_render_volume_fullsize = false;
+static constexpr int          default_rendering_rate = 4;
+static const std::string      default_output_mesh_file = "";
+static const std::string      default_sequence_name = "";
+static constexpr int          default_sensor_downsampling_factor = 1;
+static const Eigen::Vector4f  default_sensor_intrinsics = Eigen::Vector4f::Zero();
+static const std::string      default_sequence_path = "";
+static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.0f);
+static constexpr int          default_tracking_rate = 1;
 
 
 
