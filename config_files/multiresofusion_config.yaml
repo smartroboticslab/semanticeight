@@ -44,7 +44,6 @@ sensor:
   far_plane:                  4.0
 
 voxel_impl:
-  type:                       "multiresofusion"
   surface_boundary:           0.0
   occupancy_min_max:          [-100, 100]
   max_weight:                 100
@@ -53,5 +52,5 @@ voxel_impl:
   tau_min_max:                [0.06, 0.16]
   k_tau:                      0.026
   uncertainty_model:          quadratic # { linear, quadratic }
-  sigma_min_max:              [0.1, 0.45]  # minimum/maximum uncertainty := 3 x sigma_min/sigma_max
+  sigma_min_max:              [0.005, 0.02]  # minimum/maximum uncertainty := 3 x sigma_min/sigma_max
   k_sigma:                    0.0016
