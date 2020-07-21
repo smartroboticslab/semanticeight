@@ -3,10 +3,19 @@ import subprocess
 
 class runCommand:
     def __init__(self):
-        self.executable = None
-        self.args       = None
+        self.executable          = None
+        self.args                = None
+        self.base_benchmark_file = None
 
-    def toString(self):
+    def benchmark(self):
+        benchmark_arg = ['--benchmark=' + self.base_benchmark_file + 'result.txt']
+        return ' '.join(self.executable + self.args + benchmark_arg)
+
+    def manualBenchmark(self):
+        benchmark_arg = ['--benchmark=' + self.base_benchmark_file + 'result_manual_run.txt']
+        return ' '.join(self.executable + self.args + benchmark_arg)
+
+    def withoutBenchmark(self):
         return ' '.join(self.executable + self.args)
 
 class SLAMAlgorithm:
@@ -29,12 +38,13 @@ class SLAMAlgorithm:
         cmd_filename = os.path.splitext(self.config_yaml_path)[0].replace("config", "command.md")
 
         with open(cmd_filename, 'w') as f:
-            f.write('`' + cmd.toString().replace("result.txt", "result-manual-run.txt") + '`')
+            f.write('`' + cmd.manualBenchmark() + '`\n\n'
+                    '`' + cmd.withoutBenchmark() + '`')
 
         try:
             # Doesn't work without shell=True??
             subprocess.check_call(
-                cmd.toString(), shell=True)
+                cmd.benchmark(), shell=True)
         except Exception:
             pass
             #self.failed = True
@@ -57,10 +67,11 @@ class KinectFusion(SLAMAlgorithm):
     def _generate_run_command(self):
         args = []
         args.extend(['--yaml-file', str(self.config_yaml_path)])
-        args.extend(['--benchmark=' + self.config_yaml_path.replace("config.yaml", "result.txt")])
+        base_benchmark_file = (self.config_yaml_path.replace("config", "")).replace(".yaml", "")
         executable = [os.path.join(os.path.abspath(self.bin_path), 'se-denseslam-' +
                                    self.voxel_impl + '-' + self.sensor_type + '-main')]
         run_command = runCommand()
-        run_command.executable = executable
-        run_command.args       = args
+        run_command.executable          = executable
+        run_command.args                = args
+        run_command.base_benchmark_file = base_benchmark_file
         return run_command
