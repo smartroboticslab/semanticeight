@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
+#include <unistd.h>
 
 #include <Eigen/Dense>
 
@@ -68,6 +69,37 @@ void qtLinkKinectQt(int               argc,
                     void*             volume_render,
                     void*             rgba_render);
 
+struct ProgressBar {
+  ProgressBar(int total_frames=-1) : total_frames_(total_frames) {}
+
+  void update(int curr_frame) {
+    if (total_frames_ == -1) {
+      // "\033[K" clear line
+      std::cout << "\033[K" << "Processed frame " << std::setfill(' ') << std::setw(4)
+                << curr_frame << " of whole sequence" "\n";
+      // "\033[K" clear line "\r" move to beginning of line, "x1b[1A" move up one line
+      std::cout << "\033[K\r\x1b[1A" << std::flush;
+    } else {
+      int percent = 100 * curr_frame / total_frames_;
+      // "\033[K" clear line
+      std::cout << "\033[K" << "Processed frame " << curr_frame << " of " << total_frames_ << "\n";
+      std::stringstream ss;
+      ss << std::setfill(' ') << std::setw(3) << percent;
+      std::string progress = ss.str() + " % [" + std::string(percent, '*') + std::string(100 - percent, ' ') + "]";
+      // "\r" move to beginning of line, "x1b[1A" move up one line
+      std::cout << progress << "\r\x1b[1A" << std::flush;
+    }
+  }
+
+  void end() {
+    std::cout << "\n\n";
+  }
+
+  int total_frames_;
+};
+
+ProgressBar* progress_bar;
+
 void storeStats(
     int                                                              frame,
     std::vector<std::chrono::time_point<std::chrono::steady_clock>>& timings,
@@ -99,6 +131,7 @@ int main(int argc, char** argv) {
 
   Configuration config = parseArgs(argc, argv);
   power_monitor = new PowerMonitor();
+  progress_bar  = new ProgressBar(config.max_frame);
 
   // ========= READER INITIALIZATION  =========
   reader = createReader(&config);
@@ -191,12 +224,18 @@ int main(int argc, char** argv) {
     power_monitor->powerStats.print_all_data(powerStream);
     powerStream.close();
   }
-  std::cout << "{";
-  stats.print_all_data(std::cout, false);
-  std::cout << "}\n";
+
+  if (!config.benchmark) {
+    std::cout << "{";
+    stats.print_all_data(std::cout, false);
+    std::cout << "}\n";
+  } else {
+    progress_bar->end();
+  }
 
   //  =========  FREE BASIC BUFFERS  =========
   delete pipeline;
+  delete progress_bar;
   delete[] input_depth_image_data;
   delete[] input_rgb_image_data;
   delete[] rgba_render;
@@ -326,6 +365,11 @@ int processAll(DepthReader*   reader,
   storeStats(frame, timings, t_WC, tracked, integrated);
 
   if (config->no_gui) {
+    if (config->benchmark) {
+      if (frame % 10 == 0) {
+        progress_bar->update(frame);
+      }
+    }
     const Eigen::Vector3f t_MC = pipeline->t_MC();
     *log_stream << frame << "\t"
         << std::chrono::duration<double>(timings[1] - timings[0]).count() << "\t" // acquisition
