@@ -14,6 +14,9 @@
 #include <functional>
 #include <gtest/gtest.h>
 
+template<typename T>
+using VoxelBlockType = typename T::VoxelBlockType;
+
 float sphereDist(const Eigen::Vector3f& point,
                  const Eigen::Vector3f& centre,
                  const float            radius) {
@@ -30,13 +33,13 @@ float sphereDistNoisy(const Eigen::Vector3f& point,
   return (dist - radius) + noise(gen);
 }
 
-template <typename T>
-void updateBlock(se::VoxelBlock<T>*     block,
+template <typename VoxelBlockT>
+void updateBlock(VoxelBlockT*           block,
                  const Eigen::Vector3f& centre,
                  const float            radius,
                  const int              scale) {
   const Eigen::Vector3i block_coord = block->coordinates();
-  const int block_size = se::VoxelBlock<T>::size;
+  const int block_size = VoxelBlockT::size;
   const int stride = 1 << scale;
   for(int z = 0; z < block_size; z += stride) {
     for (int y = 0; y < block_size; y += stride) {
@@ -91,13 +94,13 @@ TEST_F(MultiresESDFMovingSphereTest, Integration) {
   Eigen::Vector3f centre = Eigen::Vector3f::Constant(centre_);
   int scale = 0;
   float radius = this->radius_;
-  auto update_op = [&centre, &scale, radius](se::VoxelBlock<MultiresTSDF::VoxelType>* block) {
+  auto update_op = [&centre, &scale, radius](VoxelBlockType<MultiresTSDF::VoxelType>* block) {
     updateBlock(block, centre, radius, scale);
   };
 
   for(int i = 0; i < 5; ++i) {
     se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), update_op);
-    auto op = [](se::VoxelBlock<MultiresTSDF::VoxelType>* block) { se::multires::propagateUp(block, 0); };
+    auto op = [](VoxelBlockType<MultiresTSDF::VoxelType>* block) { se::multires::propagateUp(block, 0); };
     se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), op);
 
     {
@@ -115,7 +118,7 @@ TEST_F(MultiresESDFMovingSphereTest, Integration) {
   for(int i = 5; i < 10; ++i) {
     se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), update_op);
     auto& octree_ref = octree_;
-    auto op = [&octree_ref, scale](se::VoxelBlock<MultiresTSDF::VoxelType>* block) { se::multires::propagateDown(octree_ref, block, scale, 0); };
+    auto op = [&octree_ref, scale](VoxelBlockType<MultiresTSDF::VoxelType>* block) { se::multires::propagateDown(octree_ref, block, scale, 0); };
     se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), op);
 
     {

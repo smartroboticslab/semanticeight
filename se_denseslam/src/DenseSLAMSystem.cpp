@@ -203,7 +203,7 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
                                 const unsigned     frame) {
 
   const int num_blocks_per_pixel = map_->size()
-    / ((se::VoxelBlock<VoxelImpl::VoxelType>::size));
+    / ((VoxelBlockType::size));
   const size_t num_blocks_total = num_blocks_per_pixel
     * image_res_.x() * image_res_.y();
   allocation_list_.reserve(num_blocks_total);

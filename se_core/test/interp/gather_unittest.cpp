@@ -39,6 +39,8 @@ struct TestVoxelT {
   static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
+  using VoxelBlockType = se::VoxelBlock<TestVoxelT>;
+
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
   template <typename BufferT>
@@ -79,13 +81,13 @@ TEST_F(GatherTest, GatherLocal) {
 
 TEST_F(GatherTest, ZCrosses) {
   TestVoxelT::VoxelData data[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
+  const unsigned block_size = TestVoxelT::VoxelBlockType::size;
   const Eigen::Vector3i base_coord = {132, 128, 135};
   unsigned int crossmask = ((base_coord.x() % block_size) == block_size - 1 << 2) |
                            ((base_coord.y() % block_size) == block_size - 1 << 1) |
                             (base_coord.z() % block_size) == block_size - 1;
   ASSERT_EQ(crossmask, 1);
-  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -95,13 +97,13 @@ TEST_F(GatherTest, ZCrosses) {
 
 TEST_F(GatherTest, YCrosses) {
   TestVoxelT::VoxelData data[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
+  const unsigned block_size = TestVoxelT::VoxelBlockType::size;
   const Eigen::Vector3i base_coord = {132, 135, 132};
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 2);
-  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -111,13 +113,13 @@ TEST_F(GatherTest, YCrosses) {
 
 TEST_F(GatherTest, XCrosses) {
   TestVoxelT::VoxelData data[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
+  const unsigned block_size = TestVoxelT::VoxelBlockType::size;
   const Eigen::Vector3i base_coord = {135, 132, 132};
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 4);
-  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -127,13 +129,13 @@ TEST_F(GatherTest, XCrosses) {
 
 TEST_F(GatherTest, YZCross) {
   TestVoxelT::VoxelData data[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
+  const unsigned block_size = TestVoxelT::VoxelBlockType::size;
   const Eigen::Vector3i base_coord = {129, 135, 135};
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 3);
-  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -143,13 +145,13 @@ TEST_F(GatherTest, YZCross) {
 
 TEST_F(GatherTest, XZCross) {
   TestVoxelT::VoxelData data[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
+  const unsigned block_size = TestVoxelT::VoxelBlockType::size;
   const Eigen::Vector3i base_coord = {135, 131, 135};
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 5);
-  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -159,13 +161,13 @@ TEST_F(GatherTest, XZCross) {
 
 TEST_F(GatherTest, XYCross) {
   TestVoxelT::VoxelData data[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
+  const unsigned block_size = TestVoxelT::VoxelBlockType::size;
   const Eigen::Vector3i base_coord = {135, 135, 138};
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 6);
-  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -175,13 +177,13 @@ TEST_F(GatherTest, XYCross) {
 
 TEST_F(GatherTest, AllCross) {
   TestVoxelT::VoxelData data[8];
-  const unsigned block_size = se::VoxelBlock<TestVoxelT>::size;
+  const unsigned block_size = TestVoxelT::VoxelBlockType::size;
   const Eigen::Vector3i base_coord = {135, 135, 135};
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 7);
-  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {

@@ -104,7 +104,7 @@ size_t MultiresTSDF::buildAllocationList(
             && (voxel_coord_f.y() >= 0)
             && (voxel_coord_f.z() >= 0)) {
           const Eigen::Vector3i voxel_coord = voxel_coord_f.cast<int>();
-          se::VoxelBlock<MultiresTSDF::VoxelType>* block = map.fetch(
+          VoxelBlockType* block = map.fetch(
               voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
           if (block == nullptr) {
             const se::key_t k = map.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(),

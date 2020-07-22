@@ -133,7 +133,7 @@ size_t OFusion::buildAllocationList(
               allocation_list[idx] = voxel_key;
             }
           } else if (depth >= block_depth) {
-            static_cast<se::VoxelBlock<OFusion::VoxelType>*>(node_ptr)->active(true);
+            static_cast<VoxelBlockType*>(node_ptr)->active(true);
           }
         }
 

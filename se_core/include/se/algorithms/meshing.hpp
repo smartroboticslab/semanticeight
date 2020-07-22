@@ -35,6 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "edge_tables.h"
 
 namespace se {
+
+template<typename T>
+using VoxelBlockType = typename T::VoxelBlockType;
+
 namespace meshing {
   enum status : uint8_t {
     OUTSIDE = 0x0,
@@ -115,8 +119,8 @@ namespace meshing {
       return Eigen::Vector3f::Constant(0);
     }
 
-  template <typename FieldType, typename DataT>
-    inline void gather_data( const se::VoxelBlock<FieldType>* cached, DataT data[8],
+  template <typename FieldType, template <typename FieldT> class VoxelBlockT, typename DataT>
+    inline void gather_data( const VoxelBlockT<FieldType>* cached, DataT data[8],
         const int x, const int y, const int z) {
       data[0] = cached->data(Eigen::Vector3i(x, y, z));
       data[1] = cached->data(Eigen::Vector3i(x + 1, y, z));
@@ -141,12 +145,13 @@ namespace meshing {
                data[7] = map.getFine(x, y + 1, z + 1);
              }
 
-  template <typename FieldType, template <typename FieldT> class OctreeT,
+  template <typename FieldType, template <typename FieldT> class VoxelBlockT,
+  template <typename FieldT> class OctreeT,
   typename InsidePredicate>
   uint8_t compute_index(const OctreeT<FieldType>& map,
-  const se::VoxelBlock<FieldType>* cached, InsidePredicate inside,
+  const VoxelBlockT<FieldType>* cached, InsidePredicate inside,
   const unsigned x, const unsigned y, const unsigned z){
-    unsigned int block_size =  se::VoxelBlock<FieldType>::size;
+    unsigned int block_size =  VoxelBlockT<FieldType>::size;
     unsigned int local = ((x % block_size == block_size - 1) << 2) |
       ((y % block_size == block_size - 1) << 1) |
       ((z % block_size) == block_size - 1);
@@ -193,7 +198,7 @@ namespace algorithms {
     {
 
       using namespace meshing;
-      std::vector<se::VoxelBlock<FieldType>*> block_list;
+      std::vector<VoxelBlockType<FieldType>*> block_list;
       std::mutex lck;
       const int map_size = map.size();
       const float map_dim = map.dim();
@@ -203,8 +208,8 @@ namespace algorithms {
 
 #pragma omp parallel for
       for (size_t i = 0; i < block_list.size(); i++) {
-        se::VoxelBlock<FieldType>* block = static_cast<se::VoxelBlock<FieldType> *>(block_list[i]);
-        const int block_size = se::VoxelBlock<FieldType>::size;
+        VoxelBlockType<FieldType>* block = static_cast<VoxelBlockType<FieldType> *>(block_list[i]);
+        const int block_size = VoxelBlockType<FieldType>::size;
         const Eigen::Vector3i& start_coord = block->coordinates();
         const Eigen::Vector3i last_coord =
           (block->coordinates() + Eigen::Vector3i::Constant(block_size)).cwiseMin(

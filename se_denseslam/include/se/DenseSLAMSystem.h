@@ -56,6 +56,7 @@
 
 
 class DenseSLAMSystem {
+  using VoxelBlockType = typename VoxelImpl::VoxelType::VoxelBlockType;
 
   private:
     Eigen::Vector2i image_res_;

@@ -12,7 +12,7 @@
 
 
 
-struct Voxel {
+struct TestVoxelT {
   struct VoxelData {
     float x;
     double y;
@@ -20,6 +20,8 @@ struct Voxel {
 
   static inline VoxelData invalid(){ return {0.f, 0.0}; }
   static inline VoxelData initData(){ return {0.f, 0.0}; }
+
+  using VoxelBlockType = se::VoxelBlock<TestVoxelT>;
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -33,12 +35,12 @@ class OctoMapIO : public ::testing::Test {
   protected:
     virtual void SetUp() {
       // Initialize the octrees.
-      octree_uninitialized_ = std::unique_ptr<se::Octree<Voxel>>(new se::Octree<Voxel>);
-      octree_unallocated_ = std::unique_ptr<se::Octree<Voxel>>(new se::Octree<Voxel>);
+      octree_uninitialized_ = std::unique_ptr<se::Octree<TestVoxelT>>(new se::Octree<TestVoxelT>);
+      octree_unallocated_ = std::unique_ptr<se::Octree<TestVoxelT>>(new se::Octree<TestVoxelT>);
       octree_unallocated_->init(octree_size_, octree_dim_);
-      octree_unknown_ = std::unique_ptr<se::Octree<Voxel>>(new se::Octree<Voxel>);
+      octree_unknown_ = std::unique_ptr<se::Octree<TestVoxelT>>(new se::Octree<TestVoxelT>);
       octree_unknown_->init(octree_size_, octree_dim_);
-      octree_ = std::unique_ptr<se::Octree<Voxel>>(new se::Octree<Voxel>);
+      octree_ = std::unique_ptr<se::Octree<TestVoxelT>>(new se::Octree<TestVoxelT>);
       octree_->init(octree_size_, octree_dim_);
 
       // Allocate some VoxelBlocks/Nodes.
@@ -67,7 +69,7 @@ class OctoMapIO : public ::testing::Test {
       for (int z = 0; z < 8; ++z) {
         for (int y = 0; y < octree_size_; ++y) {
           for (int x = 0; x < octree_size_; ++x) {
-            const Voxel::VoxelData voxel_data = {(z - 4) * value_increment_, 0.0};
+            const TestVoxelT::VoxelData voxel_data = {(z - 4) * value_increment_, 0.0};
             octree_->set(x, y, z, voxel_data);
             num_updated_voxels++;
           }
@@ -75,10 +77,10 @@ class OctoMapIO : public ::testing::Test {
       }
     }
 
-    std::unique_ptr<se::Octree<Voxel>> octree_uninitialized_;
-    std::unique_ptr<se::Octree<Voxel>> octree_unallocated_;
-    std::unique_ptr<se::Octree<Voxel>> octree_unknown_;
-    std::unique_ptr<se::Octree<Voxel>> octree_;
+    std::unique_ptr<se::Octree<TestVoxelT>> octree_uninitialized_;
+    std::unique_ptr<se::Octree<TestVoxelT>> octree_unallocated_;
+    std::unique_ptr<se::Octree<TestVoxelT>> octree_unknown_;
+    std::unique_ptr<se::Octree<TestVoxelT>> octree_;
     const int octree_size_ = 32;
     const float octree_dim_ = 1.f;
     const float voxel_dim_ = octree_dim_ / octree_size_;

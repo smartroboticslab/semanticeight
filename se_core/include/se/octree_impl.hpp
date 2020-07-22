@@ -36,13 +36,13 @@ namespace se {
 
 template <typename T>
 inline typename Octree<T>::VoxelData Octree<T>::getAtPoint(const Eigen::Vector3f& point_M,
-    VoxelBlock<T>* cached) const {
+    VoxelBlockType* cached) const {
   return get(point_M, 0, cached);
 }
 
 template <typename T>
 inline typename Octree<T>::VoxelData Octree<T>::getAtPoint(const Eigen::Vector3f& point_M,
-    int& scale, VoxelBlock<T>* cached) const {
+    int& scale, VoxelBlockType* cached) const {
 
   const Eigen::Vector3i voxel_coord = (point_M.homogeneous() *
       Eigen::Vector4f::Constant(inverse_voxel_dim_)).template head<3>().template cast<int>();
@@ -75,9 +75,9 @@ inline typename Octree<T>::VoxelData Octree<T>::getAtPoint(const Eigen::Vector3f
   }
 
   // Get the element in the voxel block
-  auto block = static_cast<VoxelBlock<T>*>(node);
+  auto block = static_cast<VoxelBlockType*>(node);
   scale = std::max(block->current_scale(), scale);
-  return static_cast<VoxelBlock<T>*>(node)->data(voxel_coord, scale);
+  return static_cast<VoxelBlockType*>(node)->data(voxel_coord, scale);
 }
 
 template <typename T>
@@ -102,7 +102,7 @@ inline void Octree<T>::set(const int        x,
     node = node_tmp;
   }
 
-  static_cast<VoxelBlock<T> *>(node)->setData(Eigen::Vector3i(x, y, z), data);
+  static_cast<VoxelBlockType *>(node)->setData(Eigen::Vector3i(x, y, z), data);
 }
 
 
@@ -143,7 +143,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
     node = node_tmp;
   }
 
-  return static_cast<VoxelBlock<T> *>(node)->data(Eigen::Vector3i(x, y, z));
+  return static_cast<VoxelBlockType *>(node)->data(Eigen::Vector3i(x, y, z));
 }
 
 
@@ -193,7 +193,7 @@ inline typename Octree<T>::VoxelData Octree<T>::getFine(
   }
 
   if (min_node_size == block_size) {
-    auto block = static_cast<VoxelBlock<T> *>(node);
+    auto block = static_cast<VoxelBlockType *>(node);
     return block->data(Eigen::Vector3i(x, y, z), std::max(scale, block->current_scale()));
   } else {
     return (node->parent())->data_[child_idx];
@@ -288,13 +288,13 @@ inline std::array<typename Octree<T>::VoxelData, 6> Octree<T>::get_face_neighbor
 
 template <typename T>
 inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
-   const int y, const int z, VoxelBlock<T>* cached) const {
+   const int y, const int z, VoxelBlockType* cached) const {
   return get(x, y, z, 0, cached);
 }
 
 template <typename T>
 inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
-   const int y, const int z, int& scale, VoxelBlock<T>* cached) const {
+   const int y, const int z, int& scale, VoxelBlockType* cached) const {
 
   if(cached != NULL){
     const Eigen::Vector3i voxel_coord = Eigen::Vector3i(x, y, z);
@@ -320,7 +320,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
       return T::initData();
     }
   }
-  auto block = static_cast<VoxelBlock<T> *>(node);
+  auto block = static_cast<VoxelBlockType *>(node);
   scale = std::max(block->current_scale(), scale);
   return block->data(Eigen::Vector3i(x, y, z), scale);
 }
@@ -359,7 +359,7 @@ void Octree<T>::init(int size, float dim) {
 }
 
 template <typename T>
-inline VoxelBlock<T>* Octree<T>::fetch(const int x, const int y,
+inline typename Octree<T>::VoxelBlockType* Octree<T>::fetch(const int x, const int y,
    const int z) const {
 
   Node<T>* node = root_;
@@ -375,7 +375,7 @@ inline VoxelBlock<T>* Octree<T>::fetch(const int x, const int y,
       return NULL;
     }
   }
-  return static_cast<VoxelBlock<T>* > (node);
+  return static_cast<VoxelBlockType* > (node);
 }
 
 template <typename T>
@@ -434,10 +434,10 @@ Node<T>* Octree<T>::insert(const int x, const int y, const int z,
       if(node_size == block_size) {
         node_tmp = pool_.acquireBlock();
         node_tmp->parent() = node;
-        static_cast<VoxelBlock<T> *>(node_tmp)->coordinates(
+        static_cast<VoxelBlockType *>(node_tmp)->coordinates(
             Eigen::Vector3i(unpack_morton(prefix)));
-        static_cast<VoxelBlock<T> *>(node_tmp)->active(true);
-        static_cast<VoxelBlock<T> *>(node_tmp)->code_ = prefix | d;
+        static_cast<VoxelBlockType *>(node_tmp)->active(true);
+        static_cast<VoxelBlockType *>(node_tmp)->code_ = prefix | d;
         node->children_mask_ = node->children_mask_ | (1 << child_idx);
       } else {
         node_tmp = pool_.acquireNode();
@@ -456,8 +456,8 @@ Node<T>* Octree<T>::insert(const int x, const int y, const int z,
 }
 
 template <typename T>
-VoxelBlock<T>* Octree<T>::insert(const int x, const int y, const int z) {
-  return static_cast<VoxelBlock<T> * >(insert(x, y, z, voxel_depth_));
+typename Octree<T>::VoxelBlockType* Octree<T>::insert(const int x, const int y, const int z) {
+  return static_cast<VoxelBlockType * >(insert(x, y, z, voxel_depth_));
 }
 
 
@@ -681,7 +681,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
     Eigen::Vector3i & upper_coord = upper_lower_coord;
 
 
-    VoxelBlock<T>* block = fetch(base_coord.x(), base_coord.y(), base_coord.z());
+    VoxelBlockType* block = fetch(base_coord.x(), base_coord.y(), base_coord.z());
     gradient.x() = (((select_value(get(upper_lower_coord.x(), lower_coord.y(), lower_coord.z(), scale, block))
             - select_value(get(lower_lower_coord.x(), lower_coord.y(), lower_coord.z(), scale, block))) * (1 - factor.x())
           + (select_value(get(upper_upper_coord.x(), lower_coord.y(), lower_coord.z(), scale, block))
@@ -881,9 +881,9 @@ bool Octree<T>::allocate_depth(key_t* octant_keys, int num_tasks, int target_dep
           *node = pool_.acquireBlock();
           (*node)->parent() = parent;
           (*node)->size_ = octant_size;
-          static_cast<VoxelBlock<T> *>(*node)->coordinates(Eigen::Vector3i(unpack_morton(octant_key)));
-          static_cast<VoxelBlock<T> *>(*node)->active(true);
-          static_cast<VoxelBlock<T> *>(*node)->code_ = octant_key | depth;
+          static_cast<VoxelBlockType *>(*node)->coordinates(Eigen::Vector3i(unpack_morton(octant_key)));
+          static_cast<VoxelBlockType *>(*node)->active(true);
+          static_cast<VoxelBlockType *>(*node)->code_ = octant_key | depth;
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         } else {
           *node = pool_.acquireNode();
@@ -900,7 +900,7 @@ bool Octree<T>::allocate_depth(key_t* octant_keys, int num_tasks, int target_dep
 }
 
 template <typename T>
-void Octree<T>::getBlockList(std::vector<VoxelBlock<T>*>& block_list, bool active){
+void Octree<T>::getBlockList(std::vector<VoxelBlockType*>& block_list, bool active){
   Node<T>* node = root_;
   if(!node) return;
   if(active) getActiveBlockList(node, block_list);
@@ -909,7 +909,7 @@ void Octree<T>::getBlockList(std::vector<VoxelBlock<T>*>& block_list, bool activ
 
 template <typename T>
 void Octree<T>::getActiveBlockList(Node<T>* node,
-    std::vector<VoxelBlock<T>*>& block_list){
+    std::vector<VoxelBlockType*>& block_list){
   if(!node) return;
   std::queue<Node<T> *> node_queue;
   node_queue.push(node);
@@ -918,7 +918,7 @@ void Octree<T>::getActiveBlockList(Node<T>* node,
     node_queue.pop();
 
     if(node_tmp->isBlock()){
-      VoxelBlock<T>* block = static_cast<VoxelBlock<T> *>(node_tmp);
+      VoxelBlockType* block = static_cast<VoxelBlockType *>(node_tmp);
       if(block->active()) block_list.push_back(block);
       continue;
     }
@@ -931,7 +931,7 @@ void Octree<T>::getActiveBlockList(Node<T>* node,
 
 template <typename T>
 void Octree<T>::getAllocatedBlockList(Node<T>* ,
-    std::vector<VoxelBlock<T>*>& block_list){
+    std::vector<VoxelBlockType*>& block_list){
   auto& block_buffer = pool_.blockBuffer();
   for(unsigned int i = 0; i < block_buffer.size(); ++i) {
     block_list.push_back(block_buffer[i]);
@@ -963,7 +963,7 @@ void Octree<T>::load(const std::string& filename) {
   std::ifstream is (filename, std::ios::binary);
   int size;
   float dim;
-  const int block_size_cube = se::VoxelBlock<T>::size_cube;
+  const int block_size_cube = VoxelBlockType::size_cube;
 
   is.read(reinterpret_cast<char *>(&size), sizeof(size));
   is.read(reinterpret_cast<char *>(&dim), sizeof(dim));
@@ -987,11 +987,11 @@ void Octree<T>::load(const std::string& filename) {
   is.read(reinterpret_cast<char *>(&num_blocks), sizeof(size_t));
   std::cout << "Reading " << num_blocks << " blocks " << std::endl;
   for(size_t i = 0; i < num_blocks; ++i) {
-    VoxelBlock<T> block;
+    VoxelBlockType block;
     internal::deserialise(block, is);
     Eigen::Vector3i block_coord = block.coordinates();
-    VoxelBlock<T>* block_ptr =
-      static_cast<VoxelBlock<T> *>(insert(block_coord.x(), block_coord.y(), block_coord.z(), keyops::depth(block.code_)));
+    VoxelBlockType* block_ptr =
+      static_cast<VoxelBlockType *>(insert(block_coord.x(), block_coord.y(), block_coord.z(), keyops::depth(block.code_)));
     block_ptr->min_scale(block.min_scale());
     block_ptr->current_scale(block.current_scale());
     std::memcpy(block_ptr->getBlockRawPtr(), block.getBlockRawPtr(), (block_size_cube + 64 + 8 + 1) * sizeof(*(block.getBlockRawPtr())));

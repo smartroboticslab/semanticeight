@@ -77,12 +77,11 @@ class node_iterator;
  * parameter see ExampleVoxelT.
  */
 template <typename T>
-class Octree
-{
+class Octree {
+  typedef typename T::VoxelData VoxelData;
+  typedef typename T::VoxelBlockType VoxelBlockType;
 
 public:
-  typedef typename T::VoxelData VoxelData;
-
   // Compile-time constant expressions
   // # of voxels per side in a voxel block
   static constexpr unsigned int block_size = BLOCK_SIZE;
@@ -273,7 +272,7 @@ public:
    * \param y y coordinate in interval [0, size]
    * \param z z coordinate in interval [0, size]
    */
-  VoxelBlock<T>* fetch(const int x, const int y, const int z) const;
+  VoxelBlockType* fetch(const int x, const int y, const int z) const;
 
   /*! \brief Fetch the node (x,y,z) at depth
    * \param x x coordinate in interval [0, size]
@@ -297,7 +296,7 @@ public:
    * \param y y coordinate in interval [0, size]
    * \param z z coordinate in interval [0, size]
    */
-  VoxelBlock<T>* insert(const int x, const int y, const int z);
+  VoxelBlockType* insert(const int x, const int y, const int z);
 
   /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
    *
@@ -490,7 +489,7 @@ public:
    * \param active boolean switch. Set to true to retrieve visible, allocated
    * blocks, false to retrieve all allocated blocks.
    */
-  void getBlockList(std::vector<VoxelBlock<T> *>& block_list, bool active);
+  void getBlockList(std::vector<VoxelBlockType *>& block_list, bool active);
   typename T::template MemoryPoolType<T>& pool() { return pool_; };
   const typename T::template MemoryPoolType<T>& pool() const { return pool_; };
 
@@ -554,13 +553,13 @@ private:
   int reserved_ = 0;
 
   // Private implementation of cached methods
-  VoxelData get(const int x, const int y, const int z, VoxelBlock<T>* cached) const;
-  VoxelData getAtPoint(const Eigen::Vector3f& point_M, VoxelBlock<T>* cached) const;
+  VoxelData get(const int x, const int y, const int z, VoxelBlockType* cached) const;
+  VoxelData getAtPoint(const Eigen::Vector3f& point_M, VoxelBlockType* cached) const;
 
   VoxelData get(const int x, const int y, const int z,
-     int&  scale, VoxelBlock<T>* cached) const;
+      int&  scale, VoxelBlockType* cached) const;
   VoxelData getAtPoint(const Eigen::Vector3f& point_M, int& scale,
-      VoxelBlock<T>* cached) const;
+      VoxelBlockType* cached) const;
 
   // Parallel allocation of a given tree depth for a set of input keys.
   // Pre: depth above target_depth must have been already allocated
@@ -572,8 +571,8 @@ private:
 
   int blockCountRecursive(Node<T>*);
   int nodeCountRecursive(Node<T>*);
-  void getActiveBlockList(Node<T>*, std::vector<VoxelBlock<T> *>& block_list);
-  void getAllocatedBlockList(Node<T>*, std::vector<VoxelBlock<T> *>& block_list);
+  void getActiveBlockList(Node<T>*, std::vector<VoxelBlockType *>& block_list);
+  void getAllocatedBlockList(Node<T>*, std::vector<VoxelBlockType *>& block_list);
 
   void deleteNode(Node<T>** node);
   void deallocateTree(){ deleteNode(&root_); }

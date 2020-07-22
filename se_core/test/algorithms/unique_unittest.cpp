@@ -41,6 +41,8 @@ struct TestVoxelT {
   static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
+  using VoxelBlockType = se::VoxelBlock<TestVoxelT>;
+
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
   template <typename BufferT>
@@ -110,7 +112,7 @@ TEST_F(UniqueMultiscaleTest, FilterAncestors) {
 TEST_F(UniqueMultiscaleTest, FilterDuplicatesTillLevel) {
   /*
    * 0x1FFu extracts the last 9 bits of a morton number,
-   * corresponding to the size of a voxel block: 3*log2(se::VoxelBlock<T>::size)
+   * corresponding to the size of a voxel block: 3*log2(TestVoxelT::VoxelBlockType::size)
    */
   const int last = se::algorithms::unique_multiscale(keys.data(), keys.size());
   for(int i = 1; i < last; ++i) {

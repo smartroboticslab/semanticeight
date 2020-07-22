@@ -87,11 +87,15 @@ struct MultiresOFusion {
     static inline VoxelData invalid()  { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
     static inline VoxelData initData() { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
 
+    using VoxelBlockType = se::VoxelBlock<MultiresOFusion::VoxelType>;
+
     template <typename T>
     using MemoryPoolType = se::MemoryPool<T>;
     template <typename ElemT>
     using MemoryBufferType = std::vector<ElemT>;
   };
+
+  using VoxelBlockType = typename MultiresOFusion::VoxelType::VoxelBlockType;
 
   /**
    * Set to true for TSDF maps, false for occupancy maps.

@@ -40,6 +40,8 @@ struct TestVoxelT {
   static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
+  using VoxelBlockType = se::VoxelBlock<TestVoxelT>;
+
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
   template <typename BufferT>
@@ -101,7 +103,7 @@ TEST_F(MultiscaleTest, Iterator) {
   for(int i = 512; node != nullptr; node = it.next(), i /= 2){
     const Eigen::Vector3i node_coord = se::keyops::decode(node->code_);
     const int node_size = node->size_;
-    const se::Octree<TestVoxelT>::VoxelData data = node->data_[0];
+    const TestVoxelT::VoxelData data = node->data_[0];
     EXPECT_EQ(node_size, i);
   }
 }
@@ -150,8 +152,8 @@ TEST_F(MultiscaleTest, OctantAlloc) {
 
 TEST_F(MultiscaleTest, SingleInsert) {
   Eigen::Vector3i voxel_coord(32, 208, 44);
-  const int block_size = se::VoxelBlock<TestVoxelT>::size;
-  se::VoxelBlock<TestVoxelT>* block = octree_.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+  const int block_size = TestVoxelT::VoxelBlockType::size;
+  TestVoxelT::VoxelBlockType* block = octree_.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   Eigen::Vector3i block_coord = block->coordinates();
   Eigen::Vector3i block_coord_rounded = block_size * (voxel_coord / block_size);
   ASSERT_TRUE(block_coord == block_coord_rounded);
@@ -188,6 +190,8 @@ struct TestVoxel2T {
   static inline VoxelData invalid(){ return Eigen::Vector3i::Zero(); }
   static inline VoxelData initData(){ return Eigen::Vector3i::Zero(); }
 
+  using VoxelBlockType = se::VoxelBlock<TestVoxel2T>;
+
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
   template <typename BufferT>
@@ -197,7 +201,7 @@ struct TestVoxel2T {
 TEST(MultiscaleBlock, ReadWrite) {
   se::Octree<TestVoxel2T> octree;
   octree.init(1024, 10);
-  const int block_size = se::VoxelBlock<TestVoxel2T>::size;
+  const int block_size = TestVoxel2T::VoxelBlockType::size;
   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with rd()
   std::uniform_int_distribution<> dis(0, 1023);

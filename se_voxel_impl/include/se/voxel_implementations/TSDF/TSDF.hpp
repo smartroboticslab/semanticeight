@@ -55,13 +55,15 @@ struct TSDF {
     static inline VoxelData invalid()     { return {1.f, -1.f}; }
     static inline VoxelData initData() { return {1.f,  0.f}; }
 
+    using VoxelBlockType = se::VoxelBlock<TSDF::VoxelType>;
+
     template <typename T>
     using MemoryPoolType = se::PagedMemoryPool<T>;
     template <typename ElemT>
     using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };
 
-
+  using VoxelBlockType = TSDF::VoxelType::VoxelBlockType;
 
   /**
    * The normals must be inverted when rendering a TSDF map.

@@ -39,10 +39,13 @@
 #include "se/sensor_implementation.hpp"
 
 namespace se {
+
+
 namespace functor {
   template <typename FieldType, template <typename FieldT> class OctreeT,
             typename UpdateF>
   class projective_functor {
+    using VoxelBlockType = typename FieldType::VoxelBlockType;
 
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -66,14 +69,14 @@ namespace functor {
       void build_active_list() {
         using namespace std::placeholders;
         /* Retrieve the active list */
-        const typename FieldType::template MemoryBufferType<se::VoxelBlock<FieldType>>& block_buffer = octree_.pool().blockBuffer();
+        const typename FieldType::template MemoryBufferType<VoxelBlockType>& block_buffer = octree_.pool().blockBuffer();
 
         /* Predicates definition */
         const float voxel_dim = octree_.dim() / octree_.size();
         auto in_frustum_predicate =
-          std::bind(algorithms::in_frustum<se::VoxelBlock<FieldType>>,
+          std::bind(algorithms::in_frustum<VoxelBlockType>,
               std::placeholders::_1, voxel_dim, T_CM_, sensor_);
-        auto is_active_predicate = [](const se::VoxelBlock<FieldType>* block) {
+        auto is_active_predicate = [](const VoxelBlockType* block) {
           return block->active();
         };
 
@@ -82,7 +85,7 @@ namespace functor {
             in_frustum_predicate);
       }
 
-      void update_block(se::VoxelBlock<FieldType>* block,
+      void update_block(VoxelBlockType* block,
                         const float                voxel_dim) {
         /* Is this the VoxelBlock centre? */
         const Eigen::Vector3i block_coord = block->coordinates();
@@ -90,7 +93,7 @@ namespace functor {
         block->current_scale(0);
 
         /* Iterate over each voxel in the VoxelBlock. */
-        const unsigned int block_size = se::VoxelBlock<FieldType>::size;
+        const unsigned int block_size = VoxelBlockType::size;
         const unsigned int x_last = block_coord.x() + block_size;
         const unsigned int y_last = block_coord.y() + block_size;
         const unsigned int z_last = block_coord.z() + block_size;
@@ -170,7 +173,7 @@ namespace functor {
       const SensorImpl sensor_;
       const Eigen::Vector3f sample_offset_frac_;
       const Eigen::Vector2i image_res_;
-      std::vector<se::VoxelBlock<FieldType>*> active_list_;
+      std::vector<VoxelBlockType*> active_list_;
   };
 
   /*! \brief Create a projective_functor and call projective_functor::apply.

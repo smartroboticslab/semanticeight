@@ -34,10 +34,12 @@ endif()
 # to folder names inside se_voxel_impl/include/se/voxel_implementations. When
 # adding a new voxel implementation, appending it to this list is enough to
 # compile supereight with it.
+#set(SUPEREIGHT_VOXEL_IMPLS TSDF)
 set(SUPEREIGHT_VOXEL_IMPLS MultiresOFusion OFusion MultiresTSDF TSDF)
 
 # The camera implementations to compile. The valid values are the names of the
 # *Sensor classes defined in se_shared/include/se/sensor.hpp.
+#set(SUPEREIGHT_SENSOR_IMPLS PinholeCamera)
 set(SUPEREIGHT_SENSOR_IMPLS PinholeCamera OusterLidar)
 
 # Iterate over each voxel and sensor implementaion and compile into an

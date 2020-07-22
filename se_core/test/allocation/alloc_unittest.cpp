@@ -36,6 +36,8 @@ struct TestVoxelT {
   static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 0.f; }
 
+  using VoxelBlockType = se::VoxelBlock<TestVoxelT>;
+
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
   template <typename BufferT>
@@ -62,7 +64,7 @@ TEST(AllocationTest, SetSingleVoxel) {
   se::key_t allocation_list[1] = {code};
   octree.allocate(allocation_list, 1);
 
-  se::VoxelBlock<TestVoxelT>* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   TestVoxelT::VoxelData written_data = 2.f;
   block->setData(voxel_coord, written_data);
 
@@ -143,7 +145,7 @@ TEST(AllocationTest, ParentInsert) {
   std::uniform_int_distribution<int> dis(0, map_size);
   const Eigen::Vector3i voxel_coord = {dis(gen), dis(gen), dis(gen)};
   octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-  se::VoxelBlock<TestVoxelT>* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   EXPECT_NE(block, nullptr);
   se::Node<TestVoxelT>* parent = block->parent();
   for(int depth = block_depth - 1; depth >= 0; depth--){
@@ -167,7 +169,7 @@ TEST(AllocationTest, ParentAllocation) {
   se::key_t allocation_list[1] = {code};
   octree.allocate(allocation_list, 1);
 
-  se::VoxelBlock<TestVoxelT>* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+  TestVoxelT::VoxelBlockType* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   EXPECT_NE(block, nullptr);
   se::Node<TestVoxelT>* parent = block->parent();
   for(int depth = block_depth - 1; depth >= 0; depth--){

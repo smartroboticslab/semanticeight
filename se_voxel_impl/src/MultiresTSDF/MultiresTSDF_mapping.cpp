@@ -50,9 +50,9 @@ namespace se {
  * \param[in] block VoxelBlock to be updated
  * \param[in] scale scale from which propagate up voxel values
 */
-    void propagateUp(se::VoxelBlock<MultiresTSDF::VoxelType>* block, const int scale) {
+    void propagateUp(MultiresTSDF::VoxelBlockType* block, const int scale) {
       const Eigen::Vector3i block_coord = block->coordinates();
-      const int block_size = se::VoxelBlock<MultiresTSDF::VoxelType>::size;
+      const int block_size = MultiresTSDF::VoxelBlockType::size;
       for (int voxel_scale = scale; voxel_scale < se::math::log2_const(block_size); ++voxel_scale) {
         const int stride = 1 << (voxel_scale + 1);
         for (int z = 0; z < block_size; z += stride)
@@ -133,12 +133,12 @@ namespace se {
  * \param[in] scale scale from which propagate down voxel values
 */
     void propagateDown(const se::Octree<MultiresTSDF::VoxelType>& map,
-                       se::VoxelBlock<MultiresTSDF::VoxelType>*  block,
-                       const int                                 scale,
-                       const int                                 min_scale,
-                       const int                                 max_weight = INT_MAX) {
+                       MultiresTSDF::VoxelBlockType*              block,
+                       const int                                  scale,
+                       const int                                  min_scale,
+                       const int                                  max_weight = INT_MAX) {
       const Eigen::Vector3i block_coord = block->coordinates();
-      const int block_size = se::VoxelBlock<MultiresTSDF::VoxelType>::size;
+      const int block_size = MultiresTSDF::VoxelBlockType::size;
       for (int voxel_scale = scale; voxel_scale > min_scale; --voxel_scale) {
         const int stride = 1 << voxel_scale;
         for (int z = 0; z < block_size; z += stride)
@@ -182,7 +182,7 @@ namespace se {
  * Update a voxel block at a given scale by first propagating down the parent
  * values and then integrating the new measurement;
 */
-    void propagateUpdate(se::VoxelBlock<MultiresTSDF::VoxelType>*   block,
+    void propagateUpdate(MultiresTSDF::VoxelBlockType*              block,
                          const int                                  voxel_scale,
                          const se::Octree<MultiresTSDF::VoxelType>& map,
                          const se::Image<float>&                    depth_image,
@@ -193,7 +193,7 @@ namespace se {
                          const Eigen::Vector3f&                     sample_offset_frac,
                          const float                                mu) {
 
-      const int block_size = se::VoxelBlock<MultiresTSDF::VoxelType>::size;
+      const int block_size = MultiresTSDF::VoxelBlockType::size;
       const int parent_scale = voxel_scale + 1;
       const int parent_stride = 1 << parent_scale;
       const int voxel_stride = parent_stride >> 1;
@@ -296,9 +296,9 @@ namespace se {
       const int max_weight;
       const Eigen::Vector3f& sample_offset_frac;
 
-      void operator()(se::VoxelBlock<MultiresTSDF::VoxelType>* block) {
+      void operator()(MultiresTSDF::VoxelBlockType* block) {
 
-        constexpr int block_size = se::VoxelBlock<MultiresTSDF::VoxelType>::size;
+        constexpr int block_size = MultiresTSDF::VoxelBlockType::size;
         const Eigen::Vector3i block_coord = block->coordinates();
         const Eigen::Vector3f block_sample_offset = (sample_offset_frac.array().colwise() *
             Eigen::Vector3f::Constant(block_size).array());
@@ -373,15 +373,15 @@ void MultiresTSDF::integrate(se::Octree<MultiresTSDF::VoxelType>& map,
   using namespace std::placeholders;
 
   /* Retrieve the active list */
-  std::vector<se::VoxelBlock<MultiresTSDF::VoxelType> *> active_list;
+  std::vector<VoxelBlockType *> active_list;
   auto& block_buffer = map.pool().blockBuffer();
 
   /* Predicates definition */
   const float voxel_dim = map.dim() / map.size();
   auto in_frustum_predicate =
-  std::bind(se::algorithms::in_frustum<se::VoxelBlock<MultiresTSDF::VoxelType>>,
+  std::bind(se::algorithms::in_frustum<VoxelBlockType>,
       std::placeholders::_1, voxel_dim, T_CM, sensor);
-  auto is_active_predicate = [](const se::VoxelBlock<MultiresTSDF::VoxelType> *block) {
+  auto is_active_predicate = [](const VoxelBlockType* block) {
     return block->active();
   };
   se::algorithms::filter(active_list, block_buffer, is_active_predicate,

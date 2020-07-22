@@ -100,7 +100,7 @@ size_t TSDF::buildAllocationList(
             && (voxel_coord.x() >= 0)
             && (voxel_coord.y() >= 0)
             && (voxel_coord.z() >= 0)) {
-          se::VoxelBlock<TSDF::VoxelType>* block = map.fetch(
+          VoxelBlockType* block = map.fetch(
               voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
           if (block == nullptr) {
             const se::key_t voxel_key = map.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(),

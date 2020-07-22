@@ -39,7 +39,7 @@
 struct AllocateAndUpdateRecurse {
 
 AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                        map,
-                         std::vector<se::VoxelBlock<MultiresOFusion::VoxelType>*>&      block_list,
+                         std::vector<MultiresOFusion::VoxelBlockType*>&                 block_list,
                          std::vector<std::set<se::Node<MultiresOFusion::VoxelType>*>>&  node_list,
                          const se::Image<float>&                                        depth_image,
                          const se::KernelImage* const                                   kernel_depth_image,
@@ -73,7 +73,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   se::Octree<MultiresOFusion::VoxelType>& map_;
   se::MemoryPool<MultiresOFusion::VoxelType>& pool_;
-  std::vector<se::VoxelBlock<MultiresOFusion::VoxelType>*>& block_list_;
+  std::vector<MultiresOFusion::VoxelBlockType*>& block_list_;
   std::vector<std::set<se::Node<MultiresOFusion::VoxelType>*>>& node_list_;
   const se::Image<float>& depth_image_;
   const se::KernelImage* const kernel_depth_image_;
@@ -88,7 +88,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   const float zero_depth_band_;
   const float size_to_radius;
 
-  static constexpr int max_block_scale_ =  se::math::log2_const(se::VoxelBlock<MultiresOFusion::VoxelType>::size);
+  static constexpr int max_block_scale_ =  se::math::log2_const(MultiresOFusion::VoxelBlockType::size);
 
   /**
    * \brief Propagate a summary of the eight nodes children to its parent
@@ -148,10 +148,10 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
    * \param block Voxel block to be updated
    * \param scale Scale from which propagate up voxel values
   */
-  static void propagateUp(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
-                          const int                                   scale) {
+  static void propagateUp(MultiresOFusion::VoxelBlockType* block,
+                          const int                        scale) {
     const Eigen::Vector3i block_coord = block->coordinates();
-    const int block_size = se::VoxelBlock<MultiresOFusion::VoxelType>::size;
+    const int block_size = MultiresOFusion::VoxelBlockType::size;
     for(int voxel_scale = scale; voxel_scale < max_block_scale_; ++voxel_scale) {
       const int stride = 1 << (voxel_scale + 1);
       for(int z = 0; z < block_size; z += stride) {
@@ -206,10 +206,10 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
    * \brief Update a voxel block at a given scale by first propagating down the parent
    * values and then integrating the new measurement;
   */
-  void propagateDownAndUpdate(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
-                              const int                                   scale) {
+  void propagateDownAndUpdate(MultiresOFusion::VoxelBlockType* block,
+                              const int                        scale) {
 
-    const int block_size = se::VoxelBlock<MultiresOFusion::VoxelType>::size;
+    const int block_size = MultiresOFusion::VoxelBlockType::size;
     const int parent_scale = scale + 1;
     const int parent_stride = 1 << parent_scale;
     const int voxel_stride = parent_stride >> 1;
@@ -293,10 +293,10 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
    * \brief Update a voxel block at a given scale by first updating the observed state of all voxels at the
    * scale to true if the have been partially observed (y > 0);
   */
-  void propagateUpAndUpdate(se::VoxelBlock<MultiresOFusion::VoxelType>* block,
-                       const int scale) {
+  void propagateUpAndUpdate(MultiresOFusion::VoxelBlockType* block,
+                            const int                        scale) {
     const Eigen::Vector3i block_coord = block->coordinates();
-    constexpr int block_size = se::VoxelBlock<MultiresOFusion::VoxelType>::size;
+    constexpr int block_size = MultiresOFusion::VoxelBlockType::size;
     block->current_scale(scale);
     const int stride = 1 << scale;
 
@@ -332,8 +332,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   /**
    * \brief Compute integration scale for a given voxel block and update all voxels that project into the image plane.
   */
-  void updateBlock(se::VoxelBlock<MultiresOFusion::VoxelType>* block, int /* min_scale = 0 */) {
-    constexpr int block_size = se::VoxelBlock<MultiresOFusion::VoxelType>::size;
+  void updateBlock(MultiresOFusion::VoxelBlockType* block, int /* min_scale = 0 */) {
+    constexpr int block_size = MultiresOFusion::VoxelBlockType::size;
     const Eigen::Vector3i block_coord = block->coordinates();
     const Eigen::Vector3f block_sample_offset = (sample_offset_frac_.array().colwise() *
                                                  Eigen::Vector3f::Constant(block_size).array());
@@ -393,13 +393,13 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
       auto child = node->child(child_idx);
       if (child) {
         if (child->isBlock()) {
-          se::VoxelBlock<MultiresOFusion::VoxelType>* block = dynamic_cast<se::VoxelBlock<MultiresOFusion::VoxelType>*>(child);
+          MultiresOFusion::VoxelBlockType* block = dynamic_cast<MultiresOFusion::VoxelBlockType*>(child);
           // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
           // free space integration scale or coarser (depending on later scale selection).
           updateBlock(block, MultiresOFusion::fs_integr_scale);
 #pragma omp critical (voxel_lock)
           { // Add voxel block to voxel block list for later up propagation
-            block_list_.push_back(dynamic_cast<se::VoxelBlock<MultiresOFusion::VoxelType>*>(block));
+            block_list_.push_back(dynamic_cast<MultiresOFusion::VoxelBlockType*>(block));
           }
         } else {
           freeNodeRecurse(child, depth + 1);
@@ -463,7 +463,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     // Update child mask
     parent->children_mask_ = parent->children_mask_ | (1 << node_idx);
 
-    if(node_size <= static_cast<int>(se::VoxelBlock<MultiresOFusion::VoxelType>::size)) {
+    if(node_size <= static_cast<int>(MultiresOFusion::VoxelBlockType::size)) {
       // Allocate voxel block
 #pragma omp critical (voxel_alloc_lock)
       {
@@ -473,8 +473,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         init_data.x_last = init_data.x;
         init_data.y_last = init_data.y;
         node = map_.pool().acquireBlock(init_data);
-        se::VoxelBlock<MultiresOFusion::VoxelType>* block =
-            dynamic_cast<se::VoxelBlock<MultiresOFusion::VoxelType>*>(node);
+        MultiresOFusion::VoxelBlockType* block =
+            dynamic_cast<MultiresOFusion::VoxelBlockType*>(node);
         block->coordinates(node_coord);
         block->size_ = node_size;
         block->code_ = se::keyops::encode(node_coord.x(), node_coord.y(), node_coord.z(),
@@ -610,7 +610,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
           should_split = true;
         } else if (crossesFrustum(proj_node_corner_stati)) {
 //          // EXCEPTION: The node is crossing the frustum boundary, but already reached the min allocation scale for crossing nodes
-//          if (node_size == se::VoxelBlock<MultiresOFusion::VoxelType>::size) {
+//          if (node_size == MultiresOFusion::VoxelBlockType::size) {
 //            return;
 //          }
           should_split = true;
@@ -655,7 +655,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         // CASE 2 (FRUSTUM BOUNDARY): The node is crossing the frustum boundary
         if(kernel_pixel.status_crossing == se::KernelImage::Pixel::statusCrossing::crossing) {
           // EXCEPTION: The node is crossing the frustum boundary, but already reached the min allocation scale for crossing nodes
-//          if (node_size == se::VoxelBlock<MultiresOFusion::VoxelType>::size) {
+//          if (node_size == MultiresOFusion::VoxelBlockType::size) {
 //            return;
 //          }
           should_split = true;
@@ -679,8 +679,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
       if(node->isBlock()) { // Evaluate the node directly if it is a voxel block
         node->active(true);
         // Cast from node to voxel block
-        se::VoxelBlock<MultiresOFusion::VoxelType>* block =
-            dynamic_cast<se::VoxelBlock<MultiresOFusion::VoxelType>*>(node);
+        MultiresOFusion::VoxelBlockType* block =
+            dynamic_cast<MultiresOFusion::VoxelBlockType*>(node);
         if (low_variance != 0) {
           // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
           // free space integration scale or coarser (depending on later scale selection).
@@ -691,7 +691,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         }
 #pragma omp critical (voxel_lock)
         { // Add voxel block to voxel block list for later up propagation
-          block_list_.push_back(dynamic_cast<se::VoxelBlock<MultiresOFusion::VoxelType>*>(node));
+          block_list_.push_back(dynamic_cast<MultiresOFusion::VoxelBlockType*>(node));
         }
       }
       else {
@@ -724,14 +724,14 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         // Node does exist -> Does POTENTIALLY have children that that need to be updated
           if (node->isBlock()) {
             // Node is a voxel block -> Does NOT have children that need to be updated
-            se::VoxelBlock<MultiresOFusion::VoxelType>* block =
-                dynamic_cast<se::VoxelBlock<MultiresOFusion::VoxelType>*>(node);
+            MultiresOFusion::VoxelBlockType* block =
+                dynamic_cast<MultiresOFusion::VoxelBlockType*>(node);
             // Node has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
             // free space integration scale or coarser (depending on later scale selection).
             updateBlock(block, MultiresOFusion::fs_integr_scale);
 #pragma omp critical (voxel_lock)
             { // Add voxel block to voxel block list for later up propagation
-              block_list_.push_back(dynamic_cast<se::VoxelBlock<MultiresOFusion::VoxelType>*>(node));
+              block_list_.push_back(dynamic_cast<MultiresOFusion::VoxelBlockType*>(node));
             }
           } else {
             // Node has children
@@ -755,7 +755,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         const unsigned int child_idx = se::child_idx(
             block->code_, se::keyops::depth(block->code_), map_.voxelDepth());
         auto data = block->data(
-            block->coordinates(), se::math::log2_const(se::VoxelBlock<MultiresOFusion::VoxelType>::size));
+            block->coordinates(), se::math::log2_const(MultiresOFusion::VoxelBlockType::size));
         auto& parent_data = block->parent()->data_[child_idx];
         parent_data = data;
 
@@ -800,7 +800,7 @@ void MultiresOFusion::integrate(se::Octree<MultiresOFusion::VoxelType>& map,
   const float voxel_dim = map.dim() / map.size();
   const Eigen::Vector3f sample_offset_frac = se::Octree<MultiresOFusion::VoxelType>::sample_offset_frac_;
 
-  std::vector<se::VoxelBlock<MultiresOFusion::VoxelType>*> block_list;
+  std::vector<MultiresOFusion::VoxelBlockType*> block_list;
   std::vector<std::set<se::Node<MultiresOFusion::VoxelType>*>> node_list(map.blockDepth());
   AllocateAndUpdateRecurse funct(map, block_list, node_list, depth_image, kernel_depth_image.get(), sensor, T_CM,
       voxel_dim, sample_offset_frac, map.voxelDepth(), max_depth_value, frame);

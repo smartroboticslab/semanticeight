@@ -41,6 +41,8 @@ struct TestVoxelT {
   static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
+  using VoxelBlockType = se::VoxelBlock<TestVoxelT>;
+
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
   template <typename BufferT>
@@ -54,6 +56,8 @@ struct OccupancyVoxelT {
   };
   static inline VoxelData invalid(){ return {0.f, 0.}; }
   static inline VoxelData initData(){ return {1.f, 0.}; }
+
+  using VoxelBlockType = se::VoxelBlock<OccupancyVoxelT>;
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
@@ -88,7 +92,7 @@ TEST(SerialiseUnitTest, WriteReadBlock) {
   std::string filename = "test.bin";
   {
     std::ofstream os (filename, std::ios::binary);
-    se::VoxelBlock<TestVoxelT> block;
+    TestVoxelT::VoxelBlockType block;
     block.code_ = 24;
     block.coordinates(Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
@@ -98,7 +102,7 @@ TEST(SerialiseUnitTest, WriteReadBlock) {
 
   {
     std::ifstream is(filename, std::ios::binary);
-    se::VoxelBlock<TestVoxelT> block;
+    TestVoxelT::VoxelBlockType block;
     se::internal::deserialise(block, is);
     ASSERT_EQ(block.code_, 24);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
@@ -182,7 +186,7 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
     auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-    for(int voxel_idx = 0; voxel_idx < se::VoxelBlock<TestVoxelT>::size_cube; ++voxel_idx)
+    for(int voxel_idx = 0; voxel_idx < TestVoxelT::VoxelBlockType::size_cube; ++voxel_idx)
       block->setData(voxel_idx, dis(gen));
   }
 
@@ -195,7 +199,7 @@ TEST(SerialiseUnitTest, SerialiseBlock) {
   auto& block_buffer_base = octree.pool().blockBuffer();
   auto& block_buffer_copy = octree_copy.pool().blockBuffer();
   for(int i = 0; i < block_buffer_base.size(); i++) {
-    for(int voxel_idx = 0; voxel_idx < se::VoxelBlock<TestVoxelT>::size_cube; voxel_idx++) {
+    for(int voxel_idx = 0; voxel_idx < TestVoxelT::VoxelBlockType::size_cube; voxel_idx++) {
       ASSERT_EQ(block_buffer_base[i]->data(voxel_idx), block_buffer_copy[i]->data(voxel_idx));
     }
   }

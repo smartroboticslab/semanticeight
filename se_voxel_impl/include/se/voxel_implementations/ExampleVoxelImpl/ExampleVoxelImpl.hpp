@@ -93,13 +93,15 @@ struct ExampleVoxelImpl {
      */
     static inline VoxelData initData() { return {1.f}; }
 
+    using VoxelBlockType = se::VoxelBlock<ExampleVoxelImpl::VoxelType>;
+
     template <typename T>
     using MemoryPoolType = se::PagedMemoryPool<T>;
     template <typename ElemT>
     using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };
 
-
+  using VoxelBlockType = typename ExampleVoxelImpl::VoxelType::VoxelBlockType;
 
   /**
    * Set to true for TSDF maps, false for occupancy maps.

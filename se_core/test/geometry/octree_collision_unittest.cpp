@@ -45,6 +45,8 @@ struct TestVoxelT{
   static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
+  using VoxelBlockType = se::VoxelBlock<TestVoxelT>;
+
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;
   template <typename BufferT>
@@ -86,7 +88,7 @@ TEST_F(OctreeCollisionTest, TotallyUnseen) {
   for(int i = 256; node != nullptr ; node = it.next(), i /= 2){
     const Eigen::Vector3i node_coord = se::keyops::decode(node->code_);
     const int node_size = node->size_;
-    const se::Octree<TestVoxelT>::VoxelData data = (node->data_[0]);
+    const TestVoxelT::VoxelData data = (node->data_[0]);
     printf("se::Node's coordinates: (%d, %d, %d), size %d, value %.2f\n",
         node_coord.x(), node_coord.y(), node_coord.z(), node_size, data);
     EXPECT_EQ(node_size, i);
@@ -136,10 +138,10 @@ TEST_F(OctreeCollisionTest, CollisionFreeLeaf){
   const Eigen::Vector3i bbox_size = {2, 2, 2};
 
   /* Update blocks_coord as occupied node */
-  se::VoxelBlock<TestVoxelT>* block = octree_.fetch(56, 12, 254);
+  TestVoxelT::VoxelBlockType* block = octree_.fetch(56, 12, 254);
   const Eigen::Vector3i block_coord = block->coordinates();
   int x, y, z, block_size;
-  block_size = (int) se::VoxelBlock<TestVoxelT>::size;
+  block_size = (int) TestVoxelT::VoxelBlockType::size;
   int x_last = block_coord.x() + block_size;
   int y_last = block_coord.y() + block_size;
   int z_last = block_coord.z() + block_size;
