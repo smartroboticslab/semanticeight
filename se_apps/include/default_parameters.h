@@ -59,7 +59,7 @@ static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.0f);
 static constexpr int          default_tracking_rate = 1;
 
 // Put colons after options with arguments
-static std::string short_options = "b:B:c:f:F:g:G:h:i:k:l:m:M:n:N:o:p:q:r:s:S:t:v:V:y:Y:z:?";
+static std::string short_options = "b:B:c:f:F:g:G:h:i:k:l:m:M:n:N:o:p:q:Q:r:s:S:t:v:V:y:Y:z:?";
 
 static struct option long_options[] = {
   {"drop-frames",                no_argument,       0, 'b'},
@@ -80,6 +80,7 @@ static struct option long_options[] = {
   {"log-path",                   required_argument, 0, 'o'},
   {"init-pose",                  required_argument, 0, 'p'},
   {"inable-render",              no_argument,       0, 'q'},
+  {"enable-render",              no_argument,       0, 'Q'},
   {"integration-rate",           required_argument, 0, 'r'},
   {"map-dim",                    required_argument, 0, 's'},
   {"sequence-name",              required_argument, 0, 'S'},
@@ -114,6 +115,7 @@ inline void print_arguments() {
   std::cerr << "-N  (--far-plane)                          : default is " << default_far_plane << "\n";
   std::cerr << "-p  (--init-pose)                          : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
   std::cerr << "-q  (--inable-render)                      : default is to render images\n";
+  std::cerr << "-Q  (--enable-render)                      : use to override --inable-render in YAML file\n";
   std::cerr << "-r  (--integration-rate)                   : default is " << default_integration_rate << "\n";
   std::cerr << "-s  (--map-dim)                            : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
   std::cerr << "-S  (--sequence-name)                      : name of sequence\n";
@@ -580,6 +582,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'q': // inable-render
         config.inable_render = true;
+        break;
+
+      case 'Q': // enable-render
+        config.inable_render = false;
         break;
 
       case 'r': // integration-rate

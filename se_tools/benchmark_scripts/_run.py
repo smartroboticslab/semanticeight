@@ -20,7 +20,8 @@ class runCommand:
         return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg)
 
     def withoutBenchmark(self):
-        return ' '.join(self.executable + self.args)
+        enable_render_arg = ['--enable-render']
+        return ' '.join(self.executable + self.args + enable_render_arg)
 
 class SLAMAlgorithm:
     """ A general SLAM algorithm evaluator.
