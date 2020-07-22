@@ -115,7 +115,7 @@ TEST(SerialiseUnitTest, WriteReadBlockStruct) {
   std::string filename = "test.bin";
   {
     std::ofstream os (filename, std::ios::binary);
-    se::VoxelBlock<OccupancyVoxelT> block;
+    OccupancyVoxelT::VoxelBlockType block;
     block.code_ = 24;
     block.coordinates(Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
@@ -125,7 +125,7 @@ TEST(SerialiseUnitTest, WriteReadBlockStruct) {
 
   {
     std::ifstream is(filename, std::ios::binary);
-    se::VoxelBlock<OccupancyVoxelT> block;
+    OccupancyVoxelT::VoxelBlockType block;
     se::internal::deserialise(block, is);
     ASSERT_EQ(block.code_, 24);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
