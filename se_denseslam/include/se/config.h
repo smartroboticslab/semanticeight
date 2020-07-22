@@ -139,7 +139,7 @@ struct Configuration {
 
   /**
    * The log file the timing results will be written to.
-   * <br>\em Default: std::cout if Configuration::benchmark is blank (--benchmark) or Configuration::no_gui (--no-gui)
+   * <br>\em Default: std::cout if Configuration::benchmark is blank (--benchmark) or Configuration::inable_render (--inable-render)
    * <br>\em Default: autogen filename if the Configuration::benchmark argument is a directory (--benchmark=/PATH/TO/DIR)
    */
   std::string log_file;
@@ -229,7 +229,13 @@ struct Configuration {
    * Whether to hide the GUI. Hiding the GUI results in faster operation.
    * <br>\em Default: false
    */
-  bool no_gui;
+  bool inable_render;
+
+  /*
+   * TODO
+   * <br>\em Default: ""
+   */
+  std::string output_render_file;
 
   /*
    * TODO
@@ -257,13 +263,15 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "Sequence name:                   " << config.sequence_name << "\n";
   out << "Sequence path:                   " << config.sequence_path << "\n";
   out << "Ground truth file:               " << config.ground_truth_file << "\n";
-  out << "Benchmark:                       " << (config.benchmark
-                                                 ? "true" : "false") << "\n";
-  out << "Log file:                        " << (config.log_file == ""
-                                                 ? "std::cout" : config.log_file) << "\n";
   if (config.output_mesh_file != "") {
   out << "Output mesh file:                " << config.output_mesh_file << "\n";
   }
+  out << "Log file:                        " << (config.log_file == ""
+                                                 ? "std::cout" : config.log_file) << "\n";
+  out << "Benchmark:                       " << (config.benchmark
+                                                 ? "true" : "false") << "\n";
+  out << "Inable render:                   " << (config.inable_render
+                                                 ? "true" : "false") << "\n";
   out << "\n";
 
   out << "Integration rate:                " << config.integration_rate << "\n";
@@ -272,9 +280,7 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "FPS:                             " << config.fps << "\n";
   out << "\n";
 
-  out << "Hide GUI:                        " << (config.no_gui
-                                                 ? "true" : "false") << "\n";
-  out << "ICP pyramid levels:             ";
+  out << "ICP pyramid levels:              ";
   for (const auto& level : config.pyramid) {
     out << " " << level;
   }

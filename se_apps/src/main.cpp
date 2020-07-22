@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <vector>
 #include <unistd.h>
+#include <lodepng.h>
 
 #include <Eigen/Dense>
 
@@ -173,13 +174,15 @@ int main(int argc, char** argv) {
   config.render_volume_fullsize = false;
 
 #if !defined(SE_GLUT) && !defined(__QT__)
-  // Force no_gui if compiled without GUI support
-  config.no_gui = true;
+  // Force inable_render if compiled without GUI support and not in benchmark mode
+  if (!config.benchmark) {
+    config.inable_render = true;
+  }
 #endif
   // The following runs the process loop for processing all the frames, if Qt
-  // is specified use that, else use GLUT. We can opt to not run the gui which
+  // is specified use that, else use GLUT. We can opt to inable the gui and the rendering which
   // would be faster.
-  if (config.no_gui) {
+  if (config.benchmark || config.inable_render) {
     if ((reader == nullptr) || (reader->cameraActive == false)) {
       std::cerr << "No valid input file specified\n";
       exit(1);
@@ -188,7 +191,7 @@ int main(int argc, char** argv) {
                       << "\traycasting\trendering\tcomputation\ttotal    \tRAM usage (MB)"
                       << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
 
-    while (processAll(reader, true, false, &config, false) == 0) {}
+    while (processAll(reader, true, !config.inable_render, &config, false) == 0) {}
   } else {
 #ifdef __QT__
     qtLinkKinectQt(argc,argv, &pipeline, &reader, &config,
@@ -225,12 +228,12 @@ int main(int argc, char** argv) {
     powerStream.close();
   }
 
-  if (!config.benchmark) {
+  if (config.benchmark) {
+    progress_bar->end();
+  } else {
     std::cout << "{";
     stats.print_all_data(std::cout, false);
     std::cout << "}\n";
-  } else {
-    progress_bar->end();
   }
 
   //  =========  FREE BASIC BUFFERS  =========
@@ -348,11 +351,14 @@ int processAll(DepthReader*   reader,
 
     timings[5] = std::chrono::steady_clock::now();
   }
+
+  bool render_volume = false;
   if (render_images) {
+    render_volume = (config->rendering_rate < 0) ? frame == std::abs(config->rendering_rate) : frame % config->rendering_rate == 0;
     pipeline->renderRGBA((uint8_t*) rgba_render, pipeline->getImageResolution());
     pipeline->renderDepth((unsigned char*)depth_render, pipeline->getImageResolution(), sensor);
     pipeline->renderTrack((unsigned char*)track_render, pipeline->getImageResolution());
-    if (frame % config->rendering_rate == 0) {
+    if (render_volume) {
       pipeline->renderVolume((unsigned char*)volume_render, pipeline->getImageResolution(), sensor);
     }
   }
@@ -364,7 +370,7 @@ int processAll(DepthReader*   reader,
   const Eigen::Vector3f t_WC = pipeline->t_WC();
   storeStats(frame, timings, t_WC, tracked, integrated);
 
-  if (config->no_gui) {
+  if (config->benchmark || config->inable_render) {
     if (config->benchmark) {
       if (frame % 10 == 0) {
         progress_bar->update(frame);
@@ -386,8 +392,17 @@ int processAll(DepthReader*   reader,
         << std::endl;
   }
 
+  if (render_volume && config->output_render_file != "") {
+    std::stringstream output_render_file_ss;
+    output_render_file_ss << config->output_render_file << "_frame_"
+                          << std::setw(4) << std::setfill('0') << frame << ".png";
+    lodepng_encode32_file(output_render_file_ss.str().c_str(),
+                          (unsigned char*)volume_render,
+                          (pipeline->getImageResolution()).x(),
+                          (pipeline->getImageResolution()).y());
+  }
+
   first_frame = false;
 
   return false;
 }
-

@@ -36,6 +36,7 @@ static constexpr float        default_fps = 0.0f;
 static const std::string      default_ground_truth_file = "";
 static const Eigen::Matrix4f  default_gt_transform = Eigen::Matrix4f::Identity();
 static constexpr float        default_icp_threshold = 1e-5;
+static constexpr bool         default_inable_render = false;
 static constexpr int          default_integration_rate = 2;
 static constexpr int          default_iteration_count = 3;
 static constexpr int          default_iterations[default_iteration_count] = { 10, 5, 4 };
@@ -45,27 +46,25 @@ static constexpr float        default_near_plane = 0.4f;
 static const Eigen::Vector3i  default_map_size(256, 256, 256);
 static const Eigen::Vector3f  default_map_dim(2.f, 2.f, 2.f);
 static const int              default_max_frame(-1);
-static constexpr bool         default_no_gui = false;
 static constexpr bool         default_render_volume_fullsize = false;
 static constexpr int          default_rendering_rate = 4;
 static const std::string      default_output_mesh_file = "";
+static const std::string      default_output_render_path = "";
 static const std::string      default_sequence_name = "";
 static constexpr int          default_sensor_downsampling_factor = 1;
 static const Eigen::Vector4f  default_sensor_intrinsics = Eigen::Vector4f::Zero();
 static const std::string      default_sequence_path = "";
 static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.0f);
+
 static constexpr int          default_tracking_rate = 1;
 
-
-
 // Put colons after options with arguments
-static std::string short_options = "b:B:c:d:f:F:g:G:h:i:k:l:m:n:N:o:p:q:r:s:S:t:v:y:Y:z:?";
+static std::string short_options = "b:B:c:f:F:g:G:h:i:k:l:m:M:n:N:o:p:q:r:s:S:t:v:V:y:Y:z:?";
 
 static struct option long_options[] = {
   {"drop-frames",                no_argument,       0, 'b'},
   {"benchmark",                  optional_argument, 0, 'B'},
   {"sensor-downsampling-factor", required_argument, 0, 'c'},
-  {"output-mesh-file",           required_argument, 0, 'd'},
   {"fps",                        required_argument, 0, 'f'},
   {"bilateral-filter",           no_argument,       0, 'F'},
   {"ground-truth",               required_argument, 0, 'g'},
@@ -75,16 +74,18 @@ static struct option long_options[] = {
   {"sensor-intrinsics",          required_argument, 0, 'k'},
   {"icp-threshold",              required_argument, 0, 'l'},
   {"max-frame",                  required_argument, 0, 'm'},
+  {"output-mesh-file",           required_argument, 0, 'M'},
   {"near-plane",                 required_argument, 0, 'n'},
   {"far-plane",                  required_argument, 0, 'N'},
   {"log-path",                   required_argument, 0, 'o'},
   {"init-pose",                  required_argument, 0, 'p'},
-  {"no-gui",                     no_argument,       0, 'q'},
+  {"inable-render",              no_argument,       0, 'q'},
   {"integration-rate",           required_argument, 0, 'r'},
   {"map-dim",                    required_argument, 0, 's'},
   {"sequence-name",              required_argument, 0, 'S'},
   {"tracking-rate",              required_argument, 0, 't'},
   {"map-size",                   required_argument, 0, 'v'},
+  {"output-render-path",         required_argument, 0, 'V'},
   {"pyramid-levels",             required_argument, 0, 'y'},
   {"yaml-file",                  required_argument, 0, 'Y'},
   {"rendering-rate",             required_argument, 0, 'z'},
@@ -98,7 +99,6 @@ inline void print_arguments() {
   std::cerr << "-b  (--drop-frames)                        : default is false: don't drop frames\n";
   std::cerr << "-B  (--benchmark) <blank, =filename, =dir> : default is autogen benchmark filename\n";
   std::cerr << "-c  (--sensor-downsampling-factor)         : default is " << default_sensor_downsampling_factor << " (same size)\n";
-  std::cerr << "-d  (--output-mesh-file) <filename>        : output mesh file\n";
   std::cerr << "-f  (--fps)                                : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                    : default is disabled\n";
   std::cerr << "-g  (--ground-truth) <filename>            : ground truth file\n";
@@ -107,17 +107,19 @@ inline void print_arguments() {
   std::cerr << "-i  (--sequence-path) <filename>           : sequence path\n";
   std::cerr << "-k  (--sensor-intrinsics)                  : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                      : default is " << default_icp_threshold << "\n";
-  std::cerr << "-o  (--log-path) <filename or dir>         : default is stdout\n";
+  std::cerr << "-o  (--log-path) <filename/dir>            : default is stdout\n";
   std::cerr << "-m  (--max-frame)                          : default is full dataset (-1)\n";
+  std::cerr << "-M  (--output-mesh-file) <filename>        : output mesh file\n";
   std::cerr << "-n  (--near-plane)                         : default is " << default_near_plane << "\n";
   std::cerr << "-N  (--far-plane)                          : default is " << default_far_plane << "\n";
   std::cerr << "-p  (--init-pose)                          : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
-  std::cerr << "-q  (--no-gui)                             : default is to display gui\n";
+  std::cerr << "-q  (--inable-render)                      : default is to render images\n";
   std::cerr << "-r  (--integration-rate)                   : default is " << default_integration_rate << "\n";
   std::cerr << "-s  (--map-dim)                            : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
   std::cerr << "-S  (--sequence-name)                      : name of sequence\n";
   std::cerr << "-t  (--tracking-rate)                      : default is " << default_tracking_rate << "\n";
   std::cerr << "-v  (--map-size)                           : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
+  std::cerr << "-V  (--output-render-path) <filename/dir>  : output render path\n";
   std::cerr << "-y  (--pyramid-levels)                     : default is 10,5,4\n";
   std::cerr << "-Y  (--yaml-file)                          : YAML file\n";
   std::cerr << "-z  (--rendering-rate)                     : default is " << default_rendering_rate << "\n";
@@ -237,32 +239,59 @@ std::string adjustString(std::string s) {
   return s;
 }
 
+std::string autogenFilename(Configuration& config, std::string type) {
+  if (config.sequence_name == "") {
+    std::cout << "Please provide a sequence name to autogen " << type << " filename.\n"
+                 "Options: \n"
+                 "  - Provide sequence name via terminal          (Type \"sequence_name\" + hit enter)\n"
+                 "  - Leave blank                                 (Hit enter)\n"
+                 "  - Provide full filename                       (e.g. --benchmark=\"PATH/TO/result.txt\")\n"
+                 "                                                      --output-render-path=\"PATH/TO/render\")\n"
+                 "  - Set sequence name via command line argument (-S \"sequence_name\")\n"
+                 "  - Set sequence name via YAML file             (sequence_name: \"sequence_name\") \n\n"
+                 "Provide sequence name (e.g. icl-nuim-livingroom_traj_02):" << std::endl;
+    std::getline(std::cin, config.sequence_name);
+  }
+  std::stringstream auto_filename_ss;
+  auto_filename_ss                                    << config.voxel_impl_type             <<
+                                      "_"             << config.sensor_type                 <<
+      ((config.sequence_name != "") ? "_"              + config.sequence_name : "")         <<
+                                      "_dim_"         << config.map_dim.x()                 <<
+                                      "_size_"        << config.map_size.x()                <<
+                                      "_down_"        << config.sensor_downsampling_factor  <<
+                                      "_"             << type;
+  return adjustString(auto_filename_ss.str());
+}
+
 void generateLogFile(Configuration& config) {
   stdfs::path log_path = config.log_file;
   if (config.log_file == "" || !stdfs::is_directory(log_path)) {
     return;
   } else {
-    if (config.sequence_name == "") {
-      std::cout << "Please provide a sequence name to autogen benchmark file name.\n"
-                   "Options: \n"
-                   "  - Provide sequence name via terminal          (Type \"sequence_name\" + hit enter)\n"
-                   "  - Leave blank                                 (Hit enter)\n"
-                   "  - Provide full benchmark filename             (e.g. --benchmark=\"PATH/TO/result.txt\")\n"
-                   "  - Set sequence name via command line argument (-S \"sequence_name\")\n"
-                   "  - Set sequence name via YAML file             (sequence_name: \"sequence_name\") \n\n"
-                   "Provide sequence name (e.g. icl-nuim-livingroom_traj_02):" << std::endl;
-      std::getline(std::cin, config.sequence_name);
-    }
-    std::stringstream auto_benchmark_filename_ss;
-    auto_benchmark_filename_ss                      << config.voxel_impl_type     <<
-                                    "_"             << config.sensor_type         <<
-    ((config.sequence_name != "") ? "_"              + config.sequence_name : "") <<
-                                    "_size_"        << config.map_size.x()        <<
-                                    "_dim_"         << config.map_dim.x()         <<
-                                    "_down_sample_" << config.sensor_downsampling_factor;
-    log_path /= adjustString(auto_benchmark_filename_ss.str()) + ".txt";
+    log_path /= autogenFilename(config, "result") + ".txt";
     config.log_file = log_path;
   }
+}
+
+void generateRenderFile(Configuration& config) {
+  if (config.inable_render) {
+    return;
+  }
+  stdfs::path output_render_path = config.output_render_file;
+  if (config.output_render_file != "" && !stdfs::is_directory(output_render_path)) {
+    return;
+  }
+  if (config.output_render_file == "") {
+    if (config.benchmark && config.log_file != "") {
+      stdfs::path log_file = config.log_file;
+      output_render_path = log_file.parent_path() / "render";
+      stdfs::create_directories(output_render_path);
+    } else {
+      return;
+    }
+  }
+  output_render_path /= autogenFilename(config, "render");
+  config.output_render_file = output_render_path;
 }
 
 Configuration parseArgs(unsigned int argc, char** argv) {
@@ -315,14 +344,20 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
   // Benchmark and result file or directory path
   config.benchmark = (has_yaml_general_config && yaml_general_config["benchmark"])
-      ? yaml_general_config["benchmark"].as<bool>() : default_benchmark;
+                     ? yaml_general_config["benchmark"].as<bool>() : default_benchmark;
   // Log path
   config.log_file = (has_yaml_general_config && yaml_general_config["log_path"])
       ? yaml_general_config["log_path"].as<std::string>() : default_log_path;
-
+  // Inable render
+  config.inable_render = (has_yaml_general_config && yaml_general_config["inable_render"])
+      ? yaml_general_config["inable_render"].as<bool>() : default_inable_render;
+  // Render path
+  config.output_render_file = (has_yaml_general_config && yaml_general_config["output_render_path"])
+      ? yaml_general_config["output_render_path"].as<std::string>() : default_output_render_path;
   // Output mesh file path
   config.output_mesh_file = (has_yaml_general_config && yaml_general_config["output_mesh_file"])
                             ? yaml_general_config["output_mesh_file"].as<std::string>() : default_output_mesh_file;
+
 
   // Integration rate
   config.integration_rate = (has_yaml_general_config && yaml_general_config["integration_rate"])
@@ -362,11 +397,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       config.pyramid.push_back(default_iterations[i]);
     }
   }
-
-  // No GUI
-  config.no_gui = (has_yaml_general_config && yaml_general_config["no_gui"])
-                  ? yaml_general_config["no_gui"].as<bool>() : default_no_gui;
-
 
   // CONFIGURE MAP
   // Map size
@@ -442,10 +472,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
               << "or 8  (was " << optarg << ")\n";
           exit(EXIT_FAILURE);
         }
-        break;
-
-      case 'd': // output-mesh-file
-        config.output_mesh_file = optarg;
         break;
 
       case 'f': // fps
@@ -532,6 +558,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.max_frame = atoi(optarg);
         break;
 
+      case 'M': // output-mesh-file
+        config.output_mesh_file = optarg;
+        break;
+        
       case 'n': // near-plane
         config.near_plane = atof(optarg);
         break;
@@ -548,8 +578,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.t_MW_factor = atof3(optarg);
         break;
 
-      case 'q': // no-qui
-        config.no_gui = true;
+      case 'q': // inable-render
+        config.inable_render = true;
         break;
 
       case 'r': // integration-rate
@@ -598,6 +628,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
         break;
 
+      case 'V': // output-render-path
+        config.output_render_file = optarg;
+        break;
+
       case 'y': // pyramid-levels
         {
           std::istringstream remaining_arg(optarg);
@@ -625,11 +659,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
 
-  if (config.benchmark) {
-    config.no_gui = true;
-  }
   // Autogenerate filename if only a directory is provided
   generateLogFile(config);
+  generateRenderFile(config);
 
   return config;
 }

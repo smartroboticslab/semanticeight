@@ -1,11 +1,13 @@
 general:
   # File path
-  sequence_name:              ""                            # e.g. "cow-and-lady"; No impact on pipeline.
-                                                            # Parameter only helps name log files.
+  sequence_name:              ""                              # e.g. "cow-and-lady"; No impact on pipeline.
+                                                              # Parameter only helps name log files.
   sequence_path:              "/PATH/TO/scene.raw"
   ground_truth_file:          "/PATH/TO/association.txt"
   benchmark:                  false
   log_path:                   "PATH/TO/log.txt" # or "PATH/TO/LOG_DIR
+  inable_render:              false                           # Will be set true if benchmark is true
+  output_render_path:         ""
   output_mesh_file:           ""
 
   # Rates
@@ -20,9 +22,6 @@ general:
   icp_threshold:              1e-5
   bilateral_filter:           false
   pyramid:                    [10, 5, 4]
-
-  # Visualisation
-  no_gui:                     false                           # Will be set true if benchmark is true
   render_volume_fullsize:     false
 
 map:
@@ -34,7 +33,7 @@ sensor:
   type:                       ""                              # e.g. "pinholecamera"; No impact on pipeline.
                                                               # Parameter only helps name log files.
   intrinsics:                 [525,525,319.5,239.5]
-  downsampling_factor:  4
+  downsampling_factor:        1
   left_hand_frame:            false
   T_BC:                       [1, 0, 0, 0,
                                0, 1, 0, 0,
