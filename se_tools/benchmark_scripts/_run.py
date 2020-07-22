@@ -3,17 +3,21 @@ import subprocess
 
 class runCommand:
     def __init__(self):
-        self.executable          = None
-        self.args                = None
-        self.base_benchmark_file = None
+        self.executable    = None
+        self.args          = None
+        self.base_filename = None
+        self.result_dir    = None
+        self.output_dir    = None
 
     def benchmark(self):
-        benchmark_arg = ['--benchmark=' + self.base_benchmark_file + 'result.txt']
-        return ' '.join(self.executable + self.args + benchmark_arg)
+        benchmark_arg     = ['--benchmark='          + os.path.join(self.result_dir, self.base_filename + '_result.txt')]
+        output_render_arg = ['--output-render-path=' + os.path.join(self.output_dir, self.base_filename + '_render')]
+        return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg)
 
     def manualBenchmark(self):
-        benchmark_arg = ['--benchmark=' + self.base_benchmark_file + 'result_manual_run.txt']
-        return ' '.join(self.executable + self.args + benchmark_arg)
+        benchmark_arg     = ['--benchmark='          + os.path.join(self.result_dir, self.base_filename + '_result_manual_run.txt')]
+        output_render_arg = ['--output-render-path=' + os.path.join(self.output_dir, self.base_filename + '_render_manual_run')]
+        return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg)
 
     def withoutBenchmark(self):
         return ' '.join(self.executable + self.args)
@@ -57,21 +61,26 @@ class KinectFusion(SLAMAlgorithm):
 
         self.sensor_type      = None
         self.voxel_impl       = None
+        self.base_filename    = None
+        self.output_dir       = None
         self.config_yaml_path = None
 
     def _setup_from_test_case(self, test_case):
         self.voxel_impl       = test_case.voxel_impl
         self.sensor_type      = test_case.sensor_type
+        self.base_filename    = test_case.name
+        self.output_dir       = test_case.output_dir
         self.config_yaml_path = test_case.config_yaml_path
 
     def _generate_run_command(self):
         args = []
         args.extend(['--yaml-file', str(self.config_yaml_path)])
-        base_benchmark_file = (self.config_yaml_path.replace("config", "")).replace(".yaml", "")
         executable = [os.path.join(os.path.abspath(self.bin_path), 'se-denseslam-' +
                                    self.voxel_impl + '-' + self.sensor_type + '-main')]
         run_command = runCommand()
-        run_command.executable          = executable
-        run_command.args                = args
-        run_command.base_benchmark_file = base_benchmark_file
+        run_command.executable    = executable
+        run_command.args          = args
+        run_command.base_filename = self.base_filename
+        run_command.result_dir    = os.path.dirname(self.config_yaml_path)
+        run_command.output_dir    = self.output_dir
         return run_command

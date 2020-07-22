@@ -1,4 +1,6 @@
 general:
+  inable_render:              true
+
   # Rates
   integration_rate:           2
   tracking_rate:              1

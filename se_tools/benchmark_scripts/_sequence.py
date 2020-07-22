@@ -104,7 +104,7 @@ class Sequence:
         voxel_impl_types = self.config.voxel_impls.get_types()
         sensor_type      = self.config.sensor.type
         for voxel_impl_type, yaml_keys, value_combs in zip(voxel_impl_types, yaml_keys_list, value_combs_list):
-            for value_comb in value_combs:
+            for id, value_comb in enumerate(value_combs):
                 sequence_name = "-".join([dataset_name, self.name]) if self.name else dataset_name
                 yaml_init = """\
                             general:
@@ -114,36 +114,61 @@ class Sequence:
                             sensor:
                                 type:               {}
                 """.format(sequence_name, self.file_path, self.ground_truth_file, sensor_type)
-                sequence_config_yaml = ruamel.yaml.round_trip_load(yaml_init)
+                test_case_config_yaml = ruamel.yaml.round_trip_load(yaml_init)
 
                 for yaml_key, value in zip(yaml_keys, value_comb):
                     collection_key = yaml_key[0]
                     param_key      = yaml_key[1]
-                    if not collection_key in sequence_config_yaml:
-                        sequence_config_yaml[collection_key] = {}
-                    sequence_config_yaml[collection_key][param_key] = flow_style_list(value) if isinstance(value, list) else value
+                    if not collection_key in test_case_config_yaml:
+                        test_case_config_yaml[collection_key] = {}
+                    test_case_config_yaml[collection_key][param_key] = flow_style_list(value) if isinstance(value, list) else value
 
-                id = random.randint(0, 1000000000)
-                sequence_config_yaml_name = "_".join(
-                    [sequence_name.replace('-','_').replace(' ', '_'), delist_value(voxel_impl_type),
-                     delist_value(sensor_type), str(id), "config.yaml"])
-                sequence_config_yaml_path = os.path.join(sequence_dir, sequence_config_yaml_name)
-                with open(sequence_config_yaml_path, 'w') as f:
-                    yaml.dump(sequence_config_yaml, f)
+                name_arguments = []
+                name_arguments.append('dim')
+                name_arguments.append(str(test_case_config_yaml['map']['dim']).replace('.', '_')) \
+                    if 'dim' in test_case_config_yaml['map'] \
+                    else name_arguments.append('default')
+                name_arguments.append('size')
+                name_arguments.append(str(test_case_config_yaml['map']['size'])) \
+                    if 'size' in test_case_config_yaml['map'] \
+                    else name_arguments.append('default')
+                name_arguments.append('down')
+                name_arguments.append(str(test_case_config_yaml['sensor']['downsampling_factor'])) \
+                    if 'downsampling_factor' in test_case_config_yaml['sensor'] \
+                    else name_arguments.append('default')
+                name_arguments.append('id')
+                name_arguments.append(str(id))
+
+                test_case_name = "_".join(
+                    [sequence_name.replace('-','_').replace(' ', '_'),
+                     delist_value(voxel_impl_type),
+                     delist_value(sensor_type)] +
+                     name_arguments)
+                test_case_config_yaml_name = "_".join([test_case_name, "config.yaml"])
+
+                test_case_config_yaml_path = os.path.join(sequence_dir, test_case_config_yaml_name)
+                with open(test_case_config_yaml_path, 'w') as f:
+                    yaml.dump(test_case_config_yaml, f)
+
+                # Create output dir
+                output_dir = os.path.join(sequence_dir, "_".join([test_case_name, "output"]))
+                os.mkdir(output_dir)
 
                 # Create test case
                 sequence_test_case = TestCase()
+                sequence_test_case.name             = test_case_name
                 sequence_test_case.sequence_name    = sequence_name
                 sequence_test_case.sensor_type      = delist_value(sensor_type)
                 sequence_test_case.voxel_impl       = delist_value(voxel_impl_type)
-                if 'dim' in sequence_config_yaml['map'] and 'size' in sequence_config_yaml['map']:
-                    map_res = sequence_config_yaml['map']['dim'] / sequence_config_yaml['map']['size']
+                if 'dim' in test_case_config_yaml['map'] and 'size' in test_case_config_yaml['map']:
+                    map_res = test_case_config_yaml['map']['dim'] / test_case_config_yaml['map']['size']
                 else:
                     map_res = 'default'
                 sequence_test_case.map_res          =  map_res
-                sequence_test_case.downsampling_factor      = sequence_config_yaml['sensor']['downsampling_factor'] \
-                    if 'downsampling_factor' in sequence_config_yaml['sensor'] else 'default'
-                sequence_test_case.config_yaml_path = os.path.abspath(sequence_config_yaml_path)
+                sequence_test_case.downsampling_factor      = test_case_config_yaml['sensor']['downsampling_factor'] \
+                    if 'downsampling_factor' in test_case_config_yaml['sensor'] else 'default'
+                sequence_test_case.output_dir       = os.path.abspath(output_dir)
+                sequence_test_case.config_yaml_path = os.path.abspath(test_case_config_yaml_path)
                 sequence_test_cases.append(sequence_test_case)
 
         return sequence_test_cases
