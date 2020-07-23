@@ -226,6 +226,64 @@ private:
   friend void internal::deserialise <> (VoxelBlockFull& node, std::ifstream& in);
 };
 
+/*! \brief A leaf node of the Octree. Each VoxelBlock contains compute_num_voxels() voxels
+ * voxels.
+ */
+template <typename T>
+class VoxelBlockSingle: public VoxelBlock<T> {
+
+public:
+  using VoxelData = typename VoxelBlock<T>::VoxelData;
+
+  VoxelBlockSingle(typename T::VoxelData init_data = T::initData()) : init_data_(init_data) { };
+
+  VoxelBlockSingle(VoxelBlockSingle<T>* block) {
+    this->coordinates(block->coordinates());
+    this->code_(block->code_);
+    this->active_(block->active());
+    this->min_scale(block->min_scale());
+    this->current_scale(block->current_scale());
+    if (block->min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
+      for (int scale = VoxelBlock<T>::max_scale; scale >= block.min_scale(); scale--) {
+        int size_at_scale = VoxelBlock<T>::size >> scale;
+        int num_voxels_at_scale = se::math::cu(size_at_scale);
+        blockData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
+        std::memcpy(blockData()[VoxelBlock<T>::max_scale - scale],
+                    block->blockData()[VoxelBlock<T>::max_scale - scale],
+                    (num_voxels_at_scale) * sizeof(*(block->blockData()[VoxelBlock<T>::max_scale - scale])));
+      }
+    }
+  };
+
+  VoxelData initData() const;
+  void setInitData(const VoxelData& init_data);
+
+  VoxelData data(const Eigen::Vector3i& voxel_coord) const;
+  void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+
+  VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const;
+  void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+
+  VoxelData data(const int voxel_idx) const;
+  void setData(const int voxel_idx, const VoxelData& voxel_data);
+
+  void checkAllocation();
+  void checkAllocation(const int scale);
+
+  std::vector<VoxelData*>& blockData() { return block_data_; }
+  static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
+
+private:
+  VoxelBlockSingle(const VoxelBlockSingle&) = delete;
+
+  void initaliseData(VoxelData* voxel_data, int num_voxels);
+  std::vector<VoxelData*> block_data_; // block_data_[0] returns the data at scale = max_scale and not scale = 0
+  VoxelData init_data_;
+
+  friend std::ofstream& internal::serialise <> (std::ofstream& out, VoxelBlockSingle& node);
+  friend void internal::deserialise <> (VoxelBlockSingle& node, std::ifstream& in);
+};
+
 } // namespace se
 
 #include "node_impl.hpp"
