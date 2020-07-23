@@ -39,8 +39,8 @@ inline typename VoxelBlock<T>::VoxelData
 VoxelBlockFull<T>::data(const Eigen::Vector3i& voxel_coord) const {
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   return voxel_block_[voxel_offset.x() +
-                      voxel_offset.y() * VoxelBlock<T>::size +
-                      voxel_offset.z() * VoxelBlock<T>::size_sq];
+                      voxel_offset.y() * this->size +
+                      voxel_offset.z() * this->size_sq];
 }
 
 template <typename T>
@@ -49,13 +49,13 @@ VoxelBlockFull<T>::data(const Eigen::Vector3i& voxel_coord, const int scale) con
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   int scale_offset = 0;
   int scale_tmp = 0;
-  int num_voxels = VoxelBlock<T>::size_cu;
+  int num_voxels = this->size_cu;
   while(scale_tmp < scale) {
     scale_offset += num_voxels;
     num_voxels /= 8;
     ++scale_tmp;
   }
-  const int local_size = VoxelBlock<T>::size / (1 << scale);
+  const int local_size = this->size / (1 << scale);
   voxel_offset = voxel_offset / (1 << scale);
   return voxel_block_[scale_offset + voxel_offset.x() +
                       voxel_offset.y() * local_size +
@@ -66,7 +66,7 @@ template <typename T>
 inline void VoxelBlockFull<T>::setData(const Eigen::Vector3i& voxel_coord,
                                        const VoxelData& voxel_data){
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
-  voxel_block_[voxel_offset.x() + voxel_offset.y() * VoxelBlock<T>::size + voxel_offset.z() * VoxelBlock<T>::size_sq] = voxel_data;
+  voxel_block_[voxel_offset.x() + voxel_offset.y() * this->size + voxel_offset.z() * this->size_sq] = voxel_data;
 }
 
 template <typename T>
@@ -75,14 +75,14 @@ inline void VoxelBlockFull<T>::setData(const Eigen::Vector3i& voxel_coord, const
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   int scale_offset = 0;
   int scale_tmp = 0;
-  int num_voxels = VoxelBlock<T>::size_cu;
+  int num_voxels = this->size_cu;
   while(scale_tmp < scale) {
     scale_offset += num_voxels;
     num_voxels /= 8;
     ++scale_tmp;
   }
 
-  const int size_at_scale = VoxelBlock<T>::size / (1 << scale);
+  const int size_at_scale = this->size / (1 << scale);
   voxel_offset = voxel_offset / (1 << scale);
   voxel_block_[scale_offset + voxel_offset.x() +
                voxel_offset.y() * size_at_scale +

@@ -124,11 +124,10 @@ class VoxelBlock: public Node<T> {
 public:
   using VoxelData = typename T::VoxelData;
 
-  VoxelBlock() {
-    coordinates_ = Eigen::Vector3i::Constant(0);
-    current_scale_ = 0;
-    min_scale_ = -1;
-  };
+  VoxelBlock() :
+    coordinates_(Eigen::Vector3i::Constant(0)),
+    current_scale_(0),
+    min_scale_(-1) { };
 
   static constexpr unsigned int size      = BLOCK_SIZE;
   static constexpr unsigned int size_sq   = se::math::sq(size);
@@ -189,9 +188,9 @@ public:
   VoxelData* getBlockRawPtr() { return voxel_block_; }
   static constexpr int data_size() { return sizeof(VoxelBlockFull<T>); }
 
+private:
   VoxelBlockFull(const VoxelBlockFull&) = delete;
 
-private:
   static constexpr size_t compute_num_voxels() {
     size_t voxel_count = 0;
     unsigned int size_at_scale = VoxelBlock<T>::size;
