@@ -73,6 +73,15 @@ public:
     }
   }
 
+  Node(Node<T>* node) :
+    code_(node->code_),
+    size_(node->size_),
+    children_mask_(node->children_mask_),
+    timestamp_(node->timestamp()),
+    active_(node->active()) {
+    std::memcpy(data_, node->data_, 8 * sizeof(VoxelData));
+  }
+
   virtual ~Node(){};
 
   Node*& child(const int x, const int y, const int z) {
@@ -175,6 +184,15 @@ public:
       voxel_block_[voxel_idx] = init_data;
     }
   }
+
+  VoxelBlockFull(VoxelBlockFull<T>* block) {
+    this->coordinates(block->coordinates());
+    this->code_(block->code_);
+    this->active_(block->active());
+    this->min_scale(block->min_scale());
+    this->current_scale(block->current_scale());
+    std::memcpy(getBlockRawPtr(), block->getBlockRawPtr(), (num_voxels) * sizeof(*(block->getBlockRawPtr())));
+  };
 
   VoxelData data(const Eigen::Vector3i& voxel_coord) const;
   void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
