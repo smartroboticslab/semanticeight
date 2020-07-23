@@ -261,12 +261,15 @@ public:
 
   VoxelData data(const Eigen::Vector3i& voxel_coord) const;
   void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+  void setDataSafe(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
 
   VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const;
   void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+  void setDataSafe(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
 
   VoxelData data(const int voxel_idx) const;
   void setData(const int voxel_idx, const VoxelData& voxel_data);
+  void setDataSafe(const int voxel_idx, const VoxelData& voxel_data);
 
   void checkAllocation();
   void checkAllocation(const int scale);

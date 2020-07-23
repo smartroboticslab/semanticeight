@@ -165,6 +165,15 @@ inline void VoxelBlockSingle<T>::setData(const Eigen::Vector3i& voxel_coord,
 }
 
 template <typename T>
+inline void VoxelBlockSingle<T>::setDataSafe(const Eigen::Vector3i& voxel_coord,
+                                             const VoxelData&       voxel_data){
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
+                                        voxel_offset.y() * this->size +
+                                        voxel_offset.z() * this->size_sq] = voxel_data;
+}
+
+template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingle<T>::data(const Eigen::Vector3i& voxel_coord,
                           const int              scale) const {
@@ -183,13 +192,25 @@ template <typename T>
 inline void VoxelBlockSingle<T>::setData(const Eigen::Vector3i& voxel_coord,
                                          const int              scale,
                                          const VoxelData&       voxel_data) {
-  checkAllocation(scale);
   int size_at_scale = this->size >> scale;
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   voxel_offset = voxel_offset / (1 << scale);
   block_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
                                  voxel_offset.y() * size_at_scale +
                                  voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
+}
+
+template <typename T>
+inline void VoxelBlockSingle<T>::setDataSafe(const Eigen::Vector3i& voxel_coord,
+                                             const int              scale,
+                                             const VoxelData&       voxel_data) {
+  checkAllocation(scale);
+  int size_at_scale = this->size >> scale;
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  voxel_offset = voxel_offset / (1 << scale);
+  block_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
+                                                voxel_offset.y() * size_at_scale +
+                                                voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
 }
 
 template <typename T>
@@ -210,6 +231,20 @@ VoxelBlockSingle<T>::data(const int voxel_idx) const {
 template <typename T>
 inline void VoxelBlockSingle<T>::setData(const int        voxel_idx,
                                          const VoxelData& voxel_data) {
+  int remaining_voxel_idx = voxel_idx;
+  int scale = 0;
+  int size_at_scale_cu = this->size_cu;
+  while (remaining_voxel_idx / size_at_scale_cu >= 1) {
+    scale += 1;
+    remaining_voxel_idx -= size_at_scale_cu;
+    size_at_scale_cu = se::math::cu(this->size >> scale);
+  }
+  block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx] = voxel_data;
+}
+
+template <typename T>
+inline void VoxelBlockSingle<T>::setDataSafe(const int        voxel_idx,
+                                             const VoxelData& voxel_data) {
   int remaining_voxel_idx = voxel_idx;
   int scale = 0;
   int size_at_scale_cu = this->size_cu;
