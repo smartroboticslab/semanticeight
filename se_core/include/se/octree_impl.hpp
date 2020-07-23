@@ -399,8 +399,11 @@ inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
 }
 
 template <typename T>
-Node<T>* Octree<T>::insert(const int x, const int y, const int z,
-    const int depth) {
+Node<T>* Octree<T>::insert(const int      x,
+                           const int      y,
+                           const int      z,
+                           const int      depth,
+                           const Node<T>* init_octant) {
 
   // Make sure we have enough space on buffers
   if(depth >= block_depth_) {
@@ -432,18 +435,26 @@ Node<T>* Octree<T>::insert(const int x, const int y, const int z,
     if(!node_tmp){
       const key_t prefix = keyops::code(key) & MASK[d + shift];
       if(node_size == block_size) {
-        node_tmp = pool_.acquireBlock();
-        node_tmp->parent() = node;
+        if (init_octant == nullptr) {
+          node_tmp = pool_.acquireBlock();
+          static_cast<VoxelBlockType *>(node_tmp)->active(true);
+        } else {
+          node_tmp = pool_.acquireBlock(static_cast<VoxelBlockType *>(init_octant));
+        }
         static_cast<VoxelBlockType *>(node_tmp)->coordinates(
             Eigen::Vector3i(unpack_morton(prefix)));
-        static_cast<VoxelBlockType *>(node_tmp)->active(true);
         static_cast<VoxelBlockType *>(node_tmp)->code_ = prefix | d;
+        node_tmp->parent() = node;
         node->children_mask_ = node->children_mask_ | (1 << child_idx);
       } else {
-        node_tmp = pool_.acquireNode();
+        if (init_octant == nullptr) {
+          node_tmp = pool_.acquireNode();
+          node_tmp->size_ = node_size;
+        } else {
+          node_tmp = pool_.acquireNode(init_octant);
+        }
         node_tmp->parent() = node;
         node_tmp->code_ = prefix | d;
-        node_tmp->size_ = node_size;
         node->children_mask_ = node->children_mask_ | (1 << child_idx);
         // std::cout << "coords: "
         //   << keyops::decode(keyops::code(node_tmp->code_)) << std::endl;
@@ -456,8 +467,11 @@ Node<T>* Octree<T>::insert(const int x, const int y, const int z,
 }
 
 template <typename T>
-typename Octree<T>::VoxelBlockType* Octree<T>::insert(const int x, const int y, const int z) {
-  return static_cast<VoxelBlockType * >(insert(x, y, z, voxel_depth_));
+typename Octree<T>::VoxelBlockType* Octree<T>::insert(const int              x,
+                                                      const int              y,
+                                                      const int              z,
+                                                      const VoxelBlockType*  init_block) {
+  return static_cast<VoxelBlockType* >(insert(x, y, z, voxel_depth_, init_block));
 }
 
 
@@ -975,26 +989,24 @@ void Octree<T>::load(const std::string& filename) {
   pool_.reserveNodes(num_nodes);
   std::cout << "Reading " << num_nodes << " nodes " << std::endl;
   for(size_t i = 0; i < num_nodes; ++i) {
+    // Node      := Temporary block on the stack that's only used to read block information from the file and to
+    //              initalise the inserted node.
     Node<T> node;
     internal::deserialise(node, is);
     Eigen::Vector3i node_coord = keyops::decode(node.code_);
-    Node<T>* node_ptr = insert(node_coord.x(), node_coord.y(), node_coord.z(), keyops::depth(node.code_));
-    node_ptr->timestamp(node.timestamp());
-    std::memcpy(node_ptr->data_, node.data_, 8 * sizeof(VoxelData));
+    insert(node_coord.x(), node_coord.y(), node_coord.z(), keyops::depth(node.code_), &node);
   }
 
   size_t num_blocks = 0;
   is.read(reinterpret_cast<char *>(&num_blocks), sizeof(size_t));
   std::cout << "Reading " << num_blocks << " blocks " << std::endl;
   for(size_t i = 0; i < num_blocks; ++i) {
+    // block     := Temporary block on the stack that's only used to read block information from the file and to
+    //              initalise the inserted block.
     VoxelBlockType block;
     internal::deserialise(block, is);
     Eigen::Vector3i block_coord = block.coordinates();
-    VoxelBlockType* block_ptr =
-      static_cast<VoxelBlockType *>(insert(block_coord.x(), block_coord.y(), block_coord.z(), keyops::depth(block.code_)));
-    block_ptr->min_scale(block.min_scale());
-    block_ptr->current_scale(block.current_scale());
-    std::memcpy(block_ptr->getBlockRawPtr(), block.getBlockRawPtr(), (block_size_cu + 64 + 8 + 1) * sizeof(*(block.getBlockRawPtr())));
+    insert(block_coord.x(), block_coord.y(), block_coord.z(), keyops::depth(block.code_), &block);
   }
 }
 

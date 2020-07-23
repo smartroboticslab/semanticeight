@@ -64,8 +64,25 @@ namespace se {
     void reserveNodes(const size_t /* n */) { };
     void reserveBlocks(const size_t /* n */) { };
 
-    se::Node<T>*       acquireNode(typename T::VoxelData init_data = T::initData())  { nodes_updated_ = false; return new se::Node<T>(init_data); };
-    VoxelBlockType<T>* acquireBlock(typename T::VoxelData init_data = T::initData()) { blocks_updated_ = false; return new VoxelBlockType<T>(init_data); };
+    se::Node<T>* acquireNode(typename T::VoxelData init_data = T::initData()) {
+      nodes_updated_ = false;
+      return new se::Node<T>(init_data);
+    };
+
+    VoxelBlockType<T>* acquireBlock(typename T::VoxelData init_data = T::initData()) {
+      blocks_updated_ = false;
+      return new VoxelBlockType<T>(init_data);
+    };
+
+    se::Node<T>* acquireNode(se::Node<T>* node) {
+      nodes_updated_ = false;
+      return new se::Node<T>(node);
+    };
+
+    VoxelBlockType<T>* acquireBlock(VoxelBlockType<T>* block) {
+      blocks_updated_ = false;
+      return new VoxelBlockType<T>(block);
+    };
 
     void deleteNode(se::Node<T>* node, size_t max_depth) {
       nodes_updated_ = false;
@@ -211,9 +228,19 @@ namespace se {
       // Fetch-add returns the value before increment
       int current = current_index_.fetch_add(1);
       const int page_idx = current / pagesize_;
-      const int ptr_idx = current % pagesize_;
-      ElemType * ptr = pages_[page_idx] + (ptr_idx);
-      return ptr;
+      const int elem_idx = current % pagesize_;
+      ElemType * elem = pages_[page_idx] + (elem_idx);
+      return elem;
+    }
+
+    ElemType * acquire(ElemType* init_elem){
+      // Fetch-add returns the value before increment
+      int current = current_index_.fetch_add(1);
+      const int page_idx = current / pagesize_;
+      const int elem_idx = current % pagesize_;
+      ElemType * elem = pages_[page_idx] + (elem_idx);
+      *elem = *init_elem;
+      return elem;
     }
 
   private:
@@ -254,6 +281,8 @@ namespace se {
 
     se::Node<T>*       acquireNode()  { return node_buffer_.acquire(); };
     VoxelBlockType<T>* acquireBlock() { return block_buffer_.acquire(); };
+    se::Node<T>*       acquireNode(se::Node<T>* node)         { return node_buffer_.acquire(node); };
+    VoxelBlockType<T>* acquireBlock(VoxelBlockType<T>* block) { return block_buffer_.acquire(block); };
 
     se::PagedMemoryBuffer<se::Node<T>>&       nodeBuffer()  { return node_buffer_; };
     se::PagedMemoryBuffer<VoxelBlockType<T>>& blockBuffer() { return block_buffer_; };
