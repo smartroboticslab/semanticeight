@@ -290,11 +290,11 @@ public:
    * \param depth target insertion depth
    * \param init_octant optional inital state of inserted node / voxel block
    */
-  Node<T>* insert(const int       x,
-                  const int       y,
-                  const int       z,
-                  const int       depth,
-                  const Node<T>*  init_octant = nullptr);
+  Node<T>* insert(const int x,
+                  const int y,
+                  const int z,
+                  const int depth,
+                  Node<T>*  init_octant = nullptr);
 
   /*! \brief Insert the block (x,y,z) at maximum resolution. Not thread safe.
    * \param x x coordinate in interval [0, size]
@@ -302,10 +302,10 @@ public:
    * \param z z coordinate in interval [0, size]
    * \param init_block optional inital state of inserted voxel block
    */
-  VoxelBlockType* insert(const int              x,
-                         const int              y,
-                         const int              z,
-                         const VoxelBlockType*  init_block = nullptr);
+  VoxelBlockType* insert(const int        x,
+                         const int        y,
+                         const int        z,
+                         VoxelBlockType*  init_block = nullptr);
 
   /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
    *

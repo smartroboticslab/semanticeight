@@ -399,11 +399,11 @@ inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
 }
 
 template <typename T>
-Node<T>* Octree<T>::insert(const int      x,
-                           const int      y,
-                           const int      z,
-                           const int      depth,
-                           const Node<T>* init_octant) {
+Node<T>* Octree<T>::insert(const int x,
+                           const int y,
+                           const int z,
+                           const int depth,
+                           Node<T>*  init_octant) {
 
   // Make sure we have enough space on buffers
   if(depth >= block_depth_) {
@@ -467,10 +467,10 @@ Node<T>* Octree<T>::insert(const int      x,
 }
 
 template <typename T>
-typename Octree<T>::VoxelBlockType* Octree<T>::insert(const int              x,
-                                                      const int              y,
-                                                      const int              z,
-                                                      const VoxelBlockType*  init_block) {
+typename Octree<T>::VoxelBlockType* Octree<T>::insert(const int       x,
+                                                      const int       y,
+                                                      const int       z,
+                                                      VoxelBlockType* init_block) {
   return static_cast<VoxelBlockType* >(insert(x, y, z, voxel_depth_, init_block));
 }
 
