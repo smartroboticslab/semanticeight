@@ -57,7 +57,7 @@ struct MultiresTSDF {
     static inline VoxelData invalid()     { return {1.f, 1.f, 0, 0}; }
     static inline VoxelData initData() { return {1.f, 1.f, 0, 0}; }
 
-    using VoxelBlockType = se::VoxelBlock<MultiresTSDF::VoxelType>;
+    using VoxelBlockType = se::VoxelBlockFull<MultiresTSDF::VoxelType>;
 
     template <typename T>
     using MemoryPoolType = se::PagedMemoryPool<T>;

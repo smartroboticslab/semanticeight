@@ -93,7 +93,7 @@ struct ExampleVoxelImpl {
      */
     static inline VoxelData initData() { return {1.f}; }
 
-    using VoxelBlockType = se::VoxelBlock<ExampleVoxelImpl::VoxelType>;
+    using VoxelBlockType = se::VoxelBlockFull<ExampleVoxelImpl::VoxelType>;
 
     template <typename T>
     using MemoryPoolType = se::PagedMemoryPool<T>;

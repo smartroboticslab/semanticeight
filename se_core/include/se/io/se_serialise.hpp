@@ -41,7 +41,7 @@ namespace se {
   class Node;
 
   template <typename T>
-  class VoxelBlock;
+  class VoxelBlockFull;
 
   namespace internal {
     /*
@@ -77,10 +77,10 @@ namespace se {
      * \param node Node to be serialised
      */
     template <typename T>
-    std::ofstream& serialise(std::ofstream& out, VoxelBlock<T>& block) {
+    std::ofstream& serialise(std::ofstream& out, VoxelBlockFull<T>& block) {
       out.write(reinterpret_cast<char *>(&block.code_), sizeof(key_t));
       out.write(reinterpret_cast<char *>(&block.coordinates_), sizeof(Eigen::Vector3i));
-      out.write(reinterpret_cast<char *>(&block.voxel_block_), 
+      out.write(reinterpret_cast<char *>(&block.voxel_block_),
           sizeof(block.voxel_block_));
       return out;
     }
@@ -92,7 +92,7 @@ namespace se {
      * \param node Node to be serialised
      */
     template <typename T>
-    void deserialise(VoxelBlock<T>& block, std::ifstream& in) {
+    void deserialise(VoxelBlockFull<T>& block, std::ifstream& in) {
       in.read(reinterpret_cast<char *>(&block.code_), sizeof(key_t));
       in.read(reinterpret_cast<char *>(&block.coordinates_), sizeof(Eigen::Vector3i));
       in.read(reinterpret_cast<char *>(&block.voxel_block_), sizeof(block.voxel_block_));

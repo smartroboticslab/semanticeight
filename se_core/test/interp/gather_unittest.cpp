@@ -39,7 +39,7 @@ struct TestVoxelT {
   static inline VoxelData invalid(){ return 0.f; }
   static inline VoxelData initData(){ return 1.f; }
 
-  using VoxelBlockType = se::VoxelBlock<TestVoxelT>;
+  using VoxelBlockType = se::VoxelBlockFull<TestVoxelT>;
 
   template <typename T>
   using MemoryPoolType = se::PagedMemoryPool<T>;

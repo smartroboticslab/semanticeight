@@ -55,7 +55,7 @@ struct TSDF {
     static inline VoxelData invalid()     { return {1.f, -1.f}; }
     static inline VoxelData initData() { return {1.f,  0.f}; }
 
-    using VoxelBlockType = se::VoxelBlock<TSDF::VoxelType>;
+    using VoxelBlockType = se::VoxelBlockFull<TSDF::VoxelType>;
 
     template <typename T>
     using MemoryPoolType = se::PagedMemoryPool<T>;

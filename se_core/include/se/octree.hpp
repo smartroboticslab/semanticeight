@@ -79,7 +79,7 @@ class node_iterator;
 template <typename T>
 class Octree {
   typedef typename T::VoxelData VoxelData;
-  typedef typename T::VoxelBlockType VoxelBlockType;
+  using VoxelBlockType = typename T::VoxelBlockType;
 
 public:
   // Compile-time constant expressions

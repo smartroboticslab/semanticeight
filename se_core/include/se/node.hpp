@@ -121,66 +121,91 @@ private:
 template <typename T>
 class VoxelBlock: public Node<T> {
 
-  public:
-    typedef typename T::VoxelData VoxelData;
+public:
+  using VoxelData = typename T::VoxelData;
 
-    static constexpr unsigned int size = BLOCK_SIZE;
-    static constexpr unsigned int size_sq = size * size;
-    static constexpr unsigned int size_cube = size * size * size;
+  VoxelBlock() {
+    coordinates_ = Eigen::Vector3i::Constant(0);
+    current_scale_ = 0;
+    min_scale_ = -1;
+  };
 
-    VoxelBlock(typename T::VoxelData init_data = T::initData()) {
-      coordinates_ = Eigen::Vector3i::Constant(0);
-      current_scale_ = 0;
-      min_scale_ = -1;
-      for (unsigned int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
-        voxel_block_[voxel_idx] = init_data;
-      }
+  static constexpr unsigned int size = BLOCK_SIZE;
+  static constexpr unsigned int size_sq = size * size;
+  static constexpr unsigned int size_cube = size * size * size;
+
+  bool isBlock() const { return true; }
+
+  Eigen::Vector3i coordinates() const { return coordinates_; }
+  void coordinates(const Eigen::Vector3i& block_coord){ coordinates_ = block_coord; }
+
+  int current_scale() const { return current_scale_; }
+  void current_scale(const int s) { current_scale_ = s; }
+
+  int min_scale() const { return min_scale_; }
+  void min_scale(const int s) { min_scale_ = s; }
+
+  virtual VoxelData data(const Eigen::Vector3i& voxel_coord) const {};
+  virtual void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data) {};
+
+  virtual VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const {};
+  virtual void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data) {};
+
+  virtual VoxelData data(const int voxel_idx) const {};
+  virtual void setData(const int voxel_idx, const VoxelData& voxel_data) {};
+
+protected:
+  Eigen::Vector3i coordinates_;
+  int current_scale_;
+  int min_scale_;
+};
+
+
+/*! \brief A leaf node of the Octree. Each VoxelBlock contains compute_num_voxels() voxels
+ * voxels.
+ */
+template <typename T>
+class VoxelBlockFull: public VoxelBlock<T> {
+
+public:
+  using VoxelData = typename VoxelBlock<T>::VoxelData;
+
+  VoxelBlockFull(typename T::VoxelData init_data = T::initData()) {
+    for (unsigned int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
+      voxel_block_[voxel_idx] = init_data;
     }
+  }
 
-    bool isBlock() const { return true; }
+  VoxelData data(const Eigen::Vector3i& voxel_coord) const;
+  void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
 
-    Eigen::Vector3i coordinates() const { return coordinates_; }
-    void coordinates(const Eigen::Vector3i& block_coord){ coordinates_ = block_coord; }
+  VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const;
+  void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
 
-    VoxelData data(const Eigen::Vector3i& voxel_coord) const;
-    void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+  VoxelData data(const int voxel_idx) const;
+  void setData(const int voxel_idx, const VoxelData& voxel_data);
 
-    VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const;
-    void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+  VoxelData* getBlockRawPtr() { return voxel_block_; }
+  static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
 
-    VoxelData data(const int voxel_idx) const;
-    void setData(const int voxel_idx, const VoxelData& voxel_data);
+  VoxelBlockFull(const VoxelBlockFull&) = delete;
 
-    int current_scale() const { return current_scale_; }
-    void current_scale(const int s) { current_scale_ = s; }
-
-    int min_scale() const { return min_scale_; }
-    void min_scale(const int s) { min_scale_ = s; }
-
-    VoxelData* getBlockRawPtr() { return voxel_block_; }
-    static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
-
-  private:
-    VoxelBlock(const VoxelBlock&) = delete;
-    Eigen::Vector3i coordinates_;
-    int current_scale_;
-    int min_scale_;
-
-    static constexpr size_t compute_num_voxels() {
-      size_t voxel_count = 0;
-      unsigned int size_at_scale = size;
-      while(size_at_scale >= 1) {
-        voxel_count += size_at_scale * size_at_scale * size_at_scale;
-        size_at_scale = size_at_scale >> 1;
-      }
-      return voxel_count;
+private:
+  static constexpr size_t compute_num_voxels() {
+    size_t voxel_count = 0;
+    unsigned int size_at_scale = VoxelBlock<T>::size;
+    while(size_at_scale >= 1) {
+      voxel_count += size_at_scale * size_at_scale * size_at_scale;
+      size_at_scale = size_at_scale >> 1;
     }
-    static constexpr size_t num_voxels = compute_num_voxels();
-    VoxelData voxel_block_[num_voxels]; // Brick of data.
+    return voxel_count;
+  }
+  static constexpr size_t num_voxels = compute_num_voxels();
+  VoxelData voxel_block_[num_voxels]; // Brick of data.
 
-    friend std::ofstream& internal::serialise <> (std::ofstream& out,
-        VoxelBlock& node);
-    friend void internal::deserialise <> (VoxelBlock& node, std::ifstream& in);
+  friend std::ofstream& internal::serialise <> (std::ofstream& out,
+                                                VoxelBlockFull& node);
+  friend void internal::deserialise <> (VoxelBlockFull& node, std::ifstream& in);
 };
 
 } // namespace se
