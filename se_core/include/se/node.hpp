@@ -187,7 +187,7 @@ public:
   void setData(const int voxel_idx, const VoxelData& voxel_data);
 
   VoxelData* getBlockRawPtr() { return voxel_block_; }
-  static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
+  static constexpr int data_size() { return sizeof(VoxelBlockFull<T>); }
 
   VoxelBlockFull(const VoxelBlockFull&) = delete;
 
