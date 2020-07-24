@@ -55,8 +55,6 @@ class Node {
 public:
   typedef typename T::VoxelData VoxelData;
 
-  VoxelData data_[8];
-
   Node(typename T::VoxelData init_data = T::initData());
 
   Node(Node<T>& node);
@@ -64,6 +62,12 @@ public:
   void operator=(Node<T>& node);
 
   virtual ~Node(){};
+
+  VoxelData* childrenData() { return children_data_;}
+  VoxelData& childData(const int child_idx) { return children_data_[child_idx];}
+  void childData(const int child_idx, const VoxelData& child_data) {
+    children_data_[child_idx] = child_data;
+  };
 
   Node*& child(const int x, const int y, const int z) {
     return child_ptr_[x + y * 2 + z * 4];
@@ -95,6 +99,7 @@ public:
   virtual bool isBlock() const { return false; }
 
 protected:
+  VoxelData children_data_[8];
   Node* child_ptr_[8];
   Node* parent_ptr_;
   key_t code_;

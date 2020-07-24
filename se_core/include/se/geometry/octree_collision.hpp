@@ -162,10 +162,10 @@ collision_status collides_with(const Octree<FieldType>& octree,
 
       if(overlaps && child != nullptr) {
         child_descr.node_ptr = child;
-        child_descr.parent_data = node->data_[0];
+        child_descr.parent_data = node->childData(0);
         stack[stack_idx++] = child_descr;
       } else if(overlaps && child == nullptr) {
-        status = update_status(status, test(node->data_[0]));
+        status = update_status(status, test(node->childData(0)));
       }
     }
     current = stack[--stack_idx];

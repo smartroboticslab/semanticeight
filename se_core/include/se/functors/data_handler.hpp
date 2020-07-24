@@ -93,11 +93,11 @@ namespace se {
         NodeHandler(se::Node<FieldType>* node, int child_idx) : node_(node), child_idx_(child_idx) {}
 
         typename se::Node<FieldType>::VoxelData get() {
-          return node_->data_[child_idx_];
+          return node_->childData(child_idx_);
         }
 
         void set(const typename se::Node<FieldType>::VoxelData& node_data) {
-          node_->data_[child_idx_] = node_data;
+          node_->childData(child_idx_, node_data);
         }
 
       private:

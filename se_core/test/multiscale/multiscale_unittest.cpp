@@ -88,7 +88,7 @@ TEST_F(MultiscaleTest, ScaledAlloc) {
   octree_.allocate(allocation_list, 2);
   se::Node<TestVoxelT>* node = octree_.fetch_node(87, 32, 420, 5);
   ASSERT_TRUE(node != NULL);
-  node->data_[0] = 10.f;
+  node->childData(0, 10.f);
   EXPECT_EQ(octree_.get(87, 32, 420), 10.f);
 }
 
@@ -103,7 +103,7 @@ TEST_F(MultiscaleTest, Iterator) {
   for(int i = 512; node != nullptr; node = it.next(), i /= 2){
     const Eigen::Vector3i node_coord = se::keyops::decode(node->code());
     const int node_size = node->size();
-    const TestVoxelT::VoxelData data = node->data_[0];
+    const TestVoxelT::VoxelData data = node->childData(0);
     EXPECT_EQ(node_size, i);
   }
 }

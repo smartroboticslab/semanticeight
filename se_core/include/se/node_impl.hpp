@@ -42,9 +42,9 @@ Node<T>::Node(typename T::VoxelData init_data) :
     children_mask_(0),
     timestamp_(0) {
   for (unsigned int child_idx = 0; child_idx < 8; child_idx++) {
-    data_[child_idx]      = init_data;
-    parent_ptr_           = nullptr;
-    child_ptr_[child_idx] = nullptr;
+    children_data_[child_idx] = init_data;
+    parent_ptr_            = nullptr;
+    child_ptr_[child_idx]  = nullptr;
   }
 }
 
@@ -65,7 +65,7 @@ void Node<T>::initFromNode(se::Node<T>& node) {
   children_mask_  = node.children_mask();
   timestamp_      = node.timestamp();
   active_         = node.active();
-  std::memcpy(data_, node.data_, 8 * sizeof(VoxelData));
+  std::memcpy(children_data_, node.childrenData(), 8 * sizeof(VoxelData));
 }
 
 // Voxel block base implementation

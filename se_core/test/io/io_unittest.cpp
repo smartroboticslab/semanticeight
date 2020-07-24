@@ -73,7 +73,7 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
     node.code(24);
     node.size(256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
-      node.data_[child_idx] =  5.f;
+      node.childData(child_idx, 5.f);
     se::internal::serialise(os, node);
   }
 
@@ -84,7 +84,7 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
     ASSERT_EQ(node.code(), 24);
     ASSERT_EQ(node.size(), 256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
-      ASSERT_EQ(node.data_[child_idx], 5.f);
+      ASSERT_EQ(node.childData(child_idx), 5.f);
   }
 }
 
@@ -246,7 +246,7 @@ TEST(SerialiseUnitTestSingle, WriteReadNode) {
     node.code(24);
     node.size(256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
-      node.data_[child_idx] =  5.f;
+      node.childData(child_idx,  5.f);
     se::internal::serialise(os, node);
   }
 
@@ -257,7 +257,7 @@ TEST(SerialiseUnitTestSingle, WriteReadNode) {
     ASSERT_EQ(node.code(), 24);
     ASSERT_EQ(node.size(), 256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
-      ASSERT_EQ(node.data_[child_idx], 5.f);
+      ASSERT_EQ(node.childData(child_idx), 5.f);
   }
 }
 

@@ -138,7 +138,7 @@ inline typename Octree<T>::VoxelData Octree<T>::get(const int x,
     const int child_idx = ((x & node_size) > 0) + 2 * ((y & node_size) > 0) + 4 * ((z & node_size) > 0);
     Node<T>* node_tmp = node->child(child_idx);
     if (!node_tmp) {
-      return node->data_[child_idx];
+      return node->childData(child_idx);
     }
     node = node_tmp;
   }
@@ -186,7 +186,7 @@ inline typename Octree<T>::VoxelData Octree<T>::getFine(
     child_idx  = ((x & node_size) > 0) + 2 * ((y & node_size) > 0) + 4 * ((z & node_size) > 0);
     Node<T>* node_tmp = node->child(child_idx);
     if (!node_tmp) {
-      auto& value = node->data_[child_idx];
+      auto& value = node->childData(child_idx);
       return value;
     }
     node = node_tmp;
@@ -196,7 +196,7 @@ inline typename Octree<T>::VoxelData Octree<T>::getFine(
     auto block = static_cast<VoxelBlockType *>(node);
     return block->data(Eigen::Vector3i(x, y, z), std::max(scale, block->current_scale()));
   } else {
-    return (node->parent())->data_[child_idx];
+    return (node->parent())->childData(child_idx);
   }
 }
 

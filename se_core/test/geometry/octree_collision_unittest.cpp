@@ -88,7 +88,7 @@ TEST_F(OctreeCollisionTest, TotallyUnseen) {
   for(int i = 256; node != nullptr ; node = it.next(), i /= 2){
     const Eigen::Vector3i node_coord = se::keyops::decode(node->code());
     const int node_size = node->size();
-    const TestVoxelT::VoxelData data = (node->data_[0]);
+    const TestVoxelT::VoxelData data = (node->childData(0));
     printf("se::Node's coordinates: (%d, %d, %d), size %d, value %.2f\n",
         node_coord.x(), node_coord.y(), node_coord.z(), node_size, data);
     EXPECT_EQ(node_size, i);

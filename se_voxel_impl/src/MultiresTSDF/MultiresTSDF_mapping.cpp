@@ -102,8 +102,8 @@ namespace se {
       float mean = 0;
       int sample_count = 0;
       float weight = 0;
-      for (int i = 0; i < 8; ++i) {
-        const auto &child_data = node->data_[i];
+      for (int child_idx = 0; child_idx < 8; ++child_idx) {
+        const auto &child_data = node->childData(child_idx);
         if (child_data.y != 0) {
           mean += child_data.x;
           weight += child_data.y;
@@ -112,9 +112,9 @@ namespace se {
       }
 
       const unsigned int child_idx = se::child_idx(node->code(),
-                                           se::keyops::code(node->code()), voxel_depth);
+          se::keyops::code(node->code()), voxel_depth);
       if (sample_count > 0) {
-        auto &node_data = node->parent()->data_[child_idx];
+        auto &node_data = node->parent()->childData(child_idx);
         mean /= sample_count;
         weight /= sample_count;
         node_data.x = mean;

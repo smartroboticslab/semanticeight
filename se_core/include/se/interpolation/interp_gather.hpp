@@ -370,7 +370,7 @@ namespace internal {
         const int child_size = 1 << (max_depth - depth);
         const Eigen::Vector3i coords = se::keyops::decode(stack[depth-1]->code())
             + child_size * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
-        return {select_voxel_value(stack[depth - 1]->data_[sibling]), coords};
+        return {select_voxel_value(stack[depth - 1]->childData(sibling)), coords};
       }
       depth--;
     }
