@@ -43,8 +43,8 @@ Node<T>::Node(const typename T::VoxelData init_data) :
     timestamp_(0) {
   for (unsigned int child_idx = 0; child_idx < 8; child_idx++) {
     children_data_[child_idx] = init_data;
+    children_ptr_[child_idx]  = nullptr;
     parent_ptr_               = nullptr;
-    child_ptr_[child_idx]     = nullptr;
   }
 }
 

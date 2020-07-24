@@ -71,13 +71,13 @@ public:
   };
 
   Node*& child(const int x, const int y, const int z) {
-    return child_ptr_[x + y * 2 + z * 4];
+    return children_ptr_[x + y * 2 + z * 4];
   };
   const Node* child(const int x, const int y, const int z) const {
-    return child_ptr_[x + y * 2 + z * 4];
+    return children_ptr_[x + y * 2 + z * 4];
   };
-  Node*& child(const int child_idx ) { return child_ptr_[child_idx]; }
-  const Node* child(const int child_idx ) const { return child_ptr_[child_idx]; }
+  Node*& child(const int child_idx ) { return children_ptr_[child_idx]; }
+  const Node* child(const int child_idx ) const { return children_ptr_[child_idx]; }
 
   Node*& parent() { return parent_ptr_; }
   const Node* parent() const { return parent_ptr_; }
@@ -101,7 +101,7 @@ public:
 
 protected:
   VoxelData children_data_[8];
-  Node* child_ptr_[8];
+  Node* children_ptr_[8];
   Node* parent_ptr_;
   key_t code_;
   unsigned int size_;
