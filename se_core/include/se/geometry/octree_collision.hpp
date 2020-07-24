@@ -80,7 +80,7 @@ collision_status collides_with(const VoxelBlockT<FieldType>* block,
   collision_status status = collision_status::empty;
   const Eigen::Vector3i block_coord = block->coordinates();
   int x, y, z, block_size;
-  block_size = (int) VoxelBlockT<FieldType>::size;
+  block_size = (int) VoxelBlockT<FieldType>::size_li;
   int x_last = block_coord.x() + block_size;
   int y_last = block_coord.y() + block_size;
   int z_last = block_coord.z() + block_size;

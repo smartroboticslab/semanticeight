@@ -119,7 +119,7 @@ namespace se {
       out.write(reinterpret_cast<char *>(&current_scale), sizeof(int));
       if (block.min_scale() != -1) {
         for (int scale = VoxelBlockSingle<T>::max_scale; scale >= block.min_scale(); scale--) {
-          int size_at_scale = block.size >> scale;
+          int size_at_scale = block.size_li >> scale;
           int num_voxels_at_scale = se::math::cu(size_at_scale);
           int mip_level = VoxelBlockSingle<T>::max_scale - scale;
           out.write(reinterpret_cast<char *>(block.blockData()[VoxelBlockSingle<T>::max_scale - scale]),
@@ -151,7 +151,7 @@ namespace se {
       if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
         // TODO: Assess if the loaded block is of the same size as the one it's saved to.
         for (int scale = VoxelBlockSingle<T>::max_scale; scale >= block.min_scale(); scale--) {
-          int size_at_scale = block.size >> scale;
+          int size_at_scale = block.size_li >> scale;
           int num_voxels_at_scale = se::math::cu(size_at_scale);
           typename T::VoxelData* block_data_at_scale = new typename T::VoxelData[num_voxels_at_scale];
           block.blockData().push_back(block_data_at_scale);

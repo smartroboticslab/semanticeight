@@ -52,7 +52,7 @@ namespace se {
 */
     void propagateUp(MultiresTSDF::VoxelBlockType* block, const int scale) {
       const Eigen::Vector3i block_coord = block->coordinates();
-      const int block_size = MultiresTSDF::VoxelBlockType::size;
+      const int block_size = MultiresTSDF::VoxelBlockType::size_li;
       for (int voxel_scale = scale; voxel_scale < se::math::log2_const(block_size); ++voxel_scale) {
         const int stride = 1 << (voxel_scale + 1);
         for (int z = 0; z < block_size; z += stride)
@@ -138,7 +138,7 @@ namespace se {
                        const int                                  min_scale,
                        const int                                  max_weight = INT_MAX) {
       const Eigen::Vector3i block_coord = block->coordinates();
-      const int block_size = MultiresTSDF::VoxelBlockType::size;
+      const int block_size = MultiresTSDF::VoxelBlockType::size_li;
       for (int voxel_scale = scale; voxel_scale > min_scale; --voxel_scale) {
         const int stride = 1 << voxel_scale;
         for (int z = 0; z < block_size; z += stride)
@@ -193,7 +193,7 @@ namespace se {
                          const Eigen::Vector3f&                     sample_offset_frac,
                          const float                                mu) {
 
-      const int block_size = MultiresTSDF::VoxelBlockType::size;
+      const int block_size = MultiresTSDF::VoxelBlockType::size_li;
       const int parent_scale = voxel_scale + 1;
       const int parent_stride = 1 << parent_scale;
       const int voxel_stride = parent_stride >> 1;
@@ -298,7 +298,7 @@ namespace se {
 
       void operator()(MultiresTSDF::VoxelBlockType* block) {
 
-        constexpr int block_size = MultiresTSDF::VoxelBlockType::size;
+        constexpr int block_size = MultiresTSDF::VoxelBlockType::size_li;
         const Eigen::Vector3i block_coord = block->coordinates();
         const Eigen::Vector3f block_sample_offset = (sample_offset_frac.array().colwise() *
             Eigen::Vector3f::Constant(block_size).array());

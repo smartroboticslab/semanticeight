@@ -60,7 +60,7 @@ octomap::OcTree* se::to_octomap(const se::Octree<VoxelT>& octree,
         const VoxelBlockType<VoxelT>* block
             = static_cast<VoxelBlockType <VoxelT>*>(node);
         const Eigen::Vector3i block_coord = block->coordinates();
-        const int block_size = static_cast<int>(VoxelBlockType<VoxelT>::size);
+        const int block_size = static_cast<int>(VoxelBlockType<VoxelT>::size_li);
         const int x_last = block_coord.x() + block_size;
         const int y_last = block_coord.y() + block_size;
         const int z_last = block_coord.z() + block_size;

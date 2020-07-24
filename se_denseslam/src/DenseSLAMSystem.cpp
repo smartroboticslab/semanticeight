@@ -203,7 +203,7 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
                                 const unsigned     frame) {
 
   const int num_blocks_per_pixel = map_->size()
-    / ((VoxelBlockType::size));
+    / ((VoxelBlockType::size_li));
   const size_t num_blocks_total = num_blocks_per_pixel
     * image_res_.x() * image_res_.y();
   allocation_list_.reserve(num_blocks_total);
@@ -306,7 +306,7 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
     if(block->min_scale() == 0) return;
     const Eigen::Vector3f& sample_offset_frac = map_->sample_offset_frac_;
     const Eigen::Vector3i block_coord = block->coordinates();
-    const int block_size = block->size;
+    const int block_size = VoxelBlockType::size_li;
     bool is_valid;
     for(int z = 0; z < block_size; ++z)
       for(int y = 0; y < block_size; ++y)

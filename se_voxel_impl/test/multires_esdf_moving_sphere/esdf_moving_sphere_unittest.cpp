@@ -39,7 +39,7 @@ void updateBlock(VoxelBlockT*           block,
                  const float            radius,
                  const int              scale) {
   const Eigen::Vector3i block_coord = block->coordinates();
-  const int block_size = VoxelBlockT::size;
+  const int block_size = VoxelBlockT::size_li;
   const int stride = 1 << scale;
   for(int z = 0; z < block_size; z += stride) {
     for (int y = 0; y < block_size; y += stride) {

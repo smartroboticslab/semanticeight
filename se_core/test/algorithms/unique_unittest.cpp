@@ -112,7 +112,7 @@ TEST_F(UniqueMultiscaleTest, FilterAncestors) {
 TEST_F(UniqueMultiscaleTest, FilterDuplicatesTillLevel) {
   /*
    * 0x1FFu extracts the last 9 bits of a morton number,
-   * corresponding to the size of a voxel block: 3*log2(TestVoxelT::VoxelBlockType::size)
+   * corresponding to the size of a voxel block: 3*log2(TestVoxelT::VoxelBlockType::size_li)
    */
   const int last = se::algorithms::unique_multiscale(keys.data(), keys.size());
   for(int i = 1; i < last; ++i) {

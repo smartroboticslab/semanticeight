@@ -56,7 +56,6 @@ public:
   typedef typename T::VoxelData VoxelData;
 
   VoxelData data_[8];
-  unsigned int size_;
   unsigned char children_mask_;
   unsigned int timestamp_;
 
@@ -74,6 +73,14 @@ public:
 
   key_t code() {
     return code_;
+  }
+
+  void size(int size) {
+    size_ = size;
+  }
+
+  int size() {
+    return size_;
   }
 
   Node*& child(const int x, const int y, const int z) {
@@ -110,6 +117,7 @@ public:
 
 protected:
   key_t code_;
+  unsigned int size_;
   bool active_;
   Node* parent_ptr_;
   Node* child_ptr_[8];
@@ -130,10 +138,10 @@ class VoxelBlock: public Node<T> {
 public:
   using VoxelData = typename T::VoxelData;
 
-  static constexpr unsigned int size      = BLOCK_SIZE;
-  static constexpr unsigned int size_sq   = se::math::sq(size);
-  static constexpr unsigned int size_cu   = se::math::cu(size);
-  static constexpr unsigned int max_scale = se::math::log2_const(size);
+  static constexpr unsigned int size_li   = BLOCK_SIZE;
+  static constexpr unsigned int size_sq   = se::math::sq(size_li);
+  static constexpr unsigned int size_cu   = se::math::cu(size_li);
+  static constexpr unsigned int max_scale = se::math::log2_const(size_li);
 
   VoxelBlock();
 
@@ -209,7 +217,7 @@ private:
 
   static constexpr size_t compute_num_voxels() {
     size_t voxel_count = 0;
-    unsigned int size_at_scale = VoxelBlock<T>::size;
+    unsigned int size_at_scale = VoxelBlock<T>::size_li;
     while(size_at_scale >= 1) {
       voxel_count += size_at_scale * size_at_scale * size_at_scale;
       size_at_scale = size_at_scale >> 1;

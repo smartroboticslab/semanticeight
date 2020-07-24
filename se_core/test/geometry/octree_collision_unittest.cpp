@@ -87,7 +87,7 @@ TEST_F(OctreeCollisionTest, TotallyUnseen) {
   se::Node<TestVoxelT>* node = it.next();
   for(int i = 256; node != nullptr ; node = it.next(), i /= 2){
     const Eigen::Vector3i node_coord = se::keyops::decode(node->code());
-    const int node_size = node->size_;
+    const int node_size = node->size();
     const TestVoxelT::VoxelData data = (node->data_[0]);
     printf("se::Node's coordinates: (%d, %d, %d), size %d, value %.2f\n",
         node_coord.x(), node_coord.y(), node_coord.z(), node_size, data);
@@ -141,7 +141,7 @@ TEST_F(OctreeCollisionTest, CollisionFreeLeaf){
   TestVoxelT::VoxelBlockType* block = octree_.fetch(56, 12, 254);
   const Eigen::Vector3i block_coord = block->coordinates();
   int x, y, z, block_size;
-  block_size = (int) TestVoxelT::VoxelBlockType::size;
+  block_size = (int) TestVoxelT::VoxelBlockType::size_li;
   int x_last = block_coord.x() + block_size;
   int y_last = block_coord.y() + block_size;
   int z_last = block_coord.z() + block_size;

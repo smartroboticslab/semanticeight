@@ -353,7 +353,7 @@ void Octree<T>::init(int size, float dim) {
   max_block_scale_ = log2(block_size);
   block_depth_ = voxel_depth_ - max_block_scale_;
   root_ = pool_.root();
-  root_->size_ = size;
+  root_->size(size);
   reserved_ = 1024;
   keys_at_depth_.resize(reserved_, 0);
 }
@@ -418,7 +418,7 @@ Node<T>* Octree<T>::insert(const int x,
   if(!node) {
     root_ = pool_.root();
     root_->code(0);
-    root_->size_ = size_;
+    root_->size(size_);
     node = root_;
   }
 
@@ -449,7 +449,7 @@ Node<T>* Octree<T>::insert(const int x,
       } else {
         if (init_octant == nullptr) {
           node_tmp = pool_.acquireNode();
-          node_tmp->size_ = node_size;
+          node_tmp->size(node_size);
         } else {
           node_tmp = pool_.acquireNode(init_octant);
         }
@@ -894,7 +894,7 @@ bool Octree<T>::allocate_depth(key_t* octant_keys, int num_tasks, int target_dep
         if (depth == block_depth_) {
           *node = pool_.acquireBlock();
           (*node)->parent() = parent;
-          (*node)->size_ = octant_size;
+          (*node)->size(octant_size);
           static_cast<VoxelBlockType *>(*node)->coordinates(Eigen::Vector3i(unpack_morton(octant_key)));
           static_cast<VoxelBlockType *>(*node)->active(true);
           static_cast<VoxelBlockType *>(*node)->code(octant_key | depth);
@@ -903,7 +903,7 @@ bool Octree<T>::allocate_depth(key_t* octant_keys, int num_tasks, int target_dep
           *node = pool_.acquireNode();
           (*node)->parent() = parent;
           (*node)->code(octant_key | depth);
-          (*node)->size_ = octant_size;
+          (*node)->size(octant_size);
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         }
       }

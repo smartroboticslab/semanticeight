@@ -151,7 +151,7 @@ namespace meshing {
   uint8_t compute_index(const OctreeT<FieldType>& map,
   const VoxelBlockT<FieldType>* cached, InsidePredicate inside,
   const unsigned x, const unsigned y, const unsigned z){
-    unsigned int block_size =  VoxelBlockT<FieldType>::size;
+    unsigned int block_size =  VoxelBlockT<FieldType>::size_li;
     unsigned int local = ((x % block_size == block_size - 1) << 2) |
       ((y % block_size == block_size - 1) << 1) |
       ((z % block_size) == block_size - 1);
@@ -209,7 +209,7 @@ namespace algorithms {
 #pragma omp parallel for
       for (size_t i = 0; i < block_list.size(); i++) {
         VoxelBlockType<FieldType>* block = static_cast<VoxelBlockType<FieldType> *>(block_list[i]);
-        const int block_size = VoxelBlockType<FieldType>::size;
+        const int block_size = VoxelBlockType<FieldType>::size_li;
         const Eigen::Vector3i& start_coord = block->coordinates();
         const Eigen::Vector3i last_coord =
           (block->coordinates() + Eigen::Vector3i::Constant(block_size)).cwiseMin(

@@ -71,7 +71,7 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
     std::ofstream os (filename, std::ios::binary);
     se::Node<TestVoxelFullT> node;
     node.code(24);
-    node.size_ = 256;
+    node.size(256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       node.data_[child_idx] =  5.f;
     se::internal::serialise(os, node);
@@ -82,7 +82,7 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
     se::Node<TestVoxelFullT> node;
     se::internal::deserialise(node, is);
     ASSERT_EQ(node.code(), 24);
-    ASSERT_EQ(node.size_, 256);
+    ASSERT_EQ(node.size(), 256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       ASSERT_EQ(node.data_[child_idx], 5.f);
   }
@@ -244,7 +244,7 @@ TEST(SerialiseUnitTestSingle, WriteReadNode) {
     std::ofstream os (filename, std::ios::binary);
     se::Node<TestVoxelSingleT> node;
     node.code(24);
-    node.size_ = 256;
+    node.size(256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       node.data_[child_idx] =  5.f;
     se::internal::serialise(os, node);
@@ -255,7 +255,7 @@ TEST(SerialiseUnitTestSingle, WriteReadNode) {
     se::Node<TestVoxelSingleT> node;
     se::internal::deserialise(node, is);
     ASSERT_EQ(node.code(), 24);
-    ASSERT_EQ(node.size_, 256);
+    ASSERT_EQ(node.size(), 256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       ASSERT_EQ(node.data_[child_idx], 5.f);
   }

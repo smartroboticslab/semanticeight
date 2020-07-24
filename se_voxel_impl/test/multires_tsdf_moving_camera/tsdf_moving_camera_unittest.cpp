@@ -288,7 +288,7 @@ inline float compute_scale(const Eigen::Vector3f& point_C,
 template <typename VoxelBlockT>
 void propagateDown(VoxelBlockT* block, const int scale) {
   const Eigen::Vector3i block_coord = block->coordinates();
-  const int block_size = VoxelBlockT::size;
+  const int block_size = VoxelBlockT::size_li;
   for(int voxel_scale = scale; voxel_scale > 0; --voxel_scale) {
     const int stride = 1 << voxel_scale;
     for (int z = 0; z < block_size; z += stride)
@@ -326,7 +326,7 @@ void propagateDown(VoxelBlockT* block, const int scale) {
 template <typename VoxelBlockT>
 void propagateUp(VoxelBlockT* block, const int scale) {
   const Eigen::Vector3i block_coord = block->coordinates();
-  const int block_size = VoxelBlockT::size;
+  const int block_size = VoxelBlockT::size_li;
   for(int voxel_scale = scale; voxel_scale < se::math::log2_const(block_size); ++voxel_scale) {
     const int stride = 1 << (voxel_scale + 1);
     for (int z = 0; z < block_size; z += stride)
@@ -376,7 +376,7 @@ void foreach(float                                  voxel_dim,
   for(int i = 0; i < num_elem; ++i) {
     VoxelBlockT* block = active_list[i];
     const Eigen::Vector3i block_coord = block->coordinates();
-    const int block_size = VoxelBlockT::size;
+    const int block_size = VoxelBlockT::size_li;
 
     const Eigen::Matrix4f T_CM = (camera_parameter.T_MC()).inverse();
     const Eigen::Matrix3f R_CM = T_CM.topLeftCorner<3,3>();
@@ -474,7 +474,7 @@ protected:
     Eigen::Matrix4f T_MC = Eigen::Matrix4f::Identity();
     camera_parameter_ = camera_parameter(K_, depth_image_res_, T_MC);
 
-    const int block_size = VoxelBlockType<MultiresTSDF::VoxelType>::size;
+    const int block_size = VoxelBlockType<MultiresTSDF::VoxelType>::size_li;
     for(int z = block_size / 2; z < size_; z += block_size) {
       for(int y = block_size / 2; y < size_; y += block_size) {
         for(int x = block_size / 2; x < size_; x += block_size) {

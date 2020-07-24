@@ -64,7 +64,7 @@ namespace functor {
       void update_block(VoxelBlockType<FieldType>* block) {
         Eigen::Vector3i block_coord = block->coordinates();
         unsigned int y, z, x;
-        Eigen::Vector3i block_size = Eigen::Vector3i::Constant(VoxelBlockType<FieldType>::size);
+        Eigen::Vector3i block_size = Eigen::Vector3i::Constant(VoxelBlockType<FieldType>::size_li);
         Eigen::Vector3i start_coord = block_coord.cwiseMax(min_coord_);
         Eigen::Vector3i last_coord = (block_coord + block_size).cwiseMin(max_coord_);
 
@@ -84,7 +84,7 @@ namespace functor {
 #pragma omp simd
         for(int child_idx = 0; child_idx < 8; ++child_idx) {
           const Eigen::Vector3i rel_step =  Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0);
-          const Eigen::Vector3i child_coord = node_coord + (rel_step * (node->size_ / 2));
+          const Eigen::Vector3i child_coord = node_coord + (rel_step * (node->size() / 2));
           if(!(se::math::in(child_coord.x(), min_coord_.x(), max_coord_.x()) &&
                se::math::in(child_coord.y(), min_coord_.y(), max_coord_.y()) &&
                se::math::in(child_coord.z(), min_coord_.z(), max_coord_.z()))) continue;

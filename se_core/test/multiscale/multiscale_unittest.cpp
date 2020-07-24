@@ -102,7 +102,7 @@ TEST_F(MultiscaleTest, Iterator) {
   se::Node<TestVoxelT>* node = it.next();
   for(int i = 512; node != nullptr; node = it.next(), i /= 2){
     const Eigen::Vector3i node_coord = se::keyops::decode(node->code());
-    const int node_size = node->size_;
+    const int node_size = node->size();
     const TestVoxelT::VoxelData data = node->data_[0];
     EXPECT_EQ(node_size, i);
   }
@@ -152,7 +152,7 @@ TEST_F(MultiscaleTest, OctantAlloc) {
 
 TEST_F(MultiscaleTest, SingleInsert) {
   Eigen::Vector3i voxel_coord(32, 208, 44);
-  const int block_size = TestVoxelT::VoxelBlockType::size;
+  const int block_size = TestVoxelT::VoxelBlockType::size_li;
   TestVoxelT::VoxelBlockType* block = octree_.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   Eigen::Vector3i block_coord = block->coordinates();
   Eigen::Vector3i block_coord_rounded = block_size * (voxel_coord / block_size);
@@ -201,7 +201,7 @@ struct TestVoxel2T {
 TEST(MultiscaleBlock, ReadWrite) {
   se::Octree<TestVoxel2T> octree;
   octree.init(1024, 10);
-  const int block_size = TestVoxel2T::VoxelBlockType::size;
+  const int block_size = TestVoxel2T::VoxelBlockType::size_li;
   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with rd()
   std::uniform_int_distribution<> dis(0, 1023);

@@ -161,7 +161,7 @@ namespace internal {
                            ValueT                     values[8]) {
 
     const int stride = 1 << scale;
-    unsigned int block_size = VoxelBlockType<FieldType>::size;
+    unsigned int block_size = VoxelBlockType<FieldType>::size_li;
     unsigned int crossmask
         = (((base_coord.x() & (block_size - 1)) == block_size - stride) << 2)
         | (((base_coord.y() & (block_size - 1)) == block_size - stride) << 1)
