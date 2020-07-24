@@ -81,7 +81,7 @@ octomap::OcTree* se::to_octomap(const se::Octree<VoxelT>& octree,
         }
       }
 
-      if (node->children_mask_ == 0) {
+      if (node->children_mask() == 0) {
         current = node_stack[--stack_idx];
         continue;
       }

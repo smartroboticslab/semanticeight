@@ -89,7 +89,7 @@ namespace se {
       const unsigned int child_idx = se::child_idx(node->code(),
                                            se::keyops::depth(node->code()), max_depth);
       node->parent()->child(child_idx) = nullptr;
-      node->parent()->children_mask_ = node->parent()->children_mask_ & ~(1 << child_idx);
+      node->parent()->children_mask(node->parent()->children_mask() & ~(1 << child_idx));
 
       for (int child_idx = 0; child_idx < 8; child_idx++)
         deleteNodeRecurse(node->child(child_idx));
@@ -115,7 +115,7 @@ namespace se {
       const unsigned int child_idx = se::child_idx(block->code(),
                                            se::keyops::depth(block->code()), max_depth);
       block->parent()->child(child_idx) = NULL;
-      block->parent()->children_mask_ = block->parent()->children_mask_ & ~(1 << child_idx);
+      block->parent()->children_mask(block->parent()->children_mask() & ~(1 << child_idx));
       delete(block);
     }
 

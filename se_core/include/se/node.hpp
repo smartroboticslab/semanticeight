@@ -56,8 +56,6 @@ public:
   typedef typename T::VoxelData VoxelData;
 
   VoxelData data_[8];
-  unsigned char children_mask_;
-  unsigned int timestamp_;
 
   Node(typename T::VoxelData init_data = T::initData());
 
@@ -67,48 +65,29 @@ public:
 
   virtual ~Node(){};
 
-  void code(key_t code) {
-    code_ = code;
-  }
-
-  key_t code() {
-    return code_;
-  }
-
-  void size(int size) {
-    size_ = size;
-  }
-
-  int size() {
-    return size_;
-  }
-
   Node*& child(const int x, const int y, const int z) {
     return child_ptr_[x + y * 2 + z * 4];
   };
-
   const Node* child(const int x, const int y, const int z) const {
     return child_ptr_[x + y * 2 + z * 4];
   };
+  Node*& child(const int child_idx ) { return child_ptr_[child_idx]; }
+  const Node* child(const int child_idx ) const { return child_ptr_[child_idx]; }
 
-  Node*& child(const int child_idx ) {
-    return child_ptr_[child_idx];
-  }
+  Node*& parent() { return parent_ptr_; }
+  const Node* parent() const { return parent_ptr_; }
 
-  const Node* child(const int child_idx ) const {
-    return child_ptr_[child_idx];
-  }
+  void code(key_t code) { code_ = code; }
+  key_t code() const { return code_; }
 
-  Node*& parent() {
-    return parent_ptr_;
-  }
+  void size(int size) { size_ = size; }
+  int size() const { return size_; }
 
-  const Node* parent() const {
-    return parent_ptr_;
-  }
+  void children_mask(const unsigned char cm) { children_mask_ = cm; }
+  unsigned char children_mask() const { return children_mask_; }
 
-  unsigned int timestamp() { return timestamp_; }
-  unsigned int timestamp(unsigned int t) { return timestamp_ = t; }
+  void timestamp(const unsigned int t) { timestamp_ = t; }
+  unsigned int timestamp() const { return timestamp_; }
 
   void active(const bool a){ active_ = a; }
   bool active() const { return active_; }
@@ -116,11 +95,13 @@ public:
   virtual bool isBlock() const { return false; }
 
 protected:
+  Node* child_ptr_[8];
+  Node* parent_ptr_;
   key_t code_;
   unsigned int size_;
+  unsigned char children_mask_;
+  unsigned int timestamp_;
   bool active_;
-  Node* parent_ptr_;
-  Node* child_ptr_[8];
 
 private:
   // Internal copy helper function

@@ -62,7 +62,7 @@ template <typename T>
 void Node<T>::initFromNode(se::Node<T>& node) {
   code_           = node.code();
   size_           = node.size_;
-  children_mask_  = node.children_mask_;
+  children_mask_  = node.children_mask();
   timestamp_      = node.timestamp();
   active_         = node.active();
   std::memcpy(data_, node.data_, 8 * sizeof(VoxelData));

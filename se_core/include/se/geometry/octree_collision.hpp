@@ -142,7 +142,7 @@ collision_status collides_with(const Octree<FieldType>& octree,
           bbox_coord, bbox_size, test);
     }
 
-    if(node->children_mask_ == 0) {
+    if(node->children_mask() == 0) {
        current = stack[--stack_idx];
        continue;
     }

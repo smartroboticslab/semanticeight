@@ -461,7 +461,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
      */
 
     // Update child mask
-    parent->children_mask_ = parent->children_mask_ | (1 << node_idx);
+    parent->children_mask(parent->children_mask() | (1 << node_idx));
 
     if(node_size <= static_cast<int>(MultiresOFusion::VoxelBlockType::size_li)) {
       // Allocate voxel block

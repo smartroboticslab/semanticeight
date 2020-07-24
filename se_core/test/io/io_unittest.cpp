@@ -169,7 +169,7 @@ TEST(SerialiseUnitTestFull, SerialiseTree) {
     se::Node<TestVoxelFullT> * node_base  = node_buffer_base[i];
     se::Node<TestVoxelFullT> * node_copy = node_buffer_copy[i];
     ASSERT_EQ(node_base->code(), node_copy->code());
-    ASSERT_EQ(node_base->children_mask_, node_copy->children_mask_);
+    ASSERT_EQ(node_base->children_mask(), node_copy->children_mask());
   }
 
   auto& block_buffer_base = octree.pool().blockBuffer();
@@ -344,7 +344,7 @@ TEST(SerialiseUnitTestSingle, SerialiseTree) {
     se::Node<TestVoxelSingleT> * node_base  = node_buffer_base[i];
     se::Node<TestVoxelSingleT> * node_copy = node_buffer_copy[i];
     ASSERT_EQ(node_base->code(), node_copy->code());
-    ASSERT_EQ(node_base->children_mask_, node_copy->children_mask_);
+    ASSERT_EQ(node_base->children_mask(), node_copy->children_mask());
   }
 
   auto& block_buffer_base = octree.pool().blockBuffer();

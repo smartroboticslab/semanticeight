@@ -124,7 +124,7 @@ TEST_F(MultiscaleTest, ChildrenMaskTest) {
     se::Node<TestVoxelT>* node = nodes_buffer[i];
     for(int child_idx = 0; child_idx < 8; ++child_idx) {
       if(node->child(child_idx)) {
-        ASSERT_TRUE(node->children_mask_ & (1 << child_idx));
+        ASSERT_TRUE(node->children_mask() & (1 << child_idx));
       }
     }
   }
@@ -179,7 +179,7 @@ TEST_F(MultiscaleTest, MultipleInsert) {
       // Check expected coordinates
       ASSERT_TRUE(node_coord == node_coord_rounded);
       // Should not have any children up to this depth
-      ASSERT_TRUE(fetched_node->children_mask_ == 0);
+      ASSERT_TRUE(fetched_node->children_mask() == 0);
       ++num_tested;
     }
   }
