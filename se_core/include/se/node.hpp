@@ -55,15 +55,16 @@ class Node {
 public:
   typedef typename T::VoxelData VoxelData;
 
-  Node(typename T::VoxelData init_data = T::initData());
+  Node(const typename T::VoxelData init_data = T::initData());
 
-  Node(Node<T>& node);
+  Node(const Node<T>& node);
 
-  void operator=(Node<T>& node);
+  void operator=(const Node<T>& node);
 
   virtual ~Node(){};
 
   VoxelData* childrenData() { return children_data_;}
+  const VoxelData* childrenData() const { return children_data_;}
   VoxelData& childData(const int child_idx) { return children_data_[child_idx];}
   void childData(const int child_idx, const VoxelData& child_data) {
     children_data_[child_idx] = child_data;
@@ -110,7 +111,7 @@ protected:
 
 private:
   // Internal copy helper function
-  void initFromNode(Node<T>& node);
+  void initFromNode(const Node<T>& node);
   friend std::ofstream& internal::serialise <> (std::ofstream& out, Node& node);
   friend void internal::deserialise <> (Node& node, std::ifstream& in);
 };
@@ -131,9 +132,9 @@ public:
 
   VoxelBlock();
 
-  VoxelBlock(VoxelBlock<T>& block);
+  VoxelBlock(const VoxelBlock<T>& block);
 
-  void operator=(VoxelBlock<T>& block);
+  void operator=(const VoxelBlock<T>& block);
 
   virtual ~VoxelBlock() {};
 
@@ -164,7 +165,7 @@ protected:
 
 private:
   // Internal copy helper function
-  void initFromBlock(VoxelBlock<T>& block);
+  void initFromBlock(const VoxelBlock<T>& block);
 };
 
 
@@ -177,11 +178,11 @@ class VoxelBlockFull: public VoxelBlock<T> {
 public:
   using VoxelData = typename VoxelBlock<T>::VoxelData;
 
-  VoxelBlockFull(typename T::VoxelData init_data = T::initData());
+  VoxelBlockFull(const typename T::VoxelData init_data = T::initData());
 
-  VoxelBlockFull(VoxelBlockFull<T>& block);
+  VoxelBlockFull(const VoxelBlockFull<T>& block);
 
-  void operator=(VoxelBlockFull<T>& block);
+  void operator=(const VoxelBlockFull<T>& block);
 
   virtual ~VoxelBlockFull() {};
 
@@ -195,11 +196,12 @@ public:
   void setData(const int voxel_idx, const VoxelData& voxel_data);
 
   VoxelData* blockData() { return block_data_; }
+  const VoxelData* blockData() const { return block_data_; }
   static constexpr int data_size() { return sizeof(VoxelBlockFull<T>); }
 
 private:
   // Internal copy helper function
-  void initFromBlock(VoxelBlockFull<T>& block);
+  void initFromBlock(const VoxelBlockFull<T>& block);
 
   static constexpr size_t compute_num_voxels() {
     size_t voxel_count = 0;
@@ -228,11 +230,11 @@ class VoxelBlockSingle: public VoxelBlock<T> {
 public:
   using VoxelData = typename VoxelBlock<T>::VoxelData;
 
-  VoxelBlockSingle(typename T::VoxelData init_data = T::initData()) : init_data_(init_data) { };
+  VoxelBlockSingle(const typename T::VoxelData init_data = T::initData()) : init_data_(init_data) { };
 
-  VoxelBlockSingle(VoxelBlockSingle<T>& block);
+  VoxelBlockSingle(const VoxelBlockSingle<T>& block);
 
-  void operator=(VoxelBlockSingle<T>& block);
+  void operator=(const VoxelBlockSingle<T>& block);
 
   ~VoxelBlockSingle();
 
@@ -257,12 +259,13 @@ public:
   void deleteUpTo(const int scale);
 
   std::vector<VoxelData*>& blockData() { return block_data_; }
+  const std::vector<VoxelData*>& blockData() const { return block_data_; }
   static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
 
 private:
   // Internal copy helper function
-  void initFromBlock(VoxelBlockSingle<T>& block);
-  void initaliseData(VoxelData* voxel_data, int num_voxels);
+  void initFromBlock(const VoxelBlockSingle<T>& block);
+  void initaliseData(VoxelData* voxel_data, const int num_voxels);
   std::vector<VoxelData*> block_data_; // block_data_[0] returns the data at scale = max_scale and not scale = 0
   VoxelData init_data_;
 

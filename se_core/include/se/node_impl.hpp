@@ -36,30 +36,30 @@ namespace se {
 // Node implementation
 
 template <typename T>
-Node<T>::Node(typename T::VoxelData init_data) :
+Node<T>::Node(const typename T::VoxelData init_data) :
     code_(0),
     size_(0),
     children_mask_(0),
     timestamp_(0) {
   for (unsigned int child_idx = 0; child_idx < 8; child_idx++) {
     children_data_[child_idx] = init_data;
-    parent_ptr_            = nullptr;
-    child_ptr_[child_idx]  = nullptr;
+    parent_ptr_               = nullptr;
+    child_ptr_[child_idx]     = nullptr;
   }
 }
 
 template <typename T>
-Node<T>::Node(Node<T>& node) {
+Node<T>::Node(const Node<T>& node) {
   initFromNode(node);
 }
 
 template <typename T>
-void Node<T>::operator=(Node<T>& node) {
+void Node<T>::operator=(const Node<T>& node) {
   initFromNode(node);
 }
 
 template <typename T>
-void Node<T>::initFromNode(se::Node<T>& node) {
+void Node<T>::initFromNode(const se::Node<T>& node) {
   code_           = node.code();
   size_           = node.size_;
   children_mask_  = node.children_mask();
@@ -77,17 +77,17 @@ VoxelBlock<T>::VoxelBlock() :
     min_scale_(-1) { };
 
 template <typename T>
-VoxelBlock<T>::VoxelBlock(VoxelBlock<T>& block) {
+VoxelBlock<T>::VoxelBlock(const VoxelBlock<T>& block) {
   initFromBlock(block);
 }
 
 template <typename T>
-void VoxelBlock<T>::operator=(VoxelBlock<T>& block) {
+void VoxelBlock<T>::operator=(const VoxelBlock<T>& block) {
   initFromBlock(block);
 }
 
 template <typename T>
-void VoxelBlock<T>::initFromBlock(VoxelBlock<T>& block) {
+void VoxelBlock<T>::initFromBlock(const VoxelBlock<T>& block) {
   this->code()  = block.code();
   this->active(block.active());
   coordinates(block.coordinates());
@@ -98,19 +98,19 @@ void VoxelBlock<T>::initFromBlock(VoxelBlock<T>& block) {
 // Voxel block full scale allocation implementation
 
 template <typename T>
-VoxelBlockFull<T>::VoxelBlockFull(typename T::VoxelData init_data) {
+VoxelBlockFull<T>::VoxelBlockFull(const typename T::VoxelData init_data) {
   for (unsigned int voxel_idx = 0; voxel_idx < num_voxels_in_block; voxel_idx++) {
     block_data_[voxel_idx] = init_data;
   }
 }
 
 template <typename T>
-VoxelBlockFull<T>::VoxelBlockFull(VoxelBlockFull<T>& block) {
+VoxelBlockFull<T>::VoxelBlockFull(const VoxelBlockFull<T>& block) {
   initFromBlock(block);
 }
 
 template <typename T>
-void VoxelBlockFull<T>::operator=(VoxelBlockFull<T>& block) {
+void VoxelBlockFull<T>::operator=(const VoxelBlockFull<T>& block) {
   initFromBlock(block);
 }
 
@@ -183,7 +183,7 @@ inline void VoxelBlockFull<T>::setData(const int voxel_idx, const VoxelData& vox
 }
 
 template <typename T>
-void VoxelBlockFull<T>::initFromBlock(VoxelBlockFull<T>& block) {
+void VoxelBlockFull<T>::initFromBlock(const VoxelBlockFull<T>& block) {
   this->coordinates(block.coordinates());
   this->code_  = block.code();
   this->active(block.active());
@@ -195,15 +195,14 @@ void VoxelBlockFull<T>::initFromBlock(VoxelBlockFull<T>& block) {
 // Voxel block single scale allocation implementation
 
 template <typename T>
-VoxelBlockSingle<T>::VoxelBlockSingle(VoxelBlockSingle<T>& block) {
+VoxelBlockSingle<T>::VoxelBlockSingle(const VoxelBlockSingle<T>& block) {
   initFromBlock(block);
 };
 
 template <typename T>
-void VoxelBlockSingle<T>::operator=(VoxelBlockSingle<T>& block) {
+void VoxelBlockSingle<T>::operator=(const VoxelBlockSingle<T>& block) {
   initFromBlock(block);
 }
-
 
 template <typename T>
 VoxelBlockSingle<T>::~VoxelBlockSingle() {
@@ -374,7 +373,7 @@ void VoxelBlockSingle<T>::deleteUpTo(const int scale) {
 }
 
 template <typename T>
-void VoxelBlockSingle<T>::initFromBlock(VoxelBlockSingle<T>& block) {
+void VoxelBlockSingle<T>::initFromBlock(const VoxelBlockSingle<T>& block) {
   this->coordinates(block.coordinates());
   this->code_ = block.code_;
   this->active(block.active());
@@ -385,15 +384,15 @@ void VoxelBlockSingle<T>::initFromBlock(VoxelBlockSingle<T>& block) {
       int size_at_scale = this->size_li >> scale;
       int num_voxels_at_scale = se::math::cu(size_at_scale);
       blockData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
-      std::memcpy(blockData()[this->max_scale - scale],
-          block.blockData()[this->max_scale - scale],
-          (num_voxels_at_scale) * sizeof(*(block.blockData()[this->max_scale - scale])));
+      std::memcpy(blockData()[VoxelBlock<T>::max_scale - scale],
+          block.blockData()[VoxelBlock<T>::max_scale - scale],
+          (num_voxels_at_scale) * sizeof(*(block.blockData()[VoxelBlock<T>::max_scale - scale])));
     }
   }
 }
 
 template <typename T>
-void VoxelBlockSingle<T>::initaliseData(VoxelData* voxel_data, int num_voxels) {
+void VoxelBlockSingle<T>::initaliseData(VoxelData* voxel_data, const int num_voxels) {
   for (int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
     voxel_data[voxel_idx] = init_data_;
   }
