@@ -34,6 +34,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace se {
 
+// Full scale allocation implementation
+
+template <typename T>
+VoxelBlockFull<T>::VoxelBlockFull(VoxelBlockFull<T>* block) {
+  this->coordinates(block->coordinates());
+  this->code_(block->code_);
+  this->active_(block->active());
+  this->min_scale(block->min_scale());
+  this->current_scale(block->current_scale());
+  std::memcpy(getBlockRawPtr(), block->getBlockRawPtr(), (num_voxels) * sizeof(*(block->getBlockRawPtr())));
+}
+
+template <typename T>
+VoxelBlockFull<T>::VoxelBlockFull(typename T::VoxelData init_data) {
+  for (unsigned int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
+    voxel_block_[voxel_idx] = init_data;
+  }
+}
+
 template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockFull<T>::data(const Eigen::Vector3i& voxel_coord) const {
@@ -98,6 +117,35 @@ VoxelBlockFull<T>::data(const int voxel_idx) const {
 template <typename T>
 inline void VoxelBlockFull<T>::setData(const int voxel_idx, const VoxelData& voxel_data){
   voxel_block_[voxel_idx] = voxel_data;
+}
+
+
+// Single scale allocation implementation
+
+template <typename T>
+VoxelBlockSingle<T>::VoxelBlockSingle(VoxelBlockSingle<T>* block) {
+  this->coordinates(block->coordinates());
+  this->code_(block->code_);
+  this->active_(block->active());
+  this->min_scale(block->min_scale());
+  this->current_scale(block->current_scale());
+  if (block->min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
+    for (int scale = VoxelBlock<T>::max_scale; scale >= block.min_scale(); scale--) {
+      int size_at_scale = VoxelBlock<T>::size >> scale;
+      int num_voxels_at_scale = se::math::cu(size_at_scale);
+      blockData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
+      std::memcpy(blockData()[VoxelBlock<T>::max_scale - scale],
+          block->blockData()[VoxelBlock<T>::max_scale - scale],
+          (num_voxels_at_scale) * sizeof(*(block->blockData()[VoxelBlock<T>::max_scale - scale])));
+    }
+  }
+};
+
+template <typename T>
+VoxelBlockSingle<T>::~VoxelBlockSingle() {
+  for (auto data_at_scale : block_data_) {
+    delete[] data_at_scale;
+  }
 }
 
 template <typename T>

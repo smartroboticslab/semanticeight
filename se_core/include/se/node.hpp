@@ -180,20 +180,9 @@ class VoxelBlockFull: public VoxelBlock<T> {
 public:
   using VoxelData = typename VoxelBlock<T>::VoxelData;
 
-  VoxelBlockFull(typename T::VoxelData init_data = T::initData()) {
-    for (unsigned int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
-      voxel_block_[voxel_idx] = init_data;
-    }
-  }
+  VoxelBlockFull(typename T::VoxelData init_data = T::initData());
 
-  VoxelBlockFull(VoxelBlockFull<T>* block) {
-    this->coordinates(block->coordinates());
-    this->code_(block->code_);
-    this->active_(block->active());
-    this->min_scale(block->min_scale());
-    this->current_scale(block->current_scale());
-    std::memcpy(getBlockRawPtr(), block->getBlockRawPtr(), (num_voxels) * sizeof(*(block->getBlockRawPtr())));
-  };
+  VoxelBlockFull(VoxelBlockFull<T>* block);
 
   VoxelData data(const Eigen::Vector3i& voxel_coord) const;
   void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
@@ -219,6 +208,7 @@ private:
     }
     return voxel_count;
   }
+
   static constexpr size_t num_voxels = compute_num_voxels();
   VoxelData voxel_block_[num_voxels]; // Brick of data.
 
@@ -238,23 +228,9 @@ public:
 
   VoxelBlockSingle(typename T::VoxelData init_data = T::initData()) : init_data_(init_data) { };
 
-  VoxelBlockSingle(VoxelBlockSingle<T>* block) {
-    this->coordinates(block->coordinates());
-    this->code_(block->code_);
-    this->active_(block->active());
-    this->min_scale(block->min_scale());
-    this->current_scale(block->current_scale());
-    if (block->min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
-      for (int scale = VoxelBlock<T>::max_scale; scale >= block.min_scale(); scale--) {
-        int size_at_scale = VoxelBlock<T>::size >> scale;
-        int num_voxels_at_scale = se::math::cu(size_at_scale);
-        blockData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
-        std::memcpy(blockData()[VoxelBlock<T>::max_scale - scale],
-                    block->blockData()[VoxelBlock<T>::max_scale - scale],
-                    (num_voxels_at_scale) * sizeof(*(block->blockData()[VoxelBlock<T>::max_scale - scale])));
-      }
-    }
-  };
+  VoxelBlockSingle(VoxelBlockSingle<T>* block);
+
+  ~VoxelBlockSingle();
 
   VoxelData initData() const;
   void setInitData(const VoxelData& init_data);
