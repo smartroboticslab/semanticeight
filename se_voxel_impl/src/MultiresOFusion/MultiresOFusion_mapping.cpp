@@ -343,7 +343,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     const int scale = std::max(sensor_.computeIntegrationScale(
         block_diff, voxel_dim_, last_scale, block->min_scale(), map_.maxBlockScale()), last_scale - 1);
     block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
-    block->checkAllocation(scale);
+    block->allocateDownTo(scale);
     if(last_scale > scale) {
       // Down propagate values first
       propagateDownAndUpdate(block, scale);

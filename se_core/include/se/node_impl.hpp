@@ -115,7 +115,7 @@ void VoxelBlockSingle<T>::initaliseData(VoxelData* voxel_data, int num_voxels) {
 }
 
 template <typename T>
-void VoxelBlockSingle<T>::checkAllocation() {
+void VoxelBlockSingle<T>::allocateDownTo() {
   if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
     for (int scale = VoxelBlock<T>::max_scale - block_data_.size(); scale >= 0; scale --) {
       int size_at_scale = this->size >> scale;
@@ -129,7 +129,7 @@ void VoxelBlockSingle<T>::checkAllocation() {
 }
 
 template <typename T>
-void VoxelBlockSingle<T>::checkAllocation(const int scale) {
+void VoxelBlockSingle<T>::allocateDownTo(const int scale) {
   if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) {
     for (int scale_tmp = VoxelBlock<T>::max_scale - block_data_.size(); scale_tmp >= scale; scale_tmp --) {
       int size_at_scale_tmp = this->size >> scale_tmp;
@@ -157,7 +157,7 @@ VoxelBlockSingle<T>::data(const Eigen::Vector3i& voxel_coord) const {
 template <typename T>
 inline void VoxelBlockSingle<T>::setData(const Eigen::Vector3i& voxel_coord,
                                          const VoxelData&       voxel_data){
-  checkAllocation(0);
+  allocateDownTo(0);
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                         voxel_offset.y() * this->size +
@@ -204,7 +204,7 @@ template <typename T>
 inline void VoxelBlockSingle<T>::setDataSafe(const Eigen::Vector3i& voxel_coord,
                                              const int              scale,
                                              const VoxelData&       voxel_data) {
-  checkAllocation(scale);
+  allocateDownTo(scale);
   int size_at_scale = this->size >> scale;
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   voxel_offset = voxel_offset / (1 << scale);
@@ -253,7 +253,7 @@ inline void VoxelBlockSingle<T>::setDataSafe(const int        voxel_idx,
     remaining_voxel_idx -= size_at_scale_cu;
     size_at_scale_cu = se::math::cu(this->size >> scale);
   }
-  checkAllocation(scale);
+  allocateDownTo(scale);
   block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx] = voxel_data;
 }
 

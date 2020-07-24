@@ -80,14 +80,14 @@ TEST(VoxelBlock, DataIOEigen) {
   TestVoxelT::VoxelBlockType* block_1 = octree.fetch(voxel_coord_1.x(), voxel_coord_1.y(), voxel_coord_1.z());
   ASSERT_EQ(0, block_1->blockData().size());
   
-  block_1->checkAllocation(se::VoxelBlock<TestVoxelT>::max_scale);
+  block_1->allocateDownTo(se::VoxelBlock<TestVoxelT>::max_scale);
   block_1->setData(voxel_coord_1, se::VoxelBlock<TestVoxelT>::max_scale, 1.f);
   ASSERT_EQ(1, block_1->blockData().size());
   ASSERT_EQ(1.f, block_1->data(voxel_coord_1, se::VoxelBlock<TestVoxelT>::max_scale));
   ASSERT_EQ(0.f, block_1->data(voxel_coord_1, se::VoxelBlock<TestVoxelT>::max_scale - 1));
   ASSERT_EQ(0.f, block_1->data(voxel_coord_1, 0));
 
-  block_1->checkAllocation(0);
+  block_1->allocateDownTo(0);
   block_1->setData(voxel_coord_1, 0, se::VoxelBlock<TestVoxelT>::max_scale);
   ASSERT_EQ(3 + 1, block_1->blockData().size());
   ASSERT_EQ(3.f, block_1->data(voxel_coord_1, 0));
@@ -104,14 +104,14 @@ TEST(VoxelBlock, DataIOIndex) {
   TestVoxelT::VoxelBlockType* block_1 = octree.fetch(voxel_coord_1.x(), voxel_coord_1.y(), voxel_coord_1.z());
   ASSERT_EQ(0, block_1->blockData().size());
 
-  block_1->checkAllocation(3);
+  block_1->allocateDownTo(3);
   block_1->setData(512 + 64 + 8, 1.f);
   ASSERT_EQ(1, block_1->blockData().size());
   ASSERT_EQ(1.f, block_1->data(voxel_coord_1, se::VoxelBlock<TestVoxelT>::max_scale));
   ASSERT_EQ(0.f, block_1->data(voxel_coord_1, se::VoxelBlock<TestVoxelT>::max_scale - 1));
   ASSERT_EQ(0.f, block_1->data(voxel_coord_1, 0));
 
-  block_1->checkAllocation(0);
+  block_1->allocateDownTo(0);
   block_1->setData(0, 2.f);
   block_1->setData(se::VoxelBlock<TestVoxelT>::size_cu - 1, 3.f);
   ASSERT_EQ(2.f, block_1->data(0));

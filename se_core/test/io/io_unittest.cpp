@@ -268,7 +268,7 @@ TEST(SerialiseUnitTestSingle, WriteReadBlock) {
     TestVoxelSingleT::VoxelBlockType block;
     block.code_ = 24;
     block.coordinates(Eigen::Vector3i(40, 48, 52));
-    block.checkAllocation(0);
+    block.allocateDownTo(0);
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       block.setData(voxel_idx, 5.f);
     se::internal::serialise(os, block);
@@ -292,7 +292,7 @@ TEST(SerialiseUnitTestSingle, WriteReadBlockStruct) {
     OccupancyVoxelSingleT::VoxelBlockType block;
     block.code_ = 24;
     block.coordinates(Eigen::Vector3i(40, 48, 52));
-    block.checkAllocation(0);
+    block.allocateDownTo(0);
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       block.setData(voxel_idx, {5.f, 2.});
     se::internal::serialise(os, block);
@@ -365,7 +365,7 @@ TEST(SerialiseUnitTestSingle, SerialiseBlock) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
     auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-    block->checkAllocation(0);
+    block->allocateDownTo(0);
     for (int voxel_idx = 0; voxel_idx < TestVoxelSingleT::VoxelBlockType::size_cu; ++voxel_idx)
       block->setData(voxel_idx, dis(gen));
   }

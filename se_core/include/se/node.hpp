@@ -271,8 +271,8 @@ public:
   void setData(const int voxel_idx, const VoxelData& voxel_data);
   void setDataSafe(const int voxel_idx, const VoxelData& voxel_data);
 
-  void checkAllocation();
-  void checkAllocation(const int scale);
+  void allocateDownTo();
+  void allocateDownTo(const int scale);
 
   std::vector<VoxelData*>& blockData() { return block_data_; }
   static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
