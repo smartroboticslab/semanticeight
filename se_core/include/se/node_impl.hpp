@@ -205,7 +205,6 @@ VoxelBlockSingle<T>::data(const Eigen::Vector3i& voxel_coord) const {
 template <typename T>
 inline void VoxelBlockSingle<T>::setData(const Eigen::Vector3i& voxel_coord,
                                          const VoxelData&       voxel_data){
-  allocateDownTo(0);
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                         voxel_offset.y() * this->size +
@@ -215,6 +214,7 @@ inline void VoxelBlockSingle<T>::setData(const Eigen::Vector3i& voxel_coord,
 template <typename T>
 inline void VoxelBlockSingle<T>::setDataSafe(const Eigen::Vector3i& voxel_coord,
                                              const VoxelData&       voxel_data){
+  allocateDownTo(0);
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                         voxel_offset.y() * this->size +
