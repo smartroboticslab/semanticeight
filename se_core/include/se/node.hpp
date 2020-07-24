@@ -59,7 +59,6 @@ public:
   unsigned int size_;
   unsigned char children_mask_;
   unsigned int timestamp_;
-  bool active_;
 
   Node(typename T::VoxelData init_data = T::initData());
 
@@ -111,6 +110,7 @@ public:
 
 protected:
   key_t code_;
+  bool active_;
   Node* parent_ptr_;
   Node* child_ptr_[8];
 
