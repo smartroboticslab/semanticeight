@@ -57,6 +57,9 @@ namespace se {
     std::ofstream& serialise(std::ofstream& out, Node<T>& node) {
       out.write(reinterpret_cast<char *>(&node.code_), sizeof(key_t));
       out.write(reinterpret_cast<char *>(&node.size_), sizeof(int));
+      out.write(reinterpret_cast<char *>(&node.children_mask_), sizeof(unsigned char));
+      out.write(reinterpret_cast<char *>(&node.timestamp_), sizeof(unsigned int));
+      out.write(reinterpret_cast<char *>(&node.active_), sizeof(bool));
       out.write(reinterpret_cast<char *>(&node.children_data_), sizeof(node.children_data_));
       return out;
     }
@@ -71,6 +74,9 @@ namespace se {
     void deserialise(Node<T>& node, std::ifstream& in) {
       in.read(reinterpret_cast<char *>(&node.code_), sizeof(key_t));
       in.read(reinterpret_cast<char *>(&node.size_), sizeof(int));
+      in.read(reinterpret_cast<char *>(&node.children_mask_), sizeof(unsigned char));
+      in.read(reinterpret_cast<char *>(&node.timestamp_), sizeof(unsigned int));
+      in.read(reinterpret_cast<char *>(&node.active_), sizeof(bool));
       in.read(reinterpret_cast<char *>(&node.children_data_), sizeof(node.children_data_));
     }
 
@@ -82,7 +88,14 @@ namespace se {
     template <typename T>
     std::ofstream& serialise(std::ofstream& out, VoxelBlockFull<T>& block) {
       out.write(reinterpret_cast<char *>(&block.code_), sizeof(key_t));
+      out.write(reinterpret_cast<char *>(&block.size_), sizeof(int));
+      out.write(reinterpret_cast<char *>(&block.children_mask_), sizeof(unsigned char));
+      out.write(reinterpret_cast<char *>(&block.timestamp_), sizeof(unsigned int));
+      out.write(reinterpret_cast<char *>(&block.active_), sizeof(bool));
+      out.write(reinterpret_cast<char *>(&block.children_data_), sizeof(block.children_data_));
       out.write(reinterpret_cast<char *>(&block.coordinates_), sizeof(Eigen::Vector3i));
+      out.write(reinterpret_cast<char *>(&block.min_scale_), sizeof(int));
+      out.write(reinterpret_cast<char *>(&block.current_scale_), sizeof(int));
       out.write(reinterpret_cast<char *>(&block.block_data_),
           sizeof(block.block_data_));
       return out;
@@ -97,7 +110,14 @@ namespace se {
     template <typename T>
     void deserialise(VoxelBlockFull<T>& block, std::ifstream& in) {
       in.read(reinterpret_cast<char *>(&block.code_), sizeof(key_t));
+      in.read(reinterpret_cast<char *>(&block.size_), sizeof(int));
+      in.read(reinterpret_cast<char *>(&block.children_mask_), sizeof(unsigned char));
+      in.read(reinterpret_cast<char *>(&block.timestamp_), sizeof(unsigned int));
+      in.read(reinterpret_cast<char *>(&block.active_), sizeof(bool));
+      in.read(reinterpret_cast<char *>(&block.children_data_), sizeof(block.children_data_));
       in.read(reinterpret_cast<char *>(&block.coordinates_), sizeof(Eigen::Vector3i));
+      in.read(reinterpret_cast<char *>(&block.min_scale_), sizeof(int));
+      in.read(reinterpret_cast<char *>(&block.current_scale_), sizeof(int));
       in.read(reinterpret_cast<char *>(&block.block_data_), sizeof(block.block_data_));
     }
 
@@ -109,14 +129,15 @@ namespace se {
     template <typename T>
     std::ofstream& serialise(std::ofstream& out, VoxelBlockSingle<T>& block) {
       out.write(reinterpret_cast<char *>(&block.code_), sizeof(key_t));
+      out.write(reinterpret_cast<char *>(&block.size_), sizeof(int));
+      out.write(reinterpret_cast<char *>(&block.children_mask_), sizeof(unsigned char));
+      out.write(reinterpret_cast<char *>(&block.timestamp_), sizeof(unsigned int));
       out.write(reinterpret_cast<char *>(&block.active_), sizeof(bool));
+      out.write(reinterpret_cast<char *>(&block.children_data_), sizeof(block.children_data_));
       out.write(reinterpret_cast<char *>(&block.coordinates_), sizeof(Eigen::Vector3i));
-      typename T::VoxelData init_data = block.initData();
-      int min_scale = block.min_scale();
-      int current_scale = block.current_scale();
-      out.write(reinterpret_cast<char *>(&init_data), sizeof(typename T::VoxelData));
-      out.write(reinterpret_cast<char *>(&min_scale), sizeof(int));
-      out.write(reinterpret_cast<char *>(&current_scale), sizeof(int));
+      out.write(reinterpret_cast<char *>(&block.min_scale_), sizeof(int));
+      out.write(reinterpret_cast<char *>(&block.current_scale_), sizeof(int));
+      out.write(reinterpret_cast<char *>(&block.init_data_), sizeof(typename T::VoxelData));
       if (block.min_scale() != -1) {
         for (int scale = VoxelBlockSingle<T>::max_scale; scale >= block.min_scale(); scale--) {
           int size_at_scale = block.size_li >> scale;
@@ -137,17 +158,16 @@ namespace se {
      */
     template <typename T>
     void deserialise(VoxelBlockSingle<T>& block, std::ifstream& in) {
-      typename T::VoxelData init_data;
-      int min_scale, current_scale;
       in.read(reinterpret_cast<char *>(&block.code_), sizeof(key_t));
+      in.read(reinterpret_cast<char *>(&block.size_), sizeof(int));
+      in.read(reinterpret_cast<char *>(&block.children_mask_), sizeof(unsigned char));
+      in.read(reinterpret_cast<char *>(&block.timestamp_), sizeof(unsigned int));
       in.read(reinterpret_cast<char *>(&block.active_), sizeof(bool));
+      in.read(reinterpret_cast<char *>(&block.children_data_), sizeof(block.children_data_));
       in.read(reinterpret_cast<char *>(&block.coordinates_), sizeof(Eigen::Vector3i));
-      in.read(reinterpret_cast<char *>(&init_data), sizeof(typename T::VoxelData));
-      in.read(reinterpret_cast<char *>(&min_scale), sizeof(int));
-      in.read(reinterpret_cast<char *>(&current_scale), sizeof(int));
-      block.setInitData(init_data);
-      block.min_scale(min_scale);
-      block.current_scale(current_scale);
+      in.read(reinterpret_cast<char *>(&block.min_scale_), sizeof(int));
+      in.read(reinterpret_cast<char *>(&block.current_scale_), sizeof(int));
+      in.read(reinterpret_cast<char *>(&block.init_data_), sizeof(typename T::VoxelData));
       if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
         // TODO: Assess if the loaded block is of the same size as the one it's saved to.
         for (int scale = VoxelBlockSingle<T>::max_scale; scale >= block.min_scale(); scale--) {

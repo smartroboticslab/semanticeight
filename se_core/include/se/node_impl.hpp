@@ -88,11 +88,15 @@ void VoxelBlock<T>::operator=(const VoxelBlock<T>& block) {
 
 template <typename T>
 void VoxelBlock<T>::initFromBlock(const VoxelBlock<T>& block) {
-  this->code()  = block.code();
-  this->active(block.active());
-  coordinates(block.coordinates());
-  min_scale(block.min_scale());
-  current_scale(block.current_scale());
+  this->code_          = block.code();
+  this->size_          = block.size_;
+  this->children_mask_ = block.children_mask();
+  this->timestamp_     = block.timestamp();
+  this->active_        = block.active();
+  this->coordinates_   = block.coordinates();
+  this->min_scale_     = block.min_scale();
+  this->current_scale_ = block.current_scale();
+  std::memcpy(this->children_data_, block.childrenData(), 8 * sizeof(VoxelData));
 }
 
 // Voxel block full scale allocation implementation
@@ -184,11 +188,15 @@ inline void VoxelBlockFull<T>::setData(const int voxel_idx, const VoxelData& vox
 
 template <typename T>
 void VoxelBlockFull<T>::initFromBlock(const VoxelBlockFull<T>& block) {
-  this->coordinates(block.coordinates());
-  this->code_  = block.code();
-  this->active(block.active());
-  this->min_scale(block.min_scale());
-  this->current_scale(block.current_scale());
+  this->code_          = block.code();
+  this->size_          = block.size_;
+  this->children_mask_ = block.children_mask();
+  this->timestamp_     = block.timestamp();
+  this->active_        = block.active();
+  this->coordinates_   = block.coordinates();
+  this->min_scale_     = block.min_scale();
+  this->current_scale_ = block.current_scale();
+  std::memcpy(this->children_data_, block.childrenData(), 8 * sizeof(VoxelData));
   std::memcpy(blockData(), block.blockData(), (num_voxels_in_block) * sizeof(*(block.blockData())));
 }
 
@@ -374,11 +382,15 @@ void VoxelBlockSingle<T>::deleteUpTo(const int scale) {
 
 template <typename T>
 void VoxelBlockSingle<T>::initFromBlock(const VoxelBlockSingle<T>& block) {
-  this->coordinates(block.coordinates());
-  this->code_ = block.code_;
-  this->active(block.active());
-  this->min_scale(block.min_scale());
-  this->current_scale(block.current_scale());
+  this->code_          = block.code();
+  this->size_          = block.size_;
+  this->children_mask_ = block.children_mask();
+  this->timestamp_     = block.timestamp();
+  this->active_        = block.active();
+  this->coordinates_   = block.coordinates();
+  this->min_scale_     = block.min_scale();
+  this->current_scale_ = block.current_scale();
+  std::memcpy(this->children_data_, block.childrenData(), 8 * sizeof(VoxelData));
   if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
     for (int scale = this->max_scale; scale >= block.min_scale(); scale--) {
       int size_at_scale = this->size_li >> scale;

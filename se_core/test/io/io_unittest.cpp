@@ -72,6 +72,8 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
     se::Node<TestVoxelFullT> node;
     node.code(24);
     node.size(256);
+    node.timestamp(10);
+    node.active(false);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       node.childData(child_idx, 5.f);
     se::internal::serialise(os, node);
@@ -83,6 +85,8 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
     se::internal::deserialise(node, is);
     ASSERT_EQ(node.code(), 24);
     ASSERT_EQ(node.size(), 256);
+    ASSERT_EQ(node.timestamp(), 10);
+    ASSERT_EQ(node.active(), false);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       ASSERT_EQ(node.childData(child_idx), 5.f);
   }
@@ -94,7 +98,12 @@ TEST(SerialiseUnitTestFull, WriteReadBlock) {
     std::ofstream os (filename, std::ios::binary);
     TestVoxelFullT::VoxelBlockType block;
     block.code(24);
+    block.size(8);
+    block.timestamp(10);
+    block.active(false);
     block.coordinates(Eigen::Vector3i(40, 48, 52));
+    block.min_scale(2);
+    block.current_scale(3);
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       block.setData(voxel_idx, 5.f);
     se::internal::serialise(os, block);
@@ -105,7 +114,12 @@ TEST(SerialiseUnitTestFull, WriteReadBlock) {
     TestVoxelFullT::VoxelBlockType block;
     se::internal::deserialise(block, is);
     ASSERT_EQ(block.code(), 24);
+    ASSERT_EQ(block.size(), 8);
+    ASSERT_EQ(block.timestamp(), 10);
+    ASSERT_EQ(block.active(), false);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
+    ASSERT_EQ(block.min_scale(), 2);
+    ASSERT_EQ(block.current_scale(), 3);
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       ASSERT_EQ(block.data(voxel_idx), 5.f);
   }
@@ -117,7 +131,12 @@ TEST(SerialiseUnitTestFull, WriteReadBlockStruct) {
     std::ofstream os (filename, std::ios::binary);
     OccupancyVoxelFullT::VoxelBlockType block;
     block.code(24);
+    block.size(8);
+    block.timestamp(10);
+    block.active(false);
     block.coordinates(Eigen::Vector3i(40, 48, 52));
+    block.min_scale(2);
+    block.current_scale(3);
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       block.setData(voxel_idx, {5.f, 2.});
     se::internal::serialise(os, block);
@@ -128,7 +147,12 @@ TEST(SerialiseUnitTestFull, WriteReadBlockStruct) {
     OccupancyVoxelFullT::VoxelBlockType block;
     se::internal::deserialise(block, is);
     ASSERT_EQ(block.code(), 24);
+    ASSERT_EQ(block.size(), 8);
+    ASSERT_EQ(block.timestamp(), 10);
+    ASSERT_EQ(block.active(), false);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
+    ASSERT_EQ(block.min_scale(), 2);
+    ASSERT_EQ(block.current_scale(), 3);
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx) {
       auto data = block.data(voxel_idx);
       ASSERT_EQ(data.x, 5.f);
