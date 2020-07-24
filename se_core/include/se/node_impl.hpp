@@ -163,34 +163,6 @@ void VoxelBlockSingle<T>::initaliseData(VoxelData* voxel_data, int num_voxels) {
 }
 
 template <typename T>
-void VoxelBlockSingle<T>::allocateDownTo() {
-  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
-    for (int scale = VoxelBlock<T>::max_scale - block_data_.size(); scale >= 0; scale --) {
-      int size_at_scale = this->size >> scale;
-      int num_voxels_at_scale = se::math::cu(size_at_scale);
-      VoxelData* voxel_data = new VoxelData[num_voxels_at_scale];
-      initaliseData(voxel_data, num_voxels_at_scale);
-      block_data_.push_back(voxel_data);
-    }
-    this->min_scale_ = 0;
-  }
-}
-
-template <typename T>
-void VoxelBlockSingle<T>::allocateDownTo(const int scale) {
-  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) {
-    for (int scale_tmp = VoxelBlock<T>::max_scale - block_data_.size(); scale_tmp >= scale; scale_tmp --) {
-      int size_at_scale_tmp = this->size >> scale_tmp;
-      int num_voxels_at_scale_tmp = se::math::cu(size_at_scale_tmp);
-      VoxelData* voxel_data = new VoxelData[num_voxels_at_scale_tmp];
-      initaliseData(voxel_data, num_voxels_at_scale_tmp);
-      block_data_.push_back(voxel_data);
-    }
-    this->min_scale_ = scale;
-  }
-}
-
-template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingle<T>::data(const Eigen::Vector3i& voxel_coord) const {
   if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) return init_data_;
@@ -303,6 +275,45 @@ inline void VoxelBlockSingle<T>::setDataSafe(const int        voxel_idx,
   }
   allocateDownTo(scale);
   block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx] = voxel_data;
+}
+
+template <typename T>
+void VoxelBlockSingle<T>::allocateDownTo() {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
+    for (int scale = VoxelBlock<T>::max_scale - block_data_.size(); scale >= 0; scale --) {
+      int size_at_scale = this->size >> scale;
+      int num_voxels_at_scale = se::math::cu(size_at_scale);
+      VoxelData* voxel_data = new VoxelData[num_voxels_at_scale];
+      initaliseData(voxel_data, num_voxels_at_scale);
+      block_data_.push_back(voxel_data);
+    }
+    this->min_scale_ = 0;
+  }
+}
+
+template <typename T>
+void VoxelBlockSingle<T>::allocateDownTo(const int scale) {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) {
+    for (int scale_tmp = VoxelBlock<T>::max_scale - block_data_.size(); scale_tmp >= scale; scale_tmp --) {
+      int size_at_scale_tmp = this->size >> scale_tmp;
+      int num_voxels_at_scale_tmp = se::math::cu(size_at_scale_tmp);
+      VoxelData* voxel_data = new VoxelData[num_voxels_at_scale_tmp];
+      initaliseData(voxel_data, num_voxels_at_scale_tmp);
+      block_data_.push_back(voxel_data);
+    }
+    this->min_scale_ = scale;
+  }
+}
+
+template <typename T>
+void VoxelBlockSingle<T>::deleteUpTo(const int scale) {
+  if (this->min_scale_ == -1 || this->min_scale_ > scale) return;
+  for (int scale_tmp = this->min_scale_; scale_tmp < scale; scale_tmp++) {
+    auto data_at_scale = block_data_[this->max_scale - scale_tmp];
+    delete[] data_at_scale;
+    block_data_.pop_back();
+  }
+  this->min_scale_ = scale;
 }
 
 } // namespace se

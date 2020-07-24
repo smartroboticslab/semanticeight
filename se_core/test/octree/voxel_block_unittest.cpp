@@ -169,3 +169,31 @@ TEST(VoxelBlock, DataIOSafeIndex) {
   ASSERT_EQ(3.f, block_1->data(Eigen::Vector3i(7,7,7)));
   ASSERT_EQ(3.f, block_1->data(Eigen::Vector3i(7,7,7), 0));
 }
+
+TEST(VoxelBlock, DataIODelete) {
+  se::Octree<TestVoxelT> octree;
+  const unsigned int voxel_depth = 5;
+  octree.init(1 << voxel_depth, 5);
+  Eigen::Vector3i voxel_coord_1(0, 0, 0);
+  octree.insert(voxel_coord_1.x(), voxel_coord_1.y(), voxel_coord_1.z());
+
+  TestVoxelT::VoxelBlockType* block_1 = octree.fetch(voxel_coord_1.x(), voxel_coord_1.y(), voxel_coord_1.z());
+  ASSERT_EQ(0, block_1->blockData().size());
+  ASSERT_EQ(-1, block_1->min_scale());
+
+  block_1->setDataSafe(voxel_coord_1, 1.f);
+  ASSERT_EQ(4, block_1->blockData().size());
+  ASSERT_EQ(0, block_1->min_scale());
+
+  block_1->deleteUpTo(1);
+  ASSERT_EQ(3, block_1->blockData().size());
+  ASSERT_EQ(1, block_1->min_scale());
+
+  block_1->setDataSafe(voxel_coord_1, 1.f);
+  ASSERT_EQ(4, block_1->blockData().size());
+  ASSERT_EQ(0, block_1->min_scale());
+
+  block_1->deleteUpTo(3);
+  ASSERT_EQ(1, block_1->blockData().size());
+  ASSERT_EQ(3, block_1->min_scale());
+}

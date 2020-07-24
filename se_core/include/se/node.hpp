@@ -250,6 +250,8 @@ public:
   void allocateDownTo();
   void allocateDownTo(const int scale);
 
+  void deleteUpTo(const int scale);
+
   std::vector<VoxelData*>& blockData() { return block_data_; }
   static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
 
