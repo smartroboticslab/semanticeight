@@ -111,8 +111,8 @@ namespace se {
         }
       }
 
-      const unsigned int child_idx = se::child_idx(node->code_,
-                                           se::keyops::code(node->code_), voxel_depth);
+      const unsigned int child_idx = se::child_idx(node->code(),
+                                           se::keyops::code(node->code()), voxel_depth);
       if (sample_count > 0) {
         auto &node_data = node->parent()->data_[child_idx];
         mean /= sample_count;

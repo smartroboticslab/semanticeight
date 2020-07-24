@@ -70,7 +70,7 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
   {
     std::ofstream os (filename, std::ios::binary);
     se::Node<TestVoxelFullT> node;
-    node.code_ = 24;
+    node.code(24);
     node.size_ = 256;
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       node.data_[child_idx] =  5.f;
@@ -81,7 +81,7 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
     std::ifstream is(filename, std::ios::binary);
     se::Node<TestVoxelFullT> node;
     se::internal::deserialise(node, is);
-    ASSERT_EQ(node.code_, 24);
+    ASSERT_EQ(node.code(), 24);
     ASSERT_EQ(node.size_, 256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       ASSERT_EQ(node.data_[child_idx], 5.f);
@@ -93,7 +93,7 @@ TEST(SerialiseUnitTestFull, WriteReadBlock) {
   {
     std::ofstream os (filename, std::ios::binary);
     TestVoxelFullT::VoxelBlockType block;
-    block.code_ = 24;
+    block.code(24);
     block.coordinates(Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       block.setData(voxel_idx, 5.f);
@@ -104,7 +104,7 @@ TEST(SerialiseUnitTestFull, WriteReadBlock) {
     std::ifstream is(filename, std::ios::binary);
     TestVoxelFullT::VoxelBlockType block;
     se::internal::deserialise(block, is);
-    ASSERT_EQ(block.code_, 24);
+    ASSERT_EQ(block.code(), 24);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       ASSERT_EQ(block.data(voxel_idx), 5.f);
@@ -116,7 +116,7 @@ TEST(SerialiseUnitTestFull, WriteReadBlockStruct) {
   {
     std::ofstream os (filename, std::ios::binary);
     OccupancyVoxelFullT::VoxelBlockType block;
-    block.code_ = 24;
+    block.code(24);
     block.coordinates(Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       block.setData(voxel_idx, {5.f, 2.});
@@ -127,7 +127,7 @@ TEST(SerialiseUnitTestFull, WriteReadBlockStruct) {
     std::ifstream is(filename, std::ios::binary);
     OccupancyVoxelFullT::VoxelBlockType block;
     se::internal::deserialise(block, is);
-    ASSERT_EQ(block.code_, 24);
+    ASSERT_EQ(block.code(), 24);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx) {
       auto data = block.data(voxel_idx);
@@ -168,7 +168,7 @@ TEST(SerialiseUnitTestFull, SerialiseTree) {
   for(int i = 0; i < node_buffer_base.size(); ++i) {
     se::Node<TestVoxelFullT> * node_base  = node_buffer_base[i];
     se::Node<TestVoxelFullT> * node_copy = node_buffer_copy[i];
-    ASSERT_EQ(node_base->code_, node_copy->code_);
+    ASSERT_EQ(node_base->code(), node_copy->code());
     ASSERT_EQ(node_base->children_mask_, node_copy->children_mask_);
   }
 
@@ -243,7 +243,7 @@ TEST(SerialiseUnitTestSingle, WriteReadNode) {
   {
     std::ofstream os (filename, std::ios::binary);
     se::Node<TestVoxelSingleT> node;
-    node.code_ = 24;
+    node.code(24);
     node.size_ = 256;
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       node.data_[child_idx] =  5.f;
@@ -254,7 +254,7 @@ TEST(SerialiseUnitTestSingle, WriteReadNode) {
     std::ifstream is(filename, std::ios::binary);
     se::Node<TestVoxelSingleT> node;
     se::internal::deserialise(node, is);
-    ASSERT_EQ(node.code_, 24);
+    ASSERT_EQ(node.code(), 24);
     ASSERT_EQ(node.size_, 256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       ASSERT_EQ(node.data_[child_idx], 5.f);
@@ -266,7 +266,7 @@ TEST(SerialiseUnitTestSingle, WriteReadBlock) {
   {
     std::ofstream os (filename, std::ios::binary);
     TestVoxelSingleT::VoxelBlockType block;
-    block.code_ = 24;
+    block.code(24);
     block.coordinates(Eigen::Vector3i(40, 48, 52));
     block.allocateDownTo(0);
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
@@ -278,7 +278,7 @@ TEST(SerialiseUnitTestSingle, WriteReadBlock) {
     std::ifstream is(filename, std::ios::binary);
     TestVoxelSingleT::VoxelBlockType block;
     se::internal::deserialise(block, is);
-    ASSERT_EQ(block.code_, 24);
+    ASSERT_EQ(block.code(), 24);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       ASSERT_EQ(block.data(voxel_idx), 5.f);
@@ -290,7 +290,7 @@ TEST(SerialiseUnitTestSingle, WriteReadBlockStruct) {
   {
     std::ofstream os (filename, std::ios::binary);
     OccupancyVoxelSingleT::VoxelBlockType block;
-    block.code_ = 24;
+    block.code(24);
     block.coordinates(Eigen::Vector3i(40, 48, 52));
     block.allocateDownTo(0);
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
@@ -302,7 +302,7 @@ TEST(SerialiseUnitTestSingle, WriteReadBlockStruct) {
     std::ifstream is(filename, std::ios::binary);
     OccupancyVoxelSingleT::VoxelBlockType block;
     se::internal::deserialise(block, is);
-    ASSERT_EQ(block.code_, 24);
+    ASSERT_EQ(block.code(), 24);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx) {
       auto data = block.data(voxel_idx);
@@ -343,7 +343,7 @@ TEST(SerialiseUnitTestSingle, SerialiseTree) {
   for(int i = 0; i < node_buffer_base.size(); ++i) {
     se::Node<TestVoxelSingleT> * node_base  = node_buffer_base[i];
     se::Node<TestVoxelSingleT> * node_copy = node_buffer_copy[i];
-    ASSERT_EQ(node_base->code_, node_copy->code_);
+    ASSERT_EQ(node_base->code(), node_copy->code());
     ASSERT_EQ(node_base->children_mask_, node_copy->children_mask_);
   }
 

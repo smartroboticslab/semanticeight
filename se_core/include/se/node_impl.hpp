@@ -36,11 +36,11 @@ namespace se {
 // Node implementation
 
 template <typename T>
-Node<T>::Node(typename T::VoxelData init_data) {
-  code_ = 0;
-  size_ = 0;
-  children_mask_ = 0;
-  timestamp_ = 0;
+Node<T>::Node(typename T::VoxelData init_data) :
+    code_(0),
+    size_(0),
+    children_mask_(0),
+    timestamp_(0) {
   for (unsigned int child_idx = 0; child_idx < 8; child_idx++) {
     data_[child_idx]      = init_data;
     parent_ptr_           = nullptr;
@@ -60,7 +60,7 @@ void Node<T>::operator=(Node<T>& node) {
 
 template <typename T>
 void Node<T>::initFromNode(se::Node<T>& node) {
-  code_           = node.code_;
+  code_           = node.code();
   size_           = node.size_;
   children_mask_  = node.children_mask_;
   timestamp_      = node.timestamp();
@@ -88,7 +88,7 @@ void VoxelBlock<T>::operator=(VoxelBlock<T>& block) {
 
 template <typename T>
 void VoxelBlock<T>::initFromBlock(VoxelBlock<T>& block) {
-  this->code_  = block.code_;
+  this->code()  = block.code();
   this->active(block.active());
   coordinates(block.coordinates());
   min_scale(block.min_scale());
@@ -183,7 +183,7 @@ inline void VoxelBlockFull<T>::setData(const int voxel_idx, const VoxelData& vox
 template <typename T>
 void VoxelBlockFull<T>::initFromBlock(VoxelBlockFull<T>& block) {
   this->coordinates(block.coordinates());
-  this->code_  = block.code_;
+  this->code_  = block.code();
   this->active(block.active());
   this->min_scale(block.min_scale());
   this->current_scale(block.current_scale());

@@ -127,8 +127,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
       }
     }
 
-    const unsigned int child_idx = se::child_idx(node->code_,
-                                         se::keyops::depth(node->code_), voxel_depth);
+    const unsigned int child_idx = se::child_idx(node->code(),
+                                         se::keyops::depth(node->code()), voxel_depth);
     auto& node_data = node->parent()->data_[child_idx];
     if(data_count != 0) {
       node_data.x_max  = x_max;
@@ -477,8 +477,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
             dynamic_cast<MultiresOFusion::VoxelBlockType*>(node);
         block->coordinates(node_coord);
         block->size_ = node_size;
-        block->code_ = se::keyops::encode(node_coord.x(), node_coord.y(), node_coord.z(),
-                                          map_.blockDepth(), voxel_depth_);
+        block->code(se::keyops::encode(node_coord.x(), node_coord.y(), node_coord.z(),
+                                          map_.blockDepth(), voxel_depth_));
         block->parent() = parent;
       }
     } else {
@@ -487,7 +487,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
       {
         node = map_.pool().acquireNode(parent->data_[node_idx]);
         node->size_ = node_size;
-        node->code_ = se::keyops::encode(node_coord.x(), node_coord.y(), node_coord.z(), depth, voxel_depth_);
+        node->code(se::keyops::encode(node_coord.x(), node_coord.y(), node_coord.z(), depth, voxel_depth_));
         node->parent() = parent;
         // Initalise all children with parent value if it differs from the default value
         if (node->parent()->data_[node_idx].x_max != MultiresOFusion::VoxelType::initData().x_max) {
@@ -753,7 +753,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         propagateUp(block, block->current_scale());
         node_list_[map_.blockDepth() - 1].insert(block->parent());
         const unsigned int child_idx = se::child_idx(
-            block->code_, se::keyops::depth(block->code_), map_.voxelDepth());
+            block->code(), se::keyops::depth(block->code()), map_.voxelDepth());
         auto data = block->data(
             block->coordinates(), se::math::log2_const(MultiresOFusion::VoxelBlockType::size));
         auto& parent_data = block->parent()->data_[child_idx];

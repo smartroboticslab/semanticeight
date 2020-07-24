@@ -362,13 +362,13 @@ namespace internal {
       const int          dir,
       VoxelValueSelector select_voxel_value) {
 
-    int depth = se::keyops::depth(octant->code_);
+    int depth = se::keyops::depth(octant->code());
     while (depth > 0) {
-      int child_idx = se::child_idx(stack[depth]->code_, max_depth);
+      int child_idx = se::child_idx(stack[depth]->code(), max_depth);
       int sibling = child_idx ^ dir;
       if ((sibling & dir) == dir) { // if sibling still in octant's family
         const int child_size = 1 << (max_depth - depth);
-        const Eigen::Vector3i coords = se::keyops::decode(stack[depth-1]->code_)
+        const Eigen::Vector3i coords = se::keyops::decode(stack[depth-1]->code())
             + child_size * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
         return {select_voxel_value(stack[depth - 1]->data_[sibling]), coords};
       }
@@ -393,9 +393,9 @@ namespace internal {
                                                  const int        max_depth,
                                                  const int        dir) {
 
-    int depth = se::keyops::depth(octant->code_);
+    int depth = se::keyops::depth(octant->code());
     while (depth > 0) {
-      int child_idx = se::child_idx(stack[depth]->code_, max_depth);
+      int child_idx = se::child_idx(stack[depth]->code(), max_depth);
       int sibling = child_idx ^ dir;
       if ((sibling & dir) == dir) { // if sibling still in octant's family
         return stack[depth - 1]->child(sibling);
@@ -420,7 +420,7 @@ namespace internal {
                                const int              max_depth,
                                const Eigen::Vector3i& node_coord) {
 
-    unsigned node_size = (1 << (max_depth - se::keyops::depth(root->code_))) / 2;
+    unsigned node_size = (1 << (max_depth - se::keyops::depth(root->code()))) / 2;
     constexpr unsigned int block_size = BLOCK_SIZE;
     Node<T>* node = root;
     int d = 0;

@@ -199,7 +199,7 @@ TEST_F(GatherTest, FetchWithStack) {
   auto res = octree_.fetch(128, 136, 128);
   int l = 0;
   while(stack[l] && stack[l + 1] != nullptr) {
-    ASSERT_TRUE(se::parent(stack[l + 1]->code_, voxel_depth) == stack[l]->code_);
+    ASSERT_TRUE(se::parent(stack[l + 1]->code(), voxel_depth) == stack[l]->code());
     ++l;
   }
 }
@@ -220,10 +220,10 @@ TEST_F(GatherTest, FetchNeighbourhood) {
   auto node_1 = se::internal::fetch_neighbour(stack, base, voxel_depth, 1);
   auto node_2 = se::internal::fetch_neighbour(stack, base, voxel_depth, 2);
   auto node_3 = se::internal::fetch_neighbour(stack, base, voxel_depth, 3);
-  ASSERT_TRUE(se::keyops::decode(base->code_) == base_coord);
-  ASSERT_TRUE(se::keyops::decode(node_1->code_) == node_0_coord);
-  ASSERT_TRUE(se::keyops::decode(node_2->code_) == node_1_coord);
-  ASSERT_TRUE(se::keyops::decode(node_3->code_) == node_2_coord);
+  ASSERT_TRUE(se::keyops::decode(base->code()) == base_coord);
+  ASSERT_TRUE(se::keyops::decode(node_1->code()) == node_0_coord);
+  ASSERT_TRUE(se::keyops::decode(node_2->code()) == node_1_coord);
+  ASSERT_TRUE(se::keyops::decode(node_3->code()) == node_2_coord);
 
   std::fill(std::begin(stack), std::end(stack), nullptr);
   base = se::internal::fetch(stack, octree_.root(), voxel_depth, node_0_coord);

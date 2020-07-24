@@ -417,7 +417,7 @@ Node<T>* Octree<T>::insert(const int x,
   // Should not happen if octree has been initialised properly
   if(!node) {
     root_ = pool_.root();
-    root_->code_ = 0;
+    root_->code(0);
     root_->size_ = size_;
     node = root_;
   }
@@ -443,7 +443,7 @@ Node<T>* Octree<T>::insert(const int x,
         }
         static_cast<VoxelBlockType *>(node_tmp)->coordinates(
             Eigen::Vector3i(unpack_morton(prefix)));
-        static_cast<VoxelBlockType *>(node_tmp)->code_ = prefix | d;
+        static_cast<VoxelBlockType *>(node_tmp)->code(prefix | d);
         node_tmp->parent() = node;
         node->children_mask_ = node->children_mask_ | (1 << child_idx);
       } else {
@@ -454,10 +454,10 @@ Node<T>* Octree<T>::insert(const int x,
           node_tmp = pool_.acquireNode(init_octant);
         }
         node_tmp->parent() = node;
-        node_tmp->code_ = prefix | d;
+        node_tmp->code(prefix | d);
         node->children_mask_ = node->children_mask_ | (1 << child_idx);
         // std::cout << "coords: "
-        //   << keyops::decode(keyops::code(node_tmp->code_)) << std::endl;
+        //   << keyops::decode(keyops::code(node_tmp->code())) << std::endl;
       }
       node->child(child_idx) = node_tmp;
     }
@@ -897,12 +897,12 @@ bool Octree<T>::allocate_depth(key_t* octant_keys, int num_tasks, int target_dep
           (*node)->size_ = octant_size;
           static_cast<VoxelBlockType *>(*node)->coordinates(Eigen::Vector3i(unpack_morton(octant_key)));
           static_cast<VoxelBlockType *>(*node)->active(true);
-          static_cast<VoxelBlockType *>(*node)->code_ = octant_key | depth;
+          static_cast<VoxelBlockType *>(*node)->code(octant_key | depth);
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         } else {
           *node = pool_.acquireNode();
           (*node)->parent() = parent;
-          (*node)->code_ = octant_key | depth;
+          (*node)->code(octant_key | depth);
           (*node)->size_ = octant_size;
           parent->children_mask_ = parent->children_mask_ | (1 << child_idx);
         }
@@ -993,8 +993,8 @@ void Octree<T>::load(const std::string& filename) {
     //              initalise the inserted node.
     Node<T> node;
     internal::deserialise(node, is);
-    Eigen::Vector3i node_coord = keyops::decode(node.code_);
-    insert(node_coord.x(), node_coord.y(), node_coord.z(), keyops::depth(node.code_), &node);
+    Eigen::Vector3i node_coord = keyops::decode(node.code());
+    insert(node_coord.x(), node_coord.y(), node_coord.z(), keyops::depth(node.code()), &node);
   }
 
   size_t num_blocks = 0;
@@ -1006,7 +1006,7 @@ void Octree<T>::load(const std::string& filename) {
     VoxelBlockType block;
     internal::deserialise(block, is);
     Eigen::Vector3i block_coord = block.coordinates();
-    insert(block_coord.x(), block_coord.y(), block_coord.z(), keyops::depth(block.code_), &block);
+    insert(block_coord.x(), block_coord.y(), block_coord.z(), keyops::depth(block.code()), &block);
   }
 }
 

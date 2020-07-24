@@ -124,7 +124,7 @@ namespace functor {
 
       void update_node(se::Node<FieldType>* node,
                        const float          voxel_dim) {
-        const Eigen::Vector3i node_coord = Eigen::Vector3i(unpack_morton(node->code_));
+        const Eigen::Vector3i node_coord = Eigen::Vector3i(unpack_morton(node->code()));
 
 
         /* Iterate over the Node children. */

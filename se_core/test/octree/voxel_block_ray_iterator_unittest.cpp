@@ -94,7 +94,7 @@ TEST_F(VoxelBlockRayIteratorTest, FetchAlongRay) {
   TestVoxelT::VoxelBlockType* current;
   while (current = it.next()) {
     ASSERT_LT(i, allocation_list_.size());
-    ASSERT_EQ(current->code_, allocation_list_[i]);
+    ASSERT_EQ(current->code(), allocation_list_[i]);
     i++;
   }
   ASSERT_EQ(i, allocation_list_.size());

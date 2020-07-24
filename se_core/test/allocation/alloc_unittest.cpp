@@ -86,7 +86,7 @@ TEST(AllocationTest, FetchOctant) {
 
   const int depth = 3; /* 32 voxels per side */
   se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
-  se::key_t fetched_code = node->code_;
+  se::key_t fetched_code = node->code();
 
   const se::key_t gt_code = octree.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
   ASSERT_EQ(fetched_code, gt_code);

@@ -80,7 +80,7 @@ namespace functor {
       }
 
       void update_node(se::Node<FieldType>* node) {
-        Eigen::Vector3i node_coord = Eigen::Vector3i(unpack_morton(node->code_));
+        Eigen::Vector3i node_coord = Eigen::Vector3i(unpack_morton(node->code()));
 #pragma omp simd
         for(int child_idx = 0; child_idx < 8; ++child_idx) {
           const Eigen::Vector3i rel_step =  Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0);

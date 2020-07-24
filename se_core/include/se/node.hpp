@@ -56,7 +56,6 @@ public:
   typedef typename T::VoxelData VoxelData;
 
   VoxelData data_[8];
-  key_t code_;
   unsigned int size_;
   unsigned char children_mask_;
   unsigned int timestamp_;
@@ -69,6 +68,14 @@ public:
   void operator=(Node<T>& node);
 
   virtual ~Node(){};
+
+  void code(key_t code) {
+    code_ = code;
+  }
+
+  key_t code() {
+    return code_;
+  }
 
   Node*& child(const int x, const int y, const int z) {
     return child_ptr_[x + y * 2 + z * 4];
@@ -103,6 +110,7 @@ public:
   virtual bool isBlock() const { return false; }
 
 protected:
+  key_t code_;
   Node* parent_ptr_;
   Node* child_ptr_[8];
 

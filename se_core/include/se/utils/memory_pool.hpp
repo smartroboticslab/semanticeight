@@ -86,8 +86,8 @@ namespace se {
 
     void deleteNode(se::Node<T>* node, size_t max_depth) {
       nodes_updated_ = false;
-      const unsigned int child_idx = se::child_idx(node->code_,
-                                           se::keyops::depth(node->code_), max_depth);
+      const unsigned int child_idx = se::child_idx(node->code(),
+                                           se::keyops::depth(node->code()), max_depth);
       node->parent()->child(child_idx) = nullptr;
       node->parent()->children_mask_ = node->parent()->children_mask_ & ~(1 << child_idx);
 
@@ -112,8 +112,8 @@ namespace se {
 
     void deleteBlock(VoxelBlockType<T>* block, size_t max_depth) {
       blocks_updated_ = false;
-      const unsigned int child_idx = se::child_idx(block->code_,
-                                           se::keyops::depth(block->code_), max_depth);
+      const unsigned int child_idx = se::child_idx(block->code(),
+                                           se::keyops::depth(block->code()), max_depth);
       block->parent()->child(child_idx) = NULL;
       block->parent()->children_mask_ = block->parent()->children_mask_ & ~(1 << child_idx);
       delete(block);
