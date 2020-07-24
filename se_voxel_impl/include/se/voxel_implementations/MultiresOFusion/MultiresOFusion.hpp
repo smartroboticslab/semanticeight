@@ -89,8 +89,7 @@ struct MultiresOFusion {
 
     using VoxelBlockType = se::VoxelBlockSingle<MultiresOFusion::VoxelType>;
 
-    template <typename T>
-    using MemoryPoolType = se::MemoryPool<T>;
+    using MemoryPoolType = se::MemoryPool<MultiresOFusion::VoxelType>;
     template <typename ElemT>
     using MemoryBufferType = std::vector<ElemT>;
   };

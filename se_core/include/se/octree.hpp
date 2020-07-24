@@ -499,8 +499,8 @@ public:
    * blocks, false to retrieve all allocated blocks.
    */
   void getBlockList(std::vector<VoxelBlockType *>& block_list, bool active);
-  typename T::template MemoryPoolType<T>& pool() { return pool_; };
-  const typename T::template MemoryPoolType<T>& pool() const { return pool_; };
+  typename T::MemoryPoolType& pool() { return pool_; };
+  const typename T::MemoryPoolType& pool() const { return pool_; };
 
   /*! \brief Computes the morton code of the block containing voxel
    * at coordinates (x,y,z)
@@ -552,7 +552,7 @@ private:
   int voxel_depth_ = 0;
   int max_block_scale_ = 0;
   int block_depth_ = 0;
-  typename T::template MemoryPoolType<T> pool_;
+  typename T::MemoryPoolType pool_;
 
   friend class VoxelBlockRayIterator<T>;
   friend class node_iterator<T>;

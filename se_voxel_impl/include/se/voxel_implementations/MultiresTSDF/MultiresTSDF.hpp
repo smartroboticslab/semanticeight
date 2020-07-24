@@ -59,8 +59,7 @@ struct MultiresTSDF {
 
     using VoxelBlockType = se::VoxelBlockFull<MultiresTSDF::VoxelType>;
 
-    template <typename T>
-    using MemoryPoolType = se::PagedMemoryPool<T>;
+    using MemoryPoolType = se::PagedMemoryPool<MultiresTSDF::VoxelType>;
     template <typename ElemT>
     using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };

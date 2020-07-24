@@ -95,8 +95,7 @@ struct ExampleVoxelImpl {
 
     using VoxelBlockType = se::VoxelBlockFull<ExampleVoxelImpl::VoxelType>;
 
-    template <typename T>
-    using MemoryPoolType = se::PagedMemoryPool<T>;
+    using MemoryPoolType = se::PagedMemoryPool<ExampleVoxelImpl::VoxelType>;
     template <typename ElemT>
     using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };

@@ -57,8 +57,7 @@ struct OFusion {
 
     using VoxelBlockType = se::VoxelBlockFull<OFusion::VoxelType>;
 
-    template <typename T>
-    using MemoryPoolType = se::PagedMemoryPool<T>;
+    using MemoryPoolType = se::PagedMemoryPool<OFusion::VoxelType>;
     template <typename ElemT>
     using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };

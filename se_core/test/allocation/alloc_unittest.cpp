@@ -38,8 +38,7 @@ struct TestVoxelT {
 
   using VoxelBlockType = se::VoxelBlockFull<TestVoxelT>;
 
-  template <typename T>
-  using MemoryPoolType = se::PagedMemoryPool<T>;
+  using MemoryPoolType = se::PagedMemoryPool<TestVoxelT>;
   template <typename BufferT>
   using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
 };

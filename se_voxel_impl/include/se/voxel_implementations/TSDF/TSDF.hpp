@@ -57,8 +57,7 @@ struct TSDF {
 
     using VoxelBlockType = se::VoxelBlockFull<TSDF::VoxelType>;
 
-    template <typename T>
-    using MemoryPoolType = se::PagedMemoryPool<T>;
+    using MemoryPoolType = se::PagedMemoryPool<TSDF::VoxelType>;
     template <typename ElemT>
     using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };

@@ -43,8 +43,7 @@ struct TestVoxelFullT {
 
   using VoxelBlockType = se::VoxelBlockFull<TestVoxelFullT>;
 
-  template <typename T>
-  using MemoryPoolType = se::PagedMemoryPool<T>;
+  using MemoryPoolType = se::PagedMemoryPool<TestVoxelFullT>;
   template <typename BufferT>
   using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
 };
@@ -59,8 +58,7 @@ struct OccupancyVoxelFullT {
 
   using VoxelBlockType = se::VoxelBlockFull<OccupancyVoxelFullT>;
 
-  template <typename T>
-  using MemoryPoolType = se::PagedMemoryPool<T>;
+  using MemoryPoolType = se::PagedMemoryPool<OccupancyVoxelFullT>;
   template <typename BufferT>
   using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
 };
@@ -240,8 +238,7 @@ struct TestVoxelSingleT {
 
   using VoxelBlockType = se::VoxelBlockSingle<TestVoxelSingleT>;
 
-  template <typename T>
-  using MemoryPoolType = se::PagedMemoryPool<T>;
+  using MemoryPoolType = se::PagedMemoryPool<TestVoxelSingleT>;
   template <typename BufferT>
   using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
 };
@@ -256,8 +253,7 @@ struct OccupancyVoxelSingleT {
 
   using VoxelBlockType = se::VoxelBlockSingle<OccupancyVoxelSingleT>;
 
-  template <typename T>
-  using MemoryPoolType = se::PagedMemoryPool<T>;
+  using MemoryPoolType = se::PagedMemoryPool<OccupancyVoxelSingleT>;
   template <typename BufferT>
   using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
 };
