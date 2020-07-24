@@ -99,8 +99,8 @@ void VoxelBlock<T>::initFromBlock(VoxelBlock<T>& block) {
 
 template <typename T>
 VoxelBlockFull<T>::VoxelBlockFull(typename T::VoxelData init_data) {
-  for (unsigned int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
-    voxel_block_[voxel_idx] = init_data;
+  for (unsigned int voxel_idx = 0; voxel_idx < num_voxels_in_block; voxel_idx++) {
+    block_data_[voxel_idx] = init_data;
   }
 }
 
@@ -118,9 +118,9 @@ template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockFull<T>::data(const Eigen::Vector3i& voxel_coord) const {
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
-  return voxel_block_[voxel_offset.x() +
-                      voxel_offset.y() * this->size +
-                      voxel_offset.z() * this->size_sq];
+  return block_data_[voxel_offset.x() +
+                     voxel_offset.y() * this->size +
+                     voxel_offset.z() * this->size_sq];
 }
 
 template <typename T>
@@ -137,16 +137,16 @@ VoxelBlockFull<T>::data(const Eigen::Vector3i& voxel_coord, const int scale) con
   }
   const int local_size = this->size / (1 << scale);
   voxel_offset = voxel_offset / (1 << scale);
-  return voxel_block_[scale_offset + voxel_offset.x() +
-                      voxel_offset.y() * local_size +
-                      voxel_offset.z() * se::math::sq(local_size)];
+  return block_data_[scale_offset + voxel_offset.x() +
+                     voxel_offset.y() * local_size +
+                     voxel_offset.z() * se::math::sq(local_size)];
 }
 
 template <typename T>
 inline void VoxelBlockFull<T>::setData(const Eigen::Vector3i& voxel_coord,
                                        const VoxelData& voxel_data){
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
-  voxel_block_[voxel_offset.x() + voxel_offset.y() * this->size + voxel_offset.z() * this->size_sq] = voxel_data;
+  block_data_[voxel_offset.x() + voxel_offset.y() * this->size + voxel_offset.z() * this->size_sq] = voxel_data;
 }
 
 template <typename T>
@@ -164,20 +164,20 @@ inline void VoxelBlockFull<T>::setData(const Eigen::Vector3i& voxel_coord, const
 
   const int size_at_scale = this->size / (1 << scale);
   voxel_offset = voxel_offset / (1 << scale);
-  voxel_block_[scale_offset + voxel_offset.x() +
-               voxel_offset.y() * size_at_scale +
-               voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
+  block_data_[scale_offset + voxel_offset.x() +
+              voxel_offset.y() * size_at_scale +
+              voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
 }
 
 template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockFull<T>::data(const int voxel_idx) const {
-  return voxel_block_[voxel_idx];
+  return block_data_[voxel_idx];
 }
 
 template <typename T>
 inline void VoxelBlockFull<T>::setData(const int voxel_idx, const VoxelData& voxel_data){
-  voxel_block_[voxel_idx] = voxel_data;
+  block_data_[voxel_idx] = voxel_data;
 }
 
 template <typename T>
@@ -187,7 +187,7 @@ void VoxelBlockFull<T>::initFromBlock(VoxelBlockFull<T>& block) {
   this->active(block.active());
   this->min_scale(block.min_scale());
   this->current_scale(block.current_scale());
-  std::memcpy(getBlockRawPtr(), block.getBlockRawPtr(), (num_voxels) * sizeof(*(block.getBlockRawPtr())));
+  std::memcpy(blockData(), block.blockData(), (num_voxels_in_block) * sizeof(*(block.blockData())));
 }
 
 // Voxel block single scale allocation implementation

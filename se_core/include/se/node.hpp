@@ -105,7 +105,7 @@ public:
 protected:
   Node* parent_ptr_;
   Node* child_ptr_[8];
-  
+
 private:
   // Internal copy helper function
   void initFromNode(Node<T>& node);
@@ -192,7 +192,7 @@ public:
   VoxelData data(const int voxel_idx) const;
   void setData(const int voxel_idx, const VoxelData& voxel_data);
 
-  VoxelData* getBlockRawPtr() { return voxel_block_; }
+  VoxelData* blockData() { return block_data_; }
   static constexpr int data_size() { return sizeof(VoxelBlockFull<T>); }
 
 private:
@@ -209,15 +209,15 @@ private:
     return voxel_count;
   }
 
-  static constexpr size_t num_voxels = compute_num_voxels();
-  VoxelData voxel_block_[num_voxels]; // Brick of data.
+  static constexpr size_t num_voxels_in_block = compute_num_voxels();
+  VoxelData block_data_[num_voxels_in_block]; // Brick of data.
 
   friend std::ofstream& internal::serialise <> (std::ofstream& out,
                                                 VoxelBlockFull& node);
   friend void internal::deserialise <> (VoxelBlockFull& node, std::ifstream& in);
 };
 
-/*! \brief A leaf node of the Octree. Each VoxelBlock contains compute_num_voxels() voxels
+/*! \brief A leaf node of the Octree. Each VoxelBlock contains compute_num_voxels_in_block() voxels
  * voxels.
  */
 template <typename T>
