@@ -33,24 +33,85 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NODE_IMPL_HPP
 
 namespace se {
-
-// Full scale allocation implementation
+// Node implementation
 
 template <typename T>
-VoxelBlockFull<T>::VoxelBlockFull(VoxelBlockFull<T>* block) {
-  this->coordinates(block->coordinates());
-  this->code_(block->code_);
-  this->active_(block->active());
-  this->min_scale(block->min_scale());
-  this->current_scale(block->current_scale());
-  std::memcpy(getBlockRawPtr(), block->getBlockRawPtr(), (num_voxels) * sizeof(*(block->getBlockRawPtr())));
+Node<T>::Node(typename T::VoxelData init_data) {
+  code_ = 0;
+  size_ = 0;
+  children_mask_ = 0;
+  timestamp_ = 0;
+  for (unsigned int child_idx = 0; child_idx < 8; child_idx++) {
+    data_[child_idx]      = init_data;
+    parent_ptr_           = nullptr;
+    child_ptr_[child_idx] = nullptr;
+  }
 }
+
+template <typename T>
+Node<T>::Node(Node<T>& node) {
+  initFromNode(node);
+}
+
+template <typename T>
+void Node<T>::operator=(Node<T>& node) {
+  initFromNode(node);
+}
+
+template <typename T>
+void Node<T>::initFromNode(se::Node<T>& node) {
+  code_           = node.code_;
+  size_           = node.size_;
+  children_mask_  = node.children_mask_;
+  timestamp_      = node.timestamp();
+  active_         = node.active();
+  std::memcpy(data_, node.data_, 8 * sizeof(VoxelData));
+}
+
+// Voxel block base implementation
+
+template <typename T>
+VoxelBlock<T>::VoxelBlock() :
+    coordinates_(Eigen::Vector3i::Constant(0)),
+    current_scale_(0),
+    min_scale_(-1) { };
+
+template <typename T>
+VoxelBlock<T>::VoxelBlock(VoxelBlock<T>& block) {
+  initFromBlock(block);
+}
+
+template <typename T>
+void VoxelBlock<T>::operator=(VoxelBlock<T>& block) {
+  initFromBlock(block);
+}
+
+template <typename T>
+void VoxelBlock<T>::initFromBlock(VoxelBlock<T>& block) {
+  this->code_  = block.code_;
+  this->active(block.active());
+  coordinates(block.coordinates());
+  min_scale(block.min_scale());
+  current_scale(block.current_scale());
+}
+
+// Voxel block full scale allocation implementation
 
 template <typename T>
 VoxelBlockFull<T>::VoxelBlockFull(typename T::VoxelData init_data) {
   for (unsigned int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
     voxel_block_[voxel_idx] = init_data;
   }
+}
+
+template <typename T>
+VoxelBlockFull<T>::VoxelBlockFull(VoxelBlockFull<T>& block) {
+  initFromBlock(block);
+}
+
+template <typename T>
+void VoxelBlockFull<T>::operator=(VoxelBlockFull<T>& block) {
+  initFromBlock(block);
 }
 
 template <typename T>
@@ -119,27 +180,28 @@ inline void VoxelBlockFull<T>::setData(const int voxel_idx, const VoxelData& vox
   voxel_block_[voxel_idx] = voxel_data;
 }
 
+template <typename T>
+void VoxelBlockFull<T>::initFromBlock(VoxelBlockFull<T>& block) {
+  this->coordinates(block.coordinates());
+  this->code_  = block.code_;
+  this->active(block.active());
+  this->min_scale(block.min_scale());
+  this->current_scale(block.current_scale());
+  std::memcpy(getBlockRawPtr(), block.getBlockRawPtr(), (num_voxels) * sizeof(*(block.getBlockRawPtr())));
+}
 
-// Single scale allocation implementation
+// Voxel block single scale allocation implementation
 
 template <typename T>
-VoxelBlockSingle<T>::VoxelBlockSingle(VoxelBlockSingle<T>* block) {
-  this->coordinates(block->coordinates());
-  this->code_(block->code_);
-  this->active_(block->active());
-  this->min_scale(block->min_scale());
-  this->current_scale(block->current_scale());
-  if (block->min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
-    for (int scale = VoxelBlock<T>::max_scale; scale >= block.min_scale(); scale--) {
-      int size_at_scale = VoxelBlock<T>::size >> scale;
-      int num_voxels_at_scale = se::math::cu(size_at_scale);
-      blockData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
-      std::memcpy(blockData()[VoxelBlock<T>::max_scale - scale],
-          block->blockData()[VoxelBlock<T>::max_scale - scale],
-          (num_voxels_at_scale) * sizeof(*(block->blockData()[VoxelBlock<T>::max_scale - scale])));
-    }
-  }
+VoxelBlockSingle<T>::VoxelBlockSingle(VoxelBlockSingle<T>& block) {
+  initFromBlock(block);
 };
+
+template <typename T>
+void VoxelBlockSingle<T>::operator=(VoxelBlockSingle<T>& block) {
+  initFromBlock(block);
+}
+
 
 template <typename T>
 VoxelBlockSingle<T>::~VoxelBlockSingle() {
@@ -154,13 +216,6 @@ VoxelBlockSingle<T>::initData() const { return init_data_; }
 
 template <typename T>
 inline void VoxelBlockSingle<T>::setInitData(const VoxelData& init_data) { init_data_ = init_data;}
-
-template <typename T>
-void VoxelBlockSingle<T>::initaliseData(VoxelData* voxel_data, int num_voxels) {
-  for (int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
-    voxel_data[voxel_idx] = init_data_;
-  }
-}
 
 template <typename T>
 inline typename VoxelBlock<T>::VoxelData
@@ -314,6 +369,32 @@ void VoxelBlockSingle<T>::deleteUpTo(const int scale) {
     block_data_.pop_back();
   }
   this->min_scale_ = scale;
+}
+
+template <typename T>
+void VoxelBlockSingle<T>::initFromBlock(VoxelBlockSingle<T>& block) {
+  this->coordinates(block.coordinates());
+  this->code_ = block.code_;
+  this->active(block.active());
+  this->min_scale(block.min_scale());
+  this->current_scale(block.current_scale());
+  if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
+    for (int scale = VoxelBlock<T>::max_scale; scale >= block.min_scale(); scale--) {
+      int size_at_scale = VoxelBlock<T>::size >> scale;
+      int num_voxels_at_scale = se::math::cu(size_at_scale);
+      blockData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
+      std::memcpy(blockData()[VoxelBlock<T>::max_scale - scale],
+          block.blockData()[VoxelBlock<T>::max_scale - scale],
+          (num_voxels_at_scale) * sizeof(*(block.blockData()[VoxelBlock<T>::max_scale - scale])));
+    }
+  }
+}
+
+template <typename T>
+void VoxelBlockSingle<T>::initaliseData(VoxelData* voxel_data, int num_voxels) {
+  for (int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
+    voxel_data[voxel_idx] = init_data_;
+  }
 }
 
 } // namespace se

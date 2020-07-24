@@ -365,7 +365,7 @@ TEST(SerialiseUnitTestSingle, SerialiseBlock) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
     auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-    block->allocateDownTo(0);
+    block->allocateDownTo();
     for (int voxel_idx = 0; voxel_idx < TestVoxelSingleT::VoxelBlockType::size_cu; ++voxel_idx)
       block->setData(voxel_idx, dis(gen));
   }

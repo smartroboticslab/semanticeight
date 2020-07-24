@@ -62,26 +62,11 @@ public:
   unsigned int timestamp_;
   bool active_;
 
-  Node(typename T::VoxelData init_data = T::initData()) {
-    code_ = 0;
-    size_ = 0;
-    children_mask_ = 0;
-    timestamp_ = 0;
-    for (unsigned int child_idx = 0; child_idx < 8; child_idx++) {
-      data_[child_idx]      = init_data;
-      parent_ptr_           = nullptr;
-      child_ptr_[child_idx] = nullptr;
-    }
-  }
+  Node(typename T::VoxelData init_data = T::initData());
 
-  Node(Node<T>* node) :
-    code_(node->code_),
-    size_(node->size_),
-    children_mask_(node->children_mask_),
-    timestamp_(node->timestamp()),
-    active_(node->active()) {
-    std::memcpy(data_, node->data_, 8 * sizeof(VoxelData));
-  }
+  Node(Node<T>& node);
+
+  void operator=(Node<T>& node);
 
   virtual ~Node(){};
 
@@ -118,11 +103,14 @@ public:
   virtual bool isBlock() const { return false; }
 
 protected:
-    Node* parent_ptr_;
-    Node* child_ptr_[8];
+  Node* parent_ptr_;
+  Node* child_ptr_[8];
+  
 private:
-    friend std::ofstream& internal::serialise <> (std::ofstream& out, Node& node);
-    friend void internal::deserialise <> (Node& node, std::ifstream& in);
+  // Internal copy helper function
+  void initFromNode(Node<T>& node);
+  friend std::ofstream& internal::serialise <> (std::ofstream& out, Node& node);
+  friend void internal::deserialise <> (Node& node, std::ifstream& in);
 };
 
 /*! \brief A leaf node of the Octree. Each VoxelBlock contains compute_num_voxels() voxels
@@ -134,15 +122,18 @@ class VoxelBlock: public Node<T> {
 public:
   using VoxelData = typename T::VoxelData;
 
-  VoxelBlock() :
-    coordinates_(Eigen::Vector3i::Constant(0)),
-    current_scale_(0),
-    min_scale_(-1) { };
-
   static constexpr unsigned int size      = BLOCK_SIZE;
   static constexpr unsigned int size_sq   = se::math::sq(size);
   static constexpr unsigned int size_cu   = se::math::cu(size);
   static constexpr unsigned int max_scale = se::math::log2_const(size);
+
+  VoxelBlock();
+
+  VoxelBlock(VoxelBlock<T>& block);
+
+  void operator=(VoxelBlock<T>& block);
+
+  virtual ~VoxelBlock() {};
 
   bool isBlock() const { return true; }
 
@@ -168,6 +159,10 @@ protected:
   Eigen::Vector3i coordinates_;
   int current_scale_;
   int min_scale_;
+
+private:
+  // Internal copy helper function
+  void initFromBlock(VoxelBlock<T>& block);
 };
 
 
@@ -182,7 +177,11 @@ public:
 
   VoxelBlockFull(typename T::VoxelData init_data = T::initData());
 
-  VoxelBlockFull(VoxelBlockFull<T>* block);
+  VoxelBlockFull(VoxelBlockFull<T>& block);
+
+  void operator=(VoxelBlockFull<T>& block);
+
+  virtual ~VoxelBlockFull() {};
 
   VoxelData data(const Eigen::Vector3i& voxel_coord) const;
   void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
@@ -197,7 +196,8 @@ public:
   static constexpr int data_size() { return sizeof(VoxelBlockFull<T>); }
 
 private:
-  VoxelBlockFull(const VoxelBlockFull&) = delete;
+  // Internal copy helper function
+  void initFromBlock(VoxelBlockFull<T>& block);
 
   static constexpr size_t compute_num_voxels() {
     size_t voxel_count = 0;
@@ -228,7 +228,9 @@ public:
 
   VoxelBlockSingle(typename T::VoxelData init_data = T::initData()) : init_data_(init_data) { };
 
-  VoxelBlockSingle(VoxelBlockSingle<T>* block);
+  VoxelBlockSingle(VoxelBlockSingle<T>& block);
+
+  void operator=(VoxelBlockSingle<T>& block);
 
   ~VoxelBlockSingle();
 
@@ -256,8 +258,8 @@ public:
   static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
 
 private:
-  VoxelBlockSingle(const VoxelBlockSingle&) = delete;
-
+  // Internal copy helper function
+  void initFromBlock(VoxelBlockSingle<T>& block);
   void initaliseData(VoxelData* voxel_data, int num_voxels);
   std::vector<VoxelData*> block_data_; // block_data_[0] returns the data at scale = max_scale and not scale = 0
   VoxelData init_data_;

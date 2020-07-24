@@ -238,7 +238,7 @@ namespace se {
       int current = current_index_.fetch_add(1);
       const int page_idx = current / pagesize_;
       const int elem_idx = current % pagesize_;
-      ElemType * elem = pages_[page_idx] + (elem_idx);
+      ElemType* elem = pages_[page_idx] + (elem_idx);
       *elem = *init_elem;
       return elem;
     }
