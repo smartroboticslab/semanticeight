@@ -305,8 +305,9 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 #pragma omp simd
         for (unsigned int x = 0; x < block_size; x += stride) {
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y, z);
-          const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ *
-              se::get_sample_coord(voxel_coord, 1, sample_offset_frac_)).homogeneous()).head(3);
+          const Eigen::Vector3f voxel_sample_coord_f =
+              se::get_sample_coord(voxel_coord, stride, sample_offset_frac_);
+          const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ * voxel_sample_coord_f).homogeneous()).head(3);
           auto voxel_data = block->data(voxel_coord, scale);
           Eigen::Vector2f pixel_f;
           if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
@@ -335,13 +336,12 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   void updateBlock(MultiresOFusion::VoxelBlockType* block, int /* min_scale = 0 */) {
     constexpr int block_size = MultiresOFusion::VoxelBlockType::size_li;
     const Eigen::Vector3i block_coord = block->coordinates();
-    const Eigen::Vector3f block_sample_offset = (sample_offset_frac_.array().colwise() *
-                                                 Eigen::Vector3f::Constant(block_size).array());
-    const float block_diff = (T_CM_ * (voxel_dim_ * (block_coord.cast<float>() +
-                                                   block_sample_offset)).homogeneous()).head(3).z();
+    const Eigen::Vector3f block_centre_coord_f =
+        se::get_sample_coord(block_coord, block_size, Eigen::Vector3f::Constant(0.5f));
+    const float block_centre_point_C_z = (T_CM_ * (voxel_dim_ * block_centre_coord_f).homogeneous()).head(3).z();
     const int last_scale = block->current_scale();
     const int scale = std::max(sensor_.computeIntegrationScale(
-        block_diff, voxel_dim_, last_scale, block->min_scale(), map_.maxBlockScale()), last_scale - 1);
+        block_centre_point_C_z, voxel_dim_, last_scale, block->min_scale(), map_.maxBlockScale()), last_scale - 1);
     block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
     block->allocateDownTo(scale);
     if(last_scale > scale) {
@@ -362,8 +362,9 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 #pragma omp simd
         for (unsigned int x = 0; x < block_size; x += stride) {
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y, z);
-          const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ *
-              se::get_sample_coord(voxel_coord, 1, sample_offset_frac_)).homogeneous()).head(3);
+          const Eigen::Vector3f voxel_sample_coord_f =
+              se::get_sample_coord(voxel_coord, stride, sample_offset_frac_);
+          const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ * voxel_sample_coord_f).homogeneous()).head(3);
           Eigen::Vector2f pixel_f;
           if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
             continue;

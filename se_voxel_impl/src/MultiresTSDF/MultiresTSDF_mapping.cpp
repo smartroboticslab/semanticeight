@@ -295,7 +295,7 @@ namespace se {
         constexpr int block_size = MultiresTSDF::VoxelBlockType::size_li;
         const Eigen::Vector3i block_coord = block->coordinates();
         const Eigen::Vector3f block_centre_coord_f =
-            se::getSampleCoord(block_coord, block_size, Eigen::Vector3f::Constant(0.5f));
+            se::get_sample_coord(block_coord, block_size, Eigen::Vector3f::Constant(0.5f));
         const float block_centre_point_C_z = (T_CM * (voxel_dim * block_centre_coord_f).homogeneous()).head(3).z();
         const int last_scale = block->current_scale();
 
@@ -316,7 +316,7 @@ namespace se {
             for (unsigned int x = 0; x < block_size; x += stride) {
               const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y, z);
               const Eigen::Vector3f voxel_sample_coord_f =
-                  getSampleCoord(voxel_coord, stride, sample_offset_frac);
+                  get_sample_coord(voxel_coord, stride, sample_offset_frac);
               const Eigen::Vector3f point_C = (T_CM * (voxel_dim * voxel_sample_coord_f).homogeneous()).head(3);
 
               Eigen::Vector2f pixel_f;
