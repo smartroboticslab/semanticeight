@@ -40,10 +40,10 @@
 
 #include "se/voxel_block_ray_iterator.hpp"
 #include "se/algorithms/meshing.hpp"
+#include "se/io/meshing_io.hpp"
 #include "se/geometry/octree_collision.hpp"
 #include "se/io/vtk_io.h"
 #include "se/io/ply_io.hpp"
-#include "se/io/meshing_io.hpp"
 #include "se/algorithms/balancing.hpp"
 #include "se/functors/for_each.hpp"
 #include "se/timings.h"
@@ -336,7 +336,7 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
           block->current_scale(0);
       });
 
-    std::cout << "saving triangle mesh to file :" << filename  << std::endl;
+    std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
 
     std::vector<se::Triangle> mesh;
     auto inside = [](const VoxelImpl::VoxelType::VoxelData& data) {
@@ -349,4 +349,21 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
 
     se::algorithms::marching_cube(*map_, select_value, inside, mesh);
     writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(this->T_MW_));
+}
+
+void DenseSLAMSystem::dump_dual_mesh(const std::string filename){
+
+  std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
+
+  std::vector<se::Triangle> mesh;
+  auto inside = [](const VoxelImpl::VoxelType::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const VoxelImpl::VoxelType::VoxelData& data) {
+    return data.x;
+  };
+
+  se::algorithms::dual_marching_cube(*map_, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(this->T_MW_));
 }

@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "gtest/gtest.h"
 #include "functors/axis_aligned_functor.hpp"
 #include "io/ply_io.hpp"
-#include "io/vtk-io.h"
+#include "io/vtk_io.h"
 #include "algorithms/balancing.hpp"
 #include "interpolation/idw_interpolation.hpp"
 

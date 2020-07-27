@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <sstream>
 #include "se/octree.hpp"
+#include "se/algorithms/meshing.hpp"
 #include "se/node_iterator.hpp"
 #include <Eigen/Dense>
 

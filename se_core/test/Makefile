@@ -9,6 +9,7 @@ debug:
 	$(MAKE) -C build
 
 test:
+	mkdir -p out/
 	$(MAKE) -C build test
 
 clean:

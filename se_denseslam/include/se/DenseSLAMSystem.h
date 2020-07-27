@@ -219,6 +219,8 @@ class DenseSLAMSystem {
      */
     void dump_mesh(const std::string filename);
 
+    void dump_dual_mesh(const std::string filename);
+
     /**
      * Render the current 3D reconstruction. This function performs raycasting
      * if needed, otherwise it uses the point cloud and normal maps created in
