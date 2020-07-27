@@ -135,8 +135,7 @@ namespace se {
     void propagateDown(const se::Octree<MultiresTSDF::VoxelType>& map,
                        MultiresTSDF::VoxelBlockType*              block,
                        const int                                  scale,
-                       const int                                  min_scale,
-                       const int                                  max_weight = INT_MAX) {
+                       const int                                  min_scale) {
       const Eigen::Vector3i block_coord = block->coordinates();
       const int block_size = MultiresTSDF::VoxelBlockType::size_li;
       for (int voxel_scale = scale; voxel_scale > min_scale; --voxel_scale) {
@@ -164,7 +163,7 @@ namespace se {
                       voxel_data.delta_y = 0;
                     } else {
                       voxel_data.x = std::max(voxel_data.x + delta_x, -1.f);
-                      voxel_data.y = fminf(voxel_data.y + parent_data.delta_y, max_weight);
+                      voxel_data.y = fminf(voxel_data.y + parent_data.delta_y, MultiresTSDF::max_weight);
                       voxel_data.delta_y = parent_data.delta_y;
                     }
                     block->setData(voxel_coord, voxel_scale - 1, voxel_data);
@@ -189,9 +188,7 @@ namespace se {
                          const Eigen::Matrix4f&                     T_CM,
                          const SensorImpl&                          sensor,
                          const float                                voxel_dim,
-                         const int                                  max_weight,
-                         const Eigen::Vector3f&                     sample_offset_frac,
-                         const float                                mu) {
+                         const Eigen::Vector3f&                     sample_offset_frac) {
 
       const int block_size = MultiresTSDF::VoxelBlockType::size_li;
       const int parent_scale = voxel_scale + 1;
@@ -223,7 +220,7 @@ namespace se {
                     voxel_data.delta_y = 0;
                   } else {
                     voxel_data.x = se::math::clamp(voxel_data.x + delta_x, -1.f, 1.f);
-                    voxel_data.y = fminf(voxel_data.y + parent_data.delta_y, max_weight);
+                    voxel_data.y = fminf(voxel_data.y + parent_data.delta_y, MultiresTSDF::max_weight);
                     voxel_data.delta_y = parent_data.delta_y;
                   }
 
@@ -255,7 +252,7 @@ namespace se {
                         (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
                         (static_cast<float>(voxel_data.y) + 1.f),
                         -1.f, 1.f);
-                    voxel_data.y = fminf(voxel_data.y + 1, max_weight);
+                    voxel_data.y = fminf(voxel_data.y + 1, MultiresTSDF::max_weight);
                     voxel_data.delta_y++;
                   }
                   block->setData(voxel_coord, voxel_scale, voxel_data);
@@ -278,14 +275,12 @@ namespace se {
           const se::Image<float>&                    depth_image,
           const Eigen::Matrix4f&                     T_CM,
           const SensorImpl                           sensor,
-          const float                                voxel_dim,
-          const int                                  max_weight) :
+          const float                                voxel_dim) :
           map(map),
           depth_image(depth_image),
           T_CM(T_CM),
           sensor(sensor),
           voxel_dim(voxel_dim),
-          max_weight(max_weight),
           sample_offset_frac(map.sample_offset_frac_) {}
 
       const se::Octree<MultiresTSDF::VoxelType>& map;
@@ -293,7 +288,6 @@ namespace se {
       const Eigen::Matrix4f& T_CM;
       const SensorImpl sensor;
       const float voxel_dim;
-      const int max_weight;
       const Eigen::Vector3f& sample_offset_frac;
 
       void operator()(MultiresTSDF::VoxelBlockType* block) {
@@ -310,7 +304,7 @@ namespace se {
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
         if (last_scale > scale) {
           propagateUpdate(block, scale, map, depth_image, T_CM, sensor,
-              voxel_dim, max_weight, sample_offset_frac, MultiresTSDF::mu);
+              voxel_dim, sample_offset_frac);
           return;
         }
         bool is_visible = false;
@@ -348,7 +342,7 @@ namespace se {
                     (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
                     (static_cast<float>(voxel_data.y) + 1.f),
                     -1.f, 1.f);
-                voxel_data.y = fminf(voxel_data.y + 1, max_weight);
+                voxel_data.y = fminf(voxel_data.y + 1, MultiresTSDF::max_weight);
                 voxel_data.delta_y++;
                 block->setData(voxel_coord, scale, voxel_data);
               }
@@ -388,7 +382,7 @@ void MultiresTSDF::integrate(se::Octree<MultiresTSDF::VoxelType>& map,
   std::deque<se::Node<MultiresTSDF::VoxelType> *> node_queue;
   std::mutex deque_mutex;
   struct se::multires::multires_block_update block_update_funct(
-      map, depth_image, T_CM, sensor, voxel_dim, MultiresTSDF::max_weight);
+      map, depth_image, T_CM, sensor, voxel_dim);
   se::functor::internal::parallel_for_each(active_list, block_update_funct);
 
   for (const auto &block : active_list) {
