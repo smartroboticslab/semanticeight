@@ -379,6 +379,11 @@ inline typename Octree<T>::VoxelBlockType* Octree<T>::fetch(const int x, const i
 }
 
 template <typename T>
+inline typename Octree<T>::VoxelBlockType* Octree<T>::fetch(const Eigen::Vector3i& voxel_coord) const {
+  return fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+}
+
+template <typename T>
 inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
    const int z, const int depth) const {
 
@@ -396,6 +401,12 @@ inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
     }
   }
   return node;
+}
+
+template <typename T>
+inline Node<T>* Octree<T>::fetch_node(const Eigen::Vector3i& voxel_coord,
+    const int depth) const {
+  return fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
 }
 
 template <typename T>

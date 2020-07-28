@@ -274,6 +274,12 @@ public:
    */
   VoxelBlockType* fetch(const int x, const int y, const int z) const;
 
+  /*! \brief Fetch the voxel block which contains voxel (x,y,z)
+   * \param[in] voxel_coord The coordinates of the voxel. Each component must
+   *                        be in the interval [0, size).
+   */
+  VoxelBlockType* fetch(const Eigen::Vector3i& voxel_coord) const;
+
   /*! \brief Fetch the node (x,y,z) at depth
    * \param x x coordinate in interval [0, size]
    * \param y y coordinate in interval [0, size]
@@ -282,6 +288,14 @@ public:
    */
   Node<T>* fetch_node(const int x, const int y, const int z,
       const int depth) const;
+
+  /*! \brief Fetch the node (x,y,z) at depth
+   * \param[in] voxel_coord The coordinates of the voxel. Each component must
+   *                        be in the interval [0, size).
+   * \param[in] depth depth to be searched
+   */
+  Node<T>* fetch_node(const Eigen::Vector3i& voxel_coord,
+                      const int depth) const;
 
   /*! \brief Insert the octant at (x,y,z). Not thread safe.
    * \param x x coordinate in interval [0, size]
