@@ -215,7 +215,7 @@ struct Configuration {
   bool drop_frames;
 
   /**
-   * Last frame to be integrated
+   * Last frame to be integrated. se::Configuration::max_frame starts from 0.
    */
   int max_frame;
 
