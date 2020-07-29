@@ -3,7 +3,7 @@ general:
   sequences:                    [
                                  ["sequence_name_1",
                                   "/PATH/TO/SEQUENCE_1/scene.raw",
-                                  "/PATH/TO/SEQUENCE_1/ground_truth.txt"]
+                                  "/PATH/TO/SEQUENCE_1/ground_truth.txt"],
                                  ["sequence_name_2",
                                   "/PATH/TO/SEQUENCE_2/scene.raw",
                                   "/PATH/TO/SEQUENCE_2/ground_truth.txt"],
