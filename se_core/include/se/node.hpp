@@ -265,7 +265,7 @@ public:
 private:
   // Internal copy helper function
   void initFromBlock(const VoxelBlockSingle<T>& block);
-  void initaliseData(VoxelData* voxel_data, const int num_voxels);
+  void initialiseData(VoxelData* voxel_data, const int num_voxels);
   std::vector<VoxelData*> block_data_; // block_data_[0] returns the data at scale = max_scale and not scale = 0
   VoxelData init_data_;
 

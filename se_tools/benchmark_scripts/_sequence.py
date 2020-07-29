@@ -78,7 +78,7 @@ class Sequence:
                         "ground_truth_file  = {}".format(self.name, self.file_path, self.ground_truth_file))
                 else:
                     warnings.warn(
-                        "Sequence can only be initalised by single sequence header. Use Dataset() instead.")
+                        "Sequence can only be initialised by single sequence header. Use Dataset() instead.")
             else:
                 warnings.warn(
                     "Sequence setup YAML misses sequence key.\n"

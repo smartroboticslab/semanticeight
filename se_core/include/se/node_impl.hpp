@@ -348,7 +348,7 @@ void VoxelBlockSingle<T>::allocateDownTo() {
       int size_at_scale = this->size_li >> scale;
       int num_voxels_at_scale = se::math::cu(size_at_scale);
       VoxelData* voxel_data = new VoxelData[num_voxels_at_scale];
-      initaliseData(voxel_data, num_voxels_at_scale);
+      initialiseData(voxel_data, num_voxels_at_scale);
       block_data_.push_back(voxel_data);
     }
     this->min_scale_ = 0;
@@ -362,7 +362,7 @@ void VoxelBlockSingle<T>::allocateDownTo(const int scale) {
       int size_at_scale_tmp = this->size_li >> scale_tmp;
       int num_voxels_at_scale_tmp = se::math::cu(size_at_scale_tmp);
       VoxelData* voxel_data = new VoxelData[num_voxels_at_scale_tmp];
-      initaliseData(voxel_data, num_voxels_at_scale_tmp);
+      initialiseData(voxel_data, num_voxels_at_scale_tmp);
       block_data_.push_back(voxel_data);
     }
     this->min_scale_ = scale;
@@ -391,7 +391,7 @@ void VoxelBlockSingle<T>::initFromBlock(const VoxelBlockSingle<T>& block) {
   this->min_scale_     = block.min_scale();
   this->current_scale_ = block.current_scale();
   std::memcpy(this->children_data_, block.childrenData(), 8 * sizeof(VoxelData));
-  if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
+  if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initialised.
     for (int scale = this->max_scale; scale >= block.min_scale(); scale--) {
       int size_at_scale = this->size_li >> scale;
       int num_voxels_at_scale = se::math::cu(size_at_scale);
@@ -404,7 +404,7 @@ void VoxelBlockSingle<T>::initFromBlock(const VoxelBlockSingle<T>& block) {
 }
 
 template <typename T>
-void VoxelBlockSingle<T>::initaliseData(VoxelData* voxel_data, const int num_voxels) {
+void VoxelBlockSingle<T>::initialiseData(VoxelData* voxel_data, const int num_voxels) {
   for (int voxel_idx = 0; voxel_idx < num_voxels; voxel_idx++) {
     voxel_data[voxel_idx] = init_data_;
   }

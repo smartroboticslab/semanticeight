@@ -990,7 +990,7 @@ void Octree<T>::load(const std::string& filename) {
   std::cout << "Reading " << num_nodes << " nodes " << std::endl;
   for(size_t i = 0; i < num_nodes; ++i) {
     // Node      := Temporary block on the stack that's only used to read block information from the file and to
-    //              initalise the inserted node.
+    //              initialise the inserted node.
     Node<T> node;
     internal::deserialise(node, is);
     Eigen::Vector3i node_coord = keyops::decode(node.code());
@@ -1002,7 +1002,7 @@ void Octree<T>::load(const std::string& filename) {
   std::cout << "Reading " << num_blocks << " blocks " << std::endl;
   for(size_t i = 0; i < num_blocks; ++i) {
     // block     := Temporary block on the stack that's only used to read block information from the file and to
-    //              initalise the inserted block.
+    //              initialise the inserted block.
     VoxelBlockType block;
     internal::deserialise(block, is);
     Eigen::Vector3i block_coord = block.coordinates();

@@ -168,7 +168,7 @@ namespace se {
       in.read(reinterpret_cast<char *>(&block.min_scale_), sizeof(int));
       in.read(reinterpret_cast<char *>(&block.current_scale_), sizeof(int));
       in.read(reinterpret_cast<char *>(&block.init_data_), sizeof(typename T::VoxelData));
-      if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initalised.
+      if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initialised.
         // TODO: Assess if the loaded block is of the same size as the one it's saved to.
         for (int scale = VoxelBlockSingle<T>::max_scale; scale >= block.min_scale(); scale--) {
           int size_at_scale = block.size_li >> scale;
