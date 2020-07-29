@@ -93,9 +93,9 @@ void VoxelBlock<T>::initFromBlock(const VoxelBlock<T>& block) {
   this->children_mask_ = block.children_mask();
   this->timestamp_     = block.timestamp();
   this->active_        = block.active();
-  this->coordinates_   = block.coordinates();
-  this->min_scale_     = block.min_scale();
-  this->current_scale_ = block.current_scale();
+  coordinates_   = block.coordinates();
+  min_scale_     = block.min_scale();
+  current_scale_ = block.current_scale();
   std::memcpy(this->children_data_, block.childrenData(), 8 * sizeof(VoxelData));
 }
 
@@ -229,8 +229,9 @@ inline void VoxelBlockSingle<T>::setInitData(const VoxelData& init_data) { init_
 template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingle<T>::data(const Eigen::Vector3i& voxel_coord) const {
-  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) return init_data_;
-  else {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
+    return init_data_;
+  } else {
     Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
     return block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                                  voxel_offset.y() * this->size_li +
@@ -261,8 +262,9 @@ template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingle<T>::data(const Eigen::Vector3i& voxel_coord,
                           const int              scale) const {
-  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) return init_data_;
-  else {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) {
+    return init_data_;
+  } else {
     Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
     voxel_offset = voxel_offset / (1 << scale);
     const int size_at_scale = this->size_li >> scale;
@@ -308,8 +310,11 @@ VoxelBlockSingle<T>::data(const int voxel_idx) const {
     remaining_voxel_idx -= size_at_scale_cu;
     size_at_scale_cu = se::math::cu(this->size_li >> scale);
   }
-  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) return init_data_;
-  else return block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx];
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) {
+    return init_data_;
+  } else {
+    return block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx];
+  }
 }
 
 template <typename T>
