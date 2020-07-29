@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2020 Nils Funk
 # SPDX-License-Identifier: BSD-3-Clause
 
+#!/usr/bin/env python3
 from benchmark import *
 from _run import *
 from systemsettings import *
