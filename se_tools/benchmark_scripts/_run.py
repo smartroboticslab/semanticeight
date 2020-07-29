@@ -27,8 +27,8 @@ class runCommand:
         enable_render_arg = ['--enable-render']
         return ' '.join(self.executable + self.args + enable_render_arg)
 
-class SLAMAlgorithm:
-    """ A general SLAM algorithm evaluator.
+class Pipeline:
+    """ A general Pipeline evaluator.
     """
 
     def __init__(self, bin_path):
@@ -59,10 +59,10 @@ class SLAMAlgorithm:
             #self.failed = True
 
 
-class KinectFusion(SLAMAlgorithm):
+class Supereight(Pipeline):
 
     def __init__(self, bin_path):
-        SLAMAlgorithm.__init__(self, bin_path)
+        Pipeline.__init__(self, bin_path)
 
         self.sensor_type      = None
         self.voxel_impl       = None

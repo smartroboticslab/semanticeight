@@ -18,7 +18,7 @@ num_benchmark_test_cases = len(benchmark_test_cases)
 btc_prog_bar = ProgressBar(100, num_benchmark_test_cases, "benchmark test case", 2)
 btc_prog_bar.start()
 btc_prog_bar.flash()
-algorithm = KinectFusion(BIN_PATH)
+algorithm = Supereight(BIN_PATH)
 for btc_idx, benchmark_test_case in enumerate(benchmark_test_cases):
     btc_prog_bar.update(btc_idx + 1, benchmark_test_case)
     btc_prog_bar.jump_main_to_sub_plot()
