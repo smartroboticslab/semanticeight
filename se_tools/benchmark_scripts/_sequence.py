@@ -53,8 +53,8 @@ class Sequence:
     def __init__(self, sequence_header):
         if valid_sequence(sequence_header):
             self.name              = sequence_header[0]
-            self.file_path         = sequence_header[1]
-            self.ground_truth_file = sequence_header[2] if len(sequence_header) is 3 else None
+            self.file_path         = os.path.expanduser(sequence_header[1])
+            self.ground_truth_file = os.path.expanduser(sequence_header[2]) if len(sequence_header) is 3 else None
             self.config            = Config()
         else:
             warnings.warn("Use of invalid sequence header.")
