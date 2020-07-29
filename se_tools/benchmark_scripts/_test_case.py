@@ -14,7 +14,7 @@ class TestCase:
         self.output_dir       = None
         self.config_yaml_path = None
 
-    def toString(self):
+    def __str__(self):
         return self.sequence_name + " | " + self.sensor_type + " | " + self.voxel_impl + \
                " | map res: " + str(self.map_res) + " | downsampling-factor: " + str(self.downsampling_factor)
 

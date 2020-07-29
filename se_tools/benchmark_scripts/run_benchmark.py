@@ -20,7 +20,7 @@ btc_prog_bar.start()
 btc_prog_bar.flash()
 algorithm = KinectFusion(BIN_PATH)
 for btc_idx, benchmark_test_case in enumerate(benchmark_test_cases):
-    btc_prog_bar.update(btc_idx + 1, benchmark_test_case.toString())
+    btc_prog_bar.update(btc_idx + 1, benchmark_test_case)
     btc_prog_bar.jump_main_to_sub_plot()
     algorithm.run(benchmark_test_case)
     btc_prog_bar.jump_sub_to_main_plot()
