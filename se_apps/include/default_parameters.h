@@ -233,7 +233,7 @@ Eigen::Matrix4f TvtoT(std::vector<float> T_v) {
   return T;
 }
 
-std::string adjustString(std::string s) {
+std::string to_filename(std::string s) {
   std::replace(s.begin(), s.end(), '.', '_');
   std::replace(s.begin(), s.end(), '-', '_');
   std::replace(s.begin(), s.end(), ' ', '_');
@@ -241,7 +241,7 @@ std::string adjustString(std::string s) {
   return s;
 }
 
-std::string autogenFilename(Configuration& config, std::string type) {
+std::string autogen_filename(Configuration& config, std::string type) {
   if (config.sequence_name == "") {
     std::cout << "Please provide a sequence name to autogen " << type << " filename.\n"
                  "Options: \n"
@@ -262,20 +262,20 @@ std::string autogenFilename(Configuration& config, std::string type) {
                                       "_size_"        << config.map_size.x()                <<
                                       "_down_"        << config.sensor_downsampling_factor  <<
                                       "_"             << type;
-  return adjustString(auto_filename_ss.str());
+  return to_filename(auto_filename_ss.str());
 }
 
-void generateLogFile(Configuration& config) {
+void generate_log_file(Configuration& config) {
   stdfs::path log_path = config.log_file;
   if (config.log_file == "" || !stdfs::is_directory(log_path)) {
     return;
   } else {
-    log_path /= autogenFilename(config, "result") + ".txt";
+    log_path /= autogen_filename(config, "result") + ".txt";
     config.log_file = log_path;
   }
 }
 
-void generateRenderFile(Configuration& config) {
+void generate_render_file(Configuration& config) {
   if (config.inable_render) {
     return;
   }
@@ -292,7 +292,7 @@ void generateRenderFile(Configuration& config) {
       return;
     }
   }
-  output_render_path /= autogenFilename(config, "render");
+  output_render_path /= autogen_filename(config, "render");
   config.output_render_file = output_render_path;
 }
 
@@ -666,8 +666,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   }
 
   // Autogenerate filename if only a directory is provided
-  generateLogFile(config);
-  generateRenderFile(config);
+  generate_log_file(config);
+  generate_render_file(config);
 
   return config;
 }
