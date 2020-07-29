@@ -156,7 +156,7 @@ namespace se {
                     if (voxel_data.y == 0) {
                       bool is_valid;
                       const Eigen::Vector3f voxel_sample_coord_f =
-                          getSampleCoord(voxel_coord, stride, map.sample_offset_frac_);
+                          get_sample_coord(voxel_coord, stride, map.sample_offset_frac_);
                       voxel_data.x = se::math::clamp(map.interp(voxel_sample_coord_f,
                           [](const auto &data) { return data.x; }, voxel_scale - 1, is_valid).first, -1.f, 1.f);
                       voxel_data.y = is_valid ? parent_data.y : 0;
@@ -213,7 +213,7 @@ namespace se {
                   const Eigen::Vector3i voxel_coord = parent_coord + Eigen::Vector3i(i, j, k);
                   auto voxel_data = block->data(voxel_coord, voxel_scale);
                   const Eigen::Vector3f voxel_sample_coord_f =
-                      getSampleCoord(voxel_coord, voxel_stride, sample_offset_frac);
+                      get_sample_coord(voxel_coord, voxel_stride, sample_offset_frac);
                   if (voxel_data.y == 0) {
                     bool is_valid;
                     voxel_data.x = se::math::clamp(map.interp(voxel_sample_coord_f,

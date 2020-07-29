@@ -232,7 +232,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                 bool is_valid = true;
 
                 const Eigen::Vector3f voxel_sample_coord_f =
-                    se::getSampleCoord(voxel_coord, voxel_stride, sample_offset_frac_);
+                    se::get_sample_coord(voxel_coord, voxel_stride, sample_offset_frac_);
                 auto occupancy = map_.interp(voxel_sample_coord_f,
                     [](const auto &data) { return data.x/ data.y; },
                     [](const auto &data) { return data.x; },
@@ -306,7 +306,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         for (unsigned int x = 0; x < block_size; x += stride) {
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y, z);
           const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ *
-              se::getSampleCoord(voxel_coord, 1, sample_offset_frac_)).homogeneous()).head(3);
+              se::get_sample_coord(voxel_coord, 1, sample_offset_frac_)).homogeneous()).head(3);
           auto voxel_data = block->data(voxel_coord, scale);
           Eigen::Vector2f pixel_f;
           if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
@@ -363,7 +363,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         for (unsigned int x = 0; x < block_size; x += stride) {
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y, z);
           const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ *
-              se::getSampleCoord(voxel_coord, 1, sample_offset_frac_)).homogeneous()).head(3);
+              se::get_sample_coord(voxel_coord, 1, sample_offset_frac_)).homogeneous()).head(3);
           Eigen::Vector2f pixel_f;
           if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
             continue;

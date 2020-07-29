@@ -314,12 +314,12 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y , z);
           auto voxel_data = block->data(voxel_coord, 0);
           auto voxel_value = (map_->interp(
-              se::getSampleCoord(voxel_coord, 1, sample_offset_frac),
+              se::get_sample_coord(voxel_coord, 1, sample_offset_frac),
               [](const auto& data) { return data.x; }, 0, is_valid)).first;
           if(is_valid) {
             voxel_data.x = voxel_value;
             voxel_data.y = map_->interp(
-                se::getSampleCoord(voxel_coord, 1, sample_offset_frac),
+                se::get_sample_coord(voxel_coord, 1, sample_offset_frac),
                 [](const auto& data) { return data.y; }).first;
           } else {
             voxel_data.y = 0;

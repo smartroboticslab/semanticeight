@@ -43,7 +43,7 @@ namespace se {
 /*! \brief A non-leaf node of the Octree. Each Node has 8 children.
  */
 
-static inline Eigen::Vector3f getSampleCoord(const Eigen::Vector3i& octant_coord,
+static inline Eigen::Vector3f get_sample_coord(const Eigen::Vector3i& octant_coord,
                                              const int              octant_size,
                                              const Eigen::Vector3f& sample_offset_frac) {
   return octant_coord.cast<float>() + sample_offset_frac * octant_size;
