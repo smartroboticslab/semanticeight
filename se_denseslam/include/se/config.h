@@ -139,7 +139,7 @@ struct Configuration {
 
   /**
    * The log file the timing results will be written to.
-   * <br>\em Default: std::cout if Configuration::benchmark is blank (--benchmark) or Configuration::inable_render (--inable-render)
+   * <br>\em Default: std::cout if Configuration::benchmark is blank (--benchmark) or not Configuration::enable_render (--enable-render)
    * <br>\em Default: autogen filename if the Configuration::benchmark argument is a directory (--benchmark=/PATH/TO/DIR)
    */
   std::string log_file;
@@ -229,7 +229,7 @@ struct Configuration {
    * Whether to hide the GUI. Hiding the GUI results in faster operation.
    * <br>\em Default: false
    */
-  bool inable_render;
+  bool enable_render;
 
   /*
    * TODO
@@ -270,7 +270,7 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
                                                  ? "std::cout" : config.log_file) << "\n";
   out << "Benchmark:                       " << (config.benchmark
                                                  ? "true" : "false") << "\n";
-  out << "Inable render:                   " << (config.inable_render
+  out << "Enable render:                   " << (config.enable_render
                                                  ? "true" : "false") << "\n";
   out << "\n";
 

@@ -36,7 +36,7 @@ static constexpr float        default_fps = 0.0f;
 static const std::string      default_ground_truth_file = "";
 static const Eigen::Matrix4f  default_gt_transform = Eigen::Matrix4f::Identity();
 static constexpr float        default_icp_threshold = 1e-5;
-static constexpr bool         default_inable_render = false;
+static constexpr bool         default_enable_render = true;
 static constexpr int          default_integration_rate = 2;
 static constexpr int          default_iteration_count = 3;
 static constexpr int          default_iterations[default_iteration_count] = { 10, 5, 4 };
@@ -79,7 +79,7 @@ static struct option long_options[] = {
   {"far-plane",                  required_argument, 0, 'N'},
   {"log-path",                   required_argument, 0, 'o'},
   {"init-pose",                  required_argument, 0, 'p'},
-  {"inable-render",              no_argument,       0, 'q'},
+  {"disable-render",             no_argument,       0, 'q'},
   {"enable-render",              no_argument,       0, 'Q'},
   {"integration-rate",           required_argument, 0, 'r'},
   {"map-dim",                    required_argument, 0, 's'},
@@ -114,8 +114,8 @@ inline void print_arguments() {
   std::cerr << "-n  (--near-plane)                         : default is " << default_near_plane << "\n";
   std::cerr << "-N  (--far-plane)                          : default is " << default_far_plane << "\n";
   std::cerr << "-p  (--init-pose)                          : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
-  std::cerr << "-q  (--inable-render)                      : default is to render images\n";
-  std::cerr << "-Q  (--enable-render)                      : use to override --inable-render in YAML file\n";
+  std::cerr << "-q  (--disable-render)                     : default is to render images\n";
+  std::cerr << "-Q  (--enable-render)                      : use to override --disable-render in YAML file\n";
   std::cerr << "-r  (--integration-rate)                   : default is " << default_integration_rate << "\n";
   std::cerr << "-s  (--map-dim)                            : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
   std::cerr << "-S  (--sequence-name)                      : name of sequence\n";
@@ -276,7 +276,7 @@ void generate_log_file(Configuration& config) {
 }
 
 void generate_render_file(Configuration& config) {
-  if (config.inable_render) {
+  if (!config.enable_render) {
     return;
   }
   stdfs::path output_render_path = config.output_render_file;
@@ -351,8 +351,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.log_file = (has_yaml_general_config && yaml_general_config["log_path"])
       ? yaml_general_config["log_path"].as<std::string>() : default_log_path;
   // Inable render
-  config.inable_render = (has_yaml_general_config && yaml_general_config["inable_render"])
-      ? yaml_general_config["inable_render"].as<bool>() : default_inable_render;
+  config.enable_render = (has_yaml_general_config && yaml_general_config["disable_render"])
+      ? !yaml_general_config["disable_render"].as<bool>() : default_enable_render;
   // Render path
   config.output_render_file = (has_yaml_general_config && yaml_general_config["output_render_path"])
       ? yaml_general_config["output_render_path"].as<std::string>() : default_output_render_path;
@@ -580,12 +580,12 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.t_MW_factor = atof3(optarg);
         break;
 
-      case 'q': // inable-render
-        config.inable_render = true;
+      case 'q': // disable-render
+        config.enable_render = false;
         break;
 
       case 'Q': // enable-render
-        config.inable_render = false;
+        config.enable_render = true;
         break;
 
       case 'r': // integration-rate

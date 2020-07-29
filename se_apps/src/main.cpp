@@ -174,15 +174,15 @@ int main(int argc, char** argv) {
   config.render_volume_fullsize = false;
 
 #if !defined(SE_GLUT) && !defined(__QT__)
-  // Force inable_render if compiled without GUI support and not in benchmark mode
+  // Force disable render if compiled without GUI support and not in benchmark mode
   if (!config.benchmark) {
-    config.inable_render = true;
+    config.enable_render = false;
   }
 #endif
   // The following runs the process loop for processing all the frames, if Qt
-  // is specified use that, else use GLUT. We can opt to inable the gui and the rendering which
+  // is specified use that, else use GLUT. We can opt to disable the gui and the rendering which
   // would be faster.
-  if (config.benchmark || config.inable_render) {
+  if (config.benchmark || !config.enable_render) {
     if ((reader == nullptr) || (reader->cameraActive == false)) {
       std::cerr << "No valid input file specified\n";
       exit(1);
@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
                       << "\traycasting\trendering\tcomputation\ttotal    \tRAM usage (MB)"
                       << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
 
-    while (processAll(reader, true, !config.inable_render, &config, false) == 0) {}
+    while (processAll(reader, true, config.enable_render, &config, false) == 0) {}
   } else {
 #ifdef __QT__
     qtLinkKinectQt(argc,argv, &pipeline, &reader, &config,
@@ -370,7 +370,7 @@ int processAll(DepthReader*   reader,
   const Eigen::Vector3f t_WC = pipeline->t_WC();
   storeStats(frame, timings, t_WC, tracked, integrated);
 
-  if (config->benchmark || config->inable_render) {
+  if (config->benchmark || !config->enable_render) {
     if (config->benchmark) {
       if (frame % 10 == 0) {
         progress_bar->update(frame);

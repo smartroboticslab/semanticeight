@@ -1,5 +1,5 @@
 general:
-  inable_render:              true
+  disable_render:             true
 
   # Rates
   integration_rate:           2
