@@ -223,3 +223,4036 @@ TEST(MeshingTest, FinerScaleNeighbour) {
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
   writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
 }
+
+TEST(MeshingTest, Wall) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  std::vector<Eigen::Vector3i> block_coords_1;
+  std::vector<Eigen::Vector3i> block_coords_2;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      allocation_list[list_idx] = octree.hash(8, y, z);
+      block_coords_1.push_back(Eigen::Vector3i(8, y, z));
+      list_idx++;
+      allocation_list[list_idx] = octree.hash(16, y, z);
+      block_coords_2.push_back(Eigen::Vector3i(16, y, z));
+      list_idx++;
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+  int   block_scale_1  = 0;
+  int   block_stride_1 = 1 << block_scale_1;
+  float block_value_1  = 0.5f;
+
+  int   block_scale_2  = 0;
+  int   block_stride_2 = 1 << block_scale_1;
+  float block_value_2  = -0.5f;
+
+  for (auto block_coord : block_coords_1) {
+    VoxelBlockType* block = octree.fetch(block_coord.x(), block_coord.y(), block_coord.z());
+    block->current_scale(block_scale_1);
+    block->min_scale(block_scale_1);
+    for (int x = 0; x < VoxelBlockType::size_li; x += block_stride_1) {
+      for (int y = 0; y < VoxelBlockType::size_li; y += block_stride_1) {
+        for (int z = 0; z < VoxelBlockType::size_li; z += block_stride_1) {
+          Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x, y, z);
+          block->setData(voxel_coord, block_scale_1, {block_value_1, 1.f});
+        }
+      }
+    }
+  }
+
+  for (auto block_coord : block_coords_2) {
+    VoxelBlockType* block = octree.fetch(block_coord.x(), block_coord.y(), block_coord.z());
+    block->current_scale(block_scale_2);
+    block->min_scale(block_scale_2);
+    for (int x = 0; x < VoxelBlockType::size_li; x += block_stride_2) {
+      for (int y = 0; y < VoxelBlockType::size_li; y += block_stride_2) {
+        for (int z = 0; z < VoxelBlockType::size_li; z += block_stride_2) {
+          Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x, y, z);
+          block->setData(voxel_coord, block_scale_2, {block_value_2, 1.f});
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall1-unittest.vtk";
+  std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
+
+  std::vector<se::Triangle> mesh;
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-y-scale-0-1-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-y-scale-0-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-y-scale-0-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-y-scale-1-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-y-scale-1-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-y-scale-2-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-z-scale-0-1-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-z-scale-0-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-z-scale-0-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-z-scale-1-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-z-scale-1-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-fine-to-coarse-along-z-scale-2-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-y-scale-1-0-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-y-scale-2-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-y-scale-3-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-y-scale-2-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-y-scale-3-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-y-scale-3-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-z-scale-1-0-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-z-scale-2-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-z-scale-3-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-z-scale-2-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-z-scale-3-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+        if (z >= 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (x >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-x-axis-coarse-to-fine-along-z-scale-3-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-x-scale-0-1-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-x-scale-0-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-x-scale-0-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-x-scale-1-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-x-scale-1-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-x-scale-2-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-z-scale-0-1-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-z-scale-0-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-z-scale-0-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-z-scale-1-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-z-scale-1-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (z < 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-fine-to-coarse-along-z-scale-2-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-x-scale-1-0-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-x-scale-2-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-x-scale-3-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-x-scale-2-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-x-scale-3-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-x-scale-3-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-z-scale-1-0-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-z-scale-2-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-z-scale-3-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-z-scale-2-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-z-scale-3-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (y >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-y-axis-coarse-to-fine-along-z-scale-3-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-x-scale-0-1-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-x-scale-0-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-x-scale-0-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-x-scale-1-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-x-scale-1-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x < 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-x-scale-2-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-y-scale-0-1-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-y-scale-0-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-y-scale-0-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-y-scale-1-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-y-scale-1-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y < 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z < 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-fine-to-coarse-along-y-scale-2-3-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-x-scale-1-0-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-x-scale-2-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-x-scale-3-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-x-scale-2-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-x-scale-3-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (x >= 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-x-scale-3-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
+
+TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
+  typedef se::Octree<TestVoxelT> OctreeF;
+  OctreeF octree;
+  octree.init(32, 32);
+  se::key_t allocation_list[32];
+  int list_idx = 0;
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        allocation_list[list_idx] = octree.hash(x, y, z);
+        list_idx++;
+      }
+    }
+  }
+  octree.allocate(allocation_list, 32);
+
+
+  int   block_scale_0     = 0;
+  int   block_stride_0    = 1 << block_scale_0;
+  float block_value_0_out = 0.5f;
+  float block_value_0_in  = -0.5f;
+
+  int   block_scale_1     = 1;
+  int   block_stride_1    = 1 << block_scale_0;
+  float block_value_1_out = 1.f;
+  float block_value_1_in  = -1.f;
+
+  int   block_scale_2     = 2;
+  int   block_stride_2    = 1 << block_scale_0;
+  float block_value_2_out = 2.f;
+  float block_value_2_in  = -2.f;
+
+  int   block_scale_3     = 3;
+  int   block_stride_3    = 1 << block_scale_0;
+  float block_value_3_out = 4.f;
+  float block_value_3_in  = -4.f;
+
+  auto inside = [](const TestVoxelT::VoxelData& data) {
+    return data.x < 0.f;
+  };
+
+  auto select_value = [](const TestVoxelT::VoxelData& data) {
+    return data.x;
+  };
+
+  Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::string filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-y-scale-1-0-unittest.vtk";
+  std::vector<se::Triangle> mesh;
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-y-scale-2-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 0
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_0);
+          block->min_scale(block_scale_0);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_0, {block_value_0_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-y-scale-3-0-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-y-scale-2-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 1
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_1);
+          block->min_scale(block_scale_1);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_1, {block_value_1_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-y-scale-3-1-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+
+  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+        if (y >= 16) { // Scale 2
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_2);
+          block->min_scale(block_scale_2);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_2, {block_value_2_out, 1.f});
+                }
+              }
+            }
+          }
+        } else {      // Scale 3
+          VoxelBlockType *block = octree.fetch(x, y, z);
+          block->current_scale(block_scale_3);
+          block->min_scale(block_scale_3);
+          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+                if (z >= 16) { // Inside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
+                } else {      // Outside
+                  Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
+                  block->setData(voxel_coord, block_scale_3, {block_value_3_out, 1.f});
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  filename = "../../out/multires-mesh-wall-crosses-z-axis-coarse-to-fine-along-y-scale-3-2-unittest.vtk";
+  mesh.clear();
+  se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
+  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(T_MW));
+}
