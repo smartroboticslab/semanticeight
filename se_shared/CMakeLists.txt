@@ -38,6 +38,11 @@ target_link_libraries(${PROJECT_NAME}
     SRL::Projection
     yaml-cpp
 )
+# Use floats in srl_projection
+target_compile_definitions(${PROJECT_NAME}
+  PUBLIC
+	SRL_FLOAT_T=float
+)
 
 ##############################################
 # Setup installation

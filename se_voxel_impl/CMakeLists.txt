@@ -64,10 +64,11 @@ foreach(voxel_impl ${SUPEREIGHT_VOXEL_IMPLS})
     target_compile_options(${lib_name} PUBLIC ${compile_flags})
     target_link_libraries(${lib_name} ${libraries})
 
-    # Define the sensor implementation macro.
+	# Define the sensor implementation macro and use floats in srl_projection.
     target_compile_definitions(${lib_name}
       PUBLIC
         SE_SENSOR_IMPLEMENTATION=${sensor_impl}
+		SRL_FLOAT_T=float
     )
 
     # Install the library and headers.

@@ -15,6 +15,7 @@ find_package(GTest REQUIRED)
 find_package(SEShared REQUIRED)
 
 add_definitions(-DSE_SENSOR_IMPLEMENTATION=PinholeCamera)
+add_definitions(-DSRL_FLOAT_T=float)
 
 enable_testing()
 

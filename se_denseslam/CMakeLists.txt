@@ -85,6 +85,7 @@ foreach(voxel_impl ${SUPEREIGHT_VOXEL_IMPLS})
       PUBLIC
         SE_VOXEL_IMPLEMENTATION=${voxel_impl}
         SE_SENSOR_IMPLEMENTATION=${sensor_impl}
+		SRL_FLOAT_T=float
     )
     if(DEFINED OCTOMAP_INCLUDE_DIRS)
       target_include_directories(${lib_name} PUBLIC ${OCTOMAP_INCLUDE_DIRS})

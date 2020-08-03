@@ -25,6 +25,7 @@ include_directories(
 )
 
 add_definitions(-DSE_SENSOR_IMPLEMENTATION=PinholeCamera)
+add_definitions(-DSRL_FLOAT_T=float)
 
 # Build the tests.
 add_subdirectory(preprocessing)

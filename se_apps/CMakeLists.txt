@@ -64,6 +64,11 @@ function(add_version lib_name libraries)
       target_link_libraries(${lib_name}-main PUBLIC GL)
     endif(NOT APPLE)
   endif(GLUT_FOUND)
+  # Use floats in srl_projection
+  target_compile_definitions(${lib_name}-main
+    PUBLIC
+  	SRL_FLOAT_T=float
+  )
 
   #  ------ QT --------
   if (Qt5OpenGL_FOUND)
@@ -126,7 +131,11 @@ function(add_version lib_name libraries)
         ${OPENGL_LIBRARIES}
         GL)
     endif(APPLE)
-
+    # Use floats in srl_projection
+    target_compile_definitions(${lib_name}-qt
+      PUBLIC
+    	SRL_FLOAT_T=float
+    )
   endif(Qt5OpenGL_FOUND)
 
 endfunction()
