@@ -115,12 +115,42 @@ public:
   inline int blockDepth() const { return block_depth_; }
   inline Node<T>* root() const { return root_; }
 
+  /*! \brief Verify if the each coordinate x, y and z is in the interval [0, size - 1]
+   *
+   * \param[in] x The voxel x coordinate
+   * \param[in] y The voxel y coordinate
+   * \param[in] z The voxel z coordinate
+   * \return    True if each coordinate x, y and z is in the interval [0, size - 1]; False otherwise.
+   */
+  inline bool contains(const int x, const int y, const int z) const;
+
+  /*! \brief Verify if each voxel coordinate is in the interval [0, size - 1]
+   *
+   * \param[in] voxel_coord The coordinates of the voxel.
+   * \return    True if each voxel coordinate is in the interval [0, size - 1]; False otherwise.
+   */
+  inline bool contains(Eigen::Vector3i& voxel_coord) const;
+
+  /*! \brief Verify if each voxel coordinate is in the interval [0, size)
+   *
+   * \param[in] voxel_coord_f The coordinates of the voxel.
+   * \return    True if each voxel coordinate is in the interval [0, size); False otherwise.
+   */
+  inline bool contains(Eigen::Vector3f& voxel_coord_f) const;
+
+  /*! \brief Verify if each point coordinate is in the interval [0, dim)
+   *
+   * \param[in] point_M The coordinates of the point.
+   * \return    True if each point coordinate is in the interval [0, dim); False otherwise.
+   */
+  inline bool containsPoint(Eigen::Vector3f& point_M) const;
+
   /*! \brief Set the data at the supplied voxel coordinates.
    * If the voxel hasn't been allocated, no action is performed.
    *
-   * \param[in] x    The voxel x coordinate in the interval [0, size).
-   * \param[in] y    The voxel y coordinate in the interval [0, size).
-   * \param[in] z    The voxel z coordinate in the interval [0, size).
+   * \param[in] x    The voxel x coordinate in the interval [0, size - 1].
+   * \param[in] y    The voxel y coordinate in the interval [0, size - 1].
+   * \param[in] z    The voxel z coordinate in the interval [0, size - 1].
    * \param[in] data The data to store in the voxel.
    */
   void set(const int x, const int y, const int z, const VoxelData& data);
@@ -129,7 +159,7 @@ public:
    * If the voxel hasn't been allocated, no action is performed.
    *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
-   *                        be in the interval [0, size).
+   *                        be in the interval [0, size - 1].
    * \param[in] data The data to store in the voxel.
    */
   void set(const Eigen::Vector3i& voxel_coord, const VoxelData& data);
@@ -145,9 +175,9 @@ public:
 
   /*! \brief Return the data at the supplied voxel coordinates.
    *
-   * \param[in] x The voxel x coordinate in the interval [0, size).
-   * \param[in] y The voxel y coordinate in the interval [0, size).
-   * \param[in] z The voxel z coordinate in the interval [0, size).
+   * \param[in] x The voxel x coordinate in the interval [0, size - 1].
+   * \param[in] y The voxel y coordinate in the interval [0, size - 1].
+   * \param[in] z The voxel z coordinate in the interval [0, size - 1].
    * \return The data contained in the voxel. If the octree hasn't been
    *         allocated up to the voxel level at this region return the value
    *         stored at the lowest allocated octant.
@@ -157,7 +187,7 @@ public:
   /*! \brief Return the data at the supplied voxel coordinates.
    *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
-   *                        be in the interval [0, size).
+   *                        be in the interval [0, size - 1].
    * \return The data contained in the voxel. If the octree hasn't been
    *         allocated up to the voxel level at this region return the value
    *         stored at the lowest allocated octant.
@@ -176,9 +206,9 @@ public:
 
   /*! \brief Return the data at the supplied voxel coordinates and scale.
    *
-   * \param[in] x     The voxel x coordinate in the interval [0, size).
-   * \param[in] y     The voxel y coordinate in the interval [0, size).
-   * \param[in] z     The voxel z coordinate in the interval [0, size).
+   * \param[in] x     The voxel x coordinate in the interval [0, size - 1].
+   * \param[in] y     The voxel y coordinate in the interval [0, size - 1].
+   * \param[in] z     The voxel z coordinate in the interval [0, size - 1].
    * \param[in] scale The octree scale to get the data at.
    * \return The data contained in the voxel. If the octree hasn't been
    *         allocated up to the supplied scale, return the data at the lowest
@@ -189,7 +219,7 @@ public:
   /*! \brief Return the data at the supplied voxel coordinates and scale.
    *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
-   *                        be in the interval [0, size).
+   *                        be in the interval [0, size - 1].
    * \param[in] scale The octree scale to get the data at.
    * \return The data contained in the voxel. If the octree hasn't been
    *         allocated up to the supplied scale, return the data at the lowest
@@ -227,7 +257,8 @@ public:
   /*! \brief Convert 3D point coordinates in metres to the coordinates of the
    * corresponding voxel.
    *
-   * \param point_M The coordinates of the 3D point in metres.
+   * \param point_M The coordinates of the 3D point in metres. Each component must
+   *                be in the interval [0, dim).
    * \return The corresponding int voxel coordinates.
    */
   inline Eigen::Vector3i pointToVoxel(const Eigen::Vector3f& point_M) const;
@@ -235,7 +266,8 @@ public:
   /*! \brief Convert 3D point coordinates in metres to the coordinates of the
    * corresponding voxel.
    *
-   * \param point_M The coordinates of the 3D point in metres.
+   * \param point_M The coordinates of the 3D point in metres. Each component must
+   *                be in the interval [0, dim).
    * \return The corresponding float voxel coordinates.
    */
   inline Eigen::Vector3f pointToVoxelF(const Eigen::Vector3f& point_M) const;
@@ -250,9 +282,9 @@ public:
    * ask for the neighbors of voxels at the edge of the map, then the non-safe
    * version should be safe to use and will result in better performance.
    *
-   * \param x x coordinate in interval [0, size]
-   * \param y y coordinate in interval [0, size]
-   * \param z z coordinate in interval [0, size]
+   * \param x x coordinate in interval [0, size - 1]
+   * \param y y coordinate in interval [0, size - 1]
+   * \param z z coordinate in interval [0, size - 1]
    * \return An std::array with the values of the 6 neighboring voxels. The
    * voxels are returned in the order: -z -y -x +x +y +z. Neighboring voxels
    * that are not allocated have the initial value. Neighboring voxels that are
@@ -268,9 +300,9 @@ public:
                                               const int z) const;
 
   /*! \brief Fetch the voxel block which contains voxel (x,y,z)
-   * \param x x coordinate in interval [0, size]
-   * \param y y coordinate in interval [0, size]
-   * \param z z coordinate in interval [0, size]
+   * \param x x coordinate in interval [0, size - 1]
+   * \param y y coordinate in interval [0, size - 1]
+   * \param z z coordinate in interval [0, size - 1]
    */
   VoxelBlockType* fetch(const int x, const int y, const int z) const;
 
@@ -281,9 +313,9 @@ public:
   VoxelBlockType* fetch(const Eigen::Vector3i& voxel_coord) const;
 
   /*! \brief Fetch the node (x,y,z) at depth
-   * \param x x coordinate in interval [0, size]
-   * \param y y coordinate in interval [0, size]
-   * \param z z coordinate in interval [0, size]
+   * \param x x coordinate in interval [0, size - 1]
+   * \param y y coordinate in interval [0, size - 1]
+   * \param z z coordinate in interval [0, size - 1]
    * \param depth depth to be searched
    */
   Node<T>* fetch_node(const int x, const int y, const int z,
@@ -298,9 +330,9 @@ public:
                       const int depth) const;
 
   /*! \brief Insert the octant at (x,y,z). Not thread safe.
-   * \param x x coordinate in interval [0, size]
-   * \param y y coordinate in interval [0, size]
-   * \param z z coordinate in interval [0, size]
+   * \param x x coordinate in interval [0, size - 1]
+   * \param y y coordinate in interval [0, size - 1]
+   * \param z z coordinate in interval [0, size - 1]
    * \param depth target insertion depth
    * \param init_octant optional inital state of inserted node / voxel block
    */
@@ -311,9 +343,9 @@ public:
                   Node<T>*  init_octant = nullptr);
 
   /*! \brief Insert the block (x,y,z) at maximum resolution. Not thread safe.
-   * \param x x coordinate in interval [0, size]
-   * \param y y coordinate in interval [0, size]
-   * \param z z coordinate in interval [0, size]
+   * \param x x coordinate in interval [0, size - 1]
+   * \param y y coordinate in interval [0, size - 1]
+   * \param z z coordinate in interval [0, size - 1]
    * \param init_block optional inital state of inserted voxel block
    */
   VoxelBlockType* insert(const int        x,
@@ -518,9 +550,9 @@ public:
 
   /*! \brief Computes the morton code of the block containing voxel
    * at coordinates (x,y,z)
-   * \param x x coordinate in interval [0, size]
-   * \param y y coordinate in interval [0, size]
-   * \param z z coordinate in interval [0, size]
+   * \param x x coordinate in interval [0, size - 1]
+   * \param y y coordinate in interval [0, size - 1]
+   * \param z z coordinate in interval [0, size - 1]
    */
   key_t hash(const int x, const int y, const int z) {
     const int scale = voxel_depth_ - math::log2_const(block_size);
