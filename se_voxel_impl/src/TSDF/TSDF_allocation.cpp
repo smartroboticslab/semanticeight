@@ -75,10 +75,10 @@ size_t TSDF::buildAllocationList(
   for (int y = 0; y < depth_image_res.y(); ++y) {
     for (int x = 0; x < depth_image_res.x(); ++x) {
       const Eigen::Vector2i pixel(x, y);
-      if (depth_image(pixel.x(), pixel.y()) == 0.f)
+      const float depth_value_orig = depth_image(pixel.x(), pixel.y());
+      if (depth_value_orig < sensor.near_plane)
         continue;
-
-      const float depth_value = depth_image(pixel.x(), pixel.y());
+      const float depth_value = (depth_value_orig <= sensor.far_plane) ? depth_value_orig : sensor.far_plane;
 
       Eigen::Vector3f ray_dir_C;
       const Eigen::Vector2f pixel_f = pixel.cast<float>();

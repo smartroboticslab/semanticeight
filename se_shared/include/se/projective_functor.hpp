@@ -106,6 +106,11 @@ namespace functor {
               const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim * (voxel_coord.cast<float>() +
                   sample_offset_frac_)).homogeneous()).head(3);
 
+              // Don't update the point if the sample point is behind the far plane
+              if (point_C.norm() > sensor_.farDist(point_C)) {
+                continue;
+              }
+
               Eigen::Vector2f pixel_f;
               if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
                 continue;

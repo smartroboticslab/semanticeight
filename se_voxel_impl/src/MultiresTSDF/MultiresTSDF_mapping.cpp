@@ -226,6 +226,11 @@ namespace se {
 
                   const Eigen::Vector3f point_C = (T_CM * (voxel_dim * voxel_sample_coord_f).homogeneous()).head(3);
 
+                  // Don't update the point if the sample point is behind the far plane
+                  if (point_C.norm() > sensor.farDist(point_C)) {
+                    continue;
+                  }
+
                   Eigen::Vector2f pixel_f;
                   if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
                     block->setData(voxel_coord, voxel_scale, voxel_data);
@@ -318,6 +323,11 @@ namespace se {
               const Eigen::Vector3f voxel_sample_coord_f =
                   get_sample_coord(voxel_coord, stride, sample_offset_frac);
               const Eigen::Vector3f point_C = (T_CM * (voxel_dim * voxel_sample_coord_f).homogeneous()).head(3);
+
+              // Don't update the point if the sample point is behind the far plane
+              if (point_C.norm() > sensor.farDist(point_C)) {
+                continue;
+              }
 
               Eigen::Vector2f pixel_f;
               if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
