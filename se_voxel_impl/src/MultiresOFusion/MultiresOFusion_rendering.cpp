@@ -30,6 +30,7 @@
 
 #include "se/voxel_implementations/MultiresOFusion/MultiresOFusion.hpp"
 
+#include "se/common.hpp"
 #include <se/utils/math_utils.h>
 #include <type_traits>
 
@@ -49,8 +50,11 @@
  * \param is_valid  flag if the map intersection is valid
  * \return see above
  */
-float computeMapIntersection( const Eigen::Vector3f& ray_pos_M, const Eigen::Vector3f& ray_dir_M,
-                              const int map_dim, float& t_far, bool& is_valid) {
+float computeMapIntersection(const Eigen::Vector3f& ray_pos_M,
+                             const Eigen::Vector3f& ray_dir_M,
+                             const int              map_dim,
+                             float&                 t_far,
+                             bool&                  is_valid) {
   /*
   Fast Ray-Box Intersection
   by Andrew Woo
@@ -147,8 +151,8 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>& map,
                 const Eigen::Vector3f& ray_dir_M,
                 float&                 t,
                 float&                 t_far,
-                const float&           voxel_dim,
-                int                    max_scale,
+                const float            voxel_dim,
+                const int              max_scale,
                 bool&                  is_valid) {
   int scale = max_scale;  // Initialize scale
   // Additional distance travelled in [voxel]
@@ -268,15 +272,12 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>& map,
  * \param p_far         Far plane distance in [m]
  * \return              Surface intersection point in [m] and scale
  */
-Eigen::Vector4f MultiresOFusion::raycast(const se::Octree<MultiresOFusion::VoxelType>& map,
-                                         const Eigen::Vector3f&                        ray_origin_M,
-                                         const Eigen::Vector3f&                        ray_dir_M,
+Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
+                                         const Eigen::Vector3f& ray_origin_M,
+                                         const Eigen::Vector3f& ray_dir_M,
                                          float,
-                                         float                                         t_far,
-                                         float,
-                                         float) {
-  const int map_size = map.size();              // map_size    := [voxel]
-  const float voxel_dim = map.dim() / map_size; // voxel_dim     := [m / voxel];
+                                         float                  t_far) {
+  const float voxel_dim = map.voxelDim(); // voxel_dim   := [m / voxel];
   // inv_voxel_dim := [m] to [voxel]; voxel_dim := [voxel] to [m]
   //float t_near = near_plane;                       // max travel distance in [m]
 
@@ -299,42 +300,73 @@ Eigen::Vector4f MultiresOFusion::raycast(const se::Octree<MultiresOFusion::Voxel
     // Ray passes only through free space or intersects with the map before t_near or after t_far.
     return Eigen::Vector4f::Zero();
   }
-  auto select_node_occupancy = [](const auto& data){ return (data.y > 0.f) ? data.x / data.y : MultiresOFusion::VoxelType::initData().x; };
+  auto select_node_occupancy = [](const auto& data){ return (data.y > 0.f) ? data.x / data.y : VoxelType::initData().x; };
   auto select_voxel_occupancy = [](const auto& data){ return data.x; };
 
+  Eigen::Vector3f ray_pos_M = Eigen::Vector3f::Zero();
+
   // first walk with largesteps until we found a hit
-  float step_dim = voxel_dim / 2;
-  Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
+  float step_size = voxel_dim / 2;
+  float value_t  = 0;
+  float value_tt = 0;
+  Eigen::Vector3f point_M_t = Eigen::Vector3f::Zero();
+  Eigen::Vector3f point_M_tt = Eigen::Vector3f::Zero();
+  int scale_tt = 0;
 
-  const int scale = 0;
-  auto interp_res = map.interpAtPoint(ray_pos_M, select_node_occupancy, select_voxel_occupancy, scale);
-  float f_t = interp_res.first;
-  float f_tt = 0;
+  if (!find_valid_point(map, select_node_occupancy, select_voxel_occupancy,
+                        ray_origin_M, ray_dir_M, step_size, t_far, t, value_t, point_M_t)) {
+    return Eigen::Vector4f::Zero();
+  }
+  t += step_size;
 
-  if (f_t <= MultiresOFusion::surface_boundary) { // ups, if we were already in it, then don't render anything here
-    for (; t < t_far; t += step_dim) {
-      ray_pos_M =  ray_origin_M + ray_dir_M * t;
-
-      auto data = map.getFineAtPoint(ray_pos_M, scale);
-
-      if (data.x > -0.2f && data.frame > 0.f) {
-        interp_res = map.interpAtPoint(ray_pos_M, select_node_occupancy, select_voxel_occupancy, scale);
-        f_tt = interp_res.first;
+  // if we are not already in it
+  if (value_t <= MultiresOFusion::surface_boundary) {
+    for (; t < t_far; t += step_size) {
+      ray_pos_M = ray_origin_M + ray_dir_M * t;
+      VoxelData data = map.getFineAtPoint(ray_pos_M);
+      if (data.y == 0) {
+        t += step_size;
+        if (!find_valid_point(map, select_node_occupancy, select_voxel_occupancy,
+                              ray_origin_M, ray_dir_M, step_size, t_far, t, value_t, point_M_t)) {
+          return Eigen::Vector4f::Zero();
+        }
+        if (value_t > MultiresOFusion::surface_boundary) {
+          break;
+        }
+        continue;
       }
-      if (f_tt > MultiresOFusion::surface_boundary) {                // got it, jump out of inner loop
+      value_tt = data.x;
+      point_M_tt = ray_pos_M;
+      if (value_tt > -0.2f) {
+        bool is_valid = false;
+        auto interp_res = map.interpAtPoint(ray_pos_M, select_node_occupancy, select_voxel_occupancy, 0, is_valid);
+        value_tt = interp_res.first;
+        scale_tt = interp_res.second;
+        if (!is_valid) {
+          t += step_size;
+          if (!find_valid_point(map, select_node_occupancy, select_voxel_occupancy,
+                                ray_origin_M, ray_dir_M, step_size, t_far, t, value_t, point_M_t)) {
+            return Eigen::Vector4f::Zero();
+          }
+          if (value_t > MultiresOFusion::surface_boundary) {
+            break;
+          }
+          continue;
+        }
+      }
+      if (value_tt > MultiresOFusion::surface_boundary) {                // got it, jump out of inner loop
         break;
       }
-      f_t = f_tt;
+      value_t = value_tt;
+      point_M_t = point_M_tt;
     }
-    if (f_tt > MultiresOFusion::surface_boundary) {
-      // got it, calculate accurate intersection
-      t = t - step_dim * (f_tt - MultiresOFusion::surface_boundary) / (f_tt - f_t);
-      Eigen::Vector4f res = (ray_origin_M + ray_dir_M * t).homogeneous();
-      res.w() = interp_res.second;
-      return res;
+    if (value_tt > MultiresOFusion::surface_boundary && value_t < MultiresOFusion::surface_boundary) {
+      // We overshot. Need to move backwards for zero crossing.
+      t = t - (point_M_tt - point_M_t).norm() * (value_tt - MultiresOFusion::surface_boundary) / (value_tt - value_t);
+      Eigen::Vector4f surface_point_M = (ray_origin_M + ray_dir_M * t).homogeneous();
+      surface_point_M.w() = scale_tt;
+      return surface_point_M;
     }
   }
-
   return Eigen::Vector4f::Zero();
 }
-

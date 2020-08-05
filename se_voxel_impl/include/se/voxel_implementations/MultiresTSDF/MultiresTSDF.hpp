@@ -128,9 +128,7 @@ struct MultiresTSDF {
                                  const Eigen::Vector3f& ray_origin_M,
                                  const Eigen::Vector3f& ray_dir_M,
                                  const float            t_near,
-                                 const float            t_far,
-                                 const float            step,
-                                 const float            large_step);
+                                 const float            t_far);
 };
 
 #endif

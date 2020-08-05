@@ -31,6 +31,7 @@
 
 #include "se/voxel_implementations/TSDF/TSDF.hpp"
 
+#include "se/common.hpp"
 #include "se/utils/math_utils.h"
 #include "se/voxel_block_ray_iterator.hpp"
 #include <type_traits>
@@ -41,12 +42,9 @@ Eigen::Vector4f TSDF::raycast(const OctreeType&      map,
                               const Eigen::Vector3f& ray_origin_M,
                               const Eigen::Vector3f& ray_dir_M,
                               const float            t_near,
-                              const float            t_far,
-                              const float            step,
-                              const float            large_step) {
+                              const float            t_far) {
 
-  se::VoxelBlockRayIterator<VoxelType> ray(map, ray_origin_M, ray_dir_M,
-      t_near, t_far);
+  se::VoxelBlockRayIterator<VoxelType> ray(map, ray_origin_M, ray_dir_M, t_near, t_far);
   ray.next();
   const float t_min = ray.tmin(); /* Get distance to the first intersected block */
   if (t_min <= 0.f) {
@@ -56,35 +54,67 @@ Eigen::Vector4f TSDF::raycast(const OctreeType&      map,
 
   auto select_node_tsdf = [](const auto&){ return VoxelType::initData().x; };
   auto select_voxel_tsdf = [](const auto& data){ return data.x; };
-  // first walk with largesteps until we found a hit
+  // first walk with large steps until we found a hit
   float t = t_min;
-  float step_size = large_step;
-  Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
-  float f_t = map.interpAtPoint(ray_pos_M, select_node_tsdf, select_voxel_tsdf).first;
-  float f_tt = 0;
-  if (f_t > 0) { // ups, if we were already in it, then don't render anything here
+  float step_size = TSDF::mu / 2;
+  Eigen::Vector3f ray_pos_M = Eigen::Vector3f::Zero();
+
+  float value_t  = 0;
+  float value_tt = 0;
+  Eigen::Vector3f point_M_t = Eigen::Vector3f::Zero();
+  Eigen::Vector3f point_M_tt = Eigen::Vector3f::Zero();
+  
+  if (!find_valid_point(map, select_node_tsdf, select_voxel_tsdf,
+                        ray_origin_M, ray_dir_M, step_size, t_max, t, value_t, point_M_t)) {
+    return Eigen::Vector4f::Zero();
+  }
+  step_size = se::math::clamp(value_t * TSDF::mu, TSDF::mu / 10, TSDF::mu / 2);
+  t += step_size;
+
+  if (value_t > 0) { // ups, if we were already in it, then don't render anything here
     for (; t < t_max; t += step_size) {
+      ray_pos_M = ray_origin_M + ray_dir_M * t;
       VoxelData data = map.getFineAtPoint(ray_pos_M);
       if (data.y == 0) {
-        step_size = large_step;
-        ray_pos_M += step_size * ray_dir_M;
+        t += step_size;
+        if (!find_valid_point(map, select_node_tsdf, select_voxel_tsdf,
+                              ray_origin_M, ray_dir_M, step_size, t_max, t, value_t, point_M_t)) {
+          return Eigen::Vector4f::Zero();
+        }
+        if (value_t < 0) {
+          break;
+        }
         continue;
       }
-      f_tt = data.x;
-      if (f_tt <= 0.1 && f_tt >= -0.5f) {
-        f_tt = map.interpAtPoint(ray_pos_M, select_node_tsdf, select_voxel_tsdf).first;
+      value_tt = data.x;
+      point_M_tt = ray_pos_M;
+      if (value_tt <= 0.1) {
+        bool is_valid = false;
+        value_tt = map.interpAtPoint(ray_pos_M, select_node_tsdf, select_voxel_tsdf, 0, is_valid).first;
+        if (!is_valid) {
+          t += step_size;
+          if (!find_valid_point(map, select_node_tsdf, select_voxel_tsdf,
+                                ray_origin_M, ray_dir_M, step_size, t_max, t, value_t, point_M_t)) {
+            return Eigen::Vector4f::Zero();
+          }
+          if (value_t < 0) {
+            break;
+          }
+          continue;
+        }
       }
-      if (f_tt < 0)                  // got it, jump out of inner loop
-        break;
-      step_size = fmaxf(f_tt * TSDF::mu, step);
-      ray_pos_M += step_size * ray_dir_M;
-      f_t = f_tt;
+      if (value_tt < 0)  {
+        break; // got it, jump out of inner loop
+      }
+      step_size = se::math::clamp(value_tt * TSDF::mu, TSDF::mu / 10, TSDF::mu / 2);
+      value_t = value_tt;
+      point_M_t = point_M_tt;
     }
-    if (f_tt < 0) {
-      // got it, calculate accurate intersection
-      t = t + step_size * f_tt / (f_t - f_tt);
+    if (value_tt < 0 && value_t > 0) {
+      // We overshot. Need to move backwards for zero crossing.
+      t = t - (point_M_tt - point_M_t).norm() / (value_tt - value_t) * value_tt; // (value_tt - 0)
       Eigen::Vector4f surface_point_M = (ray_origin_M + ray_dir_M * t).homogeneous();
-      surface_point_M.w() = 0.f;
+      surface_point_M.w() = 0; // Rendering scale has to be zero for single res implementation
       return surface_point_M;
     }
   }

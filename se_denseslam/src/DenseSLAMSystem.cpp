@@ -233,9 +233,8 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
 bool DenseSLAMSystem::raycast(const SensorImpl& sensor) {
 
   raycast_T_MC_ = T_MC_;
-  const float step = map_->voxelDim();
   raycastKernel<VoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_,
-      raycast_T_MC_, sensor, step, step * BLOCK_SIZE);
+      raycast_T_MC_, sensor);
   return true;
 }
 
@@ -248,8 +247,7 @@ void DenseSLAMSystem::dump_volume(std::string ) {
 void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBA_image_data,
                                    const Eigen::Vector2i& volume_RGBA_image_res,
                                    const SensorImpl&      sensor) {
-
-  const float step = map_->voxelDim();
+  
   se::Image<Eigen::Vector3f> render_surface_point_cloud_M (image_res_.x(), image_res_.y());
   se::Image<Eigen::Vector3f> render_surface_normals_M (image_res_.x(), image_res_.y());
   if (render_T_MC_->isApprox(raycast_T_MC_)) {
@@ -262,7 +260,7 @@ void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBA_image_data
   } else {
     // Raycast the map from the render viewpoint.
     raycastKernel<VoxelImpl>(*map_, render_surface_point_cloud_M,
-        render_surface_normals_M, *render_T_MC_, sensor, step, step * BLOCK_SIZE);
+        render_surface_normals_M, *render_T_MC_, sensor);
   }
   renderVolumeKernel<VoxelImpl>(volume_RGBA_image_data, volume_RGBA_image_res,
       se::math::to_translation(*render_T_MC_), ambient,

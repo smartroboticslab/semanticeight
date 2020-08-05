@@ -182,10 +182,8 @@ struct MultiresOFusion {
   static Eigen::Vector4f raycast(const OctreeType&      map,
                                  const Eigen::Vector3f& ray_origin_M,
                                  const Eigen::Vector3f& ray_dir_M,
-                                 float                  t_near,
-                                 float                  t_far,
                                  float,
-                                 float);
+                                 float                  t_far);
 };
 
 #endif // MultiresOFusion_HPP

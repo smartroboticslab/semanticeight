@@ -76,9 +76,7 @@ void raycastKernel(const se::Octree<typename T::VoxelType>& map,
                    se::Image<Eigen::Vector3f>&              surface_point_cloud_M,
                    se::Image<Eigen::Vector3f>&              surface_normals_M,
                    const Eigen::Matrix4f&                   T_MC,
-                   const SensorImpl&                        sensor,
-                   const float                              step,
-                   const float                              large_step) {
+                   const SensorImpl&                        sensor) {
 
   TICK();
 #pragma omp parallel for
@@ -94,7 +92,7 @@ void raycastKernel(const se::Octree<typename T::VoxelType>& map,
       const Eigen::Vector3f ray_dir_M = (se::math::to_rotation(T_MC) * ray_dir_C.normalized()).head(3);
       const Eigen::Vector3f t_MC = se::math::to_translation(T_MC);
 
-      surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.nearDist(ray_dir_C), sensor.farDist(ray_dir_C), step, large_step);
+      surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.nearDist(ray_dir_C), sensor.farDist(ray_dir_C));
       if (surface_intersection_M.w() >= 0.f) {
         surface_point_cloud_M[x + y * surface_point_cloud_M.width()] = surface_intersection_M.head<3>();
         Eigen::Vector3f surface_normal = map.gradAtPoint(surface_intersection_M.head<3>(),
