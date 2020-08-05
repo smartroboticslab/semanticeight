@@ -77,7 +77,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   std::vector<std::set<se::Node<MultiresOFusion::VoxelType>*>>& node_list_;
   const se::Image<float>& depth_image_;
   const se::KernelImage* const kernel_depth_image_;
-  SensorImpl sensor_;
+  const SensorImpl sensor_;
   const Eigen::Matrix4f& T_CM_;
   const float voxel_dim_;
   const Eigen::Vector3f& sample_offset_frac_;
@@ -263,16 +263,13 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                   block->setData(voxel_coord, scale, voxel_data);
                 }
 
-                const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ *
-                    voxel_sample_coord_f).homogeneous()).head(3);
-                Eigen::Vector2f pixel_f;
-                if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
+                const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ * voxel_sample_coord_f).homogeneous()).head(3);
+                float depth_value(0);
+                if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value,
+                    [&](float depth_value){ return depth_value >= sensor_.near_plane; })) {
                   block->setData(voxel_coord, scale, voxel_data);
                   continue;
                 }
-                const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
-                const float depth_value = depth_image_[pixel.x() + depth_image_.width() * pixel.y()];
-                if (depth_value <=  0) continue;
 
                 const float proj_scale =  std::sqrt(1 + se::math::sq(point_C.x() / point_C.z()) +
                                                     se::math::sq(point_C.y() / point_C.z()));
@@ -305,18 +302,18 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
 #pragma omp simd
         for (unsigned int x = 0; x < block_size; x += stride) {
           const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y, z);
+          auto voxel_data = block->data(voxel_coord, scale);
+
           const Eigen::Vector3f voxel_sample_coord_f =
               se::get_sample_coord(voxel_coord, stride, sample_offset_frac_);
           const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ * voxel_sample_coord_f).homogeneous()).head(3);
-          auto voxel_data = block->data(voxel_coord, scale);
-          Eigen::Vector2f pixel_f;
-          if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
+
+          float depth_value(0);
+          if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value,
+              [&](float depth_value){ return depth_value >= sensor_.near_plane; })) {
             block->setData(voxel_coord, scale, voxel_data);
             continue;
           }
-          const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
-          const float depth_value = depth_image_[pixel.x() + depth_image_.width() * pixel.y()];
-          if (depth_value <=  0) continue;
 
           const float proj_scale =  std::sqrt(1 + se::math::sq(point_C.x() / point_C.z()) +
                                               se::math::sq(point_C.y() / point_C.z()));
@@ -365,15 +362,14 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
           const Eigen::Vector3f voxel_sample_coord_f =
               se::get_sample_coord(voxel_coord, stride, sample_offset_frac_);
           const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ * voxel_sample_coord_f).homogeneous()).head(3);
-          Eigen::Vector2f pixel_f;
-          if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
+
+          float depth_value(0);
+          if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value,
+              [&](float depth_value){ return depth_value >= sensor_.near_plane; })) {
             continue;
           }
-          const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
-          const float depth_value = depth_image_[pixel.x() + depth_image_.width() * pixel.y()];
-          if (depth_value <=  0) continue;
-          auto voxel_data = block->data(voxel_coord, scale);
 
+          auto voxel_data = block->data(voxel_coord, scale);
           const float proj_scale =  std::sqrt(1 + se::math::sq(point_C.x() / point_C.z()) +
                                               se::math::sq(point_C.y() / point_C.z()));
 

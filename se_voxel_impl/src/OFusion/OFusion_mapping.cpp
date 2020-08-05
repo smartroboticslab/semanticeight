@@ -112,29 +112,49 @@ static inline float ofusion_apply_window(const float occupancy,
  */
 struct bfusion_update {
   const se::Image<float>& depth_image;
-  float timestamp;
-  float voxel_dim;
+  const SensorImpl&       sensor;
+  float                   timestamp;
+  float                   voxel_dim;
+  bool                    is_visible;
 
 
 
   bfusion_update(const se::Image<float>& depth_image,
+                 const SensorImpl&       sensor,
                  float                   timestamp,
-                 float                   voxel_dim)
-    : depth_image(depth_image), timestamp(timestamp), voxel_dim(voxel_dim) {};
+                 float                   voxel_dim) :
+      depth_image(depth_image),
+      sensor(sensor),
+      timestamp(timestamp),
+      voxel_dim(voxel_dim) {};
 
+  void reset() {
+    is_visible = false;
+  }
 
+  template <typename FieldType,
+      template <typename FieldT> class VoxelBlockT>
+  void operator()(VoxelBlockT<FieldType>* block) {
+    block->active(is_visible);
+  }
 
   template <typename DataHandlerT>
   void operator()(DataHandlerT&          handler,
                   const Eigen::Vector3i&,
-                  const Eigen::Vector3f& point_C,
-                  const Eigen::Vector2f& pixel_f) {
-
-    const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
-    const float depth_value = depth_image(pixel.x(), pixel.y());
-    // Return on invalid depth measurement.
-    if (depth_value <= 0.f)
+                  const Eigen::Vector3f& point_C) {
+    // Don't update the point if the sample point is behind the far plane
+    if (point_C.norm() > sensor.farDist(point_C)) {
       return;
+    }
+
+    // Don't update the point if the depth value is closer than the near plane
+    float depth_value(0);
+    if (!sensor.projectToPixelValue(point_C, depth_image, depth_value,
+        [&](float depth_value){ return depth_value >= sensor.near_plane; })) {
+      return;
+    }
+
+    is_visible = true;
 
     // Compute the occupancy probability for the current measurement.
     const float diff = (point_C.z() - depth_value);
@@ -171,7 +191,7 @@ void OFusion::integrate(se::Octree<OFusion::VoxelType>& map,
   const float voxel_dim =  map.dim() / map.size();
   const Eigen::Vector2i depth_image_res(depth_image.width(), depth_image.height());
 
-  struct bfusion_update funct(depth_image, timestamp, voxel_dim);
+  struct bfusion_update funct(depth_image, sensor, timestamp, voxel_dim);
 
   se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image_res, funct);
 }

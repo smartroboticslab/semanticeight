@@ -7,6 +7,8 @@
 #include <cmath>
 
 #include <Eigen/Dense>
+#include "se/image_utils.hpp"
+#include "se/image/image.hpp"
 #include <srl/projection/NoDistortion.hpp>
 #include <srl/projection/OusterLidar.hpp>
 #include <srl/projection/PinholeCamera.hpp>
@@ -41,6 +43,36 @@ namespace se {
 
     PinholeCamera(const PinholeCamera& pinhole_camera,
                   const float          scaling_factor);
+
+    /**
+     * \brief Determine the corresponding image value of the projected pixel for a point_C in camera frame.
+     *
+     * \param sensor          Reference to the used sensor used for the projection.
+     * \param point_C         3D coordinates of the point to be projected in camera frame.
+     * \param depth_image     Image
+     * \param depth_value     Reference to the depth value to be determined.
+     * \param valid_predicate Functor indicating if the fetched pixel value is valid.
+     *
+     * \return is_valid   Returns true if the projection is successful and false if the projection is unsuccessful
+     *                    or the pixel value is invalid.
+     */
+    template <typename ValidPredicate>
+    bool projectToPixelValue(const Eigen::Vector3f&  point_C,
+                             const se::Image<float>& image,
+                             float&                  image_value,
+                             ValidPredicate          valid_predicate) const {
+      Eigen::Vector2f pixel_f;
+      if (model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
+        return false;
+      }
+      const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+      image_value = image(pixel.x(), pixel.y());
+      // Return false for invalid depth measurement
+      if (!valid_predicate(image_value)) {
+        return false;
+      }
+      return true;
+    }
 
     /**
      * \brief Computes the scale corresponding to the back-projected pixel size
@@ -109,6 +141,36 @@ namespace se {
 
     OusterLidar(const OusterLidar& ouster_lidar,
                 const float        scaling_factor);
+
+    /**
+     * \brief Determine the corresponding image value of the projected pixel for a point_C in camera frame.
+     *
+     * \param sensor          Reference to the used sensor used for the projection.
+     * \param point_C         3D coordinates of the point to be projected in camera frame.
+     * \param depth_image     Image
+     * \param depth_value     Reference to the depth value to be determined.
+     * \param valid_predicate Functor indicating if the fetched pixel value is valid.
+     *
+     * \return is_valid   Returns true if the projection is successful and false if the projection is unsuccessful
+     *                    or the depth value is invalid.
+     */
+    template <typename ValidPredicate>
+    bool projectToPixelValue(const Eigen::Vector3f&  point_C,
+                             const se::Image<float>& image,
+                             float&                  image_value,
+                             ValidPredicate          valid_predicate) const {
+      Eigen::Vector2f pixel_f;
+      if (model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
+        return false;
+      }
+      const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+      image_value = image(pixel.x(), pixel.y());
+      // Return false for invalid depth measurement
+      if (!valid_predicate(image_value)) {
+        return false;
+      }
+      return true;
+    }
 
     int computeIntegrationScale(const float,
                                 const float,

@@ -86,12 +86,11 @@ namespace functor {
       }
 
       void update_block(VoxelBlockType* block,
-                        const float                voxel_dim) {
+                        const float     voxel_dim) {
         /* Is this the VoxelBlock centre? */
+        funct_.reset();
         const Eigen::Vector3i block_coord = block->coordinates();
-        bool is_visible = false;
         block->current_scale(0);
-
         /* Iterate over each voxel in the VoxelBlock. */
         const unsigned int block_size = VoxelBlockType::size_li;
         const unsigned int x_last = block_coord.x() + block_size;
@@ -106,25 +105,13 @@ namespace functor {
               const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim * (voxel_coord.cast<float>() +
                   sample_offset_frac_)).homogeneous()).head(3);
 
-              // Don't update the point if the sample point is behind the far plane
-              if (point_C.norm() > sensor_.farDist(point_C)) {
-                continue;
-              }
-
-              Eigen::Vector2f pixel_f;
-              if (sensor_.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
-                continue;
-              }
-
-              is_visible = true;
-
               /* Update the voxel. */
               VoxelBlockHandler<FieldType> handler = {block, voxel_coord};
-              funct_(handler, voxel_coord, point_C, pixel_f);
+              funct_(handler, voxel_coord, point_C);
             }
           }
         }
-        block->active(is_visible);
+        funct_(block);
       }
 
       void update_node(se::Node<FieldType>* node,
@@ -147,7 +134,8 @@ namespace functor {
 
           /* Update the child Node. */
           NodeHandler<FieldType> handler = {node, child_idx};
-          funct_(handler, child_coord, child_point_C, pixel_f);
+          bool is_visible(false);
+          funct_(handler, child_coord, child_point_C);
         }
       }
 

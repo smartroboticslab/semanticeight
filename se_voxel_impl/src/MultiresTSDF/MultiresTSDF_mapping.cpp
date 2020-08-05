@@ -231,21 +231,13 @@ namespace se {
                     continue;
                   }
 
-                  Eigen::Vector2f pixel_f;
-                  if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
-                    block->setData(voxel_coord, voxel_scale, voxel_data);
+                  float depth_value(0);
+                  if (!sensor.projectToPixelValue(point_C, depth_image, depth_value,
+                                                  [](float depth_value){ return depth_value > 0; })) {
                     continue;
                   }
-                  const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
 
                   is_visible = true;
-
-                  const float depth_value = depth_image(pixel.x(), pixel.y());
-                  // continue on invalid depth measurement
-                  if (depth_value <= 0) {
-                    block->setData(voxel_coord, voxel_scale, voxel_data);
-                    continue;
-                  }
 
                   // Update the TSDF
                   const float sdf_value = (depth_value - point_C.z())
@@ -328,18 +320,13 @@ namespace se {
               if (point_C.norm() > sensor.farDist(point_C)) {
                 continue;
               }
-
-              Eigen::Vector2f pixel_f;
-              if (sensor.model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
+              float depth_value(0);
+              if (!sensor.projectToPixelValue(point_C, depth_image, depth_value,
+                  [&](float depth_value){ return depth_value >= sensor.near_plane; })) {
                 continue;
               }
-              const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
 
               is_visible = true;
-
-              const float depth_value = depth_image(pixel.x(), pixel.y());
-              // continue on invalid depth measurement
-              if (depth_value <= 0) continue;
 
               // Update the TSDF
               const float point_dist = (depth_value - point_C.z())
