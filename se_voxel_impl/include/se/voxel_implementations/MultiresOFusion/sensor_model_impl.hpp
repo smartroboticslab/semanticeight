@@ -34,11 +34,11 @@ class OFusionModel : public sensor_model<OFusionModel<MultiresOFusion::VoxelType
 public:
   inline static float computeSigma(float depth_sample) {
     if (MultiresOFusion::uncertainty_model == UncertaintyModel::linear) {
-
       return 3 * se::math::clamp(MultiresOFusion::k_sigma * depth_sample, MultiresOFusion::sigma_min, MultiresOFusion::sigma_max); // Livingroom dataset
 
-    } else if (MultiresOFusion::uncertainty_model == UncertaintyModel::quadratic) {
-
+    } else {
+      // If (MultiresOFusion::uncertainty_model == UncertaintyModel::quadratic)
+      // or any other value by mistake
       return 3 * se::math::clamp(MultiresOFusion::k_sigma * depth_sample * depth_sample, MultiresOFusion::sigma_min, MultiresOFusion::sigma_max); // Cow and lady
 
     }
