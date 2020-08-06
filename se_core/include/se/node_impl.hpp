@@ -262,7 +262,7 @@ template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingle<T>::data(const Eigen::Vector3i& voxel_coord,
                           const int              scale) const {
-  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
     return init_data_;
   } else {
     Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
@@ -310,7 +310,7 @@ VoxelBlockSingle<T>::data(const int voxel_idx) const {
     remaining_voxel_idx -= size_at_scale_cu;
     size_at_scale_cu = se::math::cu(this->size_li >> scale);
   }
-  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
     return init_data_;
   } else {
     return block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx];
@@ -362,7 +362,7 @@ void VoxelBlockSingle<T>::allocateDownTo() {
 
 template <typename T>
 void VoxelBlockSingle<T>::allocateDownTo(const int scale) {
-  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > scale) {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
     for (int scale_tmp = VoxelBlock<T>::max_scale - block_data_.size(); scale_tmp >= scale; scale_tmp --) {
       int size_at_scale_tmp = this->size_li >> scale_tmp;
       int num_voxels_at_scale_tmp = se::math::cu(size_at_scale_tmp);
