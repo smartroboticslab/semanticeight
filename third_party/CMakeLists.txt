@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.0.0)
 
+# Disable warnings for third-party code
+add_compile_options(-w)
+
 add_subdirectory(lodepng)
 
 option(YAML_CPP_BUILD_TESTS "Enable testing" OFF)
