@@ -134,7 +134,6 @@ namespace functor {
 
           /* Update the child Node. */
           NodeHandler<FieldType> handler = {node, child_idx};
-          bool is_visible(false);
           funct_(handler, child_coord, child_point_C);
         }
       }
