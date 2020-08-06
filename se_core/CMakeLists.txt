@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+cmake_policy(VERSION 3.10)
 
 # Define the library targets. Use generator expressions (BUILD_INTERFACE and
 # INSTALL_INTERFACE) to change the include directories when building the

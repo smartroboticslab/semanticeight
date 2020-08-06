@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+cmake_policy(VERSION 3.10)
 
 project(supereight)
 set(SUPEREIGHT_MAJOR_VERSION 0)

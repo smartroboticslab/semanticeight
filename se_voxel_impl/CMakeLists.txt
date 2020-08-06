@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+cmake_policy(VERSION 3.10)
 
 # This project name will also be the prefix of the libraries compiled from
 # se_voxel_impl.
