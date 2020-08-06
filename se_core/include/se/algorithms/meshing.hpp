@@ -776,7 +776,7 @@ namespace meshing {
         return;
       }
     }
-    
+
     int stride = 1 << block->current_scale();
     for(const auto& offset_idx: neighbours[0]) {
       Eigen::Vector3i logical_dual_corner_coord = primal_corner_coord + logical_dual_offset[offset_idx];
@@ -784,7 +784,7 @@ namespace meshing {
           stride * OctreeT<FieldType>::sample_offset_frac_;
       data[offset_idx] = block->data(dual_corner_coords_f[offset_idx].cast<int>(), block->current_scale());
     }
-    for(int neighbour_idx = 1; neighbour_idx < neighbours.size(); ++neighbour_idx) {
+    for (size_t neighbour_idx = 1; neighbour_idx < neighbours.size(); ++neighbour_idx) {
       Eigen::Vector3i logical_dual_corner_coord = primal_corner_coord + logical_dual_offset[neighbours[neighbour_idx][0]];
       VoxelBlockType<FieldType>* neighbour = map.fetch(logical_dual_corner_coord);
       int stride = 1 << neighbour->current_scale();
