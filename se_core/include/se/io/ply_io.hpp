@@ -104,7 +104,7 @@ namespace se {
         f << "ply" << std::endl;
         f << "format ascii 1.0" << std::endl;
         f << "comment octree structure" << std::endl;
-        f << "element point " << nodes_corners_count <<  std::endl;
+        f << "element vertex " << nodes_corners_count <<  std::endl;
         f << "property float x" << std::endl;
         f << "property float y" << std::endl;
         f << "property float z" << std::endl;
