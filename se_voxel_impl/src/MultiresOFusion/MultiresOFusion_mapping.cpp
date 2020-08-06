@@ -70,7 +70,6 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                        0, 0, 0, 0, 1, 1, 1, 1;
   };
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   se::Octree<MultiresOFusion::VoxelType>& map_;
   se::MemoryPool<MultiresOFusion::VoxelType>& pool_;
   std::vector<MultiresOFusion::VoxelBlockType*>& block_list_;
@@ -780,6 +779,8 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
       }
     }
   }
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 /**

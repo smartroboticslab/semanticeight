@@ -48,7 +48,6 @@ namespace functor {
     using VoxelBlockType = typename FieldType::VoxelBlockType;
 
     public:
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       projective_functor(OctreeT<FieldType>&    octree,
                          UpdateF&               funct,
                          const Eigen::Matrix4f& T_CM,
@@ -157,6 +156,8 @@ namespace functor {
             update_node(node_buffer[i], voxel_dim);
          }
       }
+
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
       OctreeT<FieldType>& octree_;
