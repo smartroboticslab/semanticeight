@@ -16,6 +16,7 @@ set(CMAKE_CXX_STANDARD 14)
 add_compile_options(
   -Wall
   -Wextra
+  -Wimplicit-fallthrough
   -Wno-unknown-pragmas
   -Wno-unused-function)
 # Compile without measuring individual function times
