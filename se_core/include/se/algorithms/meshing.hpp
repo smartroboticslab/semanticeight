@@ -263,7 +263,7 @@ namespace meshing {
                                                    const Eigen::Vector3f& dual_corner_coord_0,
                                                    const Eigen::Vector3f& dual_corner_coord_1,
                                                    const float            voxel_dim,
-                                                   const int              edge_case){
+                                                   const int              /* edge_case */){
     Eigen::Vector3f dual_point_0_M = voxel_dim * dual_corner_coord_0;
     Eigen::Vector3f dual_point_1_M = voxel_dim * dual_corner_coord_1;
     float iso_value = 0.f;
