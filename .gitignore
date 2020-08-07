@@ -45,3 +45,6 @@ test.bin
 # vim temporary files
 *.swp
 
+# Test results
+se_core/test/out/
+
