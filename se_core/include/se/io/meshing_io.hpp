@@ -9,7 +9,6 @@
 #include <sstream>
 #include <iostream>
 #include "se/utils/math_utils.h"
-#include "se/io/meshing_io.hpp"
 #include <algorithm>
 
 namespace se {
