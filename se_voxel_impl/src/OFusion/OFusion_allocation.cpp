@@ -38,9 +38,9 @@
 
 
 /* Compute step size based on distance travelled along the ray */
-static inline float ofusionComputeStepSize(const float dist_travelled,
-                                              const float band,
-                                              const float voxel_dim) {
+inline float ofusion_compute_step_size(const float dist_travelled,
+                                       const float band,
+                                       const float voxel_dim) {
 
   float new_step_size;
   float half_band = band * 0.5f;
@@ -57,22 +57,21 @@ static inline float ofusionComputeStepSize(const float dist_travelled,
 
 
 /* Compute octree level given a step size */
-static inline int ofusionStepToDepth(const float step,
-                                        const int   voxel_depth,
-                                        const float voxel_dim) {
+inline int ofusion_step_to_depth(const float step,
+                                 const int   voxel_depth,
+                                 const float voxel_dim) {
 
   return static_cast<int>(floorf(std::log2f(voxel_dim / step)) + voxel_depth);
 }
 
 
 
-size_t OFusion::buildAllocationList(
-    se::Octree<OFusion::VoxelType>& map,
-    const se::Image<float>&         depth_image,
-    const Eigen::Matrix4f&          T_MC,
-    const SensorImpl&               sensor,
-    se::key_t*                      allocation_list,
-    size_t                          reserved) {
+size_t OFusion::buildAllocationList(OctreeType&             map,
+                                    const se::Image<float>& depth_image,
+                                    const Eigen::Matrix4f&  T_MC,
+                                    const SensorImpl&       sensor,
+                                    se::key_t*              allocation_list,
+                                    size_t                  reserved) {
 
   const Eigen::Vector2i depth_image_res (depth_image.width(), depth_image.height());
   const float voxel_dim = map.dim() / map.size();
@@ -93,8 +92,9 @@ size_t OFusion::buildAllocationList(
     for (int x = 0; x < depth_image_res.x(); ++x) {
       const Eigen::Vector2i pixel(x, y);
       const float depth_value_orig = depth_image(pixel.x(), pixel.y());
-      if (depth_value_orig < sensor.near_plane)
+      if (depth_value_orig < sensor.near_plane) {
         continue;
+      }
       const float depth_value = (depth_value_orig <= sensor.far_plane) ? depth_value_orig : sensor.far_plane;
 
       int depth = voxel_depth;
@@ -138,8 +138,8 @@ size_t OFusion::buildAllocationList(
           }
         }
 
-        step_size = ofusionComputeStepSize(travelled, band, voxel_dim);
-        depth = ofusionStepToDepth(step_size, voxel_depth, voxel_dim);
+        step_size = ofusion_compute_step_size(travelled, band, voxel_dim);
+        depth = ofusion_step_to_depth(step_size, voxel_depth, voxel_dim);
 
         step = reverse_ray_dir_M * step_size;
         ray_pos_M += step;

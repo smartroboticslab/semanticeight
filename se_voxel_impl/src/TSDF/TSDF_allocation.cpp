@@ -49,13 +49,13 @@
  * be allocated
  * \param reserved allocated size of allocation_list
  */
-size_t TSDF::buildAllocationList(
-    se::Octree<TSDF::VoxelType>& map,
-    const se::Image<float>&      depth_image,
-    const Eigen::Matrix4f&       T_MC,
-    const SensorImpl&            sensor,
-    se::key_t*                   allocation_list,
-    size_t                       reserved) {
+size_t TSDF::buildAllocationList(OctreeType&             map,
+                                 const se::Image<float>& depth_image,
+                                 const Eigen::Matrix4f&  T_MC,
+                                 const SensorImpl&       sensor,
+                                 se::key_t*              allocation_list,
+                                 size_t                  reserved) {
+
   const Eigen::Vector2i depth_image_res(depth_image.width(), depth_image.height());
   const float voxel_dim = map.dim() / map.size();
   const float inverse_voxel_dim = 1.f / voxel_dim;

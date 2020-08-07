@@ -37,16 +37,15 @@
 
 
 
-Eigen::Vector4f OFusion::raycast(
-    const se::Octree<OFusion::VoxelType>& map,
-    const Eigen::Vector3f&                ray_origin_M,
-    const Eigen::Vector3f&                ray_dir_M,
-    const float                           t_near,
-    const float                           t_far,
-    const float                           step,
-    const float                           ) {
+Eigen::Vector4f OFusion::raycast(const OctreeType&      map,
+                                 const Eigen::Vector3f& ray_origin_M,
+                                 const Eigen::Vector3f& ray_dir_M,
+                                 const float            t_near,
+                                 const float            t_far,
+                                 const float            step,
+                                 const float) {
 
-  se::VoxelBlockRayIterator<OFusion::VoxelType> ray(map, ray_origin_M, ray_dir_M,
+  se::VoxelBlockRayIterator<VoxelType> ray(map, ray_origin_M, ray_dir_M,
       t_near, t_far);
   ray.next();
   const float t_min = ray.tmin(); /* Get distance to the first intersected block */
@@ -55,7 +54,7 @@ Eigen::Vector4f OFusion::raycast(
   }
   const float t_max = ray.tmax();
 
-  auto select_node_occupancy = [](const auto&){ return OFusion::VoxelType::initData().x; };
+  auto select_node_occupancy = [](const auto&){ return VoxelType::initData().x; };
   auto select_voxel_occupancy = [](const auto& data){ return data.x; };
   float t = t_min;
   float step_size = step;
@@ -67,7 +66,7 @@ Eigen::Vector4f OFusion::raycast(
   if (f_t <= OFusion::surface_boundary) {
     for (; t < t_max; t += step_size) {
       const Eigen::Vector3f ray_pos_M = ray_origin_M + ray_dir_M * t;
-      OFusion::VoxelType::VoxelData voxel_data = map.getFineAtPoint(ray_pos_M);
+      VoxelData voxel_data = map.getFineAtPoint(ray_pos_M);
       if (voxel_data.x > -100.f && voxel_data.y > 0.f) {
         f_tt = map.interpAtPoint(ray_origin_M + ray_dir_M * t, select_node_occupancy, select_voxel_occupancy).first;
       }

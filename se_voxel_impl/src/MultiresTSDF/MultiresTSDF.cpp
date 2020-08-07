@@ -39,13 +39,15 @@ float MultiresTSDF::mu;
 int   MultiresTSDF::max_weight;
 
 void MultiresTSDF::configure() {
-  mu                = 0.1;
-  max_weight        = 100;
+  mu         = 0.1;
+  max_weight = 100;
 }
 
 void MultiresTSDF::configure(YAML::Node yaml_config) {
   configure();
-  if (yaml_config.IsNull()) return;
+  if (yaml_config.IsNull()) {
+    return;
+  }
 
   if (yaml_config["mu"]) {
     mu = yaml_config["mu"].as<float>();
@@ -55,7 +57,7 @@ void MultiresTSDF::configure(YAML::Node yaml_config) {
   }
 };
 
-std::string MultiresTSDF::print_config() {
+std::string MultiresTSDF::printConfig() {
   std::stringstream ss;
   ss << "========== VOXEL IMPL ========== " << "\n";
   ss << "Invert normals:                  " << (MultiresTSDF::invert_normals

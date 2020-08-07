@@ -69,7 +69,7 @@ float computeMapIntersection( const Eigen::Vector3f& ray_pos_M, const Eigen::Vec
   /* Find candidate planes; this loop can be avoided if
      rays cast all from the eye(assume perpsective view) */
   for (int i = 0; i < num_dim; i++)
-    if(ray_pos_M[i] < map_min) {
+    if (ray_pos_M[i] < map_min) {
       quadrant[i] = 1; // LEFT := 1
       candidate_plane[i] = map_min;
       inside = false;
@@ -82,7 +82,7 @@ float computeMapIntersection( const Eigen::Vector3f& ray_pos_M, const Eigen::Vec
     }
 
   /* Ray origin inside bounding box */
-  if(inside)	{
+  if (inside)	{
     return 0;
   }
 
@@ -100,8 +100,9 @@ float computeMapIntersection( const Eigen::Vector3f& ray_pos_M, const Eigen::Vec
   /* Get largest of the max_T's for final choice of intersection */
   which_plane = 0;
   for (int i = 1; i < num_dim; i++)
-    if (max_T[which_plane] < max_T[i])
+    if (max_T[which_plane] < max_T[i]) {
       which_plane = i;
+    }
 
   /* Check final candidate actually inside box */
   if (max_T[which_plane] < 0.f) {
@@ -166,15 +167,15 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>& map,
   Eigen::Vector3f map_frac  = ray_origin_coord_f / map.size();
   // V at which the map boundary gets crossed (separate V for each dimension x-y-z)
   Eigen::Vector3f v_map;
-  if(ray_dir_M.x() < 0) {
+  if (ray_dir_M.x() < 0) {
     v_map.x() = map_frac.x() * delta_V_map.x();
   } else {
     v_map.x() = (1 - map_frac.x()) * delta_V_map.x();
-  } if(ray_dir_M.y() < 0) {
+  } if (ray_dir_M.y() < 0) {
     v_map.y() = map_frac.y() * delta_V_map.y();
   } else {
     v_map.y() = (1 - map_frac.y()) * delta_V_map.y();
-  } if(ray_dir_M.z() < 0) {
+  } if (ray_dir_M.z() < 0) {
     v_map.z() = map_frac.z() * delta_V_map.z();
   } else {
     v_map.z() = (1 - map_frac.z()) * delta_V_map.z();
@@ -210,15 +211,15 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>& map,
     Eigen::Vector3f delta_V = node_size / ray_dir_M.array().abs(); // [voxel]/[-]
 
     // Initalize V
-    if(ray_dir_M.x() < 0) {
+    if (ray_dir_M.x() < 0) {
       V_max.x() = node_frac.x() * delta_V.x();
     } else {
       V_max.x() = (1 - node_frac.x()) * delta_V.x();
-    } if(ray_dir_M.y() < 0) {
+    } if (ray_dir_M.y() < 0) {
       V_max.y() = node_frac.y() * delta_V.y();
     } else {
       V_max.y() = (1 - node_frac.y()) * delta_V.y();
-    } if(ray_dir_M.z() < 0) {
+    } if (ray_dir_M.z() < 0) {
       V_max.z() = node_frac.z() * delta_V.z();
     } else {
       V_max.z() = (1 - node_frac.z()) * delta_V.z();
@@ -246,8 +247,9 @@ void advanceRay(const se::Octree<MultiresOFusion::VoxelType>& map,
       for (int s = scale + 1; s <= max_scale; s++) {
         value = map.getFine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), s);
 
-        if (value.x_max > -0.2f)
+        if (value.x_max > -0.2f) {
           break;
+        }
         scale += 1;
       }
     }
@@ -319,8 +321,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const se::Octree<MultiresOFusion::Voxel
         interp_res = map.interpAtPoint(ray_pos_M, select_node_occupancy, select_voxel_occupancy, scale);
         f_tt = interp_res.first;
       }
-      if (f_tt > MultiresOFusion::surface_boundary)                  // got it, jump out of inner loop
-      {
+      if (f_tt > MultiresOFusion::surface_boundary) {                // got it, jump out of inner loop
         break;
       }
       f_t = f_tt;

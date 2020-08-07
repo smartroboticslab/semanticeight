@@ -100,6 +100,8 @@ struct ExampleVoxelImpl {
     using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };
 
+  using VoxelData      = ExampleVoxelImpl::VoxelType::VoxelData;
+  using OctreeType     = se::Octree<ExampleVoxelImpl::VoxelType>;
   using VoxelBlockType = typename ExampleVoxelImpl::VoxelType::VoxelBlockType;
 
   /**
@@ -125,7 +127,7 @@ struct ExampleVoxelImpl {
   static void configure();
   static void configure(YAML::Node yaml_config);
 
-  static std::string print_config();
+  static std::string printConfig();
 
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
@@ -133,13 +135,12 @@ struct ExampleVoxelImpl {
    *
    * \warning The function signature must not be changed.
    */
-  static size_t buildAllocationList(
-      se::Octree<ExampleVoxelImpl::VoxelType>& map,
-      const se::Image<float>&                  depth_image,
-      const Eigen::Matrix4f&                   T_MC,
-      const SensorImpl&                        sensor,
-      se::key_t*                               allocation_list,
-      size_t                                   reserved);
+  static size_t buildAllocationList(OctreeType&             map,
+                                    const se::Image<float>& depth_image,
+                                    const Eigen::Matrix4f&  T_MC,
+                                    const SensorImpl&       sensor,
+                                    se::key_t*              allocation_list,
+                                    size_t                  reserved);
 
 
 
@@ -148,12 +149,11 @@ struct ExampleVoxelImpl {
    *
    * \warning The function signature must not be changed.
    */
-  static void integrate(
-      se::Octree<ExampleVoxelImpl::VoxelType>& map,
-      const se::Image<float>&                  depth_image,
-      const Eigen::Matrix4f&                   T_CM,
-      const SensorImpl&                        sensor,
-      const unsigned                           frame);
+  static void integrate(OctreeType&             map,
+                        const se::Image<float>& depth_image,
+                        const Eigen::Matrix4f&  T_CM,
+                        const SensorImpl&       sensor,
+                        const unsigned          frame);
 
 
 
@@ -162,15 +162,13 @@ struct ExampleVoxelImpl {
    *
    * \warning The function signature must not be changed.
    */
-  static Eigen::Vector4f raycast(
-      const se::Octree<ExampleVoxelImpl>& map,
-      const Eigen::Vector3f&              ray_origin_M,
-      const Eigen::Vector3f&              ray_dir_M,
-      const float                         t_near,
-      const float                         t_far,
-      const float                         step,
-      const float                         large_step);
-
+  static Eigen::Vector4f raycast(const OctreeType&      map,
+                                 const Eigen::Vector3f& ray_origin_M,
+                                 const Eigen::Vector3f& ray_dir_M,
+                                 const float            t_near,
+                                 const float            t_far,
+                                 const float            step,
+                                 const float            large_step);
 
 
   // Any other static functions required for the implementation go here.

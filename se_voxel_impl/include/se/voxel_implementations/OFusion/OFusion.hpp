@@ -62,6 +62,8 @@ struct OFusion {
     using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
   };
 
+  using VoxelData      = OFusion::VoxelType::VoxelData;
+  using OctreeType     = se::Octree<OFusion::VoxelType>;
   using VoxelBlockType = typename OFusion::VoxelType::VoxelBlockType;
 
   /**
@@ -106,45 +108,42 @@ struct OFusion {
   static void configure();
   static void configure(YAML::Node yaml_config);
 
-  static std::string print_config();
+  static std::string printConfig();
 
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
    * camera pose.
    */
-  static size_t buildAllocationList(
-      se::Octree<OFusion::VoxelType>& map,
-      const se::Image<float>&         depth_image,
-      const Eigen::Matrix4f&          T_MC,
-      const SensorImpl&               sensor,
-      se::key_t*                      allocation_list,
-      size_t                          reserved);
+  static size_t buildAllocationList(OctreeType&             map,
+                                    const se::Image<float>& depth_image,
+                                    const Eigen::Matrix4f&  T_MC,
+                                    const SensorImpl&       sensor,
+                                    se::key_t*              allocation_list,
+                                    size_t                  reserved);
 
 
 
   /**
    * Integrate a depth image into the map.
    */
-  static void integrate(
-      se::Octree<OFusion::VoxelType>& map,
-      const se::Image<float>&         depth_image,
-      const Eigen::Matrix4f&          T_CM,
-      const SensorImpl&               sensor,
-      const unsigned                  frame);
+  static void integrate(OctreeType&             map,
+                        const se::Image<float>& depth_image,
+                        const Eigen::Matrix4f&  T_CM,
+                        const SensorImpl&       sensor,
+                        const unsigned          frame);
 
 
 
   /**
    * Cast a ray and return the point where the surface was hit.
    */
-  static Eigen::Vector4f raycast(
-      const se::Octree<OFusion::VoxelType>& map,
-      const Eigen::Vector3f&                ray_origin_M,
-      const Eigen::Vector3f&                ray_dir_M,
-      const float                           t_near,
-      const float                           t_far,
-      const float                           step,
-      const float                           );
+  static Eigen::Vector4f raycast(const OctreeType&      map,
+                                 const Eigen::Vector3f& ray_origin_M,
+                                 const Eigen::Vector3f& ray_dir_M,
+                                 const float            t_near,
+                                 const float            t_far,
+                                 const float            step,
+                                 const float);
 };
 
 #endif

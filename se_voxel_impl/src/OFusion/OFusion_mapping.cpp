@@ -48,7 +48,7 @@
  * \param[in] t Where to compute the value of the spline at.
  * \return The value of the spline.
  */
-static inline float ofusion_bspline_memoized(float t) {
+inline float ofusion_bspline_memoized(float t) {
   float value = 0.f;
   constexpr float inverse_range = 1.f / 6.f;
   if (t >= -3.0f && t <= 3.0f) {
@@ -69,10 +69,9 @@ static inline float ofusion_bspline_memoized(float t) {
  *
  * \param[in] val The point on the ray at which the occupancy probability is
  * computed. The point is expressed using the ray parametric equation.
- * \param[in]
  * \return The occupancy probability.
  */
-static inline float ofusion_H(const float val, const float) {
+inline float ofusion_H(const float val) {
   const float Q_1 = ofusion_bspline_memoized(val);
   const float Q_2 = ofusion_bspline_memoized(val - 3);
   return Q_1 - Q_2 * 0.5f;
@@ -84,8 +83,8 @@ static inline float ofusion_H(const float val, const float) {
  * Perform a log-odds update of the occupancy probability. This implements
  * equations (8) and (9) from \cite VespaRAL18.
  */
-static inline float ofusion_update_logs(const float prior,
-                                        const float sample) {
+inline float ofusion_update_logs(const float prior,
+                                 const float sample) {
   return (prior + log2(sample / (1.f - sample)));
 }
 
@@ -95,7 +94,7 @@ static inline float ofusion_update_logs(const float prior,
  * Weight the occupancy by the time since the last update, acting as a
  * forgetting factor. This implements equation (10) from \cite VespaRAL18.
  */
-static inline float ofusion_apply_window(const float occupancy,
+inline float ofusion_apply_window(const float occupancy,
                                          const float,
                                          const float delta_t,
                                          const float tau) {
@@ -110,7 +109,7 @@ static inline float ofusion_apply_window(const float occupancy,
  * Struct to hold the data and perform the update of the map from a single
  * depth frame.
  */
-struct bfusion_update {
+struct OFusionUpdate {
   const se::Image<float>& depth_image;
   const SensorImpl&       sensor;
   float                   timestamp;
@@ -119,10 +118,10 @@ struct bfusion_update {
 
 
 
-  bfusion_update(const se::Image<float>& depth_image,
-                 const SensorImpl&       sensor,
-                 float                   timestamp,
-                 float                   voxel_dim) :
+  OFusionUpdate(const se::Image<float>& depth_image,
+                const SensorImpl&       sensor,
+                float                   timestamp,
+                float                   voxel_dim) :
       depth_image(depth_image),
       sensor(sensor),
       timestamp(timestamp),
@@ -160,9 +159,10 @@ struct bfusion_update {
     const float diff = (point_C.z() - depth_value);
     const float sigma = se::math::clamp(OFusion::k_sigma * se::math::sq(point_C.z()),
         2 * voxel_dim, 0.05f);
-    float sample = ofusion_H(diff / sigma, point_C.z());
-    if (sample == 0.5f)
+    float sample = ofusion_H(diff / sigma);
+    if (sample == 0.5f) {
       return;
+    }
     sample = se::math::clamp(sample, 0.03f, 0.97f);
 
     auto data = handler.get();
@@ -181,17 +181,17 @@ struct bfusion_update {
 
 
 
-void OFusion::integrate(se::Octree<OFusion::VoxelType>& map,
-                        const se::Image<float>&         depth_image,
-                        const Eigen::Matrix4f&          T_CM,
-                        const SensorImpl&               sensor,
-                        const unsigned                  frame) {
+void OFusion::integrate(OctreeType&             map,
+                        const se::Image<float>& depth_image,
+                        const Eigen::Matrix4f&  T_CM,
+                        const SensorImpl&       sensor,
+                        const unsigned          frame) {
 
   const float timestamp = (1.f / 30.f) * frame;
   const float voxel_dim =  map.dim() / map.size();
   const Eigen::Vector2i depth_image_res(depth_image.width(), depth_image.height());
 
-  struct bfusion_update funct(depth_image, sensor, timestamp, voxel_dim);
+  struct OFusionUpdate funct(depth_image, sensor, timestamp, voxel_dim);
 
   se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image_res, funct);
 }

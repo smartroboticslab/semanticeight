@@ -46,7 +46,7 @@ void ExampleVoxelImpl::configure(YAML::Node yaml_config) {
   // set yaml value if parameter key is available
 };
 
-std::string ExampleVoxelImpl::print_config() {
+std::string ExampleVoxelImpl::printConfig() {
   std::stringstream ss;
   ss << "========== VOXEL IMPL ========== " << "\n";
   ss << "Invert normals:                  " << (ExampleVoxelImpl::invert_normals
@@ -55,38 +55,34 @@ std::string ExampleVoxelImpl::print_config() {
 }
 
 // Implement static member functions.
-size_t ExampleVoxelImpl::buildAllocationList(
-    se::Octree<ExampleVoxelImpl::VoxelType>& map,
-    const se::Image<float>&                  depth_image,
-    const Eigen::Matrix4f&                   T_MC,
-    const SensorImpl&                        sensor,
-    se::key_t*                               allocation_list,
-    size_t                                   reserved) {
+size_t ExampleVoxelImpl::buildAllocationList(OctreeType&             map,
+                                             const se::Image<float>& depth_image,
+                                             const Eigen::Matrix4f&  T_MC,
+                                             const SensorImpl&       sensor,
+                                             se::key_t*              allocation_list,
+                                             size_t                  reserved) {
 
   return 0;
 }
 
 
 
-void ExampleVoxelImpl::integrate(
-    se::Octree<ExampleVoxelImpl::VoxelType>& map,
-    const se::Image<float>&                  depth_image,
-    const Eigen::Matrix4f&                   T_CM,
-    const SensorImpl&                        sensor,
-    const unsigned                           frame) {
+void ExampleVoxelImpl::integrate(OctreeType&             map,
+                                 const se::Image<float>& depth_image,
+                                 const Eigen::Matrix4f&  T_CM,
+                                 const SensorImpl&       sensor,
+                                 const unsigned          frame) {
 }
 
 
 
-Eigen::Vector4f ExampleVoxelImpl::raycast(
-    const VolumeTemplate<ExampleVoxelImpl, se::Octree>& volume,
-    const Eigen::Vector3f&                              ray_origin_M,
-    const Eigen::Vector3f&                              ray_dir_M,
-    const float                                         near_plane,
-    const float                                         far_plane,
-    const float                                         mu,
-    const float                                         step,
-    const float                                         large_step) {
+Eigen::Vector4f ExampleVoxelImpl::raycast(const OctreeType&      map,
+                                          const Eigen::Vector3f& ray_origin_M,
+                                          const Eigen::Vector3f& ray_dir_M,
+                                          const float            t_near,
+                                          const float            t_far,
+                                          const float            step,
+                                          const float            large_step) {
   return Eigen::Vector4f::Zero();
 }
 

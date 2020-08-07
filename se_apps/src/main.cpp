@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
   }
   log_stream->setf(std::ios::fixed, std::ios::floatfield);
   *log_stream << config;
-  *log_stream << VoxelImpl::print_config() << std::endl;
+  *log_stream << VoxelImpl::printConfig() << std::endl;
 
   //temporary fix to test rendering fullsize
   config.render_volume_fullsize = false;

@@ -40,13 +40,13 @@
 
 
 
-struct tsdf_update {
+struct TSDFUpdate {
   const se::Image<float>& depth_image;
   const SensorImpl&       sensor;
   bool                    is_visible;
 
-  tsdf_update(const se::Image<float>& depth_image,
-              const SensorImpl&       sensor) :
+  TSDFUpdate(const se::Image<float>& depth_image,
+             const SensorImpl&       sensor) :
       depth_image(depth_image),
       sensor(sensor) {};
 
@@ -95,15 +95,15 @@ struct tsdf_update {
 
 
 
-void TSDF::integrate(se::Octree<TSDF::VoxelType>& map,
-                     const se::Image<float>&      depth_image,
-                     const Eigen::Matrix4f&       T_CM,
-                     const SensorImpl&            sensor,
+void TSDF::integrate(OctreeType&             map,
+                     const se::Image<float>& depth_image,
+                     const Eigen::Matrix4f&  T_CM,
+                     const SensorImpl&       sensor,
                      const unsigned) {
 
   const Eigen::Vector2i depth_image_res(depth_image.width(), depth_image.height());
 
-  struct tsdf_update funct(depth_image, sensor);
+  struct TSDFUpdate funct(depth_image, sensor);
 
   se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image_res, funct);
 }

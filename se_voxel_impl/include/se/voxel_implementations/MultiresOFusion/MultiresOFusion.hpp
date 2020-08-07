@@ -94,6 +94,8 @@ struct MultiresOFusion {
     using MemoryBufferType = std::vector<ElemT>;
   };
 
+  using VoxelData      = MultiresOFusion::VoxelType::VoxelData;
+  using OctreeType     = se::Octree<MultiresOFusion::VoxelType>;
   using VoxelBlockType = typename MultiresOFusion::VoxelType::VoxelBlockType;
 
   /**
@@ -152,7 +154,7 @@ struct MultiresOFusion {
   static void configure();
   static void configure(YAML::Node yaml_config);
 
-  static std::string print_config();
+  static std::string printConfig();
 
   /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
@@ -171,20 +173,19 @@ struct MultiresOFusion {
    *
    * \warning The function signature must not be changed.
    */
-  static void integrate(se::Octree<MultiresOFusion::VoxelType>& map,
-                        const se::Image<float>&                 depth_image,
-                        const Eigen::Matrix4f&                  T_CM,
-                        const SensorImpl&                       sensor,
-                        const unsigned                          frame);
+  static void integrate(OctreeType&             map,
+                        const se::Image<float>& depth_image,
+                        const Eigen::Matrix4f&  T_CM,
+                        const SensorImpl&       sensor,
+                        const unsigned          frame);
 
-  static Eigen::Vector4f raycast(
-      const se::Octree<MultiresOFusion::VoxelType>& map,
-      const Eigen::Vector3f&                        ray_origin_M,
-      const Eigen::Vector3f&                        ray_dir_M,
-      float                                         t_near,
-      float                                         t_far,
-      float,
-      float);
+  static Eigen::Vector4f raycast(const OctreeType&      map,
+                                 const Eigen::Vector3f& ray_origin_M,
+                                 const Eigen::Vector3f& ray_dir_M,
+                                 float                  t_near,
+                                 float                  t_far,
+                                 float,
+                                 float);
 };
 
 #endif // MultiresOFusion_HPP

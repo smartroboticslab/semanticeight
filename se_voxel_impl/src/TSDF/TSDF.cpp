@@ -51,11 +51,11 @@ void TSDF::configure(YAML::Node yaml_config) {
 };
 
 void TSDF::configure() {
-  mu                = 0.1;
-  max_weight        = 100;
+  mu         = 0.1;
+  max_weight = 100;
 }
 
-std::string TSDF::print_config() {
+std::string TSDF::printConfig() {
   std::stringstream ss;
   ss << "========== VOXEL IMPL ========== " << "\n";
   ss << "Invert normals:                  " << (TSDF::invert_normals

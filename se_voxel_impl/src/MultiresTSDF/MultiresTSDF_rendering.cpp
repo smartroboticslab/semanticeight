@@ -37,17 +37,15 @@
 
 
 
-Eigen::Vector4f MultiresTSDF::raycast(
-    const se::Octree<MultiresTSDF::VoxelType>& map,
-    const Eigen::Vector3f&                     ray_origin_M,
-    const Eigen::Vector3f&                     ray_dir_M,
-    const float                                t_near,
-    const float                                t_far,
-    const float                                step,
-    const float                                large_step) {
+Eigen::Vector4f MultiresTSDF::raycast(const OctreeType&      map,
+                                      const Eigen::Vector3f& ray_origin_M,
+                                      const Eigen::Vector3f& ray_dir_M,
+                                      const float            t_near,
+                                      const float            t_far,
+                                      const float            step,
+                                      const float            large_step) {
 
-  se::VoxelBlockRayIterator<MultiresTSDF::VoxelType> ray(map, ray_origin_M, ray_dir_M,
-      t_near, t_far);
+  se::VoxelBlockRayIterator<VoxelType> ray(map, ray_origin_M, ray_dir_M, t_near, t_far);
   ray.next();
   const float t_min = ray.tmin(); /* Get distance to the first intersected block */
   if (t_min <= 0.f) {
@@ -55,7 +53,7 @@ Eigen::Vector4f MultiresTSDF::raycast(
   }
   const float t_max = ray.tmax();
 
-  auto select_node_tsdf = [](const auto&){ return MultiresTSDF::VoxelType::initData().x; };
+  auto select_node_tsdf = [](const auto&){ return VoxelType::initData().x; };
   auto select_voxel_tsdf = [](const auto& data){ return data.x; };
   // first walk with largesteps until we found a hit
   float t = t_min;
@@ -78,8 +76,9 @@ Eigen::Vector4f MultiresTSDF::raycast(
         interp_res = map.interpAtPoint(ray_pos_M, select_node_tsdf, select_voxel_tsdf, scale);
         f_tt = interp_res.first;
       }
-      if (f_tt < 0.f)                  // got it, jump out of inner loop
+      if (f_tt < 0.f) {                 // got it, jump out of inner loop
         break;
+      }
       step_size = fmaxf(f_tt * MultiresTSDF::mu, step);
       ray_pos_M += step_size * ray_dir_M;
       f_t = f_tt;

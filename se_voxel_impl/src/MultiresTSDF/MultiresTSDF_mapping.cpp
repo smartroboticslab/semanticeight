@@ -43,14 +43,15 @@
 namespace se {
   namespace multires {
 
-/**
- * Update the subgrids of a voxel block starting from a given scale up
- * to a maximum scale.
- *
- * \param[in] block VoxelBlock to be updated
- * \param[in] scale scale from which propagate up voxel values
-*/
-    void propagateUp(MultiresTSDF::VoxelBlockType* block, const int scale) {
+    /**
+     * Update the subgrids of a voxel block starting from a given scale up
+     * to a maximum scale.
+     *
+     * \param[in] block VoxelBlock to be updated
+     * \param[in] scale scale from which propagate up voxel values
+     */
+    void propagate_up(MultiresTSDF::VoxelBlockType* block,
+                      const int                     scale) {
       const Eigen::Vector3i block_coord = block->coordinates();
       const int block_size = MultiresTSDF::VoxelBlockType::size_li;
       for (int voxel_scale = scale; voxel_scale < se::math::log2_const(block_size); ++voxel_scale) {
@@ -90,9 +91,9 @@ namespace se {
       }
     }
 
-    void propagateUp(se::Node<MultiresTSDF::VoxelType>* node,
-                     const int                          voxel_depth,
-                     const unsigned                     timestamp) {
+    void propagate_up(se::Node<MultiresTSDF::VoxelType>* node,
+                      const int                          voxel_depth,
+                      const unsigned                     timestamp) {
 
       if (!node->parent()) {
         node->timestamp(timestamp);
@@ -125,17 +126,17 @@ namespace se {
       node->timestamp(timestamp);
     }
 
-/**
- * Update the subgrids of a voxel block starting from a given scale
- * down to the finest grid.
- *
- * \param[in] block VoxelBlock to be updated
- * \param[in] scale scale from which propagate down voxel values
-*/
-    void propagateDown(const se::Octree<MultiresTSDF::VoxelType>& map,
-                       MultiresTSDF::VoxelBlockType*              block,
-                       const int                                  scale,
-                       const int                                  min_scale) {
+    /**
+     * Update the subgrids of a voxel block starting from a given scale
+     * down to the finest grid.
+     *
+     * \param[in] block VoxelBlock to be updated
+     * \param[in] scale scale from which propagate down voxel values
+     */
+    void propagate_down(const se::Octree<MultiresTSDF::VoxelType>& map,
+                        MultiresTSDF::VoxelBlockType*              block,
+                        const int                                  scale,
+                        const int                                  min_scale) {
       const Eigen::Vector3i block_coord = block->coordinates();
       const int block_size = MultiresTSDF::VoxelBlockType::size_li;
       for (int voxel_scale = scale; voxel_scale > min_scale; --voxel_scale) {
@@ -177,18 +178,18 @@ namespace se {
       }
     }
 
-/**
- * Update a voxel block at a given scale by first propagating down the parent
- * values and then integrating the new measurement;
-*/
-    void propagateUpdate(MultiresTSDF::VoxelBlockType*              block,
-                         const int                                  voxel_scale,
-                         const se::Octree<MultiresTSDF::VoxelType>& map,
-                         const se::Image<float>&                    depth_image,
-                         const Eigen::Matrix4f&                     T_CM,
-                         const SensorImpl&                          sensor,
-                         const float                                voxel_dim,
-                         const Eigen::Vector3f&                     sample_offset_frac) {
+    /**
+     * Update a voxel block at a given scale by first propagating down the parent
+     * values and then integrating the new measurement;
+     */
+    void propagate_update(MultiresTSDF::VoxelBlockType*              block,
+                          const int                                  voxel_scale,
+                          const se::Octree<MultiresTSDF::VoxelType>& map,
+                          const se::Image<float>&                    depth_image,
+                          const Eigen::Matrix4f&                     T_CM,
+                          const SensorImpl&                          sensor,
+                          const float                                voxel_dim,
+                          const Eigen::Vector3f&                     sample_offset_frac) {
 
       const int block_size = MultiresTSDF::VoxelBlockType::size_li;
       const int parent_scale = voxel_scale + 1;
@@ -266,8 +267,8 @@ namespace se {
       block->active(is_visible);
     }
 
-    struct multires_block_update {
-      multires_block_update(
+    struct MultiresTSDFUpdate {
+      MultiresTSDFUpdate(
           const se::Octree<MultiresTSDF::VoxelType>& map,
           const se::Image<float>&                    depth_image,
           const Eigen::Matrix4f&                     T_CM,
@@ -300,7 +301,7 @@ namespace se {
             block_centre_point_C_z, voxel_dim, last_scale, block->min_scale(), map.maxBlockScale()), last_scale - 1);
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
         if (last_scale > scale) {
-          propagateUpdate(block, scale, map, depth_image, T_CM, sensor,
+          propagate_update(block, scale, map, depth_image, T_CM, sensor,
               voxel_dim, sample_offset_frac);
           return;
         }
@@ -346,18 +347,18 @@ namespace se {
             }
           }
         }
-        propagateUp(block, scale);
+        propagate_up(block, scale);
         block->active(is_visible);
       }
     };
 } // namespace multires
 } // namespace se
 
-void MultiresTSDF::integrate(se::Octree<MultiresTSDF::VoxelType>& map,
-                             const se::Image<float>&              depth_image,
-                             const Eigen::Matrix4f&               T_CM,
-                             const SensorImpl&                    sensor,
-                             const unsigned                       frame) {
+void MultiresTSDF::integrate(OctreeType&             map,
+                             const se::Image<float>& depth_image,
+                             const Eigen::Matrix4f&  T_CM,
+                             const SensorImpl&       sensor,
+                             const unsigned          frame) {
 
   using namespace std::placeholders;
 
@@ -376,21 +377,27 @@ void MultiresTSDF::integrate(se::Octree<MultiresTSDF::VoxelType>& map,
   se::algorithms::filter(active_list, block_buffer, is_active_predicate,
                          in_frustum_predicate);
 
-  std::deque<se::Node<MultiresTSDF::VoxelType> *> node_queue;
+  std::deque<se::Node<VoxelType> *> node_queue;
   std::mutex deque_mutex;
-  struct se::multires::multires_block_update block_update_funct(
+  struct se::multires::MultiresTSDFUpdate block_update_funct(
       map, depth_image, T_CM, sensor, voxel_dim);
   se::functor::internal::parallel_for_each(active_list, block_update_funct);
 
   for (const auto &block : active_list) {
-    if (block->parent()) node_queue.push_back(block->parent());
+    if (block->parent()) {
+      node_queue.push_back(block->parent());
+    }
   }
 
   while (!node_queue.empty()) {
-    se::Node<MultiresTSDF::VoxelType>* node = node_queue.front();
+    se::Node<VoxelType>* node = node_queue.front();
     node_queue.pop_front();
-    if (node->timestamp() == frame) continue;
-    se::multires::propagateUp(node, map.voxelDepth(), frame);
-    if (node->parent()) node_queue.push_back(node->parent());
+    if (node->timestamp() == frame) {
+      continue;
+    }
+    se::multires::propagate_up(node, map.voxelDepth(), frame);
+    if (node->parent()) {
+      node_queue.push_back(node->parent());
+    }
   }
 }

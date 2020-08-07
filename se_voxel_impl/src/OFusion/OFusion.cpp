@@ -43,17 +43,19 @@ float OFusion::tau;
 float OFusion::k_sigma;
 
 void OFusion::configure() {
-  surface_boundary  = 0.f;
-  min_occupancy     = -1000;
-  max_occupancy     =  1000;
-  tau               = 4;
-  k_sigma           = 0.01;
+  surface_boundary = 0.f;
+  min_occupancy    = -1000;
+  max_occupancy    =  1000;
+  tau              = 4;
+  k_sigma          = 0.01;
 }
 
 void OFusion::configure(YAML::Node yaml_config) {
   configure();
 
-  if (yaml_config.IsNull()) return;
+  if (yaml_config.IsNull()) {
+    return;
+  }
 
   if (yaml_config["surface_boundary"]) {
     surface_boundary = yaml_config["surface_boundary"].as<float>();
@@ -71,7 +73,7 @@ void OFusion::configure(YAML::Node yaml_config) {
   }
 };
 
-std::string OFusion::print_config() {
+std::string OFusion::printConfig() {
   std::stringstream ss;
   ss << "========== VOXEL IMPL ========== " << "\n";
 

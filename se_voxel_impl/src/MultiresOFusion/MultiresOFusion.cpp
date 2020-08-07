@@ -118,7 +118,7 @@ void MultiresOFusion::configure(YAML::Node yaml_config) {
   factor = (max_weight - 1) / max_weight;
 };
 
-std::string MultiresOFusion::print_config() {
+std::string MultiresOFusion::printConfig() {
   std::stringstream ss;
   ss << "========== VOXEL IMPL ========== " << "\n";
   ss << "Invert normals:                  " << (MultiresOFusion::invert_normals
@@ -148,13 +148,12 @@ std::string MultiresOFusion::print_config() {
 }
 
 // Implement static member functions.
-size_t MultiresOFusion::buildAllocationList(
-    se::Octree<MultiresOFusion::VoxelType>&,
-    const se::Image<float>&,
-    const Eigen::Matrix4f&,
-    const SensorImpl&,
-    se::key_t*,
-    size_t) {
+size_t MultiresOFusion::buildAllocationList(OctreeType&,
+                                            const se::Image<float>&,
+                                            const Eigen::Matrix4f&,
+                                            const SensorImpl&,
+                                            se::key_t*,
+                                            size_t) {
   return 0;
 }
 
