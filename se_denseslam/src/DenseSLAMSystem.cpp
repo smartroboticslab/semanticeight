@@ -126,8 +126,6 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
 
 
 
-
-
 bool DenseSLAMSystem::preprocessDepth(const float*           input_depth_image_data,
                                       const Eigen::Vector2i& input_depth_image_res,
                                       const bool             filter_depth){
@@ -240,10 +238,6 @@ bool DenseSLAMSystem::raycast(const SensorImpl& sensor) {
 
 
 
-void DenseSLAMSystem::dump_volume(std::string ) {
-
-}
-
 void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBA_image_data,
                                    const Eigen::Vector2i& volume_RGBA_image_res,
                                    const SensorImpl&      sensor) {
@@ -271,6 +265,8 @@ void DenseSLAMSystem::renderTrack(unsigned char*         tracking_RGBA_image_dat
                                   const Eigen::Vector2i& tracking_RGBA_image_res) {
   renderTrackKernel(tracking_RGBA_image_data, tracking_result_.data(), tracking_RGBA_image_res);
 }
+
+
 
 void DenseSLAMSystem::renderDepth(unsigned char*         depth_RGBA_image_data,
                                   const Eigen::Vector2i& depth_RGBA_image_res,

@@ -208,11 +208,6 @@ class DenseSLAMSystem {
     bool raycast(const SensorImpl& sensor);
 
     /*
-     * TODO Implement this.
-     */
-    void dump_volume(const std::string filename);
-
-    /*
      * TODO Document this.
      */
     void dump_mesh(const std::string filename);
