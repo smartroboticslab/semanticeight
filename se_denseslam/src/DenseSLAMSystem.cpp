@@ -285,78 +285,11 @@ void DenseSLAMSystem::renderRGBA(uint8_t*               output_RGBA_image_data,
 
 
 
-void DenseSLAMSystem::dump_mesh(const std::string filename){
-
-  se::functor::internal::parallel_for_each(map_->pool().blockBuffer(),
-      [](auto block) {
-        if(std::is_same<VoxelImpl, MultiresTSDF>::value) {
-          block->current_scale(block->min_scale());
-        } else {
-          block->current_scale(0);
-        }
-      });
-
-  auto interp_down = [this](auto block) {
-    if(block->min_scale() == 0) return;
-    const Eigen::Vector3f& sample_offset_frac = map_->sample_offset_frac_;
-    const Eigen::Vector3i block_coord = block->coordinates();
-    const int block_size = VoxelBlockType::size_li;
-    bool is_valid;
-    for(int z = 0; z < block_size; ++z)
-      for(int y = 0; y < block_size; ++y)
-        for(int x = 0; x < block_size; ++x) {
-          const Eigen::Vector3i voxel_coord = block_coord + Eigen::Vector3i(x, y , z);
-          auto voxel_data = block->data(voxel_coord, 0);
-          auto voxel_value = (map_->interp(
-              se::get_sample_coord(voxel_coord, 1, sample_offset_frac),
-              [](const auto& data) { return data.x; }, 0, is_valid)).first;
-          if(is_valid) {
-            voxel_data.x = voxel_value;
-            voxel_data.y = map_->interp(
-                se::get_sample_coord(voxel_coord, 1, sample_offset_frac),
-                [](const auto& data) { return data.y; }).first;
-          } else {
-            voxel_data.y = 0;
-          }
-          block->setData(voxel_coord, 0, voxel_data);
-        }
-  };
-
-  se::functor::internal::parallel_for_each(map_->pool().blockBuffer(),
-      interp_down);
-  se::functor::internal::parallel_for_each(map_->pool().blockBuffer(),
-      [](auto block) {
-          block->current_scale(0);
-      });
-
-    std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
-
-    std::vector<se::Triangle> mesh;
-    auto inside = [](const VoxelImpl::VoxelType::VoxelData& data) {
-      return data.x < 0.f;
-    };
-
-    auto select_value = [](const VoxelImpl::VoxelType::VoxelData& data) {
-      return data.x;
-    };
-
-    se::algorithms::marching_cube(*map_, select_value, inside, mesh);
-    save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
-}
-
-void DenseSLAMSystem::dump_dual_mesh(const std::string filename){
+void DenseSLAMSystem::dumpMesh(const std::string filename) {
 
   std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
-
   std::vector<se::Triangle> mesh;
-  auto inside = [](const VoxelImpl::VoxelType::VoxelData& data) {
-    return data.x < 0.f;
-  };
 
-  auto select_value = [](const VoxelImpl::VoxelType::VoxelData& data) {
-    return data.x;
-  };
-
-  se::algorithms::dual_marching_cube(*map_, select_value, inside, mesh);
+  VoxelImpl::dumpMesh(*map_, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
 }

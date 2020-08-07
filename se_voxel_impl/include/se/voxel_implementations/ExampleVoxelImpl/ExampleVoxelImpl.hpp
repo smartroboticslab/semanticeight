@@ -33,6 +33,7 @@
 
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
+#include "se/algorithms/meshing.hpp"
 #include "se/sensor_implementation.hpp"
 
 #include <yaml-cpp/yaml.h>
@@ -168,6 +169,13 @@ struct ExampleVoxelImpl {
                                  const float            t_near,
                                  const float            t_far);
 
+  /**
+   * Create a triangle mesh given the octree.
+   *
+   * \warning The function signature must not be changed.
+   */
+  static void dumpMesh(OctreeType&                map,
+                       std::vector<se::Triangle>& mesh);
 
   // Any other static functions required for the implementation go here.
 };

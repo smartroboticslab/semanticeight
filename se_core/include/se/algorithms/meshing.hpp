@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MESHING_HPP
 #define MESHING_HPP
 #include "../octree.hpp"
-#include "edge_tables.h"
+#include "edge_tables.hpp"
 
 namespace se {
 
@@ -888,7 +888,7 @@ namespace algorithms {
         for (int y = start_coord.y(); y < last_coord.y(); y++) {
           for (int z = start_coord.z(); z < last_coord.z(); z++) {
             const uint8_t edge_pattern_idx = meshing::compute_index(map, block, inside, x, y, z);
-            int* edges = triTable[edge_pattern_idx];
+            const int* edges = triTable[edge_pattern_idx];
             for (unsigned int e = 0; edges[e] != -1 && e < 16; e += 3) {
               Eigen::Vector3f vertex_0 = interp_vertexes(map, select_value, x, y, z, edges[e]);
               Eigen::Vector3f vertex_1 = interp_vertexes(map, select_value, x, y, z, edges[e + 1]);
@@ -951,7 +951,7 @@ namespace algorithms {
             typename FieldType::VoxelData data[8];
             std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> dual_corner_coords_f(8, Eigen::Vector3f::Constant(0));
             meshing::compute_dual_index(map, block, voxel_scale, inside, primal_corner_coord, edge_pattern_idx, data, dual_corner_coords_f);
-            int* edges = triTable[edge_pattern_idx];
+            const int* edges = triTable[edge_pattern_idx];
             for (unsigned int e = 0; edges[e] != -1 && e < 16; e += 3) {
               Eigen::Vector3f vertex_0 = interp_dual_vertexes(edges[e], data, dual_corner_coords_f, voxel_dim, select_value);
               Eigen::Vector3f vertex_1 = interp_dual_vertexes(edges[e + 1], data, dual_corner_coords_f, voxel_dim, select_value);

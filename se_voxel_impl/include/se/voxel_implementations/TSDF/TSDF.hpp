@@ -31,6 +31,7 @@
 
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
+#include "se/algorithms/meshing.hpp"
 #include "se/sensor_implementation.hpp"
 
 #include <yaml-cpp/yaml.h>
@@ -126,6 +127,10 @@ struct TSDF {
                                  const Eigen::Vector3f& ray_dir_M,
                                  const float            t_near,
                                  const float            t_far);
+
+  static void dumpMesh(OctreeType&                map,
+                       std::vector<se::Triangle>& mesh);
+  
 };
 
 #endif

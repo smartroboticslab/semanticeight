@@ -248,12 +248,12 @@ void qtIdle(void) {
 }
 
 //Should we want to dump data from the gui this function can be passed to the QT and will be called with a filename when needed
-void dump_mesh() {
+void dumpMesh() {
 //Call the dump function
 	std::string filename = appWindow->fileSaveSelector("Save mesh", ".",
 			"mesh (*.vtk);; All files (*.*)");
 	if (filename != "")
-		(*pipeline_pp)->dump_mesh(filename);
+		(*pipeline_pp)->dumpMesh(filename);
 }
 void dumpLog() {
 	std::string filename = appWindow->fileSaveSelector("Save sequence log", ".",
@@ -311,7 +311,7 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 	appWindow->setFilenamePointer(&(config->sequence_path));
 
 	//Function to call to dump volume model (also enable dump on file menu)
-	appWindow->setDumpFunction("Save Mesh", &dump_mesh);
+	appWindow->setDumpFunction("Save Mesh", &dumpMesh);
 	appWindow->setDumpFunction("Save Statistics log", &dumpLog);
 	if (power_monitor && power_monitor->isActive())
 		appWindow->setDumpFunction("Save power log ", &dumpPowerLog);

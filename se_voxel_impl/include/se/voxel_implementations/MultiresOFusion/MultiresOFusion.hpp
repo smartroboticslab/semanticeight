@@ -33,6 +33,7 @@
 
 #include <se/octree.hpp>
 #include <se/image/image.hpp>
+#include "se/algorithms/meshing.hpp"
 #include <se/voxel_implementations/MultiresOFusion/kernel_image.hpp>
 #include "se/sensor_implementation.hpp"
 
@@ -184,6 +185,10 @@ struct MultiresOFusion {
                                  const Eigen::Vector3f& ray_dir_M,
                                  float,
                                  float                  t_far);
+
+  static void dumpMesh(OctreeType&                map,
+                       std::vector<se::Triangle>& mesh);
+
 };
 
 #endif // MultiresOFusion_HPP

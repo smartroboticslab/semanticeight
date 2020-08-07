@@ -87,3 +87,16 @@ std::string OFusion::printConfig() {
   ss << "\n";
   return ss.str();
 }
+
+void OFusion::dumpMesh(OctreeType&                map,
+                       std::vector<se::Triangle>& mesh) {
+  auto inside = [](const VoxelData& data) {
+    return data.x > OFusion::surface_boundary;
+  };
+
+  auto select_value = [](const VoxelData& data) {
+    return data.x;
+  };
+
+  se::algorithms::marching_cube(map, select_value, inside, mesh);
+}

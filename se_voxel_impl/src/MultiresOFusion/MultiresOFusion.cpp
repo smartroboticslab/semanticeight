@@ -157,3 +157,15 @@ size_t MultiresOFusion::buildAllocationList(OctreeType&,
   return 0;
 }
 
+void MultiresOFusion::dumpMesh(OctreeType&                map,
+                               std::vector<se::Triangle>& mesh) {
+  auto inside = [](const VoxelData& data) {
+    return data.x > MultiresOFusion::surface_boundary;
+  };
+
+  auto select_value = [](const VoxelData& data) {
+    return data.x;
+  };
+
+  se::algorithms::dual_marching_cube(map, select_value, inside, mesh);
+}

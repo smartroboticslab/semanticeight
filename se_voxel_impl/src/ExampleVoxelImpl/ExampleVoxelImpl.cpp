@@ -84,3 +84,7 @@ Eigen::Vector4f ExampleVoxelImpl::raycast(const OctreeType&      map,
   return Eigen::Vector4f::Zero();
 }
 
+void ExampleVoxelImpl::dumpMesh(OctreeType&                map,
+                                std::vector<se::Triangle>& mesh) {
+}
+

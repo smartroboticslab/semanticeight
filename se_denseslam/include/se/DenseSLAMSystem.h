@@ -210,9 +210,7 @@ class DenseSLAMSystem {
     /*
      * TODO Document this.
      */
-    void dump_mesh(const std::string filename);
-
-    void dump_dual_mesh(const std::string filename);
+    void dumpMesh(const std::string filename);
 
     /**
      * Render the current 3D reconstruction. This function performs raycasting

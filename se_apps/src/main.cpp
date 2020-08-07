@@ -209,7 +209,7 @@ int main(int argc, char** argv) {
   // ==========     DUMP MESH      =========
   if (config.output_mesh_file != "") {
     const auto start = std::chrono::steady_clock::now();
-    pipeline->dump_mesh(config.output_mesh_file.c_str());
+    pipeline->dumpMesh(config.output_mesh_file.c_str());
     const auto end = std::chrono::steady_clock::now();
     stats.sample("meshing",
         std::chrono::duration<double>(end - start).count(),
