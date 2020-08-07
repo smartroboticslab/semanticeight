@@ -42,70 +42,6 @@
 
 
 /**
- * Compute the value of the q_cdf spline using a lookup table. This implements
- * equation (7) from \cite VespaRAL18.
- *
- * \param[in] t Where to compute the value of the spline at.
- * \return The value of the spline.
- */
-inline float ofusion_bspline_memoized(float t) {
-  float value = 0.f;
-  constexpr float inverse_range = 1.f / 6.f;
-  if (t >= -3.0f && t <= 3.0f) {
-    const unsigned int idx
-        = ((t + 3.f) * inverse_range) * (bspline_num_samples - 1) + 0.5f;
-    return bspline_lookup[idx];
-  } else if (t > 3.f) {
-    value = 1.f;
-  }
-  return value;
-}
-
-
-
-/**
- * Compute the occupancy probability along the ray from the camera. This
- * implements equation (6) from \cite VespaRAL18.
- *
- * \param[in] val The point on the ray at which the occupancy probability is
- * computed. The point is expressed using the ray parametric equation.
- * \return The occupancy probability.
- */
-inline float ofusion_H(const float val) {
-  const float Q_1 = ofusion_bspline_memoized(val);
-  const float Q_2 = ofusion_bspline_memoized(val - 3);
-  return Q_1 - Q_2 * 0.5f;
-}
-
-
-
-/**
- * Perform a log-odds update of the occupancy probability. This implements
- * equations (8) and (9) from \cite VespaRAL18.
- */
-inline float ofusion_update_logs(const float prior,
-                                 const float sample) {
-  return (prior + log2(sample / (1.f - sample)));
-}
-
-
-
-/**
- * Weight the occupancy by the time since the last update, acting as a
- * forgetting factor. This implements equation (10) from \cite VespaRAL18.
- */
-inline float ofusion_apply_window(const float occupancy,
-                                         const float,
-                                         const float delta_t,
-                                         const float tau) {
-  float fraction = 1.f / (1.f + (delta_t / tau));
-  fraction = std::max(0.5f, fraction);
-  return occupancy * fraction;
-}
-
-
-
-/**
  * Struct to hold the data and perform the update of the map from a single
  * depth frame.
  */
@@ -131,11 +67,79 @@ struct OFusionUpdate {
     is_visible = false;
   }
 
+
+
   template <typename FieldType,
       template <typename FieldT> class VoxelBlockT>
   void operator()(VoxelBlockT<FieldType>* block) {
     block->active(is_visible);
   }
+
+
+
+  /**
+   * Compute the value of the q_cdf spline using a lookup table. This implements
+   * equation (7) from \cite VespaRAL18.
+   *
+   * \param[in] t Where to compute the value of the spline at.
+   * \return The value of the spline.
+   */
+  inline float ofusion_bspline_memoized(float t) {
+    float value = 0.f;
+    constexpr float inverse_range = 1.f / 6.f;
+    if (t >= -3.0f && t <= 3.0f) {
+      const unsigned int idx
+          = ((t + 3.f) * inverse_range) * (bspline_num_samples - 1) + 0.5f;
+      return bspline_lookup[idx];
+    } else if (t > 3.f) {
+      value = 1.f;
+    }
+    return value;
+  }
+
+
+
+  /**
+   * Compute the occupancy probability along the ray from the camera. This
+   * implements equation (6) from \cite VespaRAL18.
+   *
+   * \param[in] val The point on the ray at which the occupancy probability is
+   * computed. The point is expressed using the ray parametric equation.
+   * \return The occupancy probability.
+   */
+  inline float ofusion_H(const float val) {
+    const float Q_1 = ofusion_bspline_memoized(val);
+    const float Q_2 = ofusion_bspline_memoized(val - 3);
+    return Q_1 - Q_2 * 0.5f;
+  }
+
+
+
+  /**
+   * Perform a log-odds update of the occupancy probability. This implements
+   * equations (8) and (9) from \cite VespaRAL18.
+   */
+  inline float ofusion_update_logs(const float prior,
+                                   const float sample) {
+    return (prior + log2(sample / (1.f - sample)));
+  }
+
+
+
+  /**
+   * Weight the occupancy by the time since the last update, acting as a
+   * forgetting factor. This implements equation (10) from \cite VespaRAL18.
+   */
+  inline float ofusion_apply_window(const float occupancy,
+                                    const float,
+                                    const float delta_t,
+                                    const float tau) {
+    float fraction = 1.f / (1.f + (delta_t / tau));
+    fraction = std::max(0.5f, fraction);
+    return occupancy * fraction;
+  }
+
+
 
   template <typename DataHandlerT>
   void operator()(DataHandlerT&          handler,
@@ -176,7 +180,6 @@ struct OFusionUpdate {
 
     handler.set(data);
   }
-
 };
 
 

@@ -93,14 +93,14 @@ class MultiresESDFMovingSphereTest : public ::testing::Test {
 TEST_F(MultiresESDFMovingSphereTest, Integration) {
   Eigen::Vector3f centre = Eigen::Vector3f::Constant(centre_);
   int scale = 0;
-  float radius = this->radius_;
+  float radius = radius_;
   auto update_op = [&centre, &scale, radius](VoxelBlockType<MultiresTSDF::VoxelType>* block) {
     updateBlock(block, centre, radius, scale);
   };
 
   for(int i = 0; i < 5; ++i) {
     se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), update_op);
-    auto op = [](VoxelBlockType<MultiresTSDF::VoxelType>* block) { se::multires::propagateUp(block, 0); };
+    auto op = [](VoxelBlockType<MultiresTSDF::VoxelType>* block) { MultiresTSDFUpdate::propagateUp(block, 0); };
     se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), op);
 
     {
@@ -118,7 +118,7 @@ TEST_F(MultiresESDFMovingSphereTest, Integration) {
   for(int i = 5; i < 10; ++i) {
     se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), update_op);
     auto& octree_ref = octree_;
-    auto op = [&octree_ref, scale](VoxelBlockType<MultiresTSDF::VoxelType>* block) { se::multires::propagateDown(octree_ref, block, scale, 0); };
+    auto op = [&octree_ref, scale](VoxelBlockType<MultiresTSDF::VoxelType>* block) { MultiresTSDFUpdate::propagateDown(octree_ref, block, scale, 0); };
     se::functor::internal::parallel_for_each(octree_.pool().blockBuffer(), op);
 
     {
