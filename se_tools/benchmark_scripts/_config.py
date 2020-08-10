@@ -117,7 +117,7 @@ class Config:
 
 class General:
     def __init__(self):
-        self.disable_render         = None
+        self.enable_render          = None
         self.max_frame              = None
 
         # Rates

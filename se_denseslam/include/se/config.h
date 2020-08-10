@@ -226,7 +226,7 @@ struct Configuration {
 
   /**
    * Whether to hide the GUI. Hiding the GUI results in faster operation.
-   * <br>\em Default: false
+   * <br>\em Default: true
    */
   bool enable_render;
 

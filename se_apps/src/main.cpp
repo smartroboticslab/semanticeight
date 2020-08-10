@@ -156,6 +156,8 @@ int main(int argc, char** argv) {
       t_MW,
       config.pyramid, config);
 
+  //  =========  PRINT CONFIGURATION  =========
+
   if (config.log_file != "") {
     log_file_stream.open(config.log_file.c_str());
     log_stream = &log_file_stream;

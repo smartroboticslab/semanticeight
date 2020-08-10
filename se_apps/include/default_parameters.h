@@ -350,9 +350,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Log path
   config.log_file = (has_yaml_general_config && yaml_general_config["log_path"])
       ? yaml_general_config["log_path"].as<std::string>() : default_log_path;
-  // Inable render
-  config.enable_render = (has_yaml_general_config && yaml_general_config["disable_render"])
-      ? !yaml_general_config["disable_render"].as<bool>() : default_enable_render;
+  // En/disable render
+  config.enable_render = (has_yaml_general_config && yaml_general_config["enable_render"])
+      ? yaml_general_config["enable_render"].as<bool>() : default_enable_render; // default true
   // Render path
   config.output_render_file = (has_yaml_general_config && yaml_general_config["output_render_path"])
       ? yaml_general_config["output_render_path"].as<std::string>() : default_output_render_path;

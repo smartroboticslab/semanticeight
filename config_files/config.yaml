@@ -6,7 +6,7 @@ general:
   ground_truth_file:          "/PATH/TO/association.txt"
   benchmark:                  false
   log_path:                   "PATH/TO/log.txt" # or "PATH/TO/LOG_DIR
-  disable_render:             false                           # Will be set true if benchmark is true
+  enable_render:              true                            # Will be set true if benchmark is true
   output_render_path:         ""
   output_mesh_file:           ""
 
