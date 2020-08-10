@@ -258,6 +258,8 @@ namespace se {
 static std::ostream& operator<<(std::ostream& out, se::Reader* reader) {
   out << "==========   READER   ========== " << "\n";
   out << "Reader type:                     " << reader->name() << "\n";
+  out << "Number frames:                   " << ((reader->numFrames() == 0) ?
+                                                "Unknown" : std::to_string(reader->numFrames())) << "\n";
   out << "\n";
   return out;
 }
