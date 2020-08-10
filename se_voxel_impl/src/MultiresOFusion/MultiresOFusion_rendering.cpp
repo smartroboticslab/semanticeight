@@ -53,7 +53,7 @@
 float compute_map_intersection(const Eigen::Vector3f& ray_pos_M,
                                const Eigen::Vector3f& ray_dir_M,
                                const int              map_dim,
-                               float&                 t_far,
+                               const float            t_far,
                                bool&                  is_valid) {
   /*
   Fast Ray-Box Intersection
@@ -205,7 +205,7 @@ void advance_ray(const se::Octree<MultiresOFusion::VoxelType>& map,
     }
 
     const int node_size = 1 << scale;
-    Eigen::Vector3i curr_node = node_size*(((ray_coord_f).array().floor())/node_size).cast<int>();
+    Eigen::Vector3i curr_node = node_size * (((ray_coord_f).array().floor()) / node_size).cast<int>();
 
 
     // Fraction of the current position in [voxel] in the current node along the x-, y- and z-axis
