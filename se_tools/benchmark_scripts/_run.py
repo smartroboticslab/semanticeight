@@ -16,14 +16,16 @@ class runCommand:
     def benchmark(self):
         benchmark_arg     = ['--benchmark='          + os.path.join(self.result_dir, self.base_filename + '_result.txt')]
         output_render_arg = ['--output-render-path=' + os.path.join(self.output_dir, self.base_filename + '_render')]
-        return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg)
+        output_mesh_arg = ['--output-mesh-path=' + os.path.join(self.output_dir, self.base_filename + '_mesh')]
+        return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg + output_mesh_arg)
 
     def manualBenchmark(self):
         benchmark_arg     = ['--benchmark='          + os.path.join(self.result_dir, self.base_filename + '_result_manual_run.txt')]
         output_render_arg = ['--output-render-path=' + os.path.join(self.output_dir, self.base_filename + '_render_manual_run')]
-        return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg)
+        output_mesh_arg = ['--output-mesh-path=' + os.path.join(self.output_dir, self.base_filename + '_mesh_manual_run')]
+        return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg + output_mesh_arg)
 
-    def withoutBenchmark(self):
+    def withoutBenchmark(self): # Force rendering to be enabled
         enable_render_arg = ['--enable-render']
         return ' '.join(self.executable + self.args + enable_render_arg)
 

@@ -73,8 +73,7 @@ struct Configuration {
    */
   int integration_rate;
 
-  /**
-   * Render the 3D reconstruction every rendering_rate frames.
+
   /**
    * Render the 3D reconstruction every rendering_rate frames
    * \Note configuration::enable_render == true (default) required.
@@ -85,6 +84,16 @@ struct Configuration {
    * <br>\em Default: 4
    */
   int rendering_rate;
+
+  /**
+   * Mesh the 3D reconstruction every meshing_rate frames.
+   *
+   * Special cases:
+   * If meshing_rate == 0 the volume is only meshed for configuration::max_frame.
+   * If meshing_rate < 0  the volume is only meshed for frame abs(meshing_rate).
+   * <br>\em Default: 100
+   */
+  int meshing_rate;
 
   /**
    * The x, y and z size of the reconstructed map in voxels.
@@ -246,6 +255,12 @@ struct Configuration {
   float icp_threshold;
 
   /**
+   * Whether to mesh the octree.
+   * <br>\em Default: false
+   */
+  bool enable_meshing;
+
+  /**
    * Whether to hide the GUI. Hiding the GUI results in faster operation.
    * <br>\em Default: true
    */
@@ -294,11 +309,14 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
                                                  ? "true" : "false") << "\n";
   out << "Enable render:                   " << (config.enable_render
                                                  ? "true" : "false") << "\n";
+  out << "Enable meshing:                  " << (config.enable_meshing
+                                                 ? "true" : "false") << "\n";
   out << "\n";
 
   out << "Integration rate:                " << config.integration_rate << "\n";
   out << "Tracking rate:                   " << config.tracking_rate << "\n";
   out << "Rendering rate:                  " << config.rendering_rate << "\n";
+  out << "Meshing rate:                    " << config.meshing_rate << "\n";
   out << "FPS:                             " << config.fps << "\n";
   out << "Drop frames:                     " << (config.drop_frames
                                                  ? "true" : "false") << "\n";

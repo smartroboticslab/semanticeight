@@ -285,11 +285,12 @@ void DenseSLAMSystem::renderRGBA(uint8_t*               output_RGBA_image_data,
 
 
 
-void DenseSLAMSystem::dumpMesh(const std::string filename) {
+void DenseSLAMSystem::dumpMesh(const std::string filename, const bool print_path) {
 
-  std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
+  if (print_path) {
+    std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
+  }
   std::vector<se::Triangle> mesh;
-
   VoxelImpl::dumpMesh(*map_, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
 }

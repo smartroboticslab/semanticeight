@@ -8,12 +8,14 @@ general:
   log_path:                   "PATH/TO/log.txt" # or "PATH/TO/LOG_DIR
   enable_render:              true                            # Will be set true if benchmark is true
   output_render_path:         ""
-  output_mesh_file:           ""
+  enable_meshing:             false
+  output_mesh_path:           ""
 
   # Rates
   tracking_rate:              1
   integration_rate:           1
   rendering_rate:             4
+  meshing_rate:               0
   fps:                        0.0
 
   # Other

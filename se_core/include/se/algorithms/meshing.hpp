@@ -873,8 +873,6 @@ namespace algorithms {
     const int map_size = map.size();
     const float map_dim = map.dim();
     map.getBlockList(block_list, false);
-    std::cout << "Blocklist size: " << block_list.size() << std::endl;
-
 
 #pragma omp parallel for
     for (size_t i = 0; i < block_list.size(); i++) {
@@ -925,8 +923,6 @@ namespace algorithms {
     const float map_dim = map.dim();
     const float voxel_dim = map_dim / map_size;
     map.getBlockList(block_list, false);
-    std::cout << "Blocklist size: " << block_list.size() << std::endl;
-
 
 #pragma omp parallel for
     for (size_t i = 0; i < block_list.size(); i++) {

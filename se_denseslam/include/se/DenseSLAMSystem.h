@@ -210,7 +210,7 @@ class DenseSLAMSystem {
     /*
      * TODO Document this.
      */
-    void dumpMesh(const std::string filename);
+    void dumpMesh(const std::string filename, const bool print_path = false);
 
     /**
      * Render the current 3D reconstruction. This function performs raycasting

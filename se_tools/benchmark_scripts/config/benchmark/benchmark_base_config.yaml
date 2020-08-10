@@ -1,10 +1,12 @@
 general:
   enable_render:              true
+  enable_meshing:             false
 
   # Rates
   integration_rate:           2
   tracking_rate:              1
   rendering_rate:             4
+  meshing_rate:               0
   fps:                        0.0
 
   # Other

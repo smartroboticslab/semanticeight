@@ -118,12 +118,14 @@ class Config:
 class General:
     def __init__(self):
         self.enable_render          = None
+        self.enable_meshing         = None
         self.max_frame              = None
 
         # Rates
         self.integration_rate       = None
         self.tracking_rate          = None
         self.rendering_rate         = None
+        self.meshing_rate           = None
         self.fps                    = None
 
         # Other
@@ -137,7 +139,7 @@ class General:
     def setup_from_yaml(self, general_config_yaml):
         for key, value in general_config_yaml.items():
             if key in ['dataset_name', 'sequences', 'benchmark',
-                       'benchmark_path', 'log_path', 'output_render_path', 'output_mesh_file']:
+                       'benchmark_path', 'log_path', 'output_render_path', 'output_mesh_path']:
                 continue
             if value is not None and value != "":
                 if not hasattr(self, key):

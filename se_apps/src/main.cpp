@@ -215,16 +215,6 @@ int main(int argc, char** argv) {
 #endif
   }
 
-  // ==========     DUMP MESH      =========
-  if (config.output_mesh_file != "") {
-    const auto start = std::chrono::steady_clock::now();
-    pipeline->dumpMesh(config.output_mesh_file.c_str());
-    const auto end = std::chrono::steady_clock::now();
-    stats.sample("meshing",
-        std::chrono::duration<double>(end - start).count(),
-        PerfStats::TIME);
-  }
-
   if (power_monitor && power_monitor->isActive()) {
     std::ofstream powerStream("power.rpt");
     power_monitor->powerStats.print_all_data(powerStream);
@@ -432,6 +422,30 @@ int processAll(se::Reader*    reader,
                           (unsigned char*)volume_render,
                           (pipeline->getImageResolution()).x(),
                           (pipeline->getImageResolution()).y());
+  }
+
+  // ==========     DUMP MESH      =========
+
+  bool mesh_volume = false;
+  if (config->enable_meshing) {
+    if (frame == config->max_frame) {
+      mesh_volume = true;
+    } else if (!config->meshing_rate == 0) {
+      mesh_volume = (config->meshing_rate < 0) ?
+          frame == std::abs(config->meshing_rate) :frame % config->meshing_rate == 0;
+    }
+  }
+  if (mesh_volume && config->output_mesh_file != "") {
+    std::stringstream output_mesh_file_ss;
+    output_mesh_file_ss << config->output_mesh_file << "_frame_"
+                          << std::setw(4) << std::setfill('0') << frame << ".vtk";
+
+    const auto start = std::chrono::steady_clock::now();
+    pipeline->dumpMesh(output_mesh_file_ss.str().c_str(), !config->benchmark);
+    const auto end = std::chrono::steady_clock::now();
+    stats.sample("meshing",
+                 std::chrono::duration<double>(end - start).count(),
+                 PerfStats::TIME);
   }
 
   first_frame = false;
