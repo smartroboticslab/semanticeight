@@ -45,7 +45,7 @@ static const std::string      default_log_path = "";
 static constexpr float        default_near_plane = 0.4f;
 static const Eigen::Vector3i  default_map_size(256, 256, 256);
 static const Eigen::Vector3f  default_map_dim(2.f, 2.f, 2.f);
-static const int              default_max_frame(-1);
+static const int              default_max_frame = -1;
 static constexpr bool         default_render_volume_fullsize = false;
 static constexpr int          default_rendering_rate = 4;
 static const std::string      default_output_mesh_file = "";
@@ -108,11 +108,11 @@ inline void print_arguments() {
   std::cerr << "-i  (--sequence-path) <filename>           : sequence path\n";
   std::cerr << "-k  (--sensor-intrinsics)                  : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                      : default is " << default_icp_threshold << "\n";
-  std::cerr << "-o  (--log-path) <filename/dir>            : default is stdout\n";
   std::cerr << "-m  (--max-frame)                          : default is full dataset (-1)\n";
   std::cerr << "-M  (--output-mesh-file) <filename>        : output mesh file\n";
   std::cerr << "-n  (--near-plane)                         : default is " << default_near_plane << "\n";
   std::cerr << "-N  (--far-plane)                          : default is " << default_far_plane << "\n";
+  std::cerr << "-o  (--log-path) <filename/dir>            : default is stdout\n";
   std::cerr << "-p  (--init-pose)                          : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
   std::cerr << "-q  (--disable-render)                     : default is to render images\n";
   std::cerr << "-Q  (--enable-render)                      : use to override --disable-render in YAML file\n";
@@ -618,10 +618,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.tracking_rate = atof(optarg);
         break;
 
-      case 'z': // rendering-rate
-        config.rendering_rate = atof(optarg);
-        break;
-
       case 'v': // map-size
         config.map_size = atoi3(optarg);
         if (   (config.map_size.x() <= 0)
@@ -652,6 +648,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       case 'Y': // yaml-file
         break;
 
+      case 'z': // rendering-rate
+        config.rendering_rate = atof(optarg);
+        break;
       default:
         print_arguments();
         exit(EXIT_FAILURE);
