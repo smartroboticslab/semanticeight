@@ -78,7 +78,7 @@ struct Configuration {
 
   /**
    * Render the 3D reconstruction every rendering_rate frames
-   * \Note configuration::enable_render == true (default) required.
+   * \note configuration::enable_render == true (default) required.
    *
    * Special cases:
    * If rendering_rate == 0 the volume is only rendered for configuration::max_frame.
@@ -228,7 +228,7 @@ struct Configuration {
    * Read frames at the specified rate, waiting if the computation rate is
    * higher than se::Configuration::fps.
    *
-   * @note Must be non-negative.
+   * \note Must be non-negative.
    *
    * <br>\em Default: 0
    */
@@ -243,7 +243,7 @@ struct Configuration {
 
   /**
    * Last frame to be integrated.
-   * \Note: se::Configuration::max_frame starts from 0.
+   * \note: se::Configuration::max_frame starts from 0.
    *
    * Special cases
    * If max_frame == -1 (default) the entire dataset will be integrated and the value will be overwritten by
