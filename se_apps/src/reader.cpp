@@ -31,17 +31,14 @@ se::Reader* se::create_reader(const Configuration& config) {
   // OpenNI from a camera or a file
   if (reader_config.sequence_path.empty()
       || (stdfs::path(reader_config.sequence_path).extension() == ".oni")) {
-    std::cout << "Using OpenNIReader\n";
     reader = new se::OpenNIReader(reader_config);
 
   // ICL-NUIM reader
   } else if (stdfs::is_directory(reader_config.sequence_path)) {
-    std::cout << "Using ICLNUIMReader\n";
     reader = new se::ICLNUIMReader(reader_config);
 
   // Slambench 1.0 .raw reader
   } else if (stdfs::path(reader_config.sequence_path).extension() == ".raw") {
-    std::cout << "Using RAWReader\n";
     reader = new se::RAWReader(reader_config);
 
   } else {

@@ -251,5 +251,17 @@ namespace se {
 
 } // namespace se
 
+/** The overview of the reader configuration in configuration format.
+ *
+ * \return The configuration of the reader to the ostream.
+ */
+static std::ostream& operator<<(std::ostream& out, se::Reader* reader) {
+  out << "==========   READER   ========== " << "\n";
+  out << "Reader type:                     " << reader->name() << "\n";
+  out << "\n";
+  return out;
+}
+
+
 #endif
 
