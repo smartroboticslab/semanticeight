@@ -50,11 +50,11 @@
  * \param is_valid  flag if the map intersection is valid
  * \return see above
  */
-float computeMapIntersection(const Eigen::Vector3f& ray_pos_M,
-                             const Eigen::Vector3f& ray_dir_M,
-                             const int              map_dim,
-                             float&                 t_far,
-                             bool&                  is_valid) {
+float compute_map_intersection(const Eigen::Vector3f& ray_pos_M,
+                               const Eigen::Vector3f& ray_dir_M,
+                               const int              map_dim,
+                               float&                 t_far,
+                               bool&                  is_valid) {
   /*
   Fast Ray-Box Intersection
   by Andrew Woo
@@ -146,14 +146,14 @@ float computeMapIntersection(const Eigen::Vector3f& ray_pos_M,
  * @param is_valid      Indiactes if a voxel block was found
  * \return              Surface intersection point in [m] and scale
  */
-void advanceRay(const se::Octree<MultiresOFusion::VoxelType>& map,
-                const Eigen::Vector3f& ray_origin_M,
-                const Eigen::Vector3f& ray_dir_M,
-                float&                 t,
-                float&                 t_far,
-                const float            voxel_dim,
-                const int              max_scale,
-                bool&                  is_valid) {
+void advance_ray(const se::Octree<MultiresOFusion::VoxelType>& map,
+                 const Eigen::Vector3f&                        ray_origin_M,
+                 const Eigen::Vector3f&                        ray_dir_M,
+                 float&                                        t,
+                 float&                                        t_far,
+                 const float                                   voxel_dim,
+                 const int                                     max_scale,
+                 bool&                                         is_valid) {
   int scale = max_scale;  // Initialize scale
   // Additional distance travelled in [voxel]
   float v_add   = 0;                     // TODO: I'll have to re-evaluate this value.
@@ -285,7 +285,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
   // If so, compute the first point of contact with the map.
   // Stop if no intersection will occur (i.e. is_valid = false).
   bool is_valid = true;
-  float t = computeMapIntersection(ray_origin_M, ray_dir_M, map.dim(), t_far, is_valid);
+  float t = compute_map_intersection(ray_origin_M, ray_dir_M, map.dim(), t_far, is_valid);
 
   if (!is_valid) {
     // Ray won't intersect with the map
@@ -294,7 +294,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
 
   const int max_scale = std::min(7, map.voxelDepth() - 1); // Max possible free space skipped per iteration (node size = 2^max_scale)
 
-  advanceRay(map, ray_origin_M, ray_dir_M, t, t_far, voxel_dim, max_scale, is_valid);
+  advance_ray(map, ray_origin_M, ray_dir_M, t, t_far, voxel_dim, max_scale, is_valid);
 
   if (!is_valid) {
     // Ray passes only through free space or intersects with the map before t_near or after t_far.
