@@ -43,11 +43,11 @@
  * 2. Origin is outside the map and ray intersects the map          -> Return t/valid
  * 3. Origin is outside the map and ray will not intersect the map  -> Return 0/invalid
  *
- * \param ray_pos_M  current camera position in [m]
- * \param ray_dir_M ray_dir_M of the ray
- * \param map_dim   map dimension in [m]
- * \param t_far     maximum travel distance along the ray in [m]
- * \param is_valid  flag if the map intersection is valid
+ * \param[in]  ray_pos_M  current camera position in [m]
+ * \param[in]  ray_dir_M ray_dir_M of the ray
+ * \param[in]  map_dim   map dimension in [m]
+ * \param[in]  t_far     maximum travel distance along the ray in [m]
+ * \param[out] is_valid  flag if the map intersection is valid
  * \return see above
  */
 float compute_map_intersection(const Eigen::Vector3f& ray_pos_M,
@@ -134,17 +134,16 @@ float compute_map_intersection(const Eigen::Vector3f& ray_pos_M,
 }
 
 /*!
- * @brief Advance ray from the camera position until a voxel block with a max occupancy
+ * \brief Advance ray from the camera position until a voxel block with a max occupancy
  * log-odd value of at least -0.2 is reached
- * @param map           Map
- * @param ray_origin_M    Position of the camera
- * @param t             Distance until the search voxel block is reached
- * @param t_near        Distance to near plane or until the map is entered
- * @param t_far         Distance to far plane or until the map is surpassed
- * @param voxel_dim     Resolution of the map
- * @param max_scale     Finest scale at which to check the occupancy
- * @param is_valid      Indiactes if a voxel block was found
- * \return              Surface intersection point in [m] and scale
+ * \param[in]     map           Map
+ * \param[in]     ray_origin_M    Position of the camera
+ * \param[in/out] t             Distance until the search voxel block is reached
+ * \param[in/out] t_far         Distance to far plane or until the map is surpassed
+ * \param[in]     voxel_dim     Resolution of the map
+ * \param[in]     max_scale     Finest scale at which to check the occupancy
+ * \param[out]    is_valid      Indiactes if a voxel block was found
+ * \return        Surface intersection point in [m] and scale
  */
 void advance_ray(const se::Octree<MultiresOFusion::VoxelType>& map,
                  const Eigen::Vector3f&                        ray_origin_M,
