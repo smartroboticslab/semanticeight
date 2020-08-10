@@ -56,12 +56,14 @@ struct Configuration {
    * The ratio of the input frame size over the frame size used internally.
    * Values greater than 1 result in the input frames being downsampled
    * before processing. Valid values are 1, 2, 4 and 8.
+   *
    * <br>\em Default: 1
    */
   int sensor_downsampling_factor;
 
   /**
    * Perform tracking on a frame every tracking_rate frames.
+   *
    * <br>\em Default: 1
    */
   int tracking_rate;
@@ -69,10 +71,10 @@ struct Configuration {
   /**
    * Integrate a 3D reconstruction every integration_rate frames. Should not
    * be less than tracking_rate.
+   *
    * <br>\em Default: 2
    */
   int integration_rate;
-
 
   /**
    * Render the 3D reconstruction every rendering_rate frames
@@ -81,6 +83,7 @@ struct Configuration {
    * Special cases:
    * If rendering_rate == 0 the volume is only rendered for configuration::max_frame.
    * If rendering_rate < 0  the volume is only rendered for frame abs(rendering_rate).
+   *
    * <br>\em Default: 4
    */
   int rendering_rate;
@@ -91,18 +94,21 @@ struct Configuration {
    * Special cases:
    * If meshing_rate == 0 the volume is only meshed for configuration::max_frame.
    * If meshing_rate < 0  the volume is only meshed for frame abs(meshing_rate).
+   *
    * <br>\em Default: 100
    */
   int meshing_rate;
 
   /**
    * The x, y and z size of the reconstructed map in voxels.
+   *
    * <br>\em Default: (256, 256, 256)
    */
   Eigen::Vector3i map_size;
 
   /**
    * The x, y and z dimensions of the reconstructed map in meters.
+   *
    * <br>\em Default: (2, 2, 2)
    */
   Eigen::Vector3f map_dim;
@@ -112,6 +118,7 @@ struct Configuration {
    * expressed as fractions [0, 1] of the volume's extent. The default value of
    * (0.5, 0.5, 0) results in the first pose being placed halfway along the x
    * and y axes and at the beginning of the z axis.
+   *
    * <br>\em Default: (0.5, 0.5, 0)
    */
   Eigen::Vector3f t_MW_factor;
@@ -128,6 +135,7 @@ struct Configuration {
    * results in 10 ICP iterations for the initial depth frame, 5 iterations for
    * the initial depth frame downsampled once and 4 iterations for the initial
    * frame downsampled twice.
+   *
    * <br>\em Default: (10, 5, 4)
    */
   std::vector<int> pyramid;
@@ -147,12 +155,14 @@ struct Configuration {
 
   /**
    * Whether to run the pipeline in benchmark mode. Hiding the GUI results in faster operation.
+   *
    * <br>\em Default: false
    */
   bool benchmark;
 
   /**
    * The log file the timing results will be written to.
+   *
    * <br>\em Default: std::cout if Configuration::benchmark is blank (--benchmark) or not Configuration::enable_render (--enable-render)
    * <br>\em Default: autogen filename if the Configuration::benchmark argument is a directory (--benchmark=/PATH/TO/DIR)
    */
@@ -167,6 +177,7 @@ struct Configuration {
    * qy qz qw`, that is the pose is encoded in the last 7 columns of the line.
    * The other columns of the file are ignored. Lines beginning with # are
    * comments.
+   *
    * <br>\em Default: ""
    *
    * \note It is assumed that the ground truth poses are the sensor frame C
@@ -181,6 +192,7 @@ struct Configuration {
    * A 4x4 transformation matrix post-multiplied with all poses read from the
    * ground truth file. It is used if the ground truth poses are in some frame
    * B other than the sensor frame C.
+   *
    * <br>\em Default: Eigen::Matrix4f::Identity()
    */
   Eigen::Matrix4f T_BC;
@@ -244,18 +256,21 @@ struct Configuration {
    * (e.g. OpenNI/live feed) the frames are integrated until the pipeline is terminated and max_frame is kept at -1.
    *
    * max_frame in [0, number of frames in dataset - 1] or [0, inf] if number of frames in dataset is unknown.
+   *
    * <br>\em Default: -1 (full dataset)
    */
   int max_frame;
 
   /**
    * The ICP convergence threshold.
+   *
    * <br>\em Default: 1e-5
    */
   float icp_threshold;
 
   /**
    * Whether to mesh the octree.
+   *
    * <br>\em Default: false
    */
   bool enable_meshing;
@@ -282,6 +297,7 @@ struct Configuration {
    * Whether to filter the depth input frames using a bilateral filter.
    * Filtering using a bilateral filter helps to reduce the measurement
    * noise.
+   *
    * <br>\em Default: false
    */
   bool bilateral_filter;
