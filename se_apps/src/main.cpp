@@ -128,10 +128,16 @@ int main(int argc, char** argv) {
 
   Configuration config = parseArgs(argc, argv);
   power_monitor = new PowerMonitor();
-  progress_bar  = new ProgressBar(config.max_frame);
 
   // ========= READER INITIALIZATION  =========
   reader = se::create_reader(config);
+
+  // ========= UPDATE MAX FRAME =========
+  if (config.max_frame == -1 ||
+      (reader->numFrames() != 0 && config.max_frame > reader->numFrames() - 1)) {
+    config.max_frame = reader->numFrames() - 1;
+  }
+  progress_bar  = new ProgressBar(config.max_frame);
 
   //  =========  BASIC PARAMETERS  (input image size / image size )  =========
   const Eigen::Vector2i input_image_res = (reader != nullptr)
@@ -373,7 +379,12 @@ int processAll(se::Reader*    reader,
 
   bool render_volume = false;
   if (render_images) {
-    render_volume = (config->rendering_rate < 0) ? frame == std::abs(config->rendering_rate) : frame % config->rendering_rate == 0;
+    if (frame == config->max_frame) {
+      render_volume = true;
+    } else if (!config->rendering_rate == 0) {
+      render_volume = (config->rendering_rate < 0) ?
+          frame == std::abs(config->rendering_rate) : frame % config->rendering_rate == 0;
+    }
     pipeline->renderRGBA((uint8_t*) rgba_render, pipeline->getImageResolution());
     pipeline->renderDepth((unsigned char*)depth_render, pipeline->getImageResolution(), sensor);
     pipeline->renderTrack((unsigned char*)track_render, pipeline->getImageResolution());
@@ -410,6 +421,8 @@ int processAll(se::Reader*    reader,
         << tracked << "\t" << integrated // tracked and integrated flags
         << std::endl;
   }
+
+  //  =========  SAVE VOLUME RENDER  =========
 
   if (render_volume && config->output_render_file != "") {
     std::stringstream output_render_file_ss;

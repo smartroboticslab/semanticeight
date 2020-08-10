@@ -75,6 +75,13 @@ struct Configuration {
 
   /**
    * Render the 3D reconstruction every rendering_rate frames.
+  /**
+   * Render the 3D reconstruction every rendering_rate frames
+   * \Note configuration::enable_render == true (default) required.
+   *
+   * Special cases:
+   * If rendering_rate == 0 the volume is only rendered for configuration::max_frame.
+   * If rendering_rate < 0  the volume is only rendered for frame abs(rendering_rate).
    * <br>\em Default: 4
    */
   int rendering_rate;
@@ -214,7 +221,21 @@ struct Configuration {
   bool drop_frames;
 
   /**
-   * Last frame to be integrated. se::Configuration::max_frame starts from 0.
+   * Last frame to be integrated.
+   * \Note: se::Configuration::max_frame starts from 0.
+   *
+   * Special cases
+   * If max_frame == -1 (default) the entire dataset will be integrated and the value will be overwritten by
+   * number of frames in dataset - 1 (exception number of frames is unknwon e.g. OpenNI/live feed).
+   *
+   * If max_frame > number of frames in dataset - 1 the value will be overwritten by reader.numFrames()
+   * (exception number of frames is unknwon e.g. OpenNI/live feed).
+   *
+   * If (max_frame == -1 (default) or max_frame > number of frames in dataset - 1) and the number of frames is unknown
+   * (e.g. OpenNI/live feed) the frames are integrated until the pipeline is terminated and max_frame is kept at -1.
+   *
+   * max_frame in [0, number of frames in dataset - 1] or [0, inf] if number of frames in dataset is unknown.
+   * <br>\em Default: -1 (full dataset)
    */
   int max_frame;
 
