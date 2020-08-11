@@ -234,15 +234,61 @@ inline Eigen::Vector4f atof4(char* arg) {
   return res;
 }
 
-// Transformation std::vector(16) to transformation Eigen::Matrix4f
-Eigen::Matrix4f TvtoT(std::vector<float> T_v) {
-  Eigen::Matrix4f T;
-  T << T_v[0],  T_v[1],  T_v[2],  T_v[3],
-       T_v[4],  T_v[5],  T_v[6],  T_v[7],
-       T_v[8],  T_v[9],  T_v[10], T_v[11],
-       T_v[12], T_v[13], T_v[14], T_v[15];
+
+
+Eigen::Matrix4f toT(std::vector<float> tokens) {
+  Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+  Eigen::Vector3f t;
+  Eigen::Quaternionf q;
+  switch (tokens.size()) {
+    case 3:
+      // Translation
+      t = Eigen::Vector3f(tokens[0], tokens[1], tokens[2]);
+      T.topRightCorner<3,1>() = t;
+      break;
+    case 4:
+      // Rotation
+      // Create a quaternion and get the equivalent rotation matrix
+      q = Eigen::Quaternionf(tokens[3], tokens[0],
+                                                tokens[1], tokens[2]);
+      T.block<3,3>(0,0) = q.toRotationMatrix();
+      break;
+    case 7:
+      // Translation and rotation
+      t = Eigen::Vector3f(tokens[0], tokens[1], tokens[2]);
+      q = Eigen::Quaternionf(tokens[6], tokens[3],
+                             tokens[4], tokens[5]);
+      T.topRightCorner<3,1>() = t;
+      T.block<3,3>(0,0) = q.toRotationMatrix();
+      break;
+    case 16:
+      T << tokens[0],  tokens[1],  tokens[2],  tokens[3],
+           tokens[4],  tokens[5],  tokens[6],  tokens[7],
+           tokens[8],  tokens[9],  tokens[10], tokens[11],
+           tokens[12], tokens[13], tokens[14], tokens[15];
+      break;
+    default:
+      std::cerr << "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
+                << "3  parameters (translation): tx,ty,tz\n"
+                << "4  parameters (rotation in quaternion form): qx,qy,qz,qw\n"
+                << "7  parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw\n"
+                << "16 parameters (transformation matrix): R_11, R_12, R_13, t_1\n"
+                << "                                       R_21, R_22, R_23, t_2\n"
+                << "                                       R_31, R_32, R_33, t_3\n"
+                << std::endl;
+      exit(EXIT_FAILURE);
+  }
   return T;
 }
+
+Eigen::Matrix4f toT(std::vector<std::string> tokens_s) {
+  std::vector<float> tokens_f;
+  for (auto& token_s : tokens_s) {
+    tokens_f.push_back(stof(token_s));
+  }
+  return toT(tokens_f);
+}
+
 
 std::string to_filename(std::string s) {
   std::replace(s.begin(), s.end(), '.', '_');
@@ -485,10 +531,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       ? yaml_sensor_config["left_hand_frame"].as<bool>() : default_left_hand_frame;
   // Camera to Body frame transformation
   config.T_BC = (has_yaml_sensor_config && yaml_sensor_config["T_BC"])
-      ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_T_BC;
+      ? Eigen::Matrix4f(toT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_T_BC;
   // Initial Body pose
   config.init_T_WB = (has_yaml_sensor_config && yaml_sensor_config["init_T_WB"])
-      ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["init_T_WB"].as<std::vector<float>>())) : default_init_T_WB;
+      ? Eigen::Matrix4f(toT(yaml_sensor_config["init_T_WB"].as<std::vector<float>>())) : default_init_T_WB;
   // Near plane
   config.near_plane = (has_yaml_sensor_config && yaml_sensor_config["near_plane"])
       ? yaml_sensor_config["near_plane"].as<float>() : default_near_plane;
@@ -550,35 +596,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       case 'G': // init-body-pose
         // Split argument into substrings
         tokens = str_utils::split_str(optarg, ',');
-        switch (tokens.size()) {
-          case 3:
-            // Translation
-            init_t_WB = Eigen::Vector3f(std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
-            config.init_T_WB.topRightCorner<3,1>() = init_t_WB;
-            break;
-          case 4:
-            // Rotation
-            // Create a quaternion and get the equivalent rotation matrix
-            init_q_WB = Eigen::Quaternionf(std::stof(tokens[3]), std::stof(tokens[0]),
-                                      std::stof(tokens[1]), std::stof(tokens[2]));
-            config.init_T_WB.block<3,3>(0,0) = init_q_WB.toRotationMatrix();
-            break;
-          case 7:
-            // Translation and rotation
-            init_t_WB = Eigen::Vector3f(std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
-            init_q_WB = Eigen::Quaternionf(std::stof(tokens[6]), std::stof(tokens[3]),
-                                      std::stof(tokens[4]), std::stof(tokens[5]));
-            config.init_T_WB.topRightCorner<3,1>() = init_t_WB;
-            config.init_T_WB.block<3,3>(0,0) = init_q_WB.toRotationMatrix();
-            break;
-          default:
-            std::cerr << "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
-                      << "3 parameters (translation): tx,ty,tz\n"
-                      << "4 parameters (rotation in quaternion form): qx,qy,qz,qw\n"
-                      << "7 parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw"
-                      << std::endl;
-            exit(EXIT_FAILURE);
-        }
+        config.init_T_WB = toT(tokens);
         break;
 
       case '?':
@@ -674,35 +692,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       case 'T': // camera-to-body-transform
         // Split argument into substrings
         tokens = str_utils::split_str(optarg, ',');
-        switch (tokens.size()) {
-          case 3:
-            // Translation
-            t_BC = Eigen::Vector3f(std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
-            config.T_BC.topRightCorner<3,1>() = t_BC;
-            break;
-          case 4:
-            // Rotation
-            // Create a quaternion and get the equivalent rotation matrix
-            q_BC = Eigen::Quaternionf(std::stof(tokens[3]), std::stof(tokens[0]),
-                                      std::stof(tokens[1]), std::stof(tokens[2]));
-            config.T_BC.block<3,3>(0,0) = q_BC.toRotationMatrix();
-            break;
-          case 7:
-            // Translation and rotation
-            t_BC = Eigen::Vector3f(std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
-            q_BC = Eigen::Quaternionf(std::stof(tokens[6]), std::stof(tokens[3]),
-                                      std::stof(tokens[4]), std::stof(tokens[5]));
-            config.T_BC.topRightCorner<3,1>() = t_BC;
-            config.T_BC.block<3,3>(0,0) = q_BC.toRotationMatrix();
-            break;
-          default:
-            std::cerr << "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
-                      << "3 parameters (translation): tx,ty,tz\n"
-                      << "4 parameters (rotation in quaternion form): qx,qy,qz,qw\n"
-                      << "7 parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw"
-                      << std::endl;
-            exit(EXIT_FAILURE);
-        }
+        config.T_BC = toT(tokens);
         break;
 
       case 'u': // disable-meshing
