@@ -29,57 +29,92 @@
 
 #ifndef VTK_IO_H
 #define VTK_IO_H
+
+#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <iostream>
-#include "se/utils/math_utils.h"
+#include <string>
 #include <algorithm>
 
-template <typename OctreeT, typename FieldSelector>
-void save3DSlice(const OctreeT& in, const Eigen::Vector3i& lower_coord,
-    const Eigen::Vector3i& upper_coord, FieldSelector select_value, const int scale, const char* filename){
+#include <Eigen/Dense>
+
+#include "se/octree.hpp"
+
+
+/**
+ * \brief Save a 3D slice of the octree values as a VTK file.
+ *
+ * \param[in] octree       The octree to be sliced.
+ * \param[in] filename     The output filename.
+ * \param[in] lower_coord  The lower, left, front coordinates of the 3D slice.
+ * \param[in] upper_coord  The upper, right, back coordinates of the 3D slice.
+ * \param[in] select_value lambda function selecting the value from the voxel data to be saved.
+ * \param[in] scale        The minimum scale to select the data from.
+ * \return 0 on success, nonzero on error.
+ */
+template <typename VoxelT, typename ValueSelector>
+int save_3d_slice_vtk(const se::Octree<VoxelT>& octree,
+                      const std::string         filename,
+                      const Eigen::Vector3i&    lower_coord,
+                      const Eigen::Vector3i&    upper_coord,
+                      ValueSelector             select_value,
+                      const int                 scale) {
+
+  // Open the file for writing.
+  std::ofstream file (filename.c_str());
+  if (!file.is_open()) {
+    std::cerr << "Unable to write file " << filename << "\n";
+    return 1;
+  }
+
   std::stringstream ss_x_coord, ss_y_coord, ss_z_coord, ss_scalars;
-  std::ofstream f;
-  f.open(filename);
 
   const int stride = 1 << scale;
   const int dimX = std::max(1, (upper_coord.x() - lower_coord.x()) / stride);
   const int dimY = std::max(1, (upper_coord.y() - lower_coord.y()) / stride);
   const int dimZ = std::max(1, (upper_coord.z() - lower_coord.z()) / stride);
 
-  f << "# vtk DataFile Version 1.0" << std::endl;
-  f << "vtk mesh generated from KFusion" << std::endl;
-  f << "ASCII" << std::endl;
-  f << "DATASET RECTILINEAR_GRID" << std::endl;
-  f << "DIMENSIONS " << dimX << " " << dimY << " " << dimZ << std::endl;
+  file << "# vtk DataFile Version 1.0" << std::endl;
+  file << "vtk mesh generated from KFusion" << std::endl;
+  file << "ASCII" << std::endl;
+  file << "DATASET RECTILINEAR_GRID" << std::endl;
+  file << "DIMENSIONS " << dimX << " " << dimY << " " << dimZ << std::endl;
 
-  for(int x = lower_coord.x(); x < upper_coord.x(); x += stride)
+  for (int x = lower_coord.x(); x < upper_coord.x(); x += stride) {
     ss_x_coord << x << " ";
-  for(int y = lower_coord.y(); y < upper_coord.y(); y += stride)
+  }
+  for (int y = lower_coord.y(); y < upper_coord.y(); y += stride) {
     ss_y_coord << y << " ";
-  for(int z = lower_coord.z(); z < upper_coord.z(); z += stride)
+  }
+  for (int z = lower_coord.z(); z < upper_coord.z(); z += stride) {
     ss_z_coord << z << " ";
+  }
 
-  for(int z = lower_coord.z(); z < upper_coord.z(); z += stride)
-    for(int y = lower_coord.y(); y < upper_coord.y(); y += stride)
-      for(int x = lower_coord.x(); x < upper_coord.x(); x += stride) {
-        const auto value = select_value(in.getFine(x, y, z, scale));
-        ss_scalars << value  << std::endl;
+  for (int z = lower_coord.z(); z < upper_coord.z(); z += stride) {
+    for (int y = lower_coord.y(); y < upper_coord.y(); y += stride) {
+      for (int x = lower_coord.x(); x < upper_coord.x(); x += stride) {
+        const auto value = select_value(octree.getFine(x, y, z, scale));
+        ss_scalars << value << std::endl;
       }
+    }
+  }
 
-  f << "X_COORDINATES " << dimX << " int " << std::endl;
-  f << ss_x_coord.str() << std::endl;
+  file << "X_COORDINATES " << dimX << " int " << std::endl;
+  file << ss_x_coord.str() << std::endl;
 
-  f << "Y_COORDINATES " << dimY << " int " << std::endl;
-  f << ss_y_coord.str() << std::endl;
+  file << "Y_COORDINATES " << dimY << " int " << std::endl;
+  file << ss_y_coord.str() << std::endl;
 
-  f << "Z_COORDINATES " << dimZ << " int " << std::endl;
-  f << ss_z_coord.str() << std::endl;
+  file << "Z_COORDINATES " << dimZ << " int " << std::endl;
+  file << ss_z_coord.str() << std::endl;
 
-  f << "POINT_DATA " << dimX*dimY*dimZ << std::endl;
-  f << "SCALARS scalars float 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  f << ss_scalars.str() << std::endl;
-  f.close();
+  file << "POINT_DATA " << dimX * dimY * dimZ << std::endl;
+  file << "SCALARS scalars float 1" << std::endl;
+  file << "LOOKUP_TABLE default" << std::endl;
+  file << ss_scalars.str() << std::endl;
+
+  file.close();
+  return 0;
 }
-#endif
+
+#endif // VTK_IO_H

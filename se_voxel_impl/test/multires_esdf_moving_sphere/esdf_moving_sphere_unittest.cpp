@@ -106,9 +106,10 @@ TEST_F(MultiresESDFMovingSphereTest, Integration) {
     {
       std::stringstream f;
       f << "./out/sphere-interp-" << i << ".vtk";
-      save3DSlice(octree_, Eigen::Vector3i(0, octree_.size() / 2, 0),
-          Eigen::Vector3i(octree_.size(), octree_.size() / 2 + 1, octree_.size()),
-          [](const auto& data) { return data.x; }, octree_.maxBlockScale(), f.str().c_str());
+      save_3d_slice_vtk(octree_, f.str().c_str(),
+                        Eigen::Vector3i(0, octree_.size() / 2, 0),
+                        Eigen::Vector3i(octree_.size(), octree_.size() / 2 + 1, octree_.size()),
+                        [](const auto& data) { return data.x; }, octree_.maxBlockScale());
     }
   }
 
@@ -124,9 +125,10 @@ TEST_F(MultiresESDFMovingSphereTest, Integration) {
     {
       std::stringstream f;
       f << "./out/sphere-interp-" << i << ".vtk";
-      save3DSlice(octree_, Eigen::Vector3i(0, octree_.size() / 2, 0),
-          Eigen::Vector3i(octree_.size(), octree_.size() / 2 + 1, octree_.size()),
-          [](const auto& data) { return data.x; }, octree_.maxBlockScale(), f.str().c_str());
+      save_3d_slice_vtk(octree_, f.str().c_str(),
+                        Eigen::Vector3i(0, octree_.size() / 2, 0),
+                        Eigen::Vector3i(octree_.size(), octree_.size() / 2 + 1, octree_.size()),
+                        [](const auto& data) { return data.x; }, octree_.maxBlockScale());
     }
   }
   se::print_octree("./out/test-sphere.ply", octree_);
