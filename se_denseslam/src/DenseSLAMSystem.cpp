@@ -347,7 +347,7 @@ void DenseSLAMSystem::dump_mesh(const std::string filename){
     };
 
     se::algorithms::marching_cube(*map_, select_value, inside, mesh);
-    writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(this->T_MW_));
+    save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
 }
 
 void DenseSLAMSystem::dump_dual_mesh(const std::string filename){
@@ -364,5 +364,5 @@ void DenseSLAMSystem::dump_dual_mesh(const std::string filename){
   };
 
   se::algorithms::dual_marching_cube(*map_, select_value, inside, mesh);
-  writeVtkMesh(filename.c_str(), mesh, se::math::to_inverse_transformation(this->T_MW_));
+  save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
 }
