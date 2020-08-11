@@ -34,7 +34,6 @@ static constexpr bool         default_drop_frames = false;
 static constexpr float        default_far_plane = 4.0f;
 static constexpr float        default_fps = 0.0f;
 static const std::string      default_ground_truth_file = "";
-static const Eigen::Matrix4f  default_gt_transform = Eigen::Matrix4f::Identity();
 static constexpr float        default_icp_threshold = 1e-5;
 static constexpr bool         default_enable_meshing = false;
 static constexpr bool         default_enable_render = true;
@@ -56,12 +55,13 @@ static const std::string      default_sequence_name = "";
 static constexpr int          default_sensor_downsampling_factor = 1;
 static const Eigen::Vector4f  default_sensor_intrinsics = Eigen::Vector4f::Zero();
 static const std::string      default_sequence_path = "";
+static const Eigen::Matrix4f  default_T_BC = Eigen::Matrix4f::Identity();
 static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.0f);
 
 static constexpr int          default_tracking_rate = 1;
 
 // Put colons after options with arguments
-static std::string short_options = "B:c:df:Fg:G:hi:k:l:m:M:n:N:o:p:qQr:s:S:t:u:U:v:V:y:Y:z:Z:?";
+static std::string short_options = "B:c:df:Fg:hi:k:l:m:M:n:N:o:p:qQr:s:S:t:T:u:U:v:V:y:Y:z:Z:?";
 
 static struct option long_options[] = {
   {"benchmark",                  optional_argument, 0, 'B'},
@@ -70,7 +70,6 @@ static struct option long_options[] = {
   {"fps",                        required_argument, 0, 'f'},
   {"bilateral-filter",           no_argument,       0, 'F'},
   {"ground-truth",               required_argument, 0, 'g'},
-  {"gt-transform",               required_argument, 0, 'G'},
   {"help",                       no_argument,       0, 'h'},
   {"sequence-path",              required_argument, 0, 'i'},
   {"sensor-intrinsics",          required_argument, 0, 'k'},
@@ -87,6 +86,7 @@ static struct option long_options[] = {
   {"map-dim",                    required_argument, 0, 's'},
   {"sequence-name",              required_argument, 0, 'S'},
   {"tracking-rate",              required_argument, 0, 't'},
+  {"camera-to-body-transform",   required_argument, 0, 'T'},
   {"disable-meshing",            no_argument,       0, 'u'},
   {"enable-meshing",             no_argument,       0, 'U'},
   {"map-size",                   required_argument, 0, 'v'},
@@ -108,7 +108,6 @@ inline void print_arguments() {
   std::cerr << "-f  (--fps)                                : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                    : default is disabled\n";
   std::cerr << "-g  (--ground-truth) <filename>            : ground truth file\n";
-  std::cerr << "-G  (--gt-transform) tx,ty,tz,qx,qy,qz,qw  : T_BC (translation and/or rotation)\n";
   std::cerr << "-h  (--help)                               : show this help message\n";
   std::cerr << "-i  (--sequence-path) <filename>           : sequence path\n";
   std::cerr << "-k  (--sensor-intrinsics)                  : default is defined by input\n";
@@ -125,6 +124,7 @@ inline void print_arguments() {
   std::cerr << "-s  (--map-dim)                            : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
   std::cerr << "-S  (--sequence-name)                      : name of sequence\n";
   std::cerr << "-t  (--tracking-rate)                      : default is " << default_tracking_rate << "\n";
+  std::cerr << "-T  (--camera-to-body-transform)           : T_BC (translation and/or rotation - tx,ty,tz,qx,qy,qz,qw)\n";
   std::cerr << "-u  (--disable-meshing)                    : use to override --enable-meshing in YAML file\n";
   std::cerr << "-U  (--enable-meshing)                     : default is to not generate mesh\n";
   std::cerr << "-v  (--map-size)                           : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
@@ -482,7 +482,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       ? yaml_sensor_config["left_hand_frame"].as<bool>() : default_left_hand_frame;
   // Camera to Body frame transformation
   config.T_BC = (has_yaml_sensor_config && yaml_sensor_config["T_BC"])
-      ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_gt_transform;
+      ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_T_BC;
   // Near plane
   config.near_plane = (has_yaml_sensor_config && yaml_sensor_config["near_plane"])
       ? yaml_sensor_config["near_plane"].as<float>() : default_near_plane;
@@ -495,8 +495,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   optind = 1;
   option_index = 0;
   std::vector<std::string> tokens;
-  Eigen::Vector3f gt_transform_tran;
-  Eigen::Quaternionf gt_transform_quat;
+  Eigen::Vector3f t_BC;
+  Eigen::Quaternionf q_BC;
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
           &option_index)) != -1) {
     switch (c) {
@@ -537,42 +537,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'g': // ground-truth
         config.ground_truth_file = optarg;
-        break;
-
-      case 'G': // gt-transform
-        // Split argument into substrings
-        tokens = split_string(optarg, ',');
-        switch (tokens.size()) {
-          case 3:
-            // Translation
-            gt_transform_tran = Eigen::Vector3f(std::stof(tokens[0]),
-                std::stof(tokens[1]), std::stof(tokens[2]));
-            config.T_BC.topRightCorner<3,1>() = gt_transform_tran;
-            break;
-          case 4:
-            // Rotation
-            // Create a quaternion and get the equivalent rotation matrix
-            gt_transform_quat = Eigen::Quaternionf(std::stof(tokens[3]),
-                std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
-            config.T_BC.block<3,3>(0,0) = gt_transform_quat.toRotationMatrix();
-            break;
-          case 7:
-            // Translation and rotation
-            gt_transform_tran = Eigen::Vector3f(std::stof(tokens[0]),
-                std::stof(tokens[1]), std::stof(tokens[2]));
-            gt_transform_quat = Eigen::Quaternionf(std::stof(tokens[6]),
-                std::stof(tokens[3]), std::stof(tokens[4]), std::stof(tokens[5]));
-            config.T_BC.topRightCorner<3,1>() = gt_transform_tran;
-            config.T_BC.block<3,3>(0,0) = gt_transform_quat.toRotationMatrix();
-            break;
-          default:
-            std::cerr << "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
-                << "3 parameters (translation): tx,ty,tz\n"
-                << "4 parameters (rotation in quaternion form): qx,qy,qz,qw\n"
-                << "7 parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw"
-                << std::endl;
-            exit(EXIT_FAILURE);
-        }
         break;
 
       case '?':
@@ -663,6 +627,40 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 't': // tracking-rate
         config.tracking_rate = atof(optarg);
+        break;
+
+      case 'T': // camera-to-body-transform
+        // Split argument into substrings
+        tokens = split_string(optarg, ',');
+        switch (tokens.size()) {
+          case 3:
+            // Translation
+            t_BC = Eigen::Vector3f(std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
+            config.T_BC.topRightCorner<3,1>() = t_BC;
+            break;
+          case 4:
+            // Rotation
+            // Create a quaternion and get the equivalent rotation matrix
+            q_BC = Eigen::Quaternionf(std::stof(tokens[3]), std::stof(tokens[0]),
+                                      std::stof(tokens[1]), std::stof(tokens[2]));
+            config.T_BC.block<3,3>(0,0) = q_BC.toRotationMatrix();
+            break;
+          case 7:
+            // Translation and rotation
+            t_BC = Eigen::Vector3f(std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
+            q_BC = Eigen::Quaternionf(std::stof(tokens[6]), std::stof(tokens[3]),
+                                      std::stof(tokens[4]), std::stof(tokens[5]));
+            config.T_BC.topRightCorner<3,1>() = t_BC;
+            config.T_BC.block<3,3>(0,0) = q_BC.toRotationMatrix();
+            break;
+          default:
+            std::cerr << "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
+                      << "3 parameters (translation): tx,ty,tz\n"
+                      << "4 parameters (rotation in quaternion form): qx,qy,qz,qw\n"
+                      << "7 parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw"
+                      << std::endl;
+            exit(EXIT_FAILURE);
+        }
         break;
 
       case 'u': // disable-meshing

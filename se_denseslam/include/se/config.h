@@ -373,7 +373,7 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
                                                  ? "true" : "false") << "\n";
   out << "Near plane:                      " << config.near_plane << " meters\n";
   out << "Far plane:                       " << config.far_plane << " meters\n";
-  out << "Sensor to ground truth transform " << config.T_BC.row(0) << "\n";
+  out << "T_BC:                            " << config.T_BC.row(0) << "\n";
   out << "                                 " << config.T_BC.row(1) << "\n";
   out << "                                 " << config.T_BC.row(2) << "\n";
   out << "                                 " << config.T_BC.row(3) << "\n";
