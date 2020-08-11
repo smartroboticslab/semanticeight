@@ -300,11 +300,13 @@ int processAll(se::Reader*    reader,
     se::ReaderStatus read_ok;
     if (config->ground_truth_file == "") {
       read_ok = reader->nextData(input_depth_image, input_rgba_image);
+      frame = reader->frame() - frame_offset;
       if (frame == 0) {
         pipeline->setInitT_WC(config->init_T_WB * config->T_BC);
       }
     } else {
       read_ok = reader->nextData(input_depth_image, input_rgba_image, T_WB);
+      frame = reader->frame() - frame_offset;
       if (frame == 0) {
         pipeline->setInitT_WC(T_WB * config->T_BC);
       }
@@ -321,8 +323,6 @@ int processAll(se::Reader*    reader,
       return true;
     }
 
-    // Process read frames
-    frame = reader->frame() - frame_offset;
     if (config->max_frame != -1 && frame > config->max_frame) {
       timings[0] = std::chrono::steady_clock::now();
       return true;
