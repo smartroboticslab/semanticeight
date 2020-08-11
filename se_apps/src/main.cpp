@@ -303,12 +303,15 @@ int processAll(se::Reader*    reader,
       frame = reader->frame() - frame_offset;
       if (frame == 0) {
         pipeline->setInitT_WC(config->init_T_WB * config->T_BC);
+        // Set the pose to the initial pose.
+        pipeline->setT_WC(config->init_T_WB * config->T_BC);
       }
     } else {
       read_ok = reader->nextData(input_depth_image, input_rgba_image, T_WB);
       frame = reader->frame() - frame_offset;
       if (frame == 0) {
-        pipeline->setInitT_WC(T_WB * config->T_BC);
+        config->init_T_WB = T_WB;
+        pipeline->setInitT_WC(config->init_T_WB * config->T_BC);
       }
     }
 
