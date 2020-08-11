@@ -266,7 +266,7 @@ TEST(Octree, BalanceTree) {
   octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   voxel_coord += Eigen::Vector3i(50, 12, 100);
   octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-  se::print_octree("./oct.ply", octree);
+  se::save_octree_structure_ply(octree, "./oct.ply");
   se::balance(octree);
-  se::print_octree("./oct-balanced.ply", octree);
+  se::save_octree_structure_ply(octree, "./oct-balanced.ply");
 }

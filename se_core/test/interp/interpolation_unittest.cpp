@@ -101,7 +101,7 @@ class InterpolationTest : public ::testing::Test {
       };
       se::functor::axis_aligned_map(octree_, circle_dist);
 
-      se::print_octree("./test-sphere.ply", octree_);
+      se::save_octree_structure_ply(octree_, "./test-sphere.ply");
       {
         std::stringstream f;
         f << "./sphere-interp.vtk";
@@ -114,7 +114,7 @@ class InterpolationTest : public ::testing::Test {
       // balance and print.
       se::balance(octree_);
       se::functor::axis_aligned_map(octree_, circle_dist);
-      se::print_octree("./test-sphere-balanced.ply", octree_);
+      se::save_octree_structure_ply(octree_, "./test-sphere-balanced.ply");
       {
         std::stringstream f;
         f << "./sphere-interp-balanced.vtk";

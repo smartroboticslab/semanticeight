@@ -131,5 +131,5 @@ TEST_F(MultiresESDFMovingSphereTest, Integration) {
                         [](const auto& data) { return data.x; }, octree_.maxBlockScale());
     }
   }
-  se::print_octree("./out/test-sphere.ply", octree_);
+  se::save_octree_structure_ply(octree_, "./out/test-sphere.ply");
 }
