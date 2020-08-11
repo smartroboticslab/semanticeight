@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "octant_ops.hpp"
 #include <octree.hpp>
 #include <bitset>
-#include <io/ply_io.hpp>
+#include "se/io/octree_io.hpp"
 #include <algorithms/balancing.hpp>
 
 struct TestVoxelT {
