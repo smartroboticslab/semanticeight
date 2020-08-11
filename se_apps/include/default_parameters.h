@@ -34,9 +34,10 @@ static constexpr bool         default_drop_frames = false;
 static constexpr float        default_far_plane = 4.0f;
 static constexpr float        default_fps = 0.0f;
 static const std::string      default_ground_truth_file = "";
-static constexpr float        default_icp_threshold = 1e-5;
 static constexpr bool         default_enable_meshing = false;
 static constexpr bool         default_enable_render = true;
+static constexpr float        default_icp_threshold = 1e-5;
+static const Eigen::Matrix4f  default_init_T_WB = Eigen::Matrix4f::Identity();
 static constexpr int          default_integration_rate = 2;
 static constexpr int          default_iteration_count = 3;
 static constexpr int          default_iterations[default_iteration_count] = { 10, 5, 4 };
@@ -61,7 +62,7 @@ static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.0f);
 static constexpr int          default_tracking_rate = 1;
 
 // Put colons after options with arguments
-static std::string short_options = "B:c:df:Fg:hi:k:l:m:M:n:N:o:p:qQr:s:S:t:T:u:U:v:V:y:Y:z:Z:?";
+static std::string short_options = "B:c:df:Fg:G:hi:k:l:m:M:n:N:o:p:qQr:s:S:t:T:uUv:V:y:Y:z:Z:?";
 
 static struct option long_options[] = {
   {"benchmark",                  optional_argument, 0, 'B'},
@@ -70,6 +71,7 @@ static struct option long_options[] = {
   {"fps",                        required_argument, 0, 'f'},
   {"bilateral-filter",           no_argument,       0, 'F'},
   {"ground-truth",               required_argument, 0, 'g'},
+  {"init-body-pose",             required_argument, 0, 'G'},
   {"help",                       no_argument,       0, 'h'},
   {"sequence-path",              required_argument, 0, 'i'},
   {"sensor-intrinsics",          required_argument, 0, 'k'},
@@ -108,6 +110,7 @@ inline void print_arguments() {
   std::cerr << "-f  (--fps)                                : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                    : default is disabled\n";
   std::cerr << "-g  (--ground-truth) <filename>            : ground truth file\n";
+  std::cerr << "-G  (--init-body-pose)                     : init_T_WB (translation and/or rotation - tx,ty,tz,qx,qy,qz,qw)\n";
   std::cerr << "-h  (--help)                               : show this help message\n";
   std::cerr << "-i  (--sequence-path) <filename>           : sequence path\n";
   std::cerr << "-k  (--sensor-intrinsics)                  : default is defined by input\n";
@@ -483,6 +486,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Camera to Body frame transformation
   config.T_BC = (has_yaml_sensor_config && yaml_sensor_config["T_BC"])
       ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_T_BC;
+  // Initial Body pose
+  config.init_T_WB = (has_yaml_sensor_config && yaml_sensor_config["init_T_WB"])
+      ? Eigen::Matrix4f(TvtoT(yaml_sensor_config["init_T_WB"].as<std::vector<float>>())) : default_init_T_WB;
   // Near plane
   config.near_plane = (has_yaml_sensor_config && yaml_sensor_config["near_plane"])
       ? yaml_sensor_config["near_plane"].as<float>() : default_near_plane;
@@ -497,6 +503,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   std::vector<std::string> tokens;
   Eigen::Vector3f t_BC;
   Eigen::Quaternionf q_BC;
+  Eigen::Vector3f init_t_WB;
+  Eigen::Quaternionf init_q_WB;
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
           &option_index)) != -1) {
     switch (c) {
@@ -537,6 +545,40 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'g': // ground-truth
         config.ground_truth_file = optarg;
+        break;
+
+      case 'G': // init-body-pose
+        // Split argument into substrings
+        tokens = str_utils::split_str(optarg, ',');
+        switch (tokens.size()) {
+          case 3:
+            // Translation
+            init_t_WB = Eigen::Vector3f(std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
+            config.init_T_WB.topRightCorner<3,1>() = init_t_WB;
+            break;
+          case 4:
+            // Rotation
+            // Create a quaternion and get the equivalent rotation matrix
+            init_q_WB = Eigen::Quaternionf(std::stof(tokens[3]), std::stof(tokens[0]),
+                                      std::stof(tokens[1]), std::stof(tokens[2]));
+            config.init_T_WB.block<3,3>(0,0) = init_q_WB.toRotationMatrix();
+            break;
+          case 7:
+            // Translation and rotation
+            init_t_WB = Eigen::Vector3f(std::stof(tokens[0]), std::stof(tokens[1]), std::stof(tokens[2]));
+            init_q_WB = Eigen::Quaternionf(std::stof(tokens[6]), std::stof(tokens[3]),
+                                      std::stof(tokens[4]), std::stof(tokens[5]));
+            config.init_T_WB.topRightCorner<3,1>() = init_t_WB;
+            config.init_T_WB.block<3,3>(0,0) = init_q_WB.toRotationMatrix();
+            break;
+          default:
+            std::cerr << "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
+                      << "3 parameters (translation): tx,ty,tz\n"
+                      << "4 parameters (rotation in quaternion form): qx,qy,qz,qw\n"
+                      << "7 parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw"
+                      << std::endl;
+            exit(EXIT_FAILURE);
+        }
         break;
 
       case '?':

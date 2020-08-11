@@ -199,6 +199,15 @@ struct Configuration {
   Eigen::Matrix4f T_BC;
 
   /**
+   * The initial pose of the body in world frame expressed in a 4x4 transformation matrix.
+   *
+   * \note If T_BC is the Idenity matrix init_T_WB equals init_T_WC
+   *
+   * <br>\em Default: Eigen::Matrix4f::Identity()
+   */
+  Eigen::Matrix4f init_T_WB;
+
+  /**
    * The intrinsic sensor parameters. sensor_intrinsics.x, sensor_intrinsics.y, sensor_intrinsics.z and
    * sensor_intrinsics.w are the x-axis focal length, y-axis focal length, horizontal
    * resolution (pixels) and vertical resolution (pixels) respectively.
@@ -357,6 +366,8 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << str_utils::value_to_pretty_str(config.far_plane,             "Far plane", "meters") << "\n";
   out << "\n";
   out << str_utils::matrix_to_pretty_str(config.T_BC,                 "T_BC") << "\n";
+  out << "\n";
+  out << str_utils::matrix_to_pretty_str(config.init_T_WB,            "init_T_WB") << "\n";
   out << "\n";
 
   return out;
