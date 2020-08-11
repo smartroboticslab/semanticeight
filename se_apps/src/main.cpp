@@ -402,7 +402,7 @@ int processAll(se::Reader*    reader,
         progress_bar->update(frame);
       }
     }
-    const Eigen::Vector3f t_MC = pipeline->t_MC();
+    const Eigen::Vector3f t_WC = pipeline->t_WC();
     *log_stream << frame << "\t"
         << std::chrono::duration<double>(timings[1] - timings[0]).count() << "\t" // acquisition
         << std::chrono::duration<double>(timings[2] - timings[1]).count() << "\t" // preprocessing
@@ -413,7 +413,7 @@ int processAll(se::Reader*    reader,
         << std::chrono::duration<double>(timings[5] - timings[1]).count() << "\t" // computation
         << std::chrono::duration<double>(timings[6] - timings[0]).count() << "\t" // total
         << se::ram_usage_self() / 1024.0 / 1024.0 << "\t" // RAM usage (MB)
-        << t_MC.x() << "\t" << t_MC.y() << "\t" << t_MC.z() << "\t" // position
+        << t_WC.x() << "\t" << t_WC.y() << "\t" << t_WC.z() << "\t" // position
         << tracked << "\t" << integrated // tracked and integrated flags
         << std::endl;
   }
