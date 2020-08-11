@@ -35,30 +35,6 @@
 #include "se/utils/math_utils.h"
 #include <algorithm>
 
-template <typename T>
-void savePointCloud(const T* points_M, const int num_points,
-    const char* filename, const Eigen::Matrix4f& T_WM){
-
-  std::stringstream ss_points_W;
-  for(int i = 0; i < num_points; ++i){
-    Eigen::Vector3f point_W = (T_WM * points_M[i].homogeneous()).head(3);
-    ss_points_W << point_W.x() << " "
-             << point_W.y() << " "
-             << point_W.z() << std::endl;
-  }
-
-  std::ofstream f;
-  f.open(filename);
-  f << "# vtk DataFile Version 1.0" << std::endl;
-  f << "vtk mesh generated from KFusion" << std::endl;
-  f << "ASCII" << std::endl;
-  f << "DATASET POLYDATA" << std::endl;
-
-  f << "POINTS " << num_points << " FLOAT" << std::endl;
-  f << ss_points_W.str();
-  f.close();
-}
-
 template <typename OctreeT, typename FieldSelector>
 void save3DSlice(const OctreeT& in, const Eigen::Vector3i& lower_coord,
     const Eigen::Vector3i& upper_coord, FieldSelector select_value, const int scale, const char* filename){

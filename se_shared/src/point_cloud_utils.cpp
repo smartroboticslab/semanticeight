@@ -47,3 +47,67 @@ int se::save_point_cloud_pcd(se::Image<Eigen::Vector3f>& point_cloud,
   return 0;
 }
 
+
+
+int se::save_point_cloud_ply(se::Image<Eigen::Vector3f>& point_cloud,
+                             const std::string&          filename,
+                             const Eigen::Matrix4f&      T_WC) {
+  // Open the file for writing.
+  std::ofstream file (filename.c_str());
+  if (!file.is_open()) {
+    std::cerr << "Unable to write file " << filename << "\n";
+    return 1;
+  }
+
+  file << "ply" << std::endl;
+  file << "format ascii 1.0" << std::endl;
+  file << "comment octree structure" << std::endl;
+  file << "element point " << point_cloud.size() <<  std::endl;
+  file << "property float x" << std::endl;
+  file << "property float y" << std::endl;
+  file << "property float z" << std::endl;
+  file << "end_header" << std::endl;
+
+  // Write the point data.
+  for (size_t i = 0; i < point_cloud.size(); ++i) {
+    Eigen::Vector3f point_W = (T_WC * point_cloud[i].homogeneous()).head(3);
+    file << point_cloud[i].x() << " "
+         << point_cloud[i].y() << " "
+         << point_cloud[i].z() << "\n";
+  }
+
+  file.close();
+  return 0;
+}
+
+
+
+int se::save_point_cloud_vtk(se::Image<Eigen::Vector3f>& point_cloud,
+                             const std::string&          filename,
+                             const Eigen::Matrix4f&      T_WC){
+
+  // Open the file for writing.
+  std::ofstream file (filename.c_str());
+  if (!file.is_open()) {
+    std::cerr << "Unable to write file " << filename << "\n";
+    return 1;
+  }
+
+  file << "# vtk DataFile Version 1.0" << std::endl;
+  file << "vtk mesh generated from KFusion" << std::endl;
+  file << "ASCII" << std::endl;
+  file << "DATASET POLYDATA" << std::endl;
+
+  file << "POINTS " << point_cloud.size() << " FLOAT" << std::endl;
+
+  // Write the point data.
+  for (size_t i = 0; i < point_cloud.size(); ++i) {
+    Eigen::Vector3f point_W = (T_WC * point_cloud[i].homogeneous()).head(3);
+    file << point_cloud[i].x() << " "
+         << point_cloud[i].y() << " "
+         << point_cloud[i].z() << "\n";
+  }
+
+  file.close();
+  return 0;
+}

@@ -115,59 +115,5 @@ namespace se {
         f << ss_faces.str();
       }
     }
-
-  template <typename T>
-  void savePointCloudPly(const T* points_M, const int num_points,
-      const char* filename, const Eigen::Matrix4f& T_WM) {
-    std::stringstream ss_points_W;
-    for(int i = 0; i < num_points; ++i){
-      Eigen::Vector3f point_W = (T_WM * points_M[i].homogeneous()).head(3);
-      ss_points_W << point_W.x() << " "
-               << point_W.y() << " "
-               << point_W.z() << std::endl;
-    }
-
-    std::ofstream f;
-    f.open(std::string(filename).c_str());
-
-    f << "ply" << std::endl;
-    f << "format ascii 1.0" << std::endl;
-    f << "comment octree structure" << std::endl;
-    f << "element point " << num_points <<  std::endl;
-    f << "property float x" << std::endl;
-    f << "property float y" << std::endl;
-    f << "property float z" << std::endl;
-    f << "end_header" << std::endl;
-    f << ss_points_W.str();
-  }
-
-  void savePointCloudPly(const std::vector<Triangle>& mesh,
-                         const char* filename, const Eigen::Matrix4f& T_WM) {
-    std::stringstream ss_points_W;
-    int point_count = 0;
-    for(size_t i = 0; i < mesh.size(); ++i ){
-      const Triangle& triangle_M = mesh[i];
-      for(int j = 0; j < 3; ++j) {
-        Eigen::Vector3f point_W = (T_WM * triangle_M.vertexes[j].homogeneous()).head(3);
-        ss_points_W << point_W.x() << " "
-                    << point_W.y() << " "
-                    << point_W.z() << std::endl;
-        point_count++;
-      }
-    }
-
-    std::ofstream f;
-    f.open(std::string(filename).c_str());
-
-    f << "ply" << std::endl;
-    f << "format ascii 1.0" << std::endl;
-    f << "comment octree structure" << std::endl;
-    f << "element vertex " << point_count <<  std::endl;
-    f << "property float x" << std::endl;
-    f << "property float y" << std::endl;
-    f << "property float z" << std::endl;
-    f << "end_header" << std::endl;
-    f << ss_points_W.str();
-  }
 }
 #endif
