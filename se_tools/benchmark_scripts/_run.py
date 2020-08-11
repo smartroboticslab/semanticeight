@@ -13,22 +13,43 @@ class runCommand:
         self.result_dir    = None
         self.output_dir    = None
 
+        self.result_file        = None
+        self.result_manual_file = None
+
     def benchmark(self):
-        benchmark_arg     = ['--enable-benchmark='   + os.path.join(self.result_dir, self.base_filename + '_result.txt')]
+        self.result_file  = os.path.join(self.result_dir, self.base_filename + '_result.txt')
+        benchmark_arg     = ['--enable-benchmark='   + self.result_file]
         output_render_arg = ['--output-render-path=' + os.path.join(self.output_dir, self.base_filename + '_render')]
-        output_mesh_arg =   ['--output-mesh-path=' + os.path.join(self.output_dir, self.base_filename + '_mesh')]
+        output_mesh_arg   = ['--output-mesh-path=' + os.path.join(self.output_dir, self.base_filename + '_mesh')]
+
         return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg + output_mesh_arg)
 
+    def evaluateATE(self):
+        executable_cmd = [os.path.dirname(os.path.realpath(__file__)) + '/evaluate_ate.py']
+        result_file_arg = ['--result-file ' + self.result_file]
+        save_arg = ['--save']
+        return ' '.join(executable_cmd + result_file_arg + save_arg)
+
+
     def manualBenchmark(self):
-        benchmark_arg     = ['--enable-benchmark='   + os.path.join(self.result_dir, self.base_filename + '_result_manual_run.txt')]
+        self.result_manual_file  = os.path.join(self.result_dir, self.base_filename + '_result_manual_run.txt')
+        benchmark_arg     = ['--enable-benchmark='   + self.result_manual_file]
         output_render_arg = ['--output-render-path=' + os.path.join(self.output_dir, self.base_filename + '_render_manual_run')]
         output_mesh_arg =   ['--output-mesh-path=' + os.path.join(self.output_dir, self.base_filename + '_mesh_manual_run')]
         return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg + output_mesh_arg)
+
+    def evaluateManualATE(self):
+        executable_cmd  = [os.path.dirname(os.path.realpath(__file__)) + '/evaluate_ate.py']
+        result_file_arg = ['--result-file ' + self.result_manual_file]
+        save_arg        = ['--save']
+        print_arg        = ['--print']
+        return ' '.join(executable_cmd + result_file_arg + save_arg + print_arg)
 
     def withoutBenchmark(self): # Force rendering to be enabled
         enable_render_arg  = ['--enable-render']
         rendering_rate_arg = ['--rendering-rate 2']
         return ' '.join(self.executable + self.args + enable_render_arg + rendering_rate_arg)
+
 
 class Pipeline:
     """ A general Pipeline evaluator.
@@ -50,13 +71,21 @@ class Pipeline:
         cmd_filename = os.path.splitext(self.config_yaml_path)[0].replace("config", "command.md")
 
         with open(cmd_filename, 'w') as f:
-            f.write('`' + cmd.manualBenchmark() + '`\n\n'
+            f.write('# Benchmark\n'
+                    '`' + cmd.manualBenchmark() + '`\n\n'
+                    '# Evaluate ATE\n'
+                    '`' + cmd.evaluateManualATE() + '`\n\n'
+                    '# Debug\n'                              
                     '`' + cmd.withoutBenchmark() + '`')
 
         try:
             # Doesn't work without shell=True??
             subprocess.check_call(
                 cmd.benchmark(), shell=True)
+            if self.evaluate_ate:
+                subprocess.check_call(
+                    cmd.evaluateATE(), shell=True)
+
         except Exception:
             pass
             #self.failed = True
@@ -79,6 +108,7 @@ class Supereight(Pipeline):
         self.base_filename    = test_case.name
         self.output_dir       = test_case.output_dir
         self.config_yaml_path = test_case.config_yaml_path
+        self.evaluate_ate     = test_case.evaluate_ate
 
     def _generate_run_command(self):
         args = []

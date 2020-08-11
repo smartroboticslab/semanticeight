@@ -13,6 +13,7 @@ class TestCase:
         self.downsampling_factor      = None
         self.output_dir       = None
         self.config_yaml_path = None
+        self.evaluate_ate     = None
 
     def __str__(self):
         return self.sequence_name + " | " + self.sensor_type + " | " + self.voxel_impl + \

@@ -132,12 +132,20 @@ class Sequence:
                 """.format(sequence_name, self.file_path, sensor_type)
                 test_case_config_yaml = ruamel.yaml.round_trip_load(yaml_init)
 
+                has_ground_truth = False;
                 if self.ground_truth_file is not None:
-                    test_case_config_yaml['general']['ground_truth_file'] =  self.ground_truth_file
+                    test_case_config_yaml['general']['ground_truth_file'] = self.ground_truth_file
+                    has_ground_truth = True;
 
+                evaluate_ate = False
                 for yaml_key, value in zip(yaml_keys, value_comb):
                     collection_key = yaml_key[0]
                     param_key      = yaml_key[1]
+                    if has_ground_truth and param_key == 'enable_ground_truth':
+                        # If ground truth is provided but not used evaluate the ATE
+                        if value is False:
+                            evaluate_ate = True
+
                     if not collection_key in test_case_config_yaml:
                         test_case_config_yaml[collection_key] = {}
                     test_case_config_yaml[collection_key][param_key] = flow_style_list(value) if isinstance(value, list) else value
@@ -188,6 +196,7 @@ class Sequence:
                     if 'downsampling_factor' in test_case_config_yaml['sensor'] else 'default'
                 sequence_test_case.output_dir       = os.path.abspath(output_dir)
                 sequence_test_case.config_yaml_path = os.path.abspath(test_case_config_yaml_path)
+                sequence_test_case.evaluate_ate     = evaluate_ate
                 sequence_test_cases.append(sequence_test_case)
 
         return sequence_test_cases
