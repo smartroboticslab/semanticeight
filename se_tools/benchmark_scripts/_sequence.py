@@ -68,7 +68,7 @@ class Sequence:
                 if len(sequence_config_yaml['general']['sequences']) is 1:
                     SEQUENCE = sequence_from_header(sequence_config_yaml['general']['sequences'][0])
                     if SEQUENCE:
-                        self = SEQUENCE
+                        self.__dict__.update(SEQUENCE.__dict__)
                 elif len(sequence_config_yaml['general']['sequences']) is 0:
                     warnings.warn(
                         "Sequence setup YAML sequence list is empty [].\n"
