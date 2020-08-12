@@ -268,7 +268,7 @@ struct MultiresTSDFUpdate {
                 // Update the TSDF
                 const float m = sensor_.measurementFromPoint(point_C);
                 const float sdf_value = (depth_value - m) / m * point_C.norm();
-                if (sdf_value > -MultiresTSDF::mu) {
+                if (sdf_value > -MultiresTSDF::mu * (1 << voxel_scale)) {
                   const float tsdf_value = fminf(1.f, sdf_value / MultiresTSDF::mu);
                   voxel_data.x = se::math::clamp(
                       (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
@@ -336,7 +336,7 @@ struct MultiresTSDFUpdate {
           // Update the TSDF
           const float m = sensor_.measurementFromPoint(point_C);
           const float sdf_value = (depth_value - m) / m * point_C.norm();
-          if (sdf_value > -MultiresTSDF::mu) {
+          if (sdf_value > -MultiresTSDF::mu  * (1 << scale)) {
             const float tsdf_value = fminf(1.f, sdf_value / MultiresTSDF::mu);
             VoxelData voxel_data = block->data(voxel_coord, scale);
             voxel_data.x = se::math::clamp(
