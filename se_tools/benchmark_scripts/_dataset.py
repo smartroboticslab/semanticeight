@@ -11,13 +11,20 @@ from ruamel.yaml import YAML
 yaml = YAML()
 
 class Dataset:
-    def __init__(self, name):
-        self.name       = name
+    def __init__(self, dataset_header):
+        self.name       = None
         self.sequences  = []
         # General param for dataset - Will be overwritten by sequence param
         self.config     = Config()
 
         self._sequence_names = []
+
+        if is_yaml_file(dataset_header):
+            self.setup_from_yaml(dataset_header)
+        elif is_instance(dataset_header, str):
+            self.name = dataset_header
+        else:
+            warnings.warn("Use of invalid sequence header. Either provide yaml config file path or dataset name")
 
     def setup_from_yaml(self, dataset_config_yaml_path):
         with open(dataset_config_yaml_path) as f:

@@ -11,12 +11,15 @@ from ruamel.yaml import YAML
 yaml = YAML()
 
 class BenchmarkBase:
-    def __init__(self, name):
+    def __init__(self, name, benchmark_base_config_yaml_path = None):
         self._name = name
         self._datasets = []
 
         # Base config for benchmark - Will be overwritten by dataset param
         self._config = Config()
+
+        if is_yaml_file(benchmark_base_config_yaml_path):
+            self.setup_from_yaml(benchmark_base_config_yaml_path)
 
     def set_config(self, config):
         assert type(config.sensor) is Sensor

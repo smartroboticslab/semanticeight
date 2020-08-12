@@ -17,6 +17,13 @@ yaml.preserve_quotes = True
 CS = ruamel.yaml.comments.CommentedSeq  # defaults to block style
 CM = ruamel.yaml.comments.CommentedMap  # defaults to block style
 
+def is_yaml_file(file_path):
+    if not isinstance(file_path, str):
+        return False
+    if os.path.exists(file_path) and file_path.lower().endswith('.yaml'):
+        return True
+    return False
+
 def valid_sequence(sequence_header):
     if len(sequence_header) not in [2, 3]:
         warnings.warn(
@@ -51,11 +58,16 @@ def list_sequences(sequences):
 class Sequence:
 
     def __init__(self, sequence_header):
-        if valid_sequence(sequence_header):
+        self.name              = None
+        self.file_path         = None
+        self.ground_truth_file = None
+        self.config = Config()
+        if is_yaml_file(sequence_header):
+            self.setup_from_yaml(sequence_header)
+        elif valid_sequence(sequence_header):
             self.name              = sequence_header[0]
             self.file_path         = os.path.expanduser(sequence_header[1])
             self.ground_truth_file = os.path.expanduser(sequence_header[2]) if len(sequence_header) is 3 else None
-            self.config            = Config()
         else:
             warnings.warn("Use of invalid sequence header.")
 
