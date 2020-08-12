@@ -149,14 +149,14 @@ public:
   int min_scale() const { return min_scale_; }
   void min_scale(const int s) { min_scale_ = s; }
 
-  virtual VoxelData data(const Eigen::Vector3i& voxel_coord) const;
-  virtual void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+  virtual VoxelData data(const Eigen::Vector3i& voxel_coord) const = 0;
+  virtual void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data) = 0;
 
-  virtual VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const;
-  virtual void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+  virtual VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const = 0;
+  virtual void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data) = 0;
 
-  virtual VoxelData data(const int voxel_idx) const;
-  virtual void setData(const int voxel_idx, const VoxelData& voxel_data);
+  virtual VoxelData data(const int voxel_idx) const = 0;
+  virtual void setData(const int voxel_idx, const VoxelData& voxel_data) = 0;
 
 protected:
   Eigen::Vector3i coordinates_;
