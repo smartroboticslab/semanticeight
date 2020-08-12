@@ -150,10 +150,12 @@ bool DenseSLAMSystem::track(const SensorImpl& sensor,
     const float scaling_factor = 1.f / (1 << i);
     const SensorImpl scaled_sensor(sensor, scaling_factor);
     depthToPointCloudKernel(input_point_cloud_C_[i], scaled_depth_image_[i], scaled_sensor);
-    if(sensor.left_hand_frame)
+    if(sensor.left_hand_frame) {
       pointCloudToNormalKernel<true>(input_normals_C_[i], input_point_cloud_C_[i]);
-    else
+    }
+    else {
       pointCloudToNormalKernel<false>(input_normals_C_[i], input_point_cloud_C_[i]);
+    }
   }
 
   previous_T_MC_ = T_MC_;

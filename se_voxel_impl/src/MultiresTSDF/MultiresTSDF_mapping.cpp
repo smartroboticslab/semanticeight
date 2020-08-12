@@ -88,8 +88,8 @@ struct MultiresTSDFUpdate {
             float mean = 0;
             int sample_count = 0;
             float weight = 0;
-            for (int k = 0; k < stride; k += stride / 2)
-              for (int j = 0; j < stride; j += stride / 2)
+            for (int k = 0; k < stride; k += stride / 2) {
+              for (int j = 0; j < stride; j += stride / 2) {
                 for (int i = 0; i < stride; i += stride / 2) {
                   VoxelData child_data = block->data(voxel_coord + Eigen::Vector3i(i, j, k), voxel_scale);
                   if (child_data.y != 0) {
@@ -98,6 +98,8 @@ struct MultiresTSDFUpdate {
                     sample_count++;
                   }
                 }
+              }
+            }
             VoxelData voxel_data = block->data(voxel_coord, voxel_scale + 1);
 
             if (sample_count != 0) {
@@ -170,8 +172,8 @@ struct MultiresTSDFUpdate {
     const int block_size = VoxelBlockType::size_li;
     for (int voxel_scale = scale; voxel_scale > min_scale; --voxel_scale) {
       const int stride = 1 << voxel_scale;
-      for (int z = 0; z < block_size; z += stride)
-        for (int y = 0; y < block_size; y += stride)
+      for (int z = 0; z < block_size; z += stride) {
+        for (int y = 0; y < block_size; y += stride) {
           for (int x = 0; x < block_size; x += stride) {
             const Eigen::Vector3i parent_coord = block_coord + Eigen::Vector3i(x, y, z);
             VoxelData parent_data = block->data(parent_coord, voxel_scale);
@@ -187,7 +189,8 @@ struct MultiresTSDFUpdate {
                     const Eigen::Vector3f voxel_sample_coord_f =
                         se::get_sample_coord(voxel_coord, stride, map.sample_offset_frac_);
                     voxel_data.x = se::math::clamp(map.interp(voxel_sample_coord_f,
-                        [](const VoxelData& data) { return data.x; }, voxel_scale - 1, is_valid).first, -1.f, 1.f);
+                                                              [](const VoxelData &data) { return data.x; },
+                                                              voxel_scale - 1, is_valid).first, -1.f, 1.f);
                     voxel_data.y = is_valid ? parent_data.y : 0;
                     voxel_data.x_last = voxel_data.x;
                     voxel_data.delta_y = 0;
@@ -204,6 +207,8 @@ struct MultiresTSDFUpdate {
             parent_data.delta_y = 0;
             block->setData(parent_coord, voxel_scale, parent_data);
           }
+        }
+      }
     }
   }
 
@@ -272,8 +277,7 @@ struct MultiresTSDFUpdate {
                   const float tsdf_value = fminf(1.f, sdf_value / MultiresTSDF::mu);
                   voxel_data.x = se::math::clamp(
                       (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
-                      (static_cast<float>(voxel_data.y) + 1.f),
-                      -1.f, 1.f);
+                      (static_cast<float>(voxel_data.y) + 1.f), -1.f, 1.f);
                   voxel_data.y = fminf(voxel_data.y + 1, MultiresTSDF::max_weight);
                   voxel_data.delta_y++;
                 }
