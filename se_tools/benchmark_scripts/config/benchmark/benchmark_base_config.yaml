@@ -29,6 +29,7 @@ sensor:
                                0, 1, 0, 0,
                                0, 0, 1, 0,
                                0, 0, 0, 1]
+  init_T_WB:                  [0, 0, 0, 0, 0, 0, 1]           # tx, ty, tz, qx, qy, qz, qw
   near_plane:                 0.4       # near plane in meters
   far_plane:                  6.0       # far plane in meters
 

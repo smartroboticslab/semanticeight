@@ -13,6 +13,7 @@ sensor:
   type:                         "pinholecamera"
   intrinsics:                   [525,525,319.5,239.5]
   downsampling_factor:          4
+  init_T_WB:                    [0, 0, 0, 0, 0, 0, 1]           # tx, ty, tz, qx, qy, qz, qw
   far_plane:                    [4.0]
 
 voxel_impls:                    # All listed voxel_impls below will be used and replace the base voxel implementations

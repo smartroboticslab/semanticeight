@@ -6,7 +6,7 @@ import itertools
 import warnings
 from _common import *
 
-LIST_VALUES = ["pyramid", "t_MW_factor",
+LIST_VALUES = ["pyramid", "t_MW_factor", "init_T_WB",
                "occupancy_min_max", "tau_min_max", "sigma_min_max",
                "sigma_min_max_factor", "intrinsics", "T_BC"]
 
@@ -235,6 +235,7 @@ class Sensor:
         self.downsampling_factor      = None
         self.bilateral_filter = None
         self.T_BC             = None
+        self.init_T_WB        = None
         self.near_plane       = None
         self.far_plane        = None
 
