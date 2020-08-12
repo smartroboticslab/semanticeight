@@ -75,6 +75,13 @@ struct MultiresTSDF {
   static constexpr bool invert_normals = true;
 
   /**
+   * The factor the voxel dim is multiplied with to compute mu
+   *
+   *  <br>\em Default: 8
+   */
+  static float mu_factor;
+
+  /**
    * The MultiresTSDF truncation bound. Values of the MultiresTSDF are assumed to be in the
    * interval ±mu. See Section 3.3 of \cite NewcombeISMAR2011 for more
    * details.
@@ -93,8 +100,8 @@ struct MultiresTSDF {
   /**
    * Configure the MultiresTSDF parameters
    */
-  static void configure();
-  static void configure(YAML::Node yaml_config);
+  static void configure(const float voxel_dim);
+  static void configure(YAML::Node yaml_config, const float voxel_dim);
 
   static std::string printConfig();
 

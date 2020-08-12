@@ -162,8 +162,7 @@ struct OFusionUpdate {
     // Compute the occupancy probability for the current measurement.
     const float m = sensor.measurementFromPoint(point_C);
     const float diff = (m - depth_value);
-    const float sigma = se::math::clamp(OFusion::k_sigma * se::math::sq(m),
-        2 * voxel_dim, 0.05f);
+    const float sigma = se::math::clamp(OFusion::k_sigma * se::math::sq(m), OFusion::sigma_min, OFusion::sigma_max);
     float sample = ofusion_H(diff / sigma);
     if (sample == 0.5f) {
       return;

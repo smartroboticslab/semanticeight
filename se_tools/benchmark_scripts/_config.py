@@ -8,7 +8,7 @@ from _common import *
 
 LIST_VALUES = ["pyramid", "t_MW_factor",
                "occupancy_min_max", "tau_min_max", "sigma_min_max",
-               "intrinsics", "T_BC"]
+               "sigma_min_max_factor", "intrinsics", "T_BC"]
 
 def list_values(obj):
     if not obj: return
@@ -390,26 +390,27 @@ class VoxelImpl():
 class TSDF(VoxelImpl):
     def __init__(self):
         self.type                    = "tsdf"
-        self.mu                      = None
+        self.mu_factor               = None
         self.max_weight              = None
 
 class MultiresTSDF(VoxelImpl):
     def __init__(self):
         self.type                    = 'multirestsdf'
-        self.mu                      = None
+        self.mu_factor               = None
         self.max_weight              = None
 
 class OFusion(VoxelImpl):
     def __init__(self):
         self.type                    = "ofusion"
-        self.mu                      = None
         self.surface_boundary        = None
         self.occupancy_min_max       = None
+        self.tau                     = None
+        self.sigma_min_max_factor    = None
+        self.k_sigma                 = None
 
 class MultiresOFusion(VoxelImpl):
     def __init__(self):
         self.type                    = 'multiresofusion'
-        self.mu                      = None
         self.surface_boundary        = None
         self.occupancy_min_max       = None
         self.max_weight              = None

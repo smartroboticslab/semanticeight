@@ -96,6 +96,12 @@ struct OFusion {
    */
   static float tau;
 
+  static float sigma_min_factor;
+  static float sigma_max_factor;
+
+  static float sigma_min;
+  static float sigma_max;
+
   /**
    * Grow rate factor of uncertainty
    */
@@ -106,8 +112,8 @@ struct OFusion {
   /**
    * Configure the OFusion parameters
    */
-  static void configure();
-  static void configure(YAML::Node yaml_config);
+  static void configure(const float voxel_dim);
+  static void configure(YAML::Node yaml_config, const float voxel_dim);
 
   static std::string printConfig();
 

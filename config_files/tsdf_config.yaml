@@ -45,5 +45,5 @@ sensor:
   far_plane:                  4.0
 
 voxel_impl:
-  mu:                         0.1
+  mu_factor:                  8
   max_weight:                 100

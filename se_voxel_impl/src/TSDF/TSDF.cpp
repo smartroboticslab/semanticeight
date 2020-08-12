@@ -35,23 +35,26 @@
 
 // Initialize static data members.
 constexpr bool TSDF::invert_normals;
+float TSDF::mu_factor;
 float TSDF::mu;
 float TSDF::max_weight;
 
-void TSDF::configure(YAML::Node yaml_config) {
-  configure();
+void TSDF::configure(YAML::Node yaml_config, const float voxel_dim) {
+  configure(voxel_dim);
   if (yaml_config.IsNull()) return;
 
-  if (yaml_config["mu"]) {
-    mu = yaml_config["mu"].as<float>();
+  if (yaml_config["mu_factor"]) {
+    mu_factor = yaml_config["mu_factor"].as<float>();
+    mu = mu_factor * voxel_dim;
   }
   if (yaml_config["max_weight"]) {
     max_weight = yaml_config["max_weight"].as<float>();
   }
 }
 
-void TSDF::configure() {
-  mu         = 0.1;
+void TSDF::configure(const float voxel_dim) {
+  mu_factor  = 8;
+  mu         = mu_factor * voxel_dim;
   max_weight = 100;
 }
 
@@ -60,6 +63,7 @@ std::string TSDF::printConfig() {
   ss << "========== VOXEL IMPL ========== " << "\n";
   ss << "Invert normals:                  " << (TSDF::invert_normals
                                                 ? "true" : "false") << "\n";
+  ss << "Mu factor:                       " << TSDF::mu_factor << "\n";
   ss << "Mu:                              " << TSDF::mu << "\n";
   ss << "Max weight:                      " << TSDF::max_weight << "\n";
   ss << "\n";

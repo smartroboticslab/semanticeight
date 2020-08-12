@@ -35,22 +35,27 @@
 
 // Initialize static data members.
 constexpr bool MultiresTSDF::invert_normals;
+float MultiresTSDF::mu_factor;
 float MultiresTSDF::mu;
 int   MultiresTSDF::max_weight;
 
-void MultiresTSDF::configure() {
-  mu         = 0.1;
+void MultiresTSDF::configure(const float voxel_dim) {
+  mu         = 8 * voxel_dim;
   max_weight = 100;
 }
 
-void MultiresTSDF::configure(YAML::Node yaml_config) {
-  configure();
+void MultiresTSDF::configure(YAML::Node yaml_config, const float voxel_dim) {
+  configure(voxel_dim);
   if (yaml_config.IsNull()) {
     return;
   }
 
-  if (yaml_config["mu"]) {
-    mu = yaml_config["mu"].as<float>();
+  if (yaml_config["mu_factor"]) {
+    mu_factor = yaml_config["mu_factor"].as<float>();
+    mu = mu_factor * voxel_dim;
+  }
+  if (yaml_config["max_weight"]) {
+    max_weight = yaml_config["max_weight"].as<float>();
   }
   if (yaml_config["max_weight"]) {
     max_weight = yaml_config["max_weight"].as<float>();
@@ -62,6 +67,7 @@ std::string MultiresTSDF::printConfig() {
   ss << "========== VOXEL IMPL ========== " << "\n";
   ss << "Invert normals:                  " << (MultiresTSDF::invert_normals
                                                 ? "true" : "false") << "\n";
+  ss << "Mu factor:                       " << MultiresTSDF::mu_factor << "\n";
   ss << "Mu:                              " << MultiresTSDF::mu << "\n";
   ss << "Max weight:                      " << MultiresTSDF::max_weight << "\n";
   ss << "\n";

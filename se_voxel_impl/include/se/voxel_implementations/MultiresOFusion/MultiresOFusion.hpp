@@ -152,8 +152,8 @@ struct MultiresOFusion {
   /**
    * Configure the MultiresOFusion parameters
    */
-  static void configure();
-  static void configure(YAML::Node yaml_config);
+  static void configure(const float voxel_dim);
+  static void configure(YAML::Node yaml_config, const float voxel_dim);
 
   static std::string printConfig();
 

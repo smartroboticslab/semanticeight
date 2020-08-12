@@ -40,18 +40,27 @@ float OFusion::surface_boundary;
 float OFusion::min_occupancy;
 float OFusion::max_occupancy;
 float OFusion::tau;
+float OFusion::sigma_min_factor;
+float OFusion::sigma_max_factor;
+float OFusion::sigma_min;
+float OFusion::sigma_max;
 float OFusion::k_sigma;
 
-void OFusion::configure() {
+void OFusion::configure(const float voxel_dim) {
   surface_boundary = 0.f;
   min_occupancy    = -1000;
   max_occupancy    =  1000;
   tau              = 4;
+  sigma_min_factor = 2;
+  sigma_max_factor = 4;
+  sigma_min        = sigma_min_factor * voxel_dim;
+  sigma_max        = sigma_max_factor * voxel_dim;
   k_sigma          = 0.01;
+
 }
 
-void OFusion::configure(YAML::Node yaml_config) {
-  configure();
+void OFusion::configure(YAML::Node yaml_config, const float voxel_dim) {
+  configure(voxel_dim);
 
   if (yaml_config.IsNull()) {
     return;
@@ -68,6 +77,13 @@ void OFusion::configure(YAML::Node yaml_config) {
   if (yaml_config["tau"]) {
     tau = yaml_config["tau"].as<float>();
   }
+  if (yaml_config["sigma_min_max_factor"]) {
+    std::vector<float> sigma_min_max_factor = yaml_config["sigma_min_max_factor"].as<std::vector<float>>();
+    sigma_min_factor = sigma_min_max_factor[0];
+    sigma_max_factor = sigma_min_max_factor[1];
+    sigma_min        = sigma_min_factor * voxel_dim;
+    sigma_max        = sigma_max_factor * voxel_dim;
+  }
   if (yaml_config["k_sigma"]) {
     k_sigma = yaml_config["k_sigma"].as<float>();
   }
@@ -83,6 +99,10 @@ std::string OFusion::printConfig() {
   ss << "Min occupancy:                   " << OFusion::min_occupancy << "\n";
   ss << "Max occupancy:                   " << OFusion::max_occupancy << "\n";
   ss << "tau:                             " << OFusion::tau << "\n";
+  ss << "sigma_min_factor:                " << OFusion::sigma_min_factor << "\n";
+  ss << "sigma_max_factor:                " << OFusion::sigma_max_factor << "\n";
+  ss << "sigma_min:                       " << OFusion::sigma_min << "\n";
+  ss << "sigma_max:                       " << OFusion::sigma_max << "\n";
   ss << "k sigma:                         " << OFusion::k_sigma << "\n";
   ss << "\n";
   return ss.str();

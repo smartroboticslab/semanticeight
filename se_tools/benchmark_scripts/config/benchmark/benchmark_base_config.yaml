@@ -34,17 +34,18 @@ sensor:
 
 voxel_impls:
   tsdf:
-    mu:                       0.1
+    mu_factor:                8
     max_weight:               100
 
 #  multirestsdf:
-#    mu:                       0.1
+#    mu_factor:                8
 #    max_weight:               100
 #
 #  ofusion:
 #    surface_boundary:         0.0
 #    occupancy_min_max:        [-100, 100]
 #    tau:                      4
+#    sigma_min_max_factor:     [2, 4]
 #    k_sigma:                  0.01
 #
 #  multiresofusion:

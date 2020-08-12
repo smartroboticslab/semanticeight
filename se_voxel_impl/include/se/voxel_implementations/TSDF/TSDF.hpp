@@ -73,10 +73,17 @@ struct TSDF {
   static constexpr bool invert_normals = true;
 
   /**
+   * The factor the voxel dim is multiplied with to compute mu
+   *
+   *  <br>\em Default: 8
+   */
+  static float mu_factor;
+
+  /**
    * The TSDF truncation bound. Values of the TSDF are assumed to be in the
    * interval ±mu. See Section 3.3 of \cite NewcombeISMAR2011 for more
    * details.
-   *  <br>\em Default: 0.1
+   *  <br>\em Default: 8 x voxel_dim
    */
   static float mu;
 
@@ -90,8 +97,8 @@ struct TSDF {
   /**
    * Configure the TSDF parameters
    */
-  static void configure();
-  static void configure(YAML::Node yaml_config);
+  static void configure(const float voxel_dim);
+  static void configure(YAML::Node yaml_config, const float voxel_dim);
 
   static std::string printConfig();
 

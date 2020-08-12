@@ -106,7 +106,7 @@ size_t OFusion::buildAllocationList(OctreeType&             map,
       const Eigen::Vector3f surface_vertex_M = (T_MC * (depth_value * ray_dir_C).homogeneous()).head<3>();
 
       const Eigen::Vector3f reverse_ray_dir_M = (t_MC - surface_vertex_M).normalized();
-      const float sigma = se::math::clamp(OFusion::k_sigma * se::math::sq(depth_value), 2 * voxel_dim, 0.05f);
+      const float sigma = se::math::clamp(OFusion::k_sigma * se::math::sq(depth_value), OFusion::sigma_min, OFusion::sigma_max);
       const float band = 2 * sigma;
       const Eigen::Vector3f ray_origin_M = surface_vertex_M - (band * 0.5f) * reverse_ray_dir_M;
       const float dist = (t_MC - ray_origin_M).norm();

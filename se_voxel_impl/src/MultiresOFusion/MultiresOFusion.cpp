@@ -51,7 +51,7 @@ float            MultiresOFusion::sigma_min;
 float            MultiresOFusion::sigma_max;
 float            MultiresOFusion::k_sigma;
 
-void MultiresOFusion::configure() {
+void MultiresOFusion::configure(const float voxel_dim) {
   surface_boundary  = 0;
   min_occupancy     = -50;
   max_occupancy     = 50;
@@ -70,9 +70,11 @@ void MultiresOFusion::configure() {
   factor = (max_weight - 1) / max_weight;
 }
 
-void MultiresOFusion::configure(YAML::Node yaml_config) {
-  configure();
-  if (yaml_config.IsNull()) return;
+void MultiresOFusion::configure(YAML::Node yaml_config, const float voxel_dim) {
+  configure(voxel_dim);
+  if (yaml_config.IsNull()) {
+    return;
+  }
 
   if (yaml_config["surface_boundary"]) {
     surface_boundary  = yaml_config["surface_boundary"].as<float>();

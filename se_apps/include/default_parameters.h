@@ -491,10 +491,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       ? yaml_sensor_config["far_plane"].as<float>() : default_far_plane;
 
 
-  // CONFIGURE VOXEL IMPL
-  config.voxel_impl_type = VoxelImpl::type();
-  (has_yaml_voxel_impl_config) ? VoxelImpl::configure(yaml_voxel_impl_config) : VoxelImpl::configure();
-
   // Reset getopt_long state to start parsing from the beginning
   optind = 1;
   option_index = 0;
@@ -720,6 +716,11 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
   }
+
+  // CONFIGURE VOXEL IMPL
+  config.voxel_impl_type = VoxelImpl::type();
+  float voxel_dim = config.map_dim.x() / config.map_size.x();
+  (has_yaml_voxel_impl_config) ? VoxelImpl::configure(yaml_voxel_impl_config, voxel_dim) : VoxelImpl::configure(voxel_dim);
 
   // Ensure the parameter values are valid.
   if (config.near_plane >= config.far_plane) {
