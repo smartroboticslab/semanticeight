@@ -515,9 +515,15 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // CONFIGURE SENSOR
   // Sensor type
   config.sensor_type = SensorImpl::type();
+  // Left hand coordinate frame
+  config.left_hand_frame = default_left_hand_frame;
   // Sensor intrinsics
   if (has_yaml_sensor_config && yaml_sensor_config["intrinsics"]) {
     config.sensor_intrinsics = Eigen::Vector4f((yaml_sensor_config["intrinsics"].as<std::vector<float>>()).data());
+    config.sensor_intrinsics_overrided = true;
+    if (config.sensor_intrinsics.y() < 0) {
+      config.left_hand_frame = true;
+    }
   } else {
     config.sensor_intrinsics = default_sensor_intrinsics;
   }
@@ -526,9 +532,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Sensor downsamling factor
   config.sensor_downsampling_factor = (has_yaml_sensor_config && yaml_sensor_config["downsampling_factor"])
       ? yaml_sensor_config["downsampling_factor"].as<int>() : default_sensor_downsampling_factor;
-  // Left hand coordinate frame
-  config.left_hand_frame = (has_yaml_sensor_config && yaml_sensor_config["left_hand_frame"])
-      ? yaml_sensor_config["left_hand_frame"].as<bool>() : default_left_hand_frame;
   // Camera to Body frame transformation
   config.T_BC = (has_yaml_sensor_config && yaml_sensor_config["T_BC"])
       ? Eigen::Matrix4f(toT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_T_BC;
@@ -619,7 +622,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.sensor_intrinsics_overrided = true;
         if (config.sensor_intrinsics.y() < 0) {
           config.left_hand_frame = true;
-          std::cerr << "update to left hand coordinate system" << std::endl;
         }
         break;
 
