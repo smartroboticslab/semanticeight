@@ -172,7 +172,6 @@ TEST(Octree, FarCorner) {
 TEST(Octree, InnerOctantExteriorNeighbours) {
   const int voxel_depth = 5;
   const int depth = 2;
-  const int size = 1 << (voxel_depth - depth);
   const se::key_t octant_key = se::keyops::encode(16, 16, 16, depth, voxel_depth);
   se::key_t neighbour_keys[7];
   se::exterior_neighbours(neighbour_keys, octant_key, depth, voxel_depth);
@@ -258,7 +257,6 @@ TEST(Octree, OctantOneNeighbours) {
 
 TEST(Octree, BalanceTree) {
   const int voxel_depth = 8;
-  const int depth = 5;
 
   se::Octree<TestVoxelT> octree;
   octree.init(1 << voxel_depth, 5);
