@@ -89,7 +89,7 @@ class VoxelBlockRayIteratorTest : public ::testing::Test {
 TEST_F(VoxelBlockRayIteratorTest, FetchAlongRay) {
   se::VoxelBlockRayIterator<TestVoxelT> it (octree_, ray_origin_M_, ray_dir_M_,
       0.4, 4.0f);
-  int i = 0;
+  size_t i = 0;
   TestVoxelT::VoxelBlockType* current;
   while (current = it.next()) {
     ASSERT_LT(i, allocation_list_.size());
