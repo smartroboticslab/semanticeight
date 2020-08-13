@@ -168,7 +168,6 @@ TEST(SerialiseUnitTestFull, SerialiseTree) {
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with constant
   std::uniform_int_distribution<> dis(0, size - 1);
 
-  int num_tested = 0;
   for(int i = 1, size = octree.size() / 2; i <= block_depth; ++i, size = size / 2) {
     for(int j = 0; j < 20; ++j) {
       Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
@@ -207,7 +206,6 @@ TEST(SerialiseUnitTestFull, SerialiseBlock) {
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with constant
   std::uniform_int_distribution<> dis(0, size - 1);
 
-  int num_tested = 0;
   for (int j = 0; j < 20; ++j) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
@@ -341,7 +339,6 @@ TEST(SerialiseUnitTestSingle, SerialiseTree) {
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with constant
   std::uniform_int_distribution<> dis(0, size - 1);
 
-  int num_tested = 0;
   for(int i = 1, size = octree.size() / 2; i <= block_depth; ++i, size = size / 2) {
     for(int j = 0; j < 20; ++j) {
       Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
@@ -380,7 +377,6 @@ TEST(SerialiseUnitTestSingle, SerialiseBlock) {
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with constant
   std::uniform_int_distribution<> dis(0, size - 1);
 
-  int num_tested = 0;
   for (int j = 0; j < 20; ++j) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
