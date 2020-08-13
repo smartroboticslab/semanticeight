@@ -63,14 +63,13 @@ namespace functor {
 
       void update_block(VoxelBlockType<FieldType>* block) {
         Eigen::Vector3i block_coord = block->coordinates();
-        unsigned int y, z, x;
         Eigen::Vector3i block_size = Eigen::Vector3i::Constant(VoxelBlockType<FieldType>::size_li);
         Eigen::Vector3i start_coord = block_coord.cwiseMax(min_coord_);
         Eigen::Vector3i last_coord = (block_coord + block_size).cwiseMin(max_coord_);
 
-        for(z = start_coord.z(); z < last_coord.z(); ++z) {
-          for (y = start_coord.y(); y < last_coord.y(); ++y) {
-            for (x = start_coord.x(); x < last_coord.x(); ++x) {
+        for (int z = start_coord.z(); z < last_coord.z(); ++z) {
+          for (int y = start_coord.y(); y < last_coord.y(); ++y) {
+            for (int x = start_coord.x(); x < last_coord.x(); ++x) {
               Eigen::Vector3i voxel_coord = Eigen::Vector3i(x, y, z);
               VoxelBlockHandler<FieldType> handler = {block, voxel_coord};
               function_(handler, voxel_coord);
