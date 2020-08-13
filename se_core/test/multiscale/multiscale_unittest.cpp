@@ -225,7 +225,7 @@ TEST(MultiscaleBlock, ReadWrite) {
     }
   }
 
-  for(int i = 0; i < voxels_coord.size(); ++i) {
+  for(size_t i = 0; i < voxels_coord.size(); ++i) {
     const Eigen::Vector3i& voxel_coord = voxels_coord[i];
     auto* block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
     const Eigen::Vector3i& block_coord = block->coordinates();
