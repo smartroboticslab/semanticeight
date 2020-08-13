@@ -1024,7 +1024,6 @@ void Octree<T>::load(const std::string& filename) {
   std::ifstream is (filename, std::ios::binary);
   int size;
   float dim;
-  const int block_size_cu = VoxelBlockType::size_cu;
 
   is.read(reinterpret_cast<char *>(&size), sizeof(size));
   is.read(reinterpret_cast<char *>(&dim), sizeof(dim));
