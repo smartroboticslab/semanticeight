@@ -154,7 +154,7 @@ int se::save_octree_structure_ply(const se::Octree<T>& octree,
   file << "property float y" << std::endl;
   file << "property float z" << std::endl;
   file << "element face " << faces_count << std::endl;
-  file << "property list uchar int point_index" << std::endl;
+  file << "property list uchar int vertex_index" << std::endl;
   file << "end_header" << std::endl;
   file << ss_nodes_corners.str();
   file << ss_faces.str();
