@@ -121,7 +121,7 @@ TEST_F(OctreeCollisionTest, Collision){
   const Eigen::Vector3i bbox_coord = {54, 10, 249};
   const Eigen::Vector3i bbox_size = {5, 5, 3};
 
-  auto update = [](auto& handler, const Eigen::Vector3i& coord) {
+  auto update = [](auto& handler, const Eigen::Vector3i&) {
       handler.set(2.f);
   };
   se::functor::axis_aligned_map(octree_, update);
