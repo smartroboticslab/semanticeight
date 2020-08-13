@@ -71,11 +71,11 @@ private:
 struct ray {
 public:
   ray(const camera_parameter& camera_parameter)
-      : direction_(Eigen::Vector3f(-1.f,-1.f,-1.f)),
+      : focal_length_pix_(camera_parameter.focal_length_pix()),
+        offset_(camera_parameter.imageResolution() / 2),
         origin_(camera_parameter.t_MC()),
         R_MC_(camera_parameter.R_MC()),
-        focal_length_pix_(camera_parameter.focal_length_pix()),
-        offset_(camera_parameter.imageResolution() / 2) {};
+        direction_(Eigen::Vector3f(-1.f,-1.f,-1.f)) {};
 
   void operator()(int pixel_x, int pixel_y) {
     direction_.x() = -offset_.x() + 0.5 + pixel_x;
