@@ -112,10 +112,10 @@ TEST_F(TestICLNUIMDataset, ReadDepthRGBAPose) {
       ASSERT_EQ(reader.frame(), frame);
 
       // Test for correct image sizes.
-      ASSERT_EQ(depth_image.width(), width_);
-      ASSERT_EQ(depth_image.height(), height_);
-      ASSERT_EQ(rgba_image.width(), width_);
-      ASSERT_EQ(rgba_image.height(), height_);
+      ASSERT_EQ(static_cast<size_t>(depth_image.width()), width_);
+      ASSERT_EQ(static_cast<size_t>(depth_image.height()), height_);
+      ASSERT_EQ(static_cast<size_t>(rgba_image.width()), width_);
+      ASSERT_EQ(static_cast<size_t>(rgba_image.height()), height_);
 
       // Test for correct image data.
       for (int y = 0; y < depth_image.height(); ++y) {
