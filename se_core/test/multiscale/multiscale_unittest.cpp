@@ -100,9 +100,7 @@ TEST_F(MultiscaleTest, Iterator) {
   se::node_iterator<TestVoxelT> it(octree_);
   se::Node<TestVoxelT>* node = it.next();
   for(int i = 512; node != nullptr; node = it.next(), i /= 2){
-    const Eigen::Vector3i node_coord = se::keyops::decode(node->code());
     const int node_size = node->size();
-    const TestVoxelT::VoxelData data = node->childData(0);
     EXPECT_EQ(node_size, i);
   }
 }
@@ -170,7 +168,7 @@ TEST_F(MultiscaleTest, MultipleInsert) {
   for(int i = 1, node_size = octree.size() / 2; i <= block_depth; ++i, node_size = node_size / 2) {
     for(int j = 0; j < 20; ++j) {
       Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
-      se::Node<TestVoxelT>* inserted_node = octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
+      octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
       se::Node<TestVoxelT>* fetched_node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), i);
       Eigen::Vector3i node_coord = se::keyops::decode(fetched_node->code());
       Eigen::Vector3i node_coord_rounded = node_size * (voxel_coord / node_size);
