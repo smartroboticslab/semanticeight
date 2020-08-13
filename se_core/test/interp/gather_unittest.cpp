@@ -82,9 +82,9 @@ TEST_F(GatherTest, ZCrosses) {
   TestVoxelT::VoxelData data[8];
   const unsigned block_size = TestVoxelT::VoxelBlockType::size_li;
   const Eigen::Vector3i base_coord = {132, 128, 135};
-  unsigned int crossmask = ((base_coord.x() % block_size) == block_size - 1 << 2) |
-                           ((base_coord.y() % block_size) == block_size - 1 << 1) |
-                            (base_coord.z() % block_size) == block_size - 1;
+  unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
+                           ((base_coord.y() % block_size == block_size - 1) << 1) |
+                            (base_coord.z() % block_size == block_size - 1);
   ASSERT_EQ(crossmask, 1u);
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
