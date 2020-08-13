@@ -131,6 +131,7 @@ collision_status collides_with(const Octree<FieldType>& octree,
   current.node_ptr = node;
   current.size = octree.size();
   current.coordinates = {0, 0, 0};
+  current.parent_data = FieldType::initData();
   stack[stack_idx++] = current;
   collision_status status = collision_status::empty;
 
