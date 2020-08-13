@@ -85,7 +85,7 @@ TEST_F(GatherTest, ZCrosses) {
   unsigned int crossmask = ((base_coord.x() % block_size) == block_size - 1 << 2) |
                            ((base_coord.y() % block_size) == block_size - 1 << 1) |
                             (base_coord.z() % block_size) == block_size - 1;
-  ASSERT_EQ(crossmask, 1);
+  ASSERT_EQ(crossmask, 1u);
   TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
@@ -101,7 +101,7 @@ TEST_F(GatherTest, YCrosses) {
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
-  ASSERT_EQ(crossmask, 2);
+  ASSERT_EQ(crossmask, 2u);
   TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
@@ -117,7 +117,7 @@ TEST_F(GatherTest, XCrosses) {
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
-  ASSERT_EQ(crossmask, 4);
+  ASSERT_EQ(crossmask, 4u);
   TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
@@ -133,7 +133,7 @@ TEST_F(GatherTest, YZCross) {
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
-  ASSERT_EQ(crossmask, 3);
+  ASSERT_EQ(crossmask, 3u);
   TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
@@ -149,7 +149,7 @@ TEST_F(GatherTest, XZCross) {
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
-  ASSERT_EQ(crossmask, 5);
+  ASSERT_EQ(crossmask, 5u);
   TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
@@ -165,7 +165,7 @@ TEST_F(GatherTest, XYCross) {
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
-  ASSERT_EQ(crossmask, 6);
+  ASSERT_EQ(crossmask, 6u);
   TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
@@ -181,7 +181,7 @@ TEST_F(GatherTest, AllCross) {
   unsigned int crossmask = ((base_coord.x() % block_size == block_size - 1) << 2) |
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
-  ASSERT_EQ(crossmask, 7);
+  ASSERT_EQ(crossmask, 7u);
   TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
