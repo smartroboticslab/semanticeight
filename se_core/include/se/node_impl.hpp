@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef NODE_IMPL_HPP
 #define NODE_IMPL_HPP
 
+#include <algorithm>
+
 namespace se {
 // Node implementation
 
@@ -65,7 +67,7 @@ void Node<T>::initFromNode(const se::Node<T>& node) {
   children_mask_  = node.children_mask();
   timestamp_      = node.timestamp();
   active_         = node.active();
-  std::memcpy(children_data_, node.childrenData(), 8 * sizeof(VoxelData));
+  std::copy(node.childrenData(), node.childrenData() + 8, children_data_);
 }
 
 // Voxel block base implementation
@@ -96,7 +98,7 @@ void VoxelBlock<T>::initFromBlock(const VoxelBlock<T>& block) {
   coordinates_   = block.coordinates();
   min_scale_     = block.min_scale();
   current_scale_ = block.current_scale();
-  std::memcpy(this->children_data_, block.childrenData(), 8 * sizeof(VoxelData));
+  std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
 }
 
 // Voxel block full scale allocation implementation
@@ -196,8 +198,8 @@ void VoxelBlockFull<T>::initFromBlock(const VoxelBlockFull<T>& block) {
   this->coordinates_   = block.coordinates();
   this->min_scale_     = block.min_scale();
   this->current_scale_ = block.current_scale();
-  std::memcpy(this->children_data_, block.childrenData(), 8 * sizeof(VoxelData));
-  std::memcpy(blockData(), block.blockData(), (num_voxels_in_block) * sizeof(*(block.blockData())));
+  std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
+  std::copy(block.blockData(), block.blockData() + num_voxels_in_block, blockData());
 }
 
 // Voxel block single scale allocation implementation
@@ -395,15 +397,16 @@ void VoxelBlockSingle<T>::initFromBlock(const VoxelBlockSingle<T>& block) {
   this->coordinates_   = block.coordinates();
   this->min_scale_     = block.min_scale();
   this->current_scale_ = block.current_scale();
-  std::memcpy(this->children_data_, block.childrenData(), 8 * sizeof(VoxelData));
+  std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
   if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initialised.
     for (int scale = this->max_scale; scale >= block.min_scale(); scale--) {
       int size_at_scale = this->size_li >> scale;
       int num_voxels_at_scale = se::math::cu(size_at_scale);
       blockData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
-      std::memcpy(blockData()[VoxelBlock<T>::max_scale - scale],
+      std::copy(
           block.blockData()[VoxelBlock<T>::max_scale - scale],
-          (num_voxels_at_scale) * sizeof(*(block.blockData()[VoxelBlock<T>::max_scale - scale])));
+          block.blockData()[VoxelBlock<T>::max_scale - scale] + num_voxels_at_scale,
+          blockData()[VoxelBlock<T>::max_scale - scale]);
     }
   }
 }
