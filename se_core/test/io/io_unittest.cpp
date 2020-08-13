@@ -81,9 +81,9 @@ TEST(SerialiseUnitTestFull, WriteReadNode) {
     std::ifstream is(filename, std::ios::binary);
     se::Node<TestVoxelFullT> node;
     se::internal::deserialise(node, is);
-    ASSERT_EQ(node.code(), 24);
+    ASSERT_EQ(node.code(), 24u);
     ASSERT_EQ(node.size(), 256);
-    ASSERT_EQ(node.timestamp(), 10);
+    ASSERT_EQ(node.timestamp(), 10u);
     ASSERT_EQ(node.active(), false);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       ASSERT_EQ(node.childData(child_idx), 5.f);
@@ -111,9 +111,9 @@ TEST(SerialiseUnitTestFull, WriteReadBlock) {
     std::ifstream is(filename, std::ios::binary);
     TestVoxelFullT::VoxelBlockType block;
     se::internal::deserialise(block, is);
-    ASSERT_EQ(block.code(), 24);
+    ASSERT_EQ(block.code(), 24u);
     ASSERT_EQ(block.size(), 8);
-    ASSERT_EQ(block.timestamp(), 10);
+    ASSERT_EQ(block.timestamp(), 10u);
     ASSERT_EQ(block.active(), false);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
     ASSERT_EQ(block.min_scale(), 2);
@@ -144,9 +144,9 @@ TEST(SerialiseUnitTestFull, WriteReadBlockStruct) {
     std::ifstream is(filename, std::ios::binary);
     OccupancyVoxelFullT::VoxelBlockType block;
     se::internal::deserialise(block, is);
-    ASSERT_EQ(block.code(), 24);
+    ASSERT_EQ(block.code(), 24u);
     ASSERT_EQ(block.size(), 8);
-    ASSERT_EQ(block.timestamp(), 10);
+    ASSERT_EQ(block.timestamp(), 10u);
     ASSERT_EQ(block.active(), false);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
     ASSERT_EQ(block.min_scale(), 2);
@@ -187,7 +187,7 @@ TEST(SerialiseUnitTestFull, SerialiseTree) {
   auto& node_buffer_base = octree.pool().nodeBuffer();
   auto& node_buffer_copy = octree_copy.pool().nodeBuffer();
   ASSERT_EQ(node_buffer_base.size(), node_buffer_copy.size());
-  for(int i = 0; i < node_buffer_base.size(); ++i) {
+  for(size_t i = 0; i < node_buffer_base.size(); ++i) {
     se::Node<TestVoxelFullT> * node_base  = node_buffer_base[i];
     se::Node<TestVoxelFullT> * node_copy = node_buffer_copy[i];
     ASSERT_EQ(node_base->code(), node_copy->code());
@@ -212,7 +212,7 @@ TEST(SerialiseUnitTestFull, SerialiseBlock) {
     Eigen::Vector3i voxel_coord(dis(gen), dis(gen), dis(gen));
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
     auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-    for (int voxel_idx = 0; voxel_idx < TestVoxelFullT::VoxelBlockType::size_cu; ++voxel_idx)
+    for (unsigned voxel_idx = 0; voxel_idx < TestVoxelFullT::VoxelBlockType::size_cu; ++voxel_idx)
       block->setData(voxel_idx, dis(gen));
   }
 
@@ -224,8 +224,8 @@ TEST(SerialiseUnitTestFull, SerialiseBlock) {
 
   auto &block_buffer_base = octree.pool().blockBuffer();
   auto &block_buffer_copy = octree_copy.pool().blockBuffer();
-  for (int i = 0; i < block_buffer_base.size(); i++) {
-    for (int voxel_idx = 0; voxel_idx < TestVoxelFullT::VoxelBlockType::size_cu; voxel_idx++) {
+  for (size_t i = 0; i < block_buffer_base.size(); i++) {
+    for (unsigned voxel_idx = 0; voxel_idx < TestVoxelFullT::VoxelBlockType::size_cu; voxel_idx++) {
       ASSERT_EQ(block_buffer_base[i]->data(voxel_idx), block_buffer_copy[i]->data(voxel_idx));
     }
   }
@@ -274,7 +274,7 @@ TEST(SerialiseUnitTestSingle, WriteReadNode) {
     std::ifstream is(filename, std::ios::binary);
     se::Node<TestVoxelSingleT> node;
     se::internal::deserialise(node, is);
-    ASSERT_EQ(node.code(), 24);
+    ASSERT_EQ(node.code(), 24u);
     ASSERT_EQ(node.size(), 256);
     for(int child_idx = 0; child_idx < 8; ++child_idx)
       ASSERT_EQ(node.childData(child_idx), 5.f);
@@ -298,7 +298,7 @@ TEST(SerialiseUnitTestSingle, WriteReadBlock) {
     std::ifstream is(filename, std::ios::binary);
     TestVoxelSingleT::VoxelBlockType block;
     se::internal::deserialise(block, is);
-    ASSERT_EQ(block.code(), 24);
+    ASSERT_EQ(block.code(), 24u);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx)
       ASSERT_EQ(block.data(voxel_idx), 5.f);
@@ -322,7 +322,7 @@ TEST(SerialiseUnitTestSingle, WriteReadBlockStruct) {
     std::ifstream is(filename, std::ios::binary);
     OccupancyVoxelSingleT::VoxelBlockType block;
     se::internal::deserialise(block, is);
-    ASSERT_EQ(block.code(), 24);
+    ASSERT_EQ(block.code(), 24u);
     ASSERT_TRUE(block.coordinates() == Eigen::Vector3i(40, 48, 52));
     for(int voxel_idx = 0; voxel_idx < 512; ++voxel_idx) {
       auto data = block.data(voxel_idx);
@@ -340,7 +340,7 @@ TEST(SerialiseUnitTestSingle, SerialiseTree) {
   octree.init(size, dim);
   std::mt19937 gen(1); //Standard mersenne_twister_engine seeded with constant
   std::uniform_int_distribution<> dis(0, size - 1);
-  
+
   int num_tested = 0;
   for(int i = 1, size = octree.size() / 2; i <= block_depth; ++i, size = size / 2) {
     for(int j = 0; j < 20; ++j) {
@@ -360,7 +360,7 @@ TEST(SerialiseUnitTestSingle, SerialiseTree) {
   auto& node_buffer_base = octree.pool().nodeBuffer();
   auto& node_buffer_copy = octree_copy.pool().nodeBuffer();
   ASSERT_EQ(node_buffer_base.size(), node_buffer_copy.size());
-  for(int i = 0; i < node_buffer_base.size(); ++i) {
+  for(size_t i = 0; i < node_buffer_base.size(); ++i) {
     se::Node<TestVoxelSingleT> * node_base  = node_buffer_base[i];
     se::Node<TestVoxelSingleT> * node_copy = node_buffer_copy[i];
     ASSERT_EQ(node_base->code(), node_copy->code());
@@ -386,10 +386,10 @@ TEST(SerialiseUnitTestSingle, SerialiseBlock) {
     octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), octree.blockDepth());
     auto block = octree.fetch(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
     block->allocateDownTo();
-    for (int voxel_idx = 0; voxel_idx < TestVoxelSingleT::VoxelBlockType::size_cu; ++voxel_idx)
+    for (unsigned voxel_idx = 0; voxel_idx < TestVoxelSingleT::VoxelBlockType::size_cu; ++voxel_idx)
       block->setData(voxel_idx, dis(gen));
   }
-  
+
   std::string filename = "block-test.bin";
   octree.save(filename);
 
@@ -398,8 +398,8 @@ TEST(SerialiseUnitTestSingle, SerialiseBlock) {
 
   auto &block_buffer_base = octree.pool().blockBuffer();
   auto &block_buffer_copy = octree_copy.pool().blockBuffer();
-  for (int i = 0; i < block_buffer_base.size(); i++) {
-    for (int voxel_idx = 0; voxel_idx < TestVoxelSingleT::VoxelBlockType::size_cu; voxel_idx++) {
+  for (size_t i = 0; i < block_buffer_base.size(); i++) {
+    for (unsigned voxel_idx = 0; voxel_idx < TestVoxelSingleT::VoxelBlockType::size_cu; voxel_idx++) {
       ASSERT_EQ(block_buffer_base[i]->data(voxel_idx), block_buffer_copy[i]->data(voxel_idx));
     }
   }
