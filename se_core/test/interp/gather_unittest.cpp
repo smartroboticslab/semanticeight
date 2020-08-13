@@ -86,7 +86,6 @@ TEST_F(GatherTest, ZCrosses) {
                            ((base_coord.y() % block_size) == block_size - 1 << 1) |
                             (base_coord.z() % block_size) == block_size - 1;
   ASSERT_EQ(crossmask, 1u);
-  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -102,7 +101,6 @@ TEST_F(GatherTest, YCrosses) {
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 2u);
-  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -118,7 +116,6 @@ TEST_F(GatherTest, XCrosses) {
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 4u);
-  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -134,7 +131,6 @@ TEST_F(GatherTest, YZCross) {
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 3u);
-  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -150,7 +146,6 @@ TEST_F(GatherTest, XZCross) {
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 5u);
-  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -166,7 +161,6 @@ TEST_F(GatherTest, XYCross) {
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 6u);
-  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -182,7 +176,6 @@ TEST_F(GatherTest, AllCross) {
                            ((base_coord.y() % block_size == block_size - 1) << 1) |
                             ((base_coord.z() % block_size) == block_size - 1);
   ASSERT_EQ(crossmask, 7u);
-  TestVoxelT::VoxelBlockType* block = octree_.fetch(base_coord.x(), base_coord.y(), base_coord.z());
   se::internal::gather_values(octree_, base_coord, 0, [](const auto& data){ return data; }, data);
 
   for(int i = 0; i < 8; ++i) {
@@ -195,7 +188,6 @@ TEST_F(GatherTest, FetchWithStack) {
   int voxel_depth = octree_.voxelDepth();
   se::internal::fetch(stack, octree_.root(), voxel_depth,
       Eigen::Vector3i(128, 136, 128));
-  auto res = octree_.fetch(128, 136, 128);
   int l = 0;
   while(stack[l] && stack[l + 1] != nullptr) {
     ASSERT_TRUE(se::parent(stack[l + 1]->code(), voxel_depth) == stack[l]->code());
