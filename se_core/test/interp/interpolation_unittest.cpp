@@ -81,9 +81,9 @@ class InterpolationTest : public ::testing::Test {
       const unsigned radius = size >> 2;
       const Eigen::Vector3f C(centre, centre, centre);
 
-      for(int z = centre - radius; z < (centre + radius); ++z) {
-        for(int y = centre - radius; y < (centre + radius); ++y) {
-          for(int x = centre - radius; x < (centre + radius); ++x) {
+      for(unsigned z = centre - radius; z < (centre + radius); ++z) {
+        for(unsigned y = centre - radius; y < (centre + radius); ++y) {
+          for(unsigned x = centre - radius; x < (centre + radius); ++x) {
             const Eigen::Vector3i voxel_coord(x, y, z);
             const float dist = fabs(sphere_dist(voxel_coord.cast<float>(), C, radius));
             if(dist > 20.f && dist < 25.f) {
