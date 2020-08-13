@@ -48,8 +48,6 @@ TEST(AllocationTest, EmptySingleVoxel) {
   OctreeF octree;
   octree.init(256, 5);
   const Eigen::Vector3i voxel_coord = {25, 65, 127};
-  const se::key_t code = octree.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-  se::key_t allocation_list[1] = {code};
   const TestVoxelT::VoxelData data = octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
   EXPECT_EQ(data, TestVoxelT::invalid());
 }
@@ -75,7 +73,6 @@ TEST(AllocationTest, FetchOctant) {
   typedef se::Octree<TestVoxelT> OctreeF;
   OctreeF octree;
   const int voxel_depth = 8;
-  const unsigned int block_size = 8;
   const unsigned int size = std::pow(2, voxel_depth);
   octree.init(size, 5);
   const Eigen::Vector3i voxel_coord = {25, 65, 127};
@@ -124,7 +121,6 @@ TEST(AllocationTest, MortonPrefixMask) {
       ASSERT_EQ(masked_voxel_coord.x() % node_size, 0);
       ASSERT_EQ(masked_voxel_coord.y() % node_size, 0);
       ASSERT_EQ(masked_voxel_coord.z() % node_size, 0);
-      const Eigen::Vector3i voxel_coord = voxels_coord[i];
       // printf("voxel_coord: %d, %d, %d\n", voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
       // printf("masked depth %d: %d, %d, %d\n", depth, masked_voxel_coord.x(), masked_voxel_coord.y(), masked_voxel_coord.z() );
     }
@@ -134,7 +130,6 @@ TEST(AllocationTest, MortonPrefixMask) {
 
 TEST(AllocationTest, ParentInsert) {
   se::Octree<TestVoxelT> octree;
-  const unsigned int block_size = 8;
   const int voxel_depth = 8;
   const unsigned int map_size = std::pow(2, voxel_depth);
   octree.init(map_size, 5);
@@ -156,7 +151,6 @@ TEST(AllocationTest, ParentInsert) {
 
 TEST(AllocationTest, ParentAllocation) {
   se::Octree<TestVoxelT> octree;
-  const unsigned int block_size = 8;
   const int voxel_depth = 8;
   const unsigned int map_size = std::pow(2, voxel_depth);
   octree.init(map_size, 5);  std::random_device rd;
