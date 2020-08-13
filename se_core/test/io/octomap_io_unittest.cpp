@@ -103,10 +103,10 @@ TEST_F(OctoMapIO, ToOctoMapUninitialized) {
 TEST_F(OctoMapIO, ToOctoMapUnallocated) {
   std::unique_ptr<octomap::OcTree> omap (se::to_octomap(*octree_unallocated_));
   ASSERT_NE(omap, nullptr);
-  ASSERT_EQ(omap->size(), 0);
+  ASSERT_EQ(omap->size(), 0u);
   std::unique_ptr<octomap::OcTree> omap_binary (se::to_binary_octomap(*octree_unallocated_));
   ASSERT_NE(omap_binary, nullptr);
-  ASSERT_EQ(omap_binary->size(), 0);
+  ASSERT_EQ(omap_binary->size(), 0u);
 }
 
 
@@ -116,10 +116,10 @@ TEST_F(OctoMapIO, ToOctoMapUnallocated) {
 TEST_F(OctoMapIO, ToOctoMapUnknown) {
   std::unique_ptr<octomap::OcTree> omap (se::to_octomap(*octree_unknown_));
   ASSERT_NE(omap, nullptr);
-  ASSERT_EQ(omap->size(), 0);
+  ASSERT_EQ(omap->size(), 0u);
   std::unique_ptr<octomap::OcTree> omap_binary (se::to_binary_octomap(*octree_unknown_));
   ASSERT_NE(omap_binary, nullptr);
-  ASSERT_EQ(omap_binary->size(), 0);
+  ASSERT_EQ(omap_binary->size(), 0u);
 }
 
 
