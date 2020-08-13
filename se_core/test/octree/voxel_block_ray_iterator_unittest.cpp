@@ -28,10 +28,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "octree.hpp"
-#include "voxel_block_ray_iterator.hpp"
-#include "gtest/gtest.h"
 #include <vector>
+
+#include <gtest/gtest.h>
+
+#include <se/octree.hpp>
+#include <se/voxel_block_ray_iterator.hpp>
 
 
 

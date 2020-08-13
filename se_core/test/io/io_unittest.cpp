@@ -28,13 +28,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+
 #include <fstream>
-#include <string>
 #include <random>
-#include "io/se_serialise.hpp"
-#include "node.hpp"
-#include "octree.hpp"
-#include "gtest/gtest.h"
+#include <string>
+
+#include <gtest/gtest.h>
+
+#include <se/io/se_serialise.hpp>
+#include <se/node.hpp>
+#include <se/octree.hpp>
 
 struct TestVoxelFullT {
   typedef float VoxelData;

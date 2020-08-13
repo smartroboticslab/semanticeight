@@ -3,12 +3,12 @@
 
 #if defined(SE_OCTOMAP) && SE_OCTOMAP
 
-#include "gtest/gtest.h"
-
 #include <memory>
 
-#include "se/octree.hpp"
-#include "se/io/octomap_io.hpp"
+#include <gtest/gtest.h>
+
+#include <se/octree.hpp>
+#include <se/io/octomap_io.hpp>
 
 
 

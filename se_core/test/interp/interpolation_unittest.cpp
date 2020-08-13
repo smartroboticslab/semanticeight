@@ -28,14 +28,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+
 #include <cmath>
-#include "octree.hpp"
-#include "utils/math_utils.h"
-#include "gtest/gtest.h"
-#include "functors/axis_aligned_functor.hpp"
-#include "se/io/octree_io.hpp"
-#include "algorithms/balancing.hpp"
-#include "interpolation/idw_interpolation.hpp"
+
+#include <gtest/gtest.h>
+
+#include <se/algorithms/balancing.hpp>
+#include <se/functors/axis_aligned_functor.hpp>
+#include <se/interpolation/idw_interpolation.hpp>
+#include <se/io/octree_io.hpp>
+#include <se/octree.hpp>
+#include <se/utils/math_utils.h>
 
 struct TestVoxelT {
   typedef float VoxelData;

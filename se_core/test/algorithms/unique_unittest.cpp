@@ -26,13 +26,14 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "octree.hpp"
-#include "utils/math_utils.h"
-#include "utils/morton_utils.hpp"
-#include "algorithms/unique.hpp"
-#include "gtest/gtest.h"
 #include <algorithm>
-#include <bitset>
+
+#include <gtest/gtest.h>
+
+#include <se/algorithms/unique.hpp>
+#include <se/octree.hpp>
+#include <se/utils/math_utils.h>
+#include <se/utils/morton_utils.hpp>
 
 typedef unsigned int MortonType;
 
@@ -101,8 +102,6 @@ TEST_F(UniqueTest, FilterDuplicates) {
 TEST_F(UniqueMultiscaleTest, FilterAncestors) {
   const int last = se::algorithms::filter_ancestors(keys.data(), keys.size(), voxel_depth_);
   for(int i = 1; i < last; ++i) {
-    // std::cout << std::bitset<64>(keys[i]) << std::endl;
-    // std::cout << std::bitset<64>(keys[i - 1]) << std::endl << std::endl;
     ASSERT_TRUE(keys[i] != keys[i-1]);
   }
   ASSERT_EQ(last, 3);
@@ -115,7 +114,6 @@ TEST_F(UniqueMultiscaleTest, FilterDuplicatesTillLevel) {
    */
   const int last = se::algorithms::unique_multiscale(keys.data(), keys.size());
   for(int i = 1; i < last; ++i) {
-    // std::cout << std::bitset<64>(keys[i]) << std::endl;
     ASSERT_TRUE(keys[i] != keys[i-1]);
   }
   ASSERT_EQ(last, 3);

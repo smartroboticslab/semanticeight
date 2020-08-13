@@ -28,15 +28,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#include "utils/math_utils.h"
-#include "geometry/octree_collision.hpp"
-#include "geometry/aabb_collision.hpp"
-#include "utils/morton_utils.hpp"
-#include "octree.hpp"
-#include "octant_ops.hpp"
-#include "node_iterator.hpp"
-#include "functors/axis_aligned_functor.hpp"
-#include "gtest/gtest.h"
+
+#include <gtest/gtest.h>
+
+#include <se/functors/axis_aligned_functor.hpp>
+#include <se/geometry/aabb_collision.hpp>
+#include <se/geometry/octree_collision.hpp>
+#include <se/node_iterator.hpp>
+#include <se/octant_ops.hpp>
+#include <se/octree.hpp>
+#include <se/utils/math_utils.h>
+#include <se/utils/morton_utils.hpp>
 
 using namespace se::geometry;
 

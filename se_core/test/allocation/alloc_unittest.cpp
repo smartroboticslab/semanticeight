@@ -25,11 +25,14 @@
   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 #include <random>
-#include "octree.hpp"
-#include "utils/math_utils.h"
-#include "utils/morton_utils.hpp"
-#include "gtest/gtest.h"
+
+#include <gtest/gtest.h>
+
+#include <se/octree.hpp>
+#include <se/utils/math_utils.h>
+#include <se/utils/morton_utils.hpp>
 
 struct TestVoxelT {
   typedef float VoxelData;
