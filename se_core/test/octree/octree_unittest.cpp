@@ -86,7 +86,7 @@ TEST(Octree, OctantParent) {
     se::keyops::encode(octant_coord.x(), octant_coord.y(), octant_coord.z(), 5, voxel_depth);
   se::key_t parent_key = se::parent(octant_key, voxel_depth);
   ASSERT_EQ(se::keyops::code(octant_key), se::keyops::code(parent_key));
-  ASSERT_EQ(4, parent_key & SCALE_MASK);
+  ASSERT_EQ(4u, parent_key & SCALE_MASK);
 
   octant_key = parent_key;
   parent_key = se::parent(octant_key, voxel_depth);
