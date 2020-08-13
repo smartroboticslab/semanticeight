@@ -378,7 +378,6 @@ void foreach(float                                  voxel_dim,
     const int block_size = VoxelBlockT::size_li;
 
     const Eigen::Matrix4f T_CM = (camera_parameter.T_MC()).inverse();
-    const Eigen::Matrix3f R_CM = T_CM.topLeftCorner<3,3>();
     const Eigen::Vector3f t_CM = se::math::to_translation(T_CM);
     const Eigen::Matrix4f K = camera_parameter.K();
     const Eigen::Vector2i depth_image_res = camera_parameter.imageResolution();
@@ -441,8 +440,6 @@ std::vector<VoxelBlockType<MultiresTSDF::VoxelType>*> buildActiveList(se::Octree
     block_buffer[i]->active(false);
   }
 
-  const Eigen::Matrix4f K = camera_parameter.K();
-  const Eigen::Matrix4f T_MC = camera_parameter.T_MC();
   const Eigen::Matrix4f T_CM = (camera_parameter.T_MC()).inverse();
   std::vector<VoxelBlockType<MultiresTSDF::VoxelType>*> active_list;
   auto in_frustum_predicate =
