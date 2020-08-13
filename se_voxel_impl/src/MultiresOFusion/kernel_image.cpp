@@ -314,6 +314,6 @@ namespace se {
     if (num_pix == num_unknown_pix)
       pixel_batch.status_known = Pixel::statusKnown::unknown;
     return pixel_batch;
-  };
+  }
 
 } // namespace se

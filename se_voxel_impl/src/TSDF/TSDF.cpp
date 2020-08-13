@@ -48,7 +48,7 @@ void TSDF::configure(YAML::Node yaml_config) {
   if (yaml_config["max_weight"]) {
     max_weight = yaml_config["max_weight"].as<float>();
   }
-};
+}
 
 void TSDF::configure() {
   mu         = 0.1;

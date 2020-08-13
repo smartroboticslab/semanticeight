@@ -74,7 +74,7 @@ template <typename T>
 VoxelBlock<T>::VoxelBlock() :
     coordinates_(Eigen::Vector3i::Constant(0)),
     current_scale_(0),
-    min_scale_(-1) { };
+    min_scale_(-1) {}
 
 template <typename T>
 VoxelBlock<T>::VoxelBlock(const VoxelBlock<T>& block) {
@@ -205,7 +205,7 @@ void VoxelBlockFull<T>::initFromBlock(const VoxelBlockFull<T>& block) {
 template <typename T>
 VoxelBlockSingle<T>::VoxelBlockSingle(const VoxelBlockSingle<T>& block) {
   initFromBlock(block);
-};
+}
 
 template <typename T>
 void VoxelBlockSingle<T>::operator=(const VoxelBlockSingle<T>& block) {

@@ -71,7 +71,7 @@ void OFusion::configure(YAML::Node yaml_config) {
   if (yaml_config["k_sigma"]) {
     k_sigma = yaml_config["k_sigma"].as<float>();
   }
-};
+}
 
 std::string OFusion::printConfig() {
   std::stringstream ss;

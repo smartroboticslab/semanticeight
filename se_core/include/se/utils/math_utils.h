@@ -79,12 +79,12 @@ namespace se {
     template <typename Scalar>
     static constexpr inline Scalar sq(Scalar a) {
       return a * a;
-    };
+    }
 
     template <typename Scalar>
     static constexpr inline Scalar cu(Scalar a) {
       return a * a * a;
-    };
+    }
 
     template <typename Scalar>
     static inline bool in(const Scalar v,

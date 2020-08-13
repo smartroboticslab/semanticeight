@@ -55,7 +55,7 @@ void MultiresTSDF::configure(YAML::Node yaml_config) {
   if (yaml_config["max_weight"]) {
     max_weight = yaml_config["max_weight"].as<float>();
   }
-};
+}
 
 std::string MultiresTSDF::printConfig() {
   std::stringstream ss;

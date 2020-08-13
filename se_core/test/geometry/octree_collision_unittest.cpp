@@ -56,7 +56,7 @@ collision_status test_voxel(const TestVoxelT::VoxelData& data) {
   if(data == TestVoxelT::initData()) return collision_status::unseen;
   if(data == 10.f) return collision_status::empty;
   return collision_status::occupied;
-};
+}
 
 class OctreeCollisionTest : public ::testing::Test {
   protected:

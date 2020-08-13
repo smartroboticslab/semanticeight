@@ -116,7 +116,7 @@ void MultiresOFusion::configure(YAML::Node yaml_config) {
     k_sigma = yaml_config["k_sigma"].as<float>();
   }
   factor = (max_weight - 1) / max_weight;
-};
+}
 
 std::string MultiresOFusion::printConfig() {
   std::stringstream ss;
