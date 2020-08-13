@@ -70,10 +70,10 @@ int se::save_point_cloud_ply(se::Image<Eigen::Vector3f>& point_cloud,
 
   // Write the point data.
   for (size_t i = 0; i < point_cloud.size(); ++i) {
-    Eigen::Vector3f point_W = (T_WC * point_cloud[i].homogeneous()).head(3);
-    file << point_cloud[i].x() << " "
-         << point_cloud[i].y() << " "
-         << point_cloud[i].z() << "\n";
+    const Eigen::Vector3f point_W = (T_WC * point_cloud[i].homogeneous()).head(3);
+    file << point_W.x() << " "
+         << point_W.y() << " "
+         << point_W.z() << "\n";
   }
 
   file.close();
@@ -102,10 +102,10 @@ int se::save_point_cloud_vtk(se::Image<Eigen::Vector3f>& point_cloud,
 
   // Write the point data.
   for (size_t i = 0; i < point_cloud.size(); ++i) {
-    Eigen::Vector3f point_W = (T_WC * point_cloud[i].homogeneous()).head(3);
-    file << point_cloud[i].x() << " "
-         << point_cloud[i].y() << " "
-         << point_cloud[i].z() << "\n";
+    const Eigen::Vector3f point_W = (T_WC * point_cloud[i].homogeneous()).head(3);
+    file << point_W.x() << " "
+         << point_W.y() << " "
+         << point_W.z() << "\n";
   }
 
   file.close();
