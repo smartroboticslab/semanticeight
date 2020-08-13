@@ -57,9 +57,9 @@ TEST(MeshingTest, EqualScaleNeighbour) {
   se::key_t allocation_list[27];
   int list_idx = 0;
   std::vector<Eigen::Vector3i> block_coords;
-  for (int x = 0; x <= 16; x += VoxelBlockType::size_li) {
-    for (int y = 0; y <= 16; y += VoxelBlockType::size_li) {
-      for (int z = 0; z <= 16; z += VoxelBlockType::size_li) {
+  for (unsigned x = 0; x <= 16; x += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y <= 16; y += VoxelBlockType::size_li) {
+      for (unsigned z = 0; z <= 16; z += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         block_coords.push_back(Eigen::Vector3i(x, y, z));
         list_idx++;
@@ -67,7 +67,7 @@ TEST(MeshingTest, EqualScaleNeighbour) {
     }
   }
   octree.allocate(allocation_list, 27);
-  
+
   Eigen::Vector3i block_coord_c = Eigen::Vector3i(8, 8, 8);
   int block_scale_c = 0;
   int block_stride_c = 1 << block_scale_c;
@@ -82,9 +82,9 @@ TEST(MeshingTest, EqualScaleNeighbour) {
   VoxelBlockType* block_c = octree.fetch(block_coord_c.x(), block_coord_c.y(), block_coord_c.z());
   block_c->current_scale(block_scale_c);
   block_c->min_scale(block_scale_c);
-  for (int x = 0; x < VoxelBlockType::size_li - 1; x += block_stride_c) {
-    for (int y = 0; y < VoxelBlockType::size_li - 1; y += block_stride_c) {
-      for (int z = 0; z < VoxelBlockType::size_li - 1; z += block_stride_c) {
+  for (unsigned x = 0; x < VoxelBlockType::size_li - 1; x += block_stride_c) {
+    for (unsigned y = 0; y < VoxelBlockType::size_li - 1; y += block_stride_c) {
+      for (unsigned z = 0; z < VoxelBlockType::size_li - 1; z += block_stride_c) {
         Eigen::Vector3i voxel_coord = block_coord_c + Eigen::Vector3i(x, y, z);
         block_c->setData(voxel_coord, block_scale_c, {1.f, 1.f});
       }
@@ -115,9 +115,9 @@ TEST(MeshingTest, CoarserScaleNeighbour) {
   se::key_t allocation_list[27];
   int list_idx = 0;
   std::vector<Eigen::Vector3i> block_coords;
-  for (int x = 0; x <= 16; x += VoxelBlockType::size_li) {
-    for (int y = 0; y <= 16; y += VoxelBlockType::size_li) {
-      for (int z = 0; z <= 16; z += VoxelBlockType::size_li) {
+  for (unsigned x = 0; x <= 16; x += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y <= 16; y += VoxelBlockType::size_li) {
+      for (unsigned z = 0; z <= 16; z += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         block_coords.push_back(Eigen::Vector3i(x, y, z));
         list_idx++;
@@ -140,9 +140,9 @@ TEST(MeshingTest, CoarserScaleNeighbour) {
   VoxelBlockType* block_c = octree.fetch(block_coord_c.x(), block_coord_c.y(), block_coord_c.z());
   block_c->current_scale(block_scale_c);
   block_c->min_scale(block_scale_c);
-  for (int x = 0; x < VoxelBlockType::size_li - 1; x += block_stride_c) {
-    for (int y = 0; y < VoxelBlockType::size_li - 1; y += block_stride_c) {
-      for (int z = 0; z < VoxelBlockType::size_li - 1; z += block_stride_c) {
+  for (unsigned x = 0; x < VoxelBlockType::size_li - 1; x += block_stride_c) {
+    for (unsigned y = 0; y < VoxelBlockType::size_li - 1; y += block_stride_c) {
+      for (unsigned z = 0; z < VoxelBlockType::size_li - 1; z += block_stride_c) {
         Eigen::Vector3i voxel_coord = block_coord_c + Eigen::Vector3i(x, y, z);
         block_c->setData(voxel_coord, block_scale_c, {1.f, 1.f});
       }
@@ -173,9 +173,9 @@ TEST(MeshingTest, FinerScaleNeighbour) {
   se::key_t allocation_list[27];
   int list_idx = 0;
   std::vector<Eigen::Vector3i> block_coords;
-  for (int x = 0; x <= 16; x += VoxelBlockType::size_li) {
-    for (int y = 0; y <= 16; y += VoxelBlockType::size_li) {
-      for (int z = 0; z <= 16; z += VoxelBlockType::size_li) {
+  for (unsigned x = 0; x <= 16; x += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y <= 16; y += VoxelBlockType::size_li) {
+      for (unsigned z = 0; z <= 16; z += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         block_coords.push_back(Eigen::Vector3i(x, y, z));
         list_idx++;
@@ -198,9 +198,9 @@ TEST(MeshingTest, FinerScaleNeighbour) {
   VoxelBlockType* block_c = octree.fetch(block_coord_c.x(), block_coord_c.y(), block_coord_c.z());
   block_c->current_scale(block_scale_c);
   block_c->min_scale(block_scale_c);
-  for (int x = 0; x < VoxelBlockType::size_li - 1; x += block_stride_c) {
-    for (int y = 0; y < VoxelBlockType::size_li - 1; y += block_stride_c) {
-      for (int z = 0; z < VoxelBlockType::size_li - 1; z += block_stride_c) {
+  for (unsigned x = 0; x < VoxelBlockType::size_li - 1; x += block_stride_c) {
+    for (unsigned y = 0; y < VoxelBlockType::size_li - 1; y += block_stride_c) {
+      for (unsigned z = 0; z < VoxelBlockType::size_li - 1; z += block_stride_c) {
         Eigen::Vector3i voxel_coord = block_coord_c + Eigen::Vector3i(x, y, z);
         block_c->setData(voxel_coord, block_scale_c, {1.f, 1.f});
       }
@@ -232,8 +232,8 @@ TEST(MeshingTest, Wall) {
   int list_idx = 0;
   std::vector<Eigen::Vector3i> block_coords_1;
   std::vector<Eigen::Vector3i> block_coords_2;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
       allocation_list[list_idx] = octree.hash(8, y, z);
       block_coords_1.push_back(Eigen::Vector3i(8, y, z));
       list_idx++;
@@ -256,9 +256,9 @@ TEST(MeshingTest, Wall) {
     VoxelBlockType* block = octree.fetch(block_coord.x(), block_coord.y(), block_coord.z());
     block->current_scale(block_scale_1);
     block->min_scale(block_scale_1);
-    for (int x = 0; x < VoxelBlockType::size_li; x += block_stride_1) {
-      for (int y = 0; y < VoxelBlockType::size_li; y += block_stride_1) {
-        for (int z = 0; z < VoxelBlockType::size_li; z += block_stride_1) {
+    for (unsigned x = 0; x < VoxelBlockType::size_li; x += block_stride_1) {
+      for (unsigned y = 0; y < VoxelBlockType::size_li; y += block_stride_1) {
+        for (unsigned z = 0; z < VoxelBlockType::size_li; z += block_stride_1) {
           Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x, y, z);
           block->setData(voxel_coord, block_scale_1, {block_value_1, 1.f});
         }
@@ -270,9 +270,9 @@ TEST(MeshingTest, Wall) {
     VoxelBlockType* block = octree.fetch(block_coord.x(), block_coord.y(), block_coord.z());
     block->current_scale(block_scale_2);
     block->min_scale(block_scale_2);
-    for (int x = 0; x < VoxelBlockType::size_li; x += block_stride_2) {
-      for (int y = 0; y < VoxelBlockType::size_li; y += block_stride_2) {
-        for (int z = 0; z < VoxelBlockType::size_li; z += block_stride_2) {
+    for (unsigned x = 0; x < VoxelBlockType::size_li; x += block_stride_2) {
+      for (unsigned y = 0; y < VoxelBlockType::size_li; y += block_stride_2) {
+        for (unsigned z = 0; z < VoxelBlockType::size_li; z += block_stride_2) {
           Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x, y, z);
           block->setData(voxel_coord, block_scale_2, {block_value_2, 1.f});
         }
@@ -303,9 +303,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -344,16 +344,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -368,9 +368,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -391,16 +391,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -415,9 +415,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -438,16 +438,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -462,9 +462,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -485,16 +485,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -509,9 +509,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -532,16 +532,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -556,9 +556,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -579,16 +579,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -603,9 +603,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -633,9 +633,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -674,16 +674,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -698,9 +698,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -721,16 +721,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -745,9 +745,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -768,16 +768,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -792,9 +792,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -815,16 +815,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -839,9 +839,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -862,16 +862,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -886,9 +886,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -909,16 +909,16 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -933,9 +933,9 @@ TEST(MeshingTest, WallCrossesXFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -963,9 +963,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -1004,16 +1004,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1028,9 +1028,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1051,16 +1051,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1075,9 +1075,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -1098,16 +1098,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1122,9 +1122,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1145,16 +1145,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1169,9 +1169,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -1192,16 +1192,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1216,9 +1216,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1239,16 +1239,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -1263,9 +1263,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1293,9 +1293,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -1334,16 +1334,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1358,9 +1358,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1381,16 +1381,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1405,9 +1405,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -1428,16 +1428,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1452,9 +1452,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1475,16 +1475,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1499,9 +1499,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -1522,16 +1522,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1546,9 +1546,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1569,16 +1569,16 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 8; x < 24; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 8; x < 24; x += VoxelBlockType::size_li) {
         if (z >= 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -1593,9 +1593,9 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (x >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1623,9 +1623,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -1664,16 +1664,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1688,9 +1688,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1711,16 +1711,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1735,9 +1735,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -1758,16 +1758,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -1782,9 +1782,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1805,16 +1805,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1829,9 +1829,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -1852,16 +1852,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -1876,9 +1876,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1899,16 +1899,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -1923,9 +1923,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -1953,9 +1953,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -1994,16 +1994,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2018,9 +2018,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2041,16 +2041,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2065,9 +2065,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -2088,16 +2088,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2112,9 +2112,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2135,16 +2135,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2159,9 +2159,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -2182,16 +2182,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2206,9 +2206,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2229,16 +2229,16 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (z < 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -2253,9 +2253,9 @@ TEST(MeshingTest, WallCrossesYFineToCoarseAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2283,9 +2283,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -2324,16 +2324,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2348,9 +2348,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2371,16 +2371,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2395,9 +2395,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -2418,16 +2418,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2442,9 +2442,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2465,16 +2465,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2489,9 +2489,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -2512,16 +2512,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2536,9 +2536,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2559,16 +2559,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -2583,9 +2583,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2613,9 +2613,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -2654,16 +2654,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2678,9 +2678,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2701,16 +2701,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2725,9 +2725,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -2748,16 +2748,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -2772,9 +2772,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2795,16 +2795,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2819,9 +2819,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -2842,16 +2842,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -2866,9 +2866,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2889,16 +2889,16 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 0; z < 32; z += VoxelBlockType::size_li) {
-    for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
-      for (int y = 8; y < 24; y += VoxelBlockType::size_li) {
+  for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
+    for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
+      for (unsigned y = 8; y < 24; y += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -2913,9 +2913,9 @@ TEST(MeshingTest, WallCrossesYCoarseToFineAlongZ) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (y >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -2943,9 +2943,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -2984,16 +2984,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3008,9 +3008,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3031,16 +3031,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3055,9 +3055,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -3078,16 +3078,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3102,9 +3102,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3125,16 +3125,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3149,9 +3149,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -3172,16 +3172,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3196,9 +3196,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3219,16 +3219,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x < 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -3243,9 +3243,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3273,9 +3273,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -3314,16 +3314,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3338,9 +3338,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3361,16 +3361,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3385,9 +3385,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -3408,16 +3408,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3432,9 +3432,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3455,16 +3455,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3479,9 +3479,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -3502,16 +3502,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3526,9 +3526,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3549,16 +3549,16 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y < 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -3573,9 +3573,9 @@ TEST(MeshingTest, WallCrossesZFineToCoarseAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z < 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3603,9 +3603,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -3644,16 +3644,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3668,9 +3668,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3691,16 +3691,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3715,9 +3715,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -3738,16 +3738,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3762,9 +3762,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3785,16 +3785,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3809,9 +3809,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -3832,16 +3832,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -3856,9 +3856,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3879,16 +3879,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (x >= 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -3903,9 +3903,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongX) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -3933,9 +3933,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
   octree.init(32, 32);
   se::key_t allocation_list[32];
   int list_idx = 0;
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         allocation_list[list_idx] = octree.hash(x, y, z);
         list_idx++;
       }
@@ -3974,16 +3974,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
 
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -3998,9 +3998,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -4021,16 +4021,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -4045,9 +4045,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -4068,16 +4068,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 0
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_0);
           block->min_scale(block_scale_0);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_0) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_0) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_0) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_0, {block_value_0_in, 1.f});
@@ -4092,9 +4092,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -4115,16 +4115,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -4139,9 +4139,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_1_in, 1.f});
@@ -4162,16 +4162,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 1
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_1);
           block->min_scale(block_scale_1);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_1) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_1) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_1) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_1, {block_value_1_in, 1.f});
@@ -4186,9 +4186,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
@@ -4209,16 +4209,16 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
   se::algorithms::dual_marching_cube(octree, select_value, inside, mesh);
   save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(T_MW));
 
-  for (int z = 8; z < 24; z += VoxelBlockType::size_li) {
-    for (int y = 0; y < 32; y += VoxelBlockType::size_li) {
-      for (int x = 0; x < 32; x += VoxelBlockType::size_li) {
+  for (unsigned z = 8; z < 24; z += VoxelBlockType::size_li) {
+    for (unsigned y = 0; y < 32; y += VoxelBlockType::size_li) {
+      for (unsigned x = 0; x < 32; x += VoxelBlockType::size_li) {
         if (y >= 16) { // Scale 2
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_2);
           block->min_scale(block_scale_2);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_2) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_2) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_2) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_2, {block_value_2_in, 1.f});
@@ -4233,9 +4233,9 @@ TEST(MeshingTest, WallCrossesZCoarseToFineAlongY) {
           VoxelBlockType *block = octree.fetch(x, y, z);
           block->current_scale(block_scale_3);
           block->min_scale(block_scale_3);
-          for (int z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
-            for (int y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
-              for (int x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
+          for (unsigned z_rel = 0; z_rel < VoxelBlockType::size_li; z_rel += block_stride_3) {
+            for (unsigned y_rel = 0; y_rel < VoxelBlockType::size_li; y_rel += block_stride_3) {
+              for (unsigned x_rel = 0; x_rel < VoxelBlockType::size_li; x_rel += block_stride_3) {
                 if (z >= 16) { // Inside
                   Eigen::Vector3i voxel_coord = block->coordinates() + Eigen::Vector3i(x_rel, y_rel, z_rel);
                   block->setData(voxel_coord, block_scale_3, {block_value_3_in, 1.f});
