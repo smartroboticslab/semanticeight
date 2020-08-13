@@ -1,17 +1,17 @@
 .PHONY: release
-release:
+release: clean-cache
 	mkdir -p build/release
 	cd build/release && cmake -DCMAKE_BUILD_TYPE=Release $(CMAKE_ARGUMENTS) ../..
 	$(MAKE) -C build/release $(MFLAGS)
 
-.PHONY: release-with-debug
-release-with-debug:
+.PHONY: relwithdebinfo
+relwithdebinfo: clean-cache
 	mkdir -p build/relwithdebinfo
 	cd build/relwithdebinfo && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo $(CMAKE_ARGUMENTS) ../..
 	$(MAKE) -C build/relwithdebinfo $(MFLAGS)
 
 .PHONY: debug
-debug:
+debug: clean-cache
 	mkdir -p build/debug/logs
 	cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug $(CMAKE_ARGUMENTS) ../..
 	$(MAKE) -C build/debug $(MFLAGS)
@@ -26,29 +26,17 @@ uninstall:
 
 
 
-.PHONY: build-tests
-build-tests:
-	$(MAKE) -C se_shared/test $(MFLAGS)
-	$(MAKE) -C se_core/test $(MFLAGS)
-	$(MAKE) -C se_voxel_impl/test $(MFLAGS)
-	$(MAKE) -C se_denseslam/test $(MFLAGS)
-	$(MAKE) -C se_apps/test $(MFLAGS)
-
 .PHONY: test
-test: build-tests
-	$(MAKE) -C se_shared/test $(MFLAGS) test
-	$(MAKE) -C se_core/test $(MFLAGS) test
-	$(MAKE) -C se_voxel_impl/test $(MFLAGS) test
-	$(MAKE) -C se_denseslam/test $(MFLAGS) test
-	$(MAKE) -C se_apps/test $(MFLAGS) test
+test: release
+	$(MAKE) -C build/release $(MFLAGS) test
 
-.PHONY: clean-tests
-clean-tests:
-	$(MAKE) -C se_shared/test $(MFLAGS) clean
-	$(MAKE) -C se_core/test $(MFLAGS) clean
-	$(MAKE) -C se_voxel_impl/test $(MFLAGS) clean
-	$(MAKE) -C se_denseslam/test $(MFLAGS) clean
-	$(MAKE) -C se_apps/test $(MFLAGS) clean
+.PHONY: test-relwithdebinfo
+test-relwithdebinfo: relwithdebinfo
+	$(MAKE) -C build/relwithdebinfo $(MFLAGS) test
+
+.PHONY: test-debug
+test-debug: debug
+	$(MAKE) -C build/debug $(MFLAGS) test
 
 
 
@@ -61,6 +49,12 @@ doc:
 .PHONY: clean
 clean:
 	rm -rf build
+
+.PHONY: clean-cache
+clean-cache:
+	rm -rf build/release/CMakeCache.txt
+	rm -rf build/relwithdebinfo/CMakeCache.txt
+	rm -rf build/debug/CMakeCache.txt
 
 .PHONY: clean-doc
 clean-doc:

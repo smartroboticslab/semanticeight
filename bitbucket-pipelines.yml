@@ -6,6 +6,5 @@ pipelines:
     - step:
         script:
           - git submodule update --init --recursive
-          - GTEST_ROOT=/usr/local/src/googletest/googletest/ make
           - GTEST_ROOT=/usr/local/src/googletest/googletest/ make test
 

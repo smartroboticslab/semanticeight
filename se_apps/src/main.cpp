@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
   //temporary fix to test rendering fullsize
   config.render_volume_fullsize = false;
 
-#if !defined(SE_GLUT) && !defined(__QT__)
+#if !defined(SE_GLUT) && !defined(SE_QT)
   // Force disable render if compiled without GUI support and not in benchmark mode
   if (!config.benchmark) {
     config.enable_render = false;
@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
 
     while (processAll(reader, true, config.enable_render, &config, false) == 0) {}
   } else {
-#ifdef __QT__
+#ifdef SE_QT
     qtLinkKinectQt(argc,argv, &pipeline, &reader, &config,
         depth_render, track_render, volume_render, rgba_render);
 #else

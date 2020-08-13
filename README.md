@@ -45,7 +45,7 @@ git submodule update --init --recursive
 
 The following packages are required to build the `se-denseslam` library:
 
-* CMake >= 3.10
+* CMake >= 3.5
 * Eigen3
 * Sophus
 * OpenCV

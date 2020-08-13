@@ -47,7 +47,7 @@
 #include "se/image/image.hpp"
 #include "se/tracking.hpp"
 
-#include "voxel_implementations.hpp"
+#include "se/voxel_implementations.hpp"
 #include "se/sensor_implementation.hpp"
 
 

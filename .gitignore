@@ -35,7 +35,7 @@
 *.app
 
 # Directories
-build
+build*
 doc/html
 se_tools/benchmark_scripts/results*
 se_tools/evaluation_scripts/results

@@ -49,7 +49,7 @@
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
 #include "se/sensor_implementation.hpp"
-#include "voxel_implementations.hpp"
+#include "se/voxel_implementations.hpp"
 #include "preprocessing.hpp"
 #include "tracking.hpp"
 
