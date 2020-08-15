@@ -75,7 +75,7 @@ template<typename T>
 void raycastKernel(const se::Octree<typename T::VoxelType>& map,
                    se::Image<Eigen::Vector3f>&              surface_point_cloud_M,
                    se::Image<Eigen::Vector3f>&              surface_normals_M,
-                   const Eigen::Matrix4f&                   T_MC,
+                   const Eigen::Matrix4f&                   raycast_T_MC,
                    const SensorImpl&                        sensor) {
 
   TICK();
@@ -89,8 +89,8 @@ void raycastKernel(const se::Octree<typename T::VoxelType>& map,
       const Eigen::Vector2f pixel_f = pixel.cast<float>();
       Eigen::Vector3f ray_dir_C;
       sensor.model.backProject(pixel_f, &ray_dir_C);
-      const Eigen::Vector3f ray_dir_M = (se::math::to_rotation(T_MC) * ray_dir_C.normalized()).head(3);
-      const Eigen::Vector3f t_MC = se::math::to_translation(T_MC);
+      const Eigen::Vector3f ray_dir_M = (se::math::to_rotation(raycast_T_MC) * ray_dir_C.normalized()).head(3);
+      const Eigen::Vector3f t_MC = se::math::to_translation(raycast_T_MC);
 
       surface_intersection_M = T::raycast(map, t_MC, ray_dir_M, sensor.nearDist(ray_dir_C), sensor.farDist(ray_dir_C));
       if (surface_intersection_M.w() >= 0.f) {

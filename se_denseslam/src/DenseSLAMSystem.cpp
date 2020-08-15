@@ -182,7 +182,7 @@ bool DenseSLAMSystem::track(const SensorImpl& sensor,
     for (int i = 0; i < iterations_[level]; ++i) {
 
       trackKernel(tracking_result_.data(), input_point_cloud_C_[level], input_normals_C_[level],
-                  surface_point_cloud_M_, surface_normals_M_, T_MC_, sensor, dist_threshold, normal_threshold);
+          surface_point_cloud_M_, surface_normals_M_, T_MC_, raycast_T_MC_, sensor, dist_threshold, normal_threshold);
 
       reduceKernel(reduction_output_.data(), reduction_output_res, tracking_result_.data(), image_res_);
 
