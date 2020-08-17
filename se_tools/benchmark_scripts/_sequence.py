@@ -122,15 +122,18 @@ class Sequence:
         for voxel_impl_type, yaml_keys, value_combs in zip(voxel_impl_types, yaml_keys_list, value_combs_list):
             for id, value_comb in enumerate(value_combs):
                 sequence_name = "-".join([dataset_name, self.name]) if self.name else dataset_name
+
                 yaml_init = """\
                             general:
                                 sequence_name:      {}
                                 sequence_path: {}
-                                ground_truth_file:  {}
                             sensor:
                                 type:               {}
-                """.format(sequence_name, self.file_path, self.ground_truth_file, sensor_type)
+                """.format(sequence_name, self.file_path, sensor_type)
                 test_case_config_yaml = ruamel.yaml.round_trip_load(yaml_init)
+
+                if self.ground_truth_file is not None:
+                    test_case_config_yaml['general']['ground_truth_file'] =  self.ground_truth_file
 
                 for yaml_key, value in zip(yaml_keys, value_comb):
                     collection_key = yaml_key[0]
