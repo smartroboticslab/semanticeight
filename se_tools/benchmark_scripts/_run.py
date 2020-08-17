@@ -26,8 +26,9 @@ class runCommand:
         return ' '.join(self.executable + self.args + benchmark_arg + output_render_arg + output_mesh_arg)
 
     def withoutBenchmark(self): # Force rendering to be enabled
-        enable_render_arg = ['--enable-render']
-        return ' '.join(self.executable + self.args + enable_render_arg)
+        enable_render_arg  = ['--enable-render']
+        rendering_rate_arg = ['--rendering-rate 2']
+        return ' '.join(self.executable + self.args + enable_render_arg + rendering_rate_arg)
 
 class Pipeline:
     """ A general Pipeline evaluator.
