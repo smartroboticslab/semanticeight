@@ -57,7 +57,7 @@ static constexpr int          default_sensor_downsampling_factor = 1;
 static const Eigen::Vector4f  default_sensor_intrinsics = Eigen::Vector4f::Zero();
 static const std::string      default_sequence_path = "";
 static const Eigen::Matrix4f  default_T_BC = Eigen::Matrix4f::Identity();
-static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.0f);
+static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.5f);
 
 static constexpr int          default_tracking_rate = 1;
 
