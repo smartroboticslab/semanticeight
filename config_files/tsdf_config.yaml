@@ -3,6 +3,7 @@ general:
   sequence_name:              ""                              # e.g. "cow-and-lady"; No impact on pipeline.
                                                               # Parameter only helps name log files.
   sequence_path:              "/PATH/TO/scene.raw"
+  enable_ground_truth:        true
   ground_truth_file:          "/PATH/TO/association.txt"
   benchmark:                  false
   log_path:                   "PATH/TO/log.txt" # or "PATH/TO/LOG_DIR

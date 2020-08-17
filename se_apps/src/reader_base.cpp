@@ -126,6 +126,7 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>&    depth_image,
 
 void se::Reader::restart() {
   frame_ = SIZE_MAX;
+  ground_truth_frame_ = SIZE_MAX;
   prev_frame_timestamp_ = std::chrono::steady_clock::time_point();
   if (ground_truth_fs_.good() || ground_truth_fs_.eof()) {
     ground_truth_fs_.clear();
@@ -182,6 +183,31 @@ se::ReaderStatus se::Reader::mergeStatus(se::ReaderStatus status_1,
 
 
 se::ReaderStatus se::Reader::nextPose(Eigen::Matrix4f& T_WB) {
+  return readPose(T_WB, frame_);
+}
+
+se::ReaderStatus se::Reader::getPose(Eigen::Matrix4f& T_WB, const size_t frame) {
+  // Store and reset current ground truth frame
+  size_t ground_truth_frame_curr = ground_truth_frame_;
+  ground_truth_frame_ = SIZE_MAX;
+
+  // Store and reset current ground truth file stream
+  std::fpos ground_truth_fs_pos_curr = ground_truth_fs_.tellg();
+  std::ios_base::iostate ground_truth_fs_state_curr = ground_truth_fs_.rdstate();
+  ground_truth_fs_.clear();
+  ground_truth_fs_.seekg(0);
+
+  auto status = readPose(T_WB, frame);
+
+  // Restore current state of ground truth variables
+  ground_truth_frame_ = ground_truth_frame_curr;
+  ground_truth_fs_.setstate(ground_truth_fs_state_curr);
+  ground_truth_fs_.seekg(ground_truth_fs_pos_curr);
+  return status;
+}
+
+
+se::ReaderStatus se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame) {
   std::string line;
   while (true) {
     std::getline(ground_truth_fs_, line);
@@ -196,7 +222,7 @@ se::ReaderStatus se::Reader::nextPose(Eigen::Matrix4f& T_WB) {
     // Skip ground truth data until the ones corresponding to the current frame
     // are found. This only happens when frames are dropped.
     ground_truth_frame_++;
-    if (ground_truth_frame_ < frame_) {
+    if (ground_truth_frame_ < frame) {
       continue;
     }
     // Data line read, split on spaces
@@ -204,7 +230,7 @@ se::ReaderStatus se::Reader::nextPose(Eigen::Matrix4f& T_WB) {
     const size_t num_cols = line_data.size();
     if (num_cols < 7) {
       std::cerr << "Error: Invalid ground truth file format. "
-          << "Expected line format: ... tx ty tz qx qy qz qw\n";
+                << "Expected line format: ... tx ty tz qx qy qz qw\n";
       camera_active_ = false;
       camera_open_ = false;
       return se::ReaderStatus::error;
@@ -230,13 +256,13 @@ se::ReaderStatus se::Reader::nextPose(Eigen::Matrix4f& T_WB) {
     // Convert to position and orientation
     const Eigen::Vector3f position (pose_data[0], pose_data[1], pose_data[2]);
     const Eigen::Quaternionf orientation (pose_data[6], pose_data[3],
-        pose_data[4], pose_data[5]);
+                                          pose_data[4], pose_data[5]);
     // Ensure the quaternion represents a valid orientation
     if (std::abs(orientation.norm() - 1.0f) > 1e-3) {
       std::cerr << "Warning: Expected unit quaternion but got "
-          << orientation.x() << " " << orientation.y() << " "
-          << orientation.z() << " " << orientation.w()
-          << " (x,y,z,w) with norm " << orientation.norm() << "\n";
+                << orientation.x() << " " << orientation.y() << " "
+                << orientation.z() << " " << orientation.w()
+                << " (x,y,z,w) with norm " << orientation.norm() << "\n";
       return se::ReaderStatus::skip;
     }
     // Combine into the pose
@@ -246,7 +272,6 @@ se::ReaderStatus se::Reader::nextPose(Eigen::Matrix4f& T_WB) {
     return se::ReaderStatus::ok;
   }
 }
-
 
 
 void se::Reader::nextFrame() {

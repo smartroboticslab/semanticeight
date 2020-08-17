@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
+#include <vector>
 #include <unistd.h>
 #include <lodepng.h>
 
@@ -162,6 +163,21 @@ int main(int argc, char** argv) {
       t_MW,
       config.pyramid, config);
 
+  // ========= UPDATE INIT POSE =========
+  se::ReaderStatus read_ok = se::ReaderStatus::ok;
+  if (!config.ground_truth_file.empty()) {
+    Eigen::Matrix4f init_T_WB;
+    read_ok = reader->getPose(init_T_WB, 0);
+    config.init_T_WB = init_T_WB;
+  }
+  pipeline->setInitT_WC(config.init_T_WB * config.T_BC);
+  pipeline->setT_WC(config.init_T_WB * config.T_BC);
+
+  if (read_ok != se::ReaderStatus::ok) {
+    std::cerr << "Couldn't read initial pose\n";
+    exit(1);
+  }
+
   //  =========  PRINT CONFIGURATION  =========
 
   if (config.log_file != "") {
@@ -248,7 +264,7 @@ int processAll(se::Reader*    reader,
   static bool first_frame = true;
   bool tracked = false;
   bool integrated = false;
-  const bool track = (config->ground_truth_file == "");
+  const bool track = !config->enable_ground_truth;
   const bool raycast = (track || render_images);
   int frame = 0;
   const Eigen::Vector2i input_image_res = (reader != nullptr)
@@ -283,37 +299,39 @@ int processAll(se::Reader*    reader,
   static se::Image<float> input_depth_image (input_image_res.x(), input_image_res.y());
   static se::Image<uint32_t> input_rgba_image (input_image_res.x(), input_image_res.y());
 
+  Eigen::Matrix4f T_WB;
+
   if (reset) {
+    se::ReaderStatus read_ok = se::ReaderStatus::ok;
     frame_offset = reader->frame();
+    if (!config->ground_truth_file.empty()) {
+      Eigen::Matrix4f init_T_WB;
+      read_ok = reader->getPose(init_T_WB, frame_offset);
+      pipeline->setInitT_WC(init_T_WB * config->T_BC);
+      pipeline->setT_WC(init_T_WB * config->T_BC);
+    }
+    if (read_ok != se::ReaderStatus::ok) {
+      std::cerr << "Couldn't read pose\n";
+      return true;
+    }
   }
 
   if (process_frame) {
     stats.start();
   }
-  Eigen::Matrix4f T_WB;
+
   const std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
   std::vector<std::chrono::time_point<std::chrono::steady_clock>> timings (7, now);
 
   if (process_frame) {
-
     // Read frames and ground truth data if set
     se::ReaderStatus read_ok;
-    if (config->ground_truth_file == "") {
-      read_ok = reader->nextData(input_depth_image, input_rgba_image);
-      frame = reader->frame() - frame_offset;
-      if (frame == 0) {
-        pipeline->setInitT_WC(config->init_T_WB * config->T_BC);
-        // Set the pose to the initial pose.
-        pipeline->setT_WC(config->init_T_WB * config->T_BC);
-      }
-    } else {
+    if (config->enable_ground_truth) {
       read_ok = reader->nextData(input_depth_image, input_rgba_image, T_WB);
-      frame = reader->frame() - frame_offset;
-      if (frame == 0) {
-        config->init_T_WB = T_WB;
-        pipeline->setInitT_WC(config->init_T_WB * config->T_BC);
-      }
+    } else {
+      read_ok = reader->nextData(input_depth_image, input_rgba_image);
     }
+    frame = reader->frame() - frame_offset;
 
     if (read_ok == se::ReaderStatus::ok) {
       // Continue normally

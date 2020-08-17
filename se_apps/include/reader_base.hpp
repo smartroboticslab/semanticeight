@@ -114,6 +114,18 @@ namespace se {
                             Image<uint32_t>& rgba_image,
                             Eigen::Matrix4f& T_WB);
 
+     /** Read the ground truth pose at the provided frame number.
+       * Each line in the ground truth file should correspond to a single
+       * depth/RGBA image pair and have a format<br>
+       * `... tx ty tz qx qy qz qw`,<br>
+       * that is the pose is encoded in the last 7 columns of the line.
+       *
+       * \param[in]  frame The frame number of the requested ground truth pose.
+       * \param[out] T_WB  The ground truth pose.
+       * \return An appropriate status code.
+       */
+      ReaderStatus getPose(Eigen::Matrix4f& T_WB, const size_t frame);
+
       /** Restart reading from the beginning.
        *
        * \note Although this is a virtual function, it does have a default
@@ -209,6 +221,23 @@ namespace se {
        */
       size_t frame_;
       size_t num_frames_;
+
+
+      /** Read the ground truth pose at the provided frame number.
+       * Each line in the ground truth file should correspond to a single
+       * depth/RGBA image pair and have a format<br>
+       * `... tx ty tz qx qy qz qw`,<br>
+       * that is the pose is encoded in the last 7 columns of the line.
+       *
+       * \note Use getPose(...) to request a pose. It keeps track of the ground_truth_frame_
+       *       and ifstream state.
+       *
+       * \param[in]  frame The frame number of the requested ground truth pose.
+       * \param[out] T_WB  The ground truth pose.
+       * \return An appropriate status code.
+       */
+      ReaderStatus readPose(Eigen::Matrix4f& T_WB, const size_t frame);
+
 
       /** Read the next ground truth pose.
        * Each line in the ground truth file should correspond to a single

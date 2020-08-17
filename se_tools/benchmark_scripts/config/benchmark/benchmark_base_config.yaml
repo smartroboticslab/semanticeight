@@ -1,4 +1,5 @@
 general:
+  enable_ground_truth:        true
   enable_render:              true
   enable_meshing:             false
 

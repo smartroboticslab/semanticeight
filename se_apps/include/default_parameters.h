@@ -34,6 +34,7 @@ static constexpr bool         default_drop_frames = false;
 static constexpr float        default_far_plane = 4.0f;
 static constexpr float        default_fps = 0.0f;
 static const std::string      default_ground_truth_file = "";
+static const bool             default_enable_ground_truth = true;
 static constexpr bool         default_enable_meshing = false;
 static constexpr bool         default_enable_render = true;
 static constexpr float        default_icp_threshold = 1e-5;
@@ -62,7 +63,7 @@ static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.5f);
 static constexpr int          default_tracking_rate = 1;
 
 // Put colons after options with arguments
-static std::string short_options = "bB:c:df:Fhl:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";
+static std::string short_options = "bB:c:dfgG:Fhl:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";
 
 static struct option long_options[] = {
   {"disable-benchmark",          no_argument,       0, 'b'},
@@ -71,6 +72,8 @@ static struct option long_options[] = {
   {"drop-frames",                no_argument,       0, 'd'},
   {"fps",                        required_argument, 0, 'f'},
   {"bilateral-filter",           no_argument,       0, 'F'},
+  {"disable-ground-truth",       no_argument,       0, 'g'},
+  {"enable-ground-truth",        no_argument,       0, 'G'},
   {"help",                       no_argument,       0, 'h'},
   {"icp-threshold",              required_argument, 0, 'l'},
   {"max-frame",                  required_argument, 0, 'm'},
@@ -103,6 +106,8 @@ inline void print_arguments() {
   std::cerr << "-d  (--drop-frames)                               : default is false: don't drop frames\n";
   std::cerr << "-f  (--fps)                                       : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                           : default is disabled\n";
+  std::cerr << "-g  (--disable-ground-truth)                      : default is true if ground truth is provided\n";
+  std::cerr << "-G  (--enable-ground-truth)                       : default is true if ground truth is provided\n";
   std::cerr << "-h  (--help)                                      : show this help message\n";
   std::cerr << "-l  (--icp-threshold)                             : default is " << default_icp_threshold << "\n";
   std::cerr << "-m  (--max-frame)                                 : default is full dataset (-1)\n";
@@ -420,6 +425,9 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   config.sequence_path = (has_yaml_general_config && yaml_general_config["sequence_path"])
       ? yaml_general_config["sequence_path"].as<std::string>() : default_sequence_path;
 
+  // En/disable ground truth
+  config.enable_ground_truth = (has_yaml_general_config && yaml_general_config["enable_ground_truth"])
+                               ? yaml_general_config["enable_ground_truth"].as<bool>() : default_enable_ground_truth;
   // Ground truth file path
   config.ground_truth_file = (has_yaml_general_config && yaml_general_config["ground_truth_file"])
       ? yaml_general_config["ground_truth_file"].as<std::string>() : default_ground_truth_file;
@@ -580,6 +588,14 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'F': // bilateral-filter
         config.bilateral_filter = true;
+        break;
+
+      case 'g': // disable-ground-truth
+        config.enable_ground_truth = false;
+        break;
+
+      case 'G': // enable-ground-truth
+        config.enable_ground_truth = true;
         break;
 
       case '?':

@@ -27,6 +27,7 @@ namespace str_utils {
   }
 
 
+
   template<typename VectorT>
   std::string vector_to_pretty_str(const VectorT &v,
                                    const std::string v_name,
@@ -42,7 +43,7 @@ namespace str_utils {
     if (e_names.empty()) {
       l_side += "[";
 
-      Eigen::IOFormat VectorFmt(6, 0,
+      Eigen::IOFormat VectorFmt(6, Eigen::DontAlignCols,
                                 "", ", ", "", "",
                                 l_side, "]");
       ss << v.format(VectorFmt);

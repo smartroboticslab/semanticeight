@@ -190,6 +190,14 @@ struct Configuration {
   std::string ground_truth_file;
 
   /**
+   * Whether to use the available ground truth camera pose.
+   *
+   * <br>\em Default: true
+   */
+  bool enable_ground_truth;
+
+
+  /**
    * A 4x4 transformation matrix post-multiplied with all poses read from the
    * ground truth file. It is used if the ground truth poses are in some frame
    * B other than the sensor frame C.
@@ -328,10 +336,11 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   if (config.output_mesh_file != "") {
     out << str_utils::str_to_pretty_str(config.output_mesh_file,      "Output mesh file") << "\n";
   }
-  
+
   out << str_utils::str_to_pretty_str((config.log_file == "" ? "std::cout" : config.log_file),
                                                                       "Log file") << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_benchmark,       "Enable benchmark") << "\n";
+  out << str_utils::bool_to_pretty_str(config.enable_ground_truth,    "Enable ground truth") << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_render,          "Enable render"      ) << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_meshing,         "Enable meshing"     ) << "\n";
   out << "\n";
