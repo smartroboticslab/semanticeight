@@ -159,13 +159,13 @@ struct Configuration {
    *
    * <br>\em Default: false
    */
-  bool benchmark;
+  bool enable_benchmark;
 
   /**
    * The log file the timing results will be written to.
    *
-   * <br>\em Default: std::cout if Configuration::benchmark is blank (--benchmark) or not Configuration::enable_render (--enable-render)
-   * <br>\em Default: autogen filename if the Configuration::benchmark argument is a directory (--benchmark=/PATH/TO/DIR)
+   * <br>\em Default: std::cout if Configuration::enable_benchmark is blank (--enable-benchmark) or not Configuration::enable_render (--enable-render)
+   * <br>\em Default: autogen log filename if the Configuration::enable_benchmark argument is a directory (--enable-benchmark=/PATH/TO/DIR)
    */
   std::string log_file;
 
@@ -328,9 +328,10 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   if (config.output_mesh_file != "") {
     out << str_utils::str_to_pretty_str(config.output_mesh_file,      "Output mesh file") << "\n";
   }
+  
   out << str_utils::str_to_pretty_str((config.log_file == "" ? "std::cout" : config.log_file),
                                                                       "Log file") << "\n";
-  out << str_utils::bool_to_pretty_str(config.benchmark,              "Benchmark") << "\n";
+  out << str_utils::bool_to_pretty_str(config.enable_benchmark,       "Enable benchmark") << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_render,          "Enable render"      ) << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_meshing,         "Enable meshing"     ) << "\n";
   out << "\n";

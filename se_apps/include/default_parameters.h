@@ -28,7 +28,7 @@
 #include "se/utils/math_utils.h"
 
 // Default option values.
-static constexpr bool         default_benchmark = false;
+static constexpr bool         default_enable_benchmark = false;
 static constexpr bool         default_bilateral_filter = false;
 static constexpr bool         default_drop_frames = false;
 static constexpr float        default_far_plane = 4.0f;
@@ -62,10 +62,11 @@ static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.5f);
 static constexpr int          default_tracking_rate = 1;
 
 // Put colons after options with arguments
-static std::string short_options = "B:c:df:Fhl:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";
+static std::string short_options = "bB:c:df:Fhl:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";
 
 static struct option long_options[] = {
-  {"benchmark",                  optional_argument, 0, 'B'},
+  {"disable-benchmark",          no_argument,       0, 'b'},
+  {"enable-benchmark",           optional_argument, 0, 'B'},
   {"sensor-downsampling-factor", required_argument, 0, 'c'},
   {"drop-frames",                no_argument,       0, 'd'},
   {"fps",                        required_argument, 0, 'f'},
@@ -96,30 +97,31 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
-  std::cerr << "-B  (--benchmark) <blank, =filename, =dir> : default is autogen benchmark filename\n";
-  std::cerr << "-c  (--sensor-downsampling-factor)         : default is " << default_sensor_downsampling_factor << " (same size)\n";
-  std::cerr << "-d  (--drop-frames)                        : default is false: don't drop frames\n";
-  std::cerr << "-f  (--fps)                                : default is " << default_fps << "\n";
-  std::cerr << "-F  (--bilateral-filter                    : default is disabled\n";
-  std::cerr << "-h  (--help)                               : show this help message\n";
-  std::cerr << "-l  (--icp-threshold)                      : default is " << default_icp_threshold << "\n";
-  std::cerr << "-m  (--max-frame)                          : default is full dataset (-1)\n";
-  std::cerr << "-M  (--output-mesh-path) <filename/dir>    : output mesh path\n";
-  std::cerr << "-n  (--near-plane)                         : default is " << default_near_plane << "\n";
-  std::cerr << "-N  (--far-plane)                          : default is " << default_far_plane << "\n";
-  std::cerr << "-o  (--log-path) <filename/dir>            : default is stdout\n";
-  std::cerr << "-q  (--disable-render)                     : default is to render images\n";
-  std::cerr << "-Q  (--enable-render)                      : use to override --disable-render in YAML file\n";
-  std::cerr << "-r  (--integration-rate)                   : default is " << default_integration_rate << "\n";
-  std::cerr << "-s  (--map-dim)                            : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
-  std::cerr << "-t  (--tracking-rate)                      : default is " << default_tracking_rate << "\n";
-  std::cerr << "-u  (--disable-meshing)                    : use to override --enable-meshing in YAML file\n";
-  std::cerr << "-U  (--enable-meshing)                     : default is to not generate mesh\n";
-  std::cerr << "-v  (--map-size)                           : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
-  std::cerr << "-V  (--output-render-path) <filename/dir>  : output render path\n";
-  std::cerr << "-Y  (--yaml-file)                          : YAML file\n";
-  std::cerr << "-z  (--rendering-rate)                     : default is " << default_rendering_rate << "\n";
-  std::cerr << "-Z  (--meshing-rate)                       : default is " << default_meshing_rate << "\n";
+  std::cerr << "-b  (--disable-benchmark)                         : use to override --enable-benchmark in YAML file\n";
+  std::cerr << "-B  (--enable-benchmark) <blank, =filename, =dir> : default is autogen log filename\n";
+  std::cerr << "-c  (--sensor-downsampling-factor)                : default is " << default_sensor_downsampling_factor << " (same size)\n";
+  std::cerr << "-d  (--drop-frames)                               : default is false: don't drop frames\n";
+  std::cerr << "-f  (--fps)                                       : default is " << default_fps << "\n";
+  std::cerr << "-F  (--bilateral-filter                           : default is disabled\n";
+  std::cerr << "-h  (--help)                                      : show this help message\n";
+  std::cerr << "-l  (--icp-threshold)                             : default is " << default_icp_threshold << "\n";
+  std::cerr << "-m  (--max-frame)                                 : default is full dataset (-1)\n";
+  std::cerr << "-M  (--output-mesh-path) <filename/dir>           : output mesh path\n";
+  std::cerr << "-n  (--near-plane)                                : default is " << default_near_plane << "\n";
+  std::cerr << "-N  (--far-plane)                                 : default is " << default_far_plane << "\n";
+  std::cerr << "-o  (--log-path) <filename/dir>                   : default is stdout\n";
+  std::cerr << "-q  (--disable-render)                            : default is to render images\n";
+  std::cerr << "-Q  (--enable-render)                             : use to override --disable-render in YAML file\n";
+  std::cerr << "-r  (--integration-rate)                          : default is " << default_integration_rate << "\n";
+  std::cerr << "-s  (--map-dim)                                   : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
+  std::cerr << "-t  (--tracking-rate)                             : default is " << default_tracking_rate << "\n";
+  std::cerr << "-u  (--disable-meshing)                           : use to override --enable-meshing in YAML file\n";
+  std::cerr << "-U  (--enable-meshing)                            : default is to not generate mesh\n";
+  std::cerr << "-v  (--map-size)                                  : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
+  std::cerr << "-V  (--output-render-path) <filename/dir>         : output render path\n";
+  std::cerr << "-Y  (--yaml-file)                                 : YAML file\n";
+  std::cerr << "-z  (--rendering-rate)                            : default is " << default_rendering_rate << "\n";
+  std::cerr << "-Z  (--meshing-rate)                              : default is " << default_meshing_rate << "\n";
 }
 
 
@@ -331,7 +333,7 @@ void generate_render_file(Configuration& config) {
   // CASE 2.1a - Nothing provided: Check if output render directory should be autogenerated
   if (config.output_render_file == "") {
     // If benchmark is active and a log file is provided, save the render in a "/render" directory within the log directory.
-    if (config.benchmark && config.log_file != "") {
+    if (config.enable_benchmark && config.log_file != "") {
       stdfs::path log_file = config.log_file;
       output_render_path = log_file.parent_path() / "render";
       stdfs::create_directories(output_render_path);
@@ -360,7 +362,7 @@ void generate_mesh_file(Configuration& config) {
   // CASE 2.1a - Nothing provided: Check if output meshing directory should be autogenerated
   if (config.output_mesh_file == "") {
     // If benchmark is active and a log file is provided, save the mesh in a "/mesh" directory within the log directory.
-    if (config.benchmark && config.log_file != "") {
+    if (config.enable_benchmark && config.log_file != "") {
       stdfs::path log_file = config.log_file;
       output_mesh_path = log_file.parent_path() / "mesh";
       stdfs::create_directories(output_mesh_path);
@@ -423,8 +425,8 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       ? yaml_general_config["ground_truth_file"].as<std::string>() : default_ground_truth_file;
 
   // Benchmark and result file or directory path
-  config.benchmark = (has_yaml_general_config && yaml_general_config["benchmark"])
-      ? yaml_general_config["benchmark"].as<bool>() : default_benchmark;
+  config.enable_benchmark = (has_yaml_general_config && yaml_general_config["enable_benchmark"])
+      ? yaml_general_config["enable_benchmark"].as<bool>() : default_enable_benchmark;
   // Log path
   config.log_file = (has_yaml_general_config && yaml_general_config["log_path"])
       ? yaml_general_config["log_path"].as<std::string>() : default_log_path;
@@ -541,8 +543,12 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
           &option_index)) != -1) {
     switch (c) {
-      case 'B': // benchmark
-        config.benchmark = true;
+      case 'b': // disable-benchmark
+        config.enable_benchmark = false;
+        break;
+
+      case 'B': // enable-benchmark
+        config.enable_benchmark = true;
         if (optarg) {
           config.log_file = optarg;
         }

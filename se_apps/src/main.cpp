@@ -178,14 +178,14 @@ int main(int argc, char** argv) {
 
 #if !defined(SE_GLUT) && !defined(SE_QT)
   // Force disable render if compiled without GUI support and not in benchmark mode
-  if (!config.benchmark) {
+  if (!config.enable_benchmark) {
     config.enable_render = false;
   }
 #endif
   // The following runs the process loop for processing all the frames, if Qt
   // is specified use that, else use GLUT. We can opt to disable the gui and the rendering which
   // would be faster.
-  if (config.benchmark || !config.enable_render) {
+  if (config.enable_benchmark || !config.enable_render) {
     if ((reader == nullptr) || !reader->good()) {
       std::cerr << "No valid input file specified\n";
       exit(1);
@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
     powerStream.close();
   }
 
-  if (config.benchmark) {
+  if (config.enable_benchmark) {
     progress_bar->end();
   } else {
     std::cout << "{";
@@ -396,8 +396,8 @@ int processAll(se::Reader*    reader,
   const Eigen::Vector3f t_WC = pipeline->t_WC();
   storeStats(frame, timings, t_WC, tracked, integrated);
 
-  if (config->benchmark || !config->enable_render) {
-    if (config->benchmark) {
+  if (config->enable_benchmark || !config->enable_render) {
+    if (config->enable_benchmark) {
       if (frame % 10 == 0) {
         progress_bar->update(frame);
       }
@@ -447,7 +447,7 @@ int processAll(se::Reader*    reader,
                           << std::setw(4) << std::setfill('0') << frame << ".vtk";
 
     const auto start = std::chrono::steady_clock::now();
-    pipeline->dumpMesh(output_mesh_file_ss.str().c_str(), !config->benchmark);
+    pipeline->dumpMesh(output_mesh_file_ss.str().c_str(), !config->enable_benchmark);
     const auto end = std::chrono::steady_clock::now();
     stats.sample("meshing",
                  std::chrono::duration<double>(end - start).count(),
