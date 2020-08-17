@@ -62,7 +62,7 @@ static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.5f);
 static constexpr int          default_tracking_rate = 1;
 
 // Put colons after options with arguments
-static std::string short_options = "B:c:df:Fg:G:hi:k:l:m:M:n:N:o:p:qQr:s:S:t:T:uUv:V:y:Y:z:Z:?";
+static std::string short_options = "B:c:df:Fhl:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";
 
 static struct option long_options[] = {
   {"benchmark",                  optional_argument, 0, 'B'},
@@ -70,30 +70,22 @@ static struct option long_options[] = {
   {"drop-frames",                no_argument,       0, 'd'},
   {"fps",                        required_argument, 0, 'f'},
   {"bilateral-filter",           no_argument,       0, 'F'},
-  {"ground-truth",               required_argument, 0, 'g'},
-  {"init-body-pose",             required_argument, 0, 'G'},
   {"help",                       no_argument,       0, 'h'},
-  {"sequence-path",              required_argument, 0, 'i'},
-  {"sensor-intrinsics",          required_argument, 0, 'k'},
   {"icp-threshold",              required_argument, 0, 'l'},
   {"max-frame",                  required_argument, 0, 'm'},
   {"output-mesh-path",           required_argument, 0, 'M'},
   {"near-plane",                 required_argument, 0, 'n'},
   {"far-plane",                  required_argument, 0, 'N'},
   {"log-path",                   required_argument, 0, 'o'},
-  {"init-pose",                  required_argument, 0, 'p'},
   {"disable-render",             no_argument,       0, 'q'},
   {"enable-render",              no_argument,       0, 'Q'},
   {"integration-rate",           required_argument, 0, 'r'},
   {"map-dim",                    required_argument, 0, 's'},
-  {"sequence-name",              required_argument, 0, 'S'},
   {"tracking-rate",              required_argument, 0, 't'},
-  {"camera-to-body-transform",   required_argument, 0, 'T'},
   {"disable-meshing",            no_argument,       0, 'u'},
   {"enable-meshing",             no_argument,       0, 'U'},
   {"map-size",                   required_argument, 0, 'v'},
   {"output-render-path",         required_argument, 0, 'V'},
-  {"pyramid-levels",             required_argument, 0, 'y'},
   {"yaml-file",                  required_argument, 0, 'Y'},
   {"rendering-rate",             required_argument, 0, 'z'},
   {"meshing-rate",               required_argument, 0, 'Z'},
@@ -109,30 +101,22 @@ inline void print_arguments() {
   std::cerr << "-d  (--drop-frames)                        : default is false: don't drop frames\n";
   std::cerr << "-f  (--fps)                                : default is " << default_fps << "\n";
   std::cerr << "-F  (--bilateral-filter                    : default is disabled\n";
-  std::cerr << "-g  (--ground-truth) <filename>            : ground truth file\n";
-  std::cerr << "-G  (--init-body-pose)                     : init_T_WB (translation and/or rotation - tx,ty,tz,qx,qy,qz,qw)\n";
   std::cerr << "-h  (--help)                               : show this help message\n";
-  std::cerr << "-i  (--sequence-path) <filename>           : sequence path\n";
-  std::cerr << "-k  (--sensor-intrinsics)                  : default is defined by input\n";
   std::cerr << "-l  (--icp-threshold)                      : default is " << default_icp_threshold << "\n";
   std::cerr << "-m  (--max-frame)                          : default is full dataset (-1)\n";
   std::cerr << "-M  (--output-mesh-path) <filename/dir>    : output mesh path\n";
   std::cerr << "-n  (--near-plane)                         : default is " << default_near_plane << "\n";
   std::cerr << "-N  (--far-plane)                          : default is " << default_far_plane << "\n";
   std::cerr << "-o  (--log-path) <filename/dir>            : default is stdout\n";
-  std::cerr << "-p  (--init-pose)                          : default is " << default_t_MW_factor.x() << "," << default_t_MW_factor.y() << "," << default_t_MW_factor.z() << "\n";
   std::cerr << "-q  (--disable-render)                     : default is to render images\n";
   std::cerr << "-Q  (--enable-render)                      : use to override --disable-render in YAML file\n";
   std::cerr << "-r  (--integration-rate)                   : default is " << default_integration_rate << "\n";
   std::cerr << "-s  (--map-dim)                            : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
-  std::cerr << "-S  (--sequence-name)                      : name of sequence\n";
   std::cerr << "-t  (--tracking-rate)                      : default is " << default_tracking_rate << "\n";
-  std::cerr << "-T  (--camera-to-body-transform)           : T_BC (translation and/or rotation - tx,ty,tz,qx,qy,qz,qw)\n";
   std::cerr << "-u  (--disable-meshing)                    : use to override --enable-meshing in YAML file\n";
   std::cerr << "-U  (--enable-meshing)                     : default is to not generate mesh\n";
   std::cerr << "-v  (--map-size)                           : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
   std::cerr << "-V  (--output-render-path) <filename/dir>  : output render path\n";
-  std::cerr << "-y  (--pyramid-levels)                     : default is 10,5,4\n";
   std::cerr << "-Y  (--yaml-file)                          : YAML file\n";
   std::cerr << "-z  (--rendering-rate)                     : default is " << default_rendering_rate << "\n";
   std::cerr << "-Z  (--meshing-rate)                       : default is " << default_meshing_rate << "\n";
@@ -592,38 +576,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         config.bilateral_filter = true;
         break;
 
-      case 'g': // ground-truth
-        config.ground_truth_file = optarg;
-        break;
-
-      case 'G': // init-body-pose
-        // Split argument into substrings
-        tokens = str_utils::split_str(optarg, ',');
-        config.init_T_WB = toT(tokens);
-        break;
-
       case '?':
       case 'h': // help
         print_arguments();
         exit(EXIT_SUCCESS);
-
-      case 'i': // sequence-path
-        config.sequence_path = optarg;
-        struct stat st;
-        if (stat(config.sequence_path.c_str(), &st) != 0) {
-          std::cerr << "Error: --sequence-path (-i) does not exist (was "
-              << config.sequence_path << ")\n";
-          exit(EXIT_FAILURE);
-        }
-        break;
-
-      case 'k': // sensor-intrinsics
-        config.sensor_intrinsics = atof4(optarg);
-        config.sensor_intrinsics_overrided = true;
-        if (config.sensor_intrinsics.y() < 0) {
-          config.left_hand_frame = true;
-        }
-        break;
 
       case 'l': // icp-threshold
         config.icp_threshold = atof(optarg);
@@ -647,10 +603,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'o': // log-path
         config.log_file = optarg;
-        break;
-
-      case 'p': // init-pose
-        config.t_MW_factor = atof3(optarg);
         break;
 
       case 'q': // disable-render
@@ -681,22 +633,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
         }
         break;
 
-      case 'S': // sequence-name
-        {
-          config.sequence_name = optarg;
-        }
-        break;
-
       case 't': // tracking-rate
         config.tracking_rate = atof(optarg);
         break;
-
-      case 'T': // camera-to-body-transform
-        // Split argument into substrings
-        tokens = str_utils::split_str(optarg, ',');
-        config.T_BC = toT(tokens);
-        break;
-
+        
       case 'u': // disable-meshing
         config.enable_meshing = false;
         break;
@@ -719,17 +659,6 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'V': // output-render-path
         config.output_render_file = optarg;
-        break;
-
-      case 'y': // pyramid-levels
-        {
-          std::istringstream remaining_arg(optarg);
-          std::string s;
-          config.pyramid.clear();
-          while (std::getline(remaining_arg, s, ',')) {
-            config.pyramid.push_back(atof(s.c_str()));
-          }
-        }
         break;
 
       case 'Y': // yaml-file
