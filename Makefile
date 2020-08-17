@@ -38,6 +38,13 @@ test-relwithdebinfo: relwithdebinfo
 test-debug: debug
 	$(MAKE) -C build/debug $(MFLAGS) test
 
+.PHONY: test-install
+test-install:
+	mkdir -p build/testinstall
+	cd build/testinstall && cmake -DCMAKE_BUILD_TYPE=Release $(CMAKE_ARGUMENTS) ../../test/test_install
+	$(MAKE) -C build/testinstall $(MFLAGS)
+	$(MAKE) -C build/testinstall $(MFLAGS) test
+
 
 
 .PHONY: doc
