@@ -370,6 +370,17 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << str_utils::matrix_to_pretty_str(config.init_T_WB,            "init_T_WB") << "\n";
   out << "\n";
 
+  const Eigen::Vector3f t_MW = config.map_dim.x() * config.t_MW_factor;
+  const Eigen::Matrix4f T_MW = se::math::to_transformation(t_MW);
+  const Eigen::Matrix4f init_T_MB = T_MW * config.init_T_WB;
+  const Eigen::Vector3f init_t_MB = se::math::to_translation(init_T_MB);
+  out << str_utils::vector_to_pretty_str(init_t_MB,                   "init t_MB") << "\n";
+  out << "\n";
+
+  const Eigen::Vector3f init_t_MB_factor = init_t_MB / config.map_dim.x();
+  out << str_utils::vector_to_pretty_str(init_t_MB_factor,            "init t_MB_factor") << "\n";
+  out << "\n";
+
   return out;
 }
 
