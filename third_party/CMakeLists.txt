@@ -6,6 +6,11 @@ add_compile_options(-w)
 # LodePNG
 add_subdirectory(lodepng)
 
+# Sophus
+option(BUILD_TESTS "Build tests." OFF)
+option(BUILD_EXAMPLES "Build examples." OFF)
+add_subdirectory(sophus)
+
 # YAML-CPP
 option(YAML_CPP_BUILD_TESTS "Enable testing" OFF)
 option(YAML_CPP_BUILD_TOOLS "Enable parse tools" OFF)
