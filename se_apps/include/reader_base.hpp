@@ -17,6 +17,7 @@
 #include <Eigen/Dense>
 
 #include "se/image/image.hpp"
+#include "se/str_utils.hpp"
 
 
 
@@ -256,10 +257,10 @@ namespace se {
  * \return The configuration of the reader to the ostream.
  */
 static std::ostream& operator<<(std::ostream& out, se::Reader* reader) {
-  out << "==========   READER   ========== " << "\n";
-  out << "Reader type:                     " << reader->name() << "\n";
-  out << "Number frames:                   " << ((reader->numFrames() == 0) ?
-                                                "Unknown" : std::to_string(reader->numFrames())) << "\n";
+  out << str_utils::header_to_pretty_str("READER") << "\n";
+  out << str_utils::str_to_pretty_str(reader->name(),  "Reader type") << "\n";
+  out << str_utils::str_to_pretty_str(((reader->numFrames() == 0) ? "Unknown" : std::to_string(reader->numFrames())),
+                                           "Number frames") << "\n";
   out << "\n";
   return out;
 }

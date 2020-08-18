@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 
 #include "se/utils/math_utils.h"
+#include "se/str_utils.hpp"
 
 
 
@@ -305,78 +306,57 @@ struct Configuration {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-
-
 static std::ostream& operator<<(std::ostream& out, const Configuration& config) {
-  out << "==========   GENERAL  ========== " << "\n";
-  out << "Voxel impl type:                 " << config.voxel_impl_type << "\n";
-  out << "Sensor type:                     " << config.sensor_type << "\n";
+
+  out << str_utils::header_to_pretty_str("GENERAL") << "\n";
+  out << str_utils::str_to_pretty_str(config.voxel_impl_type,         "Voxel impl type") << "\n";
+  out << str_utils::str_to_pretty_str(config.sensor_type,             "Sensor type") << "\n";
   out << "\n";
 
-  out << "Sequence name:                   " << config.sequence_name << "\n";
-  out << "Sequence path:                   " << config.sequence_path << "\n";
-  out << "Ground truth file:               " << config.ground_truth_file << "\n";
+  out << str_utils::str_to_pretty_str(config.sequence_name,           "Sequence name") << "\n";
+  out << str_utils::str_to_pretty_str(config.sequence_path,           "Sequence path") << "\n";
+  out << str_utils::str_to_pretty_str(config.ground_truth_file,       "Ground truth file") << "\n";
   if (config.output_mesh_file != "") {
-  out << "Output mesh file:                " << config.output_mesh_file << "\n";
+    out << str_utils::str_to_pretty_str(config.output_mesh_file,      "Output mesh file") << "\n";
   }
-  out << "Log file:                        " << (config.log_file == ""
-                                                 ? "std::cout" : config.log_file) << "\n";
-  out << "Benchmark:                       " << (config.benchmark
-                                                 ? "true" : "false") << "\n";
-  out << "Enable render:                   " << (config.enable_render
-                                                 ? "true" : "false") << "\n";
-  out << "Enable meshing:                  " << (config.enable_meshing
-                                                 ? "true" : "false") << "\n";
+  out << str_utils::str_to_pretty_str((config.log_file == "" ? "std::cout" : config.log_file),
+                                                                      "Log file") << "\n";
+  out << str_utils::bool_to_pretty_str(config.benchmark,              "Benchmark") << "\n";
+  out << str_utils::bool_to_pretty_str(config.enable_render,          "Enable render"      ) << "\n";
+  out << str_utils::bool_to_pretty_str(config.enable_meshing,         "Enable meshing"     ) << "\n";
   out << "\n";
 
-  out << "Integration rate:                " << config.integration_rate << "\n";
-  out << "Tracking rate:                   " << config.tracking_rate << "\n";
-  out << "Rendering rate:                  " << config.rendering_rate << "\n";
-  out << "Meshing rate:                    " << config.meshing_rate << "\n";
-  out << "FPS:                             " << config.fps << "\n";
-  out << "Drop frames:                     " << (config.drop_frames
-                                                 ? "true" : "false") << "\n";
-  out << "Max frame:                       " << ((config.max_frame == -1)
-                                                 ? "full dataset" : std::to_string(config.max_frame)) << "\n";
+  out << str_utils::value_to_pretty_str(config.integration_rate,      "Integration rate") << "\n";
+  out << str_utils::value_to_pretty_str(config.rendering_rate,        "Rendering rate") << "\n";
+  out << str_utils::value_to_pretty_str(config.meshing_rate,          "Meshing rate") << "\n";
+  out << str_utils::value_to_pretty_str(config.fps,                   "FPS") << "\n";
+  out << str_utils::bool_to_pretty_str(config.drop_frames,            "Drop frames") << "\n";
+  out << str_utils::value_to_pretty_str(config.max_frame,             "Max frame") << "\n";
   out << "\n";
 
-  out << "ICP pyramid levels:              ";
-  for (const auto& level : config.pyramid) {
-    out << " " << level;
-  }
-  out << "\n";
-  out << "ICP threshold:                   " << config.icp_threshold << "\n";
-  out << "Render volume full-size:         " << (config.render_volume_fullsize
-                                                 ? "true" : "false") << "\n";
+  out << str_utils::vector_to_pretty_str(Eigen::VectorXi::Map(config.pyramid.data(), config.pyramid.size()),
+                                                                      "ICP pyramid levels") << "\n";
+  out << str_utils::value_to_pretty_str(config.icp_threshold,         "ICP threshold") << "\n";
+  out << str_utils::bool_to_pretty_str(config.render_volume_fullsize, "Render volume full-size") << "\n";
   out << "\n";
 
-  out << "==========     MAP    ========== " << "\n";
-  out << "Map size:                        " << config.map_size.x() << "x"
-                                             << config.map_size.y() << "x"
-                                             << config.map_size.z() << " voxels\n";
-  out << "Map dim:                         " << config.map_dim.x() << "x"
-                                             << config.map_dim.y() << "x"
-                                             << config.map_dim.z() << " meters\n";
-  out << "World to map translation factor: " << config.t_MW_factor.x() << " "
-      << config.t_MW_factor.y() << " "
-      << config.t_MW_factor.z() << "\n";
+  out << str_utils::header_to_pretty_str("MAP") << "\n";
+  out << str_utils::volume_to_pretty_str(config.map_size,             "Map size", "voxel") << "\n";
+  out << str_utils::volume_to_pretty_str(config.map_dim,              "Map dim",  "meter") << "\n";
+
+  out << str_utils::vector_to_pretty_str(config.t_MW_factor,          "t_MW_factor") << "\n";
   out << "\n";
 
-  out << "==========   SENSOR   ========== " << "\n";
-  out << "Sensor intrinsics:               " << config.sensor_intrinsics.x() << " "
-                                             << config.sensor_intrinsics.y() << " "
-                                             << config.sensor_intrinsics.z() << " "
-                                             << config.sensor_intrinsics.w() << "\n";
-  out << "Left hand frame:                 " << config.left_hand_frame << "\n";
-  out << "Sensor downsampling factor:      " << config.sensor_downsampling_factor << "\n";
-  out << "Filter depth:                    " << (config.bilateral_filter
-                                                 ? "true" : "false") << "\n";
-  out << "Near plane:                      " << config.near_plane << " meters\n";
-  out << "Far plane:                       " << config.far_plane << " meters\n";
-  out << "T_BC:                            " << config.T_BC.row(0) << "\n";
-  out << "                                 " << config.T_BC.row(1) << "\n";
-  out << "                                 " << config.T_BC.row(2) << "\n";
-  out << "                                 " << config.T_BC.row(3) << "\n";
+  out << str_utils::header_to_pretty_str("SENSOR") << "\n";
+  out << str_utils::vector_to_pretty_str(config.sensor_intrinsics,    "Sensor intrinsics", {"fx", "fy", "cx", "cy"}) << "\n";
+  out << str_utils::bool_to_pretty_str(config.left_hand_frame,        "Left-handed-coordinate system") << "\n";
+  out << str_utils::value_to_pretty_str(config.sensor_downsampling_factor,
+                                                                      "Sensor downsampling factor") << "\n";
+  out << str_utils::bool_to_pretty_str(config.bilateral_filter,       "Filter depth (bilateral filter)") << "\n";
+  out << str_utils::value_to_pretty_str(config.near_plane,            "Near plane", "meters") << "\n";
+  out << str_utils::value_to_pretty_str(config.far_plane,             "Far plane", "meters") << "\n";
+  out << "\n";
+  out << str_utils::matrix_to_pretty_str(config.T_BC,                 "T_BC") << "\n";
   out << "\n";
 
   return out;

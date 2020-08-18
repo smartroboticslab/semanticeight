@@ -29,6 +29,7 @@
  */
 
 #include "se/voxel_implementations/MultiresOFusion/MultiresOFusion.hpp"
+#include "se/str_utils.hpp"
 
 
 
@@ -121,32 +122,33 @@ void MultiresOFusion::configure(YAML::Node yaml_config, const float voxel_dim) {
 }
 
 std::string MultiresOFusion::printConfig() {
-  std::stringstream ss;
-  ss << "========== VOXEL IMPL ========== " << "\n";
-  ss << "Invert normals:                  " << (MultiresOFusion::invert_normals
-                                                ? "true" : "false") << "\n";
-  ss << "Surface boundary:                " << MultiresOFusion::surface_boundary << "\n";
-  ss << "Min occupancy:                   " << MultiresOFusion::min_occupancy << "\n";
-  ss << "Max occupancy:                   " << MultiresOFusion::max_occupancy << "\n";
-  ss << "Max weight:                      " << MultiresOFusion::max_weight << "\n";
-  ss << "Free-space integration scale:    " << MultiresOFusion::fs_integr_scale << "\n";
-  ss << "Log-odd min per integration:     " << MultiresOFusion::log_odd_min << "\n";
-  ss << "Log-odd max per integration:     " << MultiresOFusion::log_odd_max << "\n";
-  ss << "Const surface thickness:         " << (MultiresOFusion::const_surface_thickness
-                                                ? "true" : "false") << "\n";
+
+  std::stringstream out;
+  out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
+  out << str_utils::bool_to_pretty_str(MultiresOFusion::invert_normals,          "Invert normals") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::surface_boundary,       "Surface boundary") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::min_occupancy,          "Min occupancy") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::max_occupancy,          "Max occupancy") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::max_weight,             "Max weight") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::fs_integr_scale,        "Free-space integration scale") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::log_odd_min,            "Log-odd min per integration") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::log_odd_max,            "Log-odd max per integration") << "\n";
+  out << str_utils::bool_to_pretty_str(MultiresOFusion::const_surface_thickness, "Const surface thickness") << "\n";
   if (MultiresOFusion::const_surface_thickness) {
-    ss << "tau:                             " << MultiresOFusion::tau_max << "\n";
+    out << str_utils::value_to_pretty_str(MultiresOFusion::tau_max,              "tau") << "\n";
   } else {
-    ss << "tau min:                         " << MultiresOFusion::tau_min << "\n";
-    ss << "tau max:                         " << MultiresOFusion::tau_max << "\n";
-    ss << "k tau:                           " << MultiresOFusion::k_tau << "\n";
+    out << str_utils::value_to_pretty_str(MultiresOFusion::tau_min,              "tau min") << "\n";
+    out << str_utils::value_to_pretty_str(MultiresOFusion::tau_max,              "tau max") << "\n";
+    out << str_utils::value_to_pretty_str(MultiresOFusion::k_tau,                "k tau") << "\n";
   }
-  ss << "Uncertainty model:               " << modelToString.find(MultiresOFusion::uncertainty_model)->second << "\n";
-  ss << "sigma min:                       " << MultiresOFusion::sigma_min << "\n";
-  ss << "sigma max:                       " << MultiresOFusion::sigma_max << "\n";
-  ss << "k sigma:                         " << MultiresOFusion::k_sigma << "\n";
-  ss << "\n";
-  return ss.str();
+
+  out << str_utils::str_to_pretty_str(modelToString.find(MultiresOFusion::uncertainty_model)->second,
+                                                                         "Uncertainty model") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::sigma_min,              "sigma min") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::sigma_max,              "sigma max") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresOFusion::k_sigma,                "k sigma") << "\n";
+  out << "\n";
+  return out.str();
 }
 
 // Implement static member functions.

@@ -31,6 +31,7 @@
  * */
 
 #include "se/voxel_implementations/OFusion/OFusion.hpp"
+#include "se/str_utils.hpp"
 
 
 
@@ -90,22 +91,21 @@ void OFusion::configure(YAML::Node yaml_config, const float voxel_dim) {
 }
 
 std::string OFusion::printConfig() {
-  std::stringstream ss;
-  ss << "========== VOXEL IMPL ========== " << "\n";
 
-  ss << "Invert normals:                  " << (OFusion::invert_normals
-                                                ? "true" : "false") << "\n";
-  ss << "Surface boundary:                " << OFusion::surface_boundary << "\n";
-  ss << "Min occupancy:                   " << OFusion::min_occupancy << "\n";
-  ss << "Max occupancy:                   " << OFusion::max_occupancy << "\n";
-  ss << "tau:                             " << OFusion::tau << "\n";
-  ss << "sigma_min_factor:                " << OFusion::sigma_min_factor << "\n";
-  ss << "sigma_max_factor:                " << OFusion::sigma_max_factor << "\n";
-  ss << "sigma_min:                       " << OFusion::sigma_min << "\n";
-  ss << "sigma_max:                       " << OFusion::sigma_max << "\n";
-  ss << "k sigma:                         " << OFusion::k_sigma << "\n";
-  ss << "\n";
-  return ss.str();
+  std::stringstream out;
+  out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
+  out << str_utils::bool_to_pretty_str(OFusion::invert_normals,    "Invert normals") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::surface_boundary, "Surface boundary") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::min_occupancy,    "Min occupancy") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::max_occupancy,    "Max occupancy") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::tau,              "tau") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::sigma_min_factor, "sigma min factor") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::sigma_max_factor, "sigma max factor") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::sigma_min,        "sigma min") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::sigma_max,        "sigma max") << "\n";
+  out << str_utils::value_to_pretty_str(OFusion::k_sigma,          "k sigma") << "\n";
+  out << "\n";
+  return out.str();
 }
 
 void OFusion::dumpMesh(OctreeType&                map,

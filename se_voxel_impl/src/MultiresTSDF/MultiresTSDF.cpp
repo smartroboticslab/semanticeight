@@ -30,6 +30,7 @@
  * */
 
 #include "se/voxel_implementations/MultiresTSDF/MultiresTSDF.hpp"
+#include "se/str_utils.hpp"
 
 
 
@@ -63,15 +64,15 @@ void MultiresTSDF::configure(YAML::Node yaml_config, const float voxel_dim) {
 }
 
 std::string MultiresTSDF::printConfig() {
-  std::stringstream ss;
-  ss << "========== VOXEL IMPL ========== " << "\n";
-  ss << "Invert normals:                  " << (MultiresTSDF::invert_normals
-                                                ? "true" : "false") << "\n";
-  ss << "Mu factor:                       " << MultiresTSDF::mu_factor << "\n";
-  ss << "Mu:                              " << MultiresTSDF::mu << "\n";
-  ss << "Max weight:                      " << MultiresTSDF::max_weight << "\n";
-  ss << "\n";
-  return ss.str();
+
+  std::stringstream out;
+  out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
+  out << str_utils::bool_to_pretty_str(MultiresTSDF::invert_normals, "Invert normals") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresTSDF::mu_factor,     "mu factor") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresTSDF::mu,            "mu") << "\n";
+  out << str_utils::value_to_pretty_str(MultiresTSDF::max_weight,    "Max weight") << "\n";
+  out << "\n";
+  return out.str();
 }
 
 void MultiresTSDF::dumpMesh(OctreeType&                map,

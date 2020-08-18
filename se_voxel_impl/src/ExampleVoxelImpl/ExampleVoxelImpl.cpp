@@ -29,6 +29,7 @@
  */
 
 #include "se/voxel_implementations/ExampleVoxelImpl/ExampleVoxelImpl.hpp"
+#include "se/str_utils.hpp"
 
 
 
@@ -47,11 +48,10 @@ void ExampleVoxelImpl::configure(YAML::Node yaml_config) {
 };
 
 std::string ExampleVoxelImpl::printConfig() {
-  std::stringstream ss;
-  ss << "========== VOXEL IMPL ========== " << "\n";
-  ss << "Invert normals:                  " << (ExampleVoxelImpl::invert_normals
-                                                ? "true" : "false") << "\n";
-  return ss.str();
+  std::stringstream out;
+  out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
+  out << str_utils::bool_to_pretty_str(ExampleVoxelImpl::invert_normals, "Invert normals") << "\n";
+  return out.str();
 }
 
 // Implement static member functions.

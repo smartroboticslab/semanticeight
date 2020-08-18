@@ -30,6 +30,7 @@
  * */
 
 #include "se/voxel_implementations/TSDF/TSDF.hpp"
+#include "se/str_utils.hpp"
 
 
 
@@ -59,15 +60,15 @@ void TSDF::configure(const float voxel_dim) {
 }
 
 std::string TSDF::printConfig() {
-  std::stringstream ss;
-  ss << "========== VOXEL IMPL ========== " << "\n";
-  ss << "Invert normals:                  " << (TSDF::invert_normals
-                                                ? "true" : "false") << "\n";
-  ss << "Mu factor:                       " << TSDF::mu_factor << "\n";
-  ss << "Mu:                              " << TSDF::mu << "\n";
-  ss << "Max weight:                      " << TSDF::max_weight << "\n";
-  ss << "\n";
-  return ss.str();
+
+  std::stringstream out;
+  out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
+  out << str_utils::bool_to_pretty_str(TSDF::invert_normals, "Invert normals") << "\n";
+  out << str_utils::value_to_pretty_str(TSDF::mu_factor,     "mu factor") << "\n";
+  out << str_utils::value_to_pretty_str(TSDF::mu,            "mu") << "\n";
+  out << str_utils::value_to_pretty_str(TSDF::max_weight,    "Max weight") << "\n";
+  out << "\n";
+  return out.str();
 }
 
 void TSDF::dumpMesh(OctreeType&                map,
