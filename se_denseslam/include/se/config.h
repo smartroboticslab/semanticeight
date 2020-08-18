@@ -352,6 +352,8 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << str_utils::header_to_pretty_str("MAP") << "\n";
   out << str_utils::volume_to_pretty_str(config.map_size,             "Map size", "voxel") << "\n";
   out << str_utils::volume_to_pretty_str(config.map_dim,              "Map dim",  "meter") << "\n";
+  out << str_utils::value_to_pretty_str(config.map_dim.x() / config.map_size.x(),
+                                                                      "Map res", "meter/voxel") << "\n";
 
   out << str_utils::vector_to_pretty_str(config.t_MW_factor,          "t_MW_factor") << "\n";
   out << "\n";
