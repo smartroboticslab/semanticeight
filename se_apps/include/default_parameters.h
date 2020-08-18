@@ -631,7 +631,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
       case 'T': // camera-to-body-transform
         // Split argument into substrings
-        tokens = split_string(optarg, ',');
+        tokens = str_utils::split_str(optarg, ',');
         switch (tokens.size()) {
           case 3:
             // Translation

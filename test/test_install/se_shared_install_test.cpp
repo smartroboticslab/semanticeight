@@ -8,7 +8,7 @@
 
 int main(int argc, char** argv) {
   const std::string str ("this is supereight");
-  const std::vector<std::string> words = split_string(str, ' ');
+  const std::vector<std::string> words = str_utils::split_str(str, ' ');
 
   std::cout << str << "\n\n";
   for (const auto& word : words) {

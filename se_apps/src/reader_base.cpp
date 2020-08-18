@@ -200,7 +200,7 @@ se::ReaderStatus se::Reader::nextPose(Eigen::Matrix4f& T_WB) {
       continue;
     }
     // Data line read, split on spaces
-    const std::vector<std::string> line_data = split_string(line, ' ');
+    const std::vector<std::string> line_data = str_utils::split_str(line, ' ');
     const size_t num_cols = line_data.size();
     if (num_cols < 7) {
       std::cerr << "Error: Invalid ground truth file format. "
