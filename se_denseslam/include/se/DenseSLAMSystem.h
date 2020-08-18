@@ -344,7 +344,7 @@ class DenseSLAMSystem {
      * \return A vector containing the x, y and z coordinates of t_WC.
      */
     Eigen::Vector3f t_WC() {
-      Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
+      Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
       Eigen::Vector3f t_WC = se::math::to_translation(T_WC);
       return t_WC;
     }
