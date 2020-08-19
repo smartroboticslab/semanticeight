@@ -40,23 +40,18 @@
 
 
 
-inline void gs2rgb(double h, unsigned char rgba[4]) {
-  double v = 0;
+inline uint32_t gray_to_RGBA(double h) {
+  constexpr double v = 0.75;
   double r = 0, g = 0, b = 0;
-  v = 0.75;
   if (v > 0) {
-    double m;
-    double sv;
-    int sextant;
-    double fract, vsf, mid1, mid2;
-    m = 0.25;
-    sv = 0.6667;
+    constexpr double m = 0.25;
+    constexpr double sv = 0.6667;
     h *= 6.0;
-    sextant = (int) h;
-    fract = h - sextant;
-    vsf = v * sv * fract;
-    mid1 = m + vsf;
-    mid2 = v - vsf;
+    const int sextant = static_cast<int>(h);
+    const double fract = h - sextant;
+    const double vsf = v * sv * fract;
+    const double mid1 = m + vsf;
+    const double mid2 = v - vsf;
     switch (sextant) {
       case 0:
         r = v;
@@ -95,10 +90,7 @@ inline void gs2rgb(double h, unsigned char rgba[4]) {
         break;
     }
   }
-  rgba[0] = r * 255;
-  rgba[1] = g * 255;
-  rgba[2] = b * 255;
-  rgba[3] = 255; // Only for padding purposes
+  return se::pack_rgba(r * 255, g * 255, b * 255, 255);
 }
 
 
@@ -147,12 +139,11 @@ void renderDepthKernel(unsigned char*         depth_RGBA_image_data,
         depth_RGBA_image_data[rgba_idx + 3] = 255;
       } else {
         const float depth_value = (depth_image_data[pixel_idx] - near_plane) * range_scale;
-        unsigned char rgba[4];
-        gs2rgb(depth_value, rgba);
-        depth_RGBA_image_data[rgba_idx + 0] = rgba[0];
-        depth_RGBA_image_data[rgba_idx + 1] = rgba[1];
-        depth_RGBA_image_data[rgba_idx + 2] = rgba[2];
-        depth_RGBA_image_data[rgba_idx + 3] = rgba[3];
+        const uint32_t rgba = gray_to_RGBA(depth_value);
+        depth_RGBA_image_data[rgba_idx + 0] = se::r_from_rgba(rgba);
+        depth_RGBA_image_data[rgba_idx + 1] = se::g_from_rgba(rgba);
+        depth_RGBA_image_data[rgba_idx + 2] = se::b_from_rgba(rgba);
+        depth_RGBA_image_data[rgba_idx + 3] = se::a_from_rgba(rgba);
       }
     }
   }
