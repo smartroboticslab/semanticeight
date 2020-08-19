@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 
   // ========= UPDATE MAX FRAME =========
   if (config.max_frame == -1 ||
-      (reader->numFrames() != 0 && config.max_frame > reader->numFrames() - 1)) {
+      (reader->numFrames() != 0 && config.max_frame > static_cast<long int>(reader->numFrames()) - 1)) {
     config.max_frame = reader->numFrames() - 1;
   }
   progress_bar  = new ProgressBar(config.max_frame);
