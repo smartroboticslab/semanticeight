@@ -112,11 +112,11 @@ class DenseSLAMSystem {
      * \param[in] config_ The pipeline options.
      */
     DenseSLAMSystem(const Eigen::Vector2i& image_res,
-                    const Eigen::Vector3i& map_size_,
-                    const Eigen::Vector3f& map_dim_,
+                    const Eigen::Vector3i& map_size,
+                    const Eigen::Vector3f& map_dim,
                     const Eigen::Vector3f& t_MW,
                     std::vector<int> &     pyramid,
-                    const Configuration&   config_);
+                    const Configuration&   config);
     /**
      * Constructor using the initial camera position.
      *
@@ -130,11 +130,11 @@ class DenseSLAMSystem {
      * \param[in] config_ The pipeline options.
      */
     DenseSLAMSystem(const Eigen::Vector2i& image_res,
-                    const Eigen::Vector3i& map_size_,
-                    const Eigen::Vector3f& map_dim_,
+                    const Eigen::Vector3i& map_size,
+                    const Eigen::Vector3f& map_dim,
                     const Eigen::Matrix4f& T_MW,
                     std::vector<int> &     pyramid,
-                    const Configuration&   config_);
+                    const Configuration&   config);
 
     /**
      * Preprocess a single depth frame and add it to the pipeline.
