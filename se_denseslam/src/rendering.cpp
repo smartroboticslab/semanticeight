@@ -95,16 +95,14 @@ inline uint32_t gray_to_RGBA(double h) {
 
 
 
-void renderRGBAKernel(uint8_t*                   output_RGBA_image_data,
+void renderRGBAKernel(uint32_t*                  output_RGBA_image_data,
                       const Eigen::Vector2i&     output_RGBA_image_res,
                       const se::Image<uint32_t>& input_RGBA_image) {
 
   TICK();
-
   memcpy(output_RGBA_image_data, input_RGBA_image.data(),
-         output_RGBA_image_res.x() * output_RGBA_image_res.y() * 4);
-
-  TOCK("renderRGBAKernel", output_RGBA_image_res.x() * output_RGBA_image_res.y());
+         output_RGBA_image_res.prod() * sizeof(uint32_t));
+  TOCK("renderRGBAKernel", output_RGBA_image_res.prod());
 }
 
 

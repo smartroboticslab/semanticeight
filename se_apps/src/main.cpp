@@ -375,7 +375,7 @@ int processAll(se::Reader*    reader,
       render_volume = (config->rendering_rate < 0) ?
           frame == std::abs(config->rendering_rate) : frame % config->rendering_rate == 0;
     }
-    pipeline->renderRGBA((uint8_t*) rgba_render, pipeline->getImageResolution());
+    pipeline->renderRGBA(rgba_render, pipeline->getImageResolution());
     pipeline->renderDepth(depth_render, pipeline->getImageResolution(), sensor);
     pipeline->renderTrack((unsigned char*)track_render, pipeline->getImageResolution());
     if (render_volume) {

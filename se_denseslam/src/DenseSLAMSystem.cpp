@@ -274,7 +274,7 @@ void DenseSLAMSystem::renderDepth(uint32_t*              depth_RGBA_image_data,
 
 
 
-void DenseSLAMSystem::renderRGBA(uint8_t*               output_RGBA_image_data,
+void DenseSLAMSystem::renderRGBA(uint32_t*              output_RGBA_image_data,
                                  const Eigen::Vector2i& output_RGBA_image_res) {
 
   renderRGBAKernel(output_RGBA_image_data, output_RGBA_image_res, rgba_image_);

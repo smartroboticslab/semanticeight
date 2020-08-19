@@ -283,7 +283,7 @@ class DenseSLAMSystem {
      * \param[in] output_RGBA_image_res The dimensions of the output image (width and
      * height in pixels).
      */
-    void renderRGBA(uint8_t*               output_RGBA_image_data,
+    void renderRGBA(uint32_t*              output_RGBA_image_data,
                     const Eigen::Vector2i& output_RGBA_image_res);
 
     //

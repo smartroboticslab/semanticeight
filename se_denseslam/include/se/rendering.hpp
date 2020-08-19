@@ -118,7 +118,7 @@ void raycastKernel(const se::Octree<typename T::VoxelType>& map,
 
 
 
-void renderRGBAKernel(uint8_t*                   output_RGBA_image_data,
+void renderRGBAKernel(uint32_t*                  output_RGBA_image_data,
                       const Eigen::Vector2i&     output_RGBA_image_res,
                       const se::Image<uint32_t>& input_RGBA_image);
 
