@@ -39,6 +39,70 @@
 #include <cstring>
 
 
+
+inline void gs2rgb(double h, unsigned char rgba[4]) {
+  double v = 0;
+  double r = 0, g = 0, b = 0;
+  v = 0.75;
+  if (v > 0) {
+    double m;
+    double sv;
+    int sextant;
+    double fract, vsf, mid1, mid2;
+    m = 0.25;
+    sv = 0.6667;
+    h *= 6.0;
+    sextant = (int) h;
+    fract = h - sextant;
+    vsf = v * sv * fract;
+    mid1 = m + vsf;
+    mid2 = v - vsf;
+    switch (sextant) {
+      case 0:
+        r = v;
+        g = mid1;
+        b = m;
+        break;
+      case 1:
+        r = mid2;
+        g = v;
+        b = m;
+        break;
+      case 2:
+        r = m;
+        g = v;
+        b = mid1;
+        break;
+      case 3:
+        r = m;
+        g = mid2;
+        b = v;
+        break;
+      case 4:
+        r = mid1;
+        g = m;
+        b = v;
+        break;
+      case 5:
+        r = v;
+        g = m;
+        b = mid2;
+        break;
+      default:
+        r = 0;
+        g = 0;
+        b = 0;
+        break;
+    }
+  }
+  rgba[0] = r * 255;
+  rgba[1] = g * 255;
+  rgba[2] = b * 255;
+  rgba[3] = 255; // Only for padding purposes
+}
+
+
+
 void renderRGBAKernel(uint8_t*                   output_RGBA_image_data,
                       const Eigen::Vector2i&     output_RGBA_image_res,
                       const se::Image<uint32_t>& input_RGBA_image) {
