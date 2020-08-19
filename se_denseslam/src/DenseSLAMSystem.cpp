@@ -51,7 +51,6 @@
 
 
 extern PerfStats stats;
-static bool print_kernel_timing = false;
 
 DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
                                  const Eigen::Vector3i& map_size,
@@ -71,44 +70,21 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
   : image_res_(image_res),
     depth_image_(image_res_.x(), image_res_.y()),
     rgba_image_(image_res_.x(), image_res_.y()),
+    map_dim_(map_dim),
+    map_size_(map_size),
     config_(config),
-    surface_point_cloud_M_(image_res_.x(), image_res_.y()),
-    surface_normals_M_(image_res_.x(), image_res_.y())
+    init_T_MC_(T_MW),
+    T_MC_(init_T_MC_),
+    previous_T_MC_(T_MC_),
+    iterations_(pyramid),
+    reduction_output_(8 * 32, 0.0f),
+    tracking_result_(image_res_.prod(), TrackData()),
+    raycast_T_MC_(T_MC_),
+    surface_point_cloud_M_(image_res_.x(), image_res_.y(), Eigen::Vector3f::Zero()),
+    surface_normals_M_(image_res_.x(), image_res_.y(), Eigen::Vector3f::Zero()),
+    render_T_MC_(&T_MC_),
+    T_MW_(T_MW)
   {
-    // Initalise poses
-    T_MW_ = T_MW;
-    T_MC_ = T_MW;
-    init_T_MC_ = T_MC_;
-    raycast_T_MC_ = T_MC_;
-    render_T_MC_ =  &T_MC_;
-    this->map_dim_ = map_dim;
-    this->map_size_ = map_size;
-
-    this->iterations_.clear();
-    for(std::vector<int>::iterator it = pyramid.begin();
-        it != pyramid.end(); it++) {
-      this->iterations_.push_back(*it);
-    }
-
-    if (getenv("KERNEL_TIMINGS"))
-      print_kernel_timing = true;
-
-    // internal buffers to initialize
-    reduction_output_.resize(8 * 32);
-    tracking_result_.resize(image_res_.x() * image_res_.y());
-
-    for (unsigned int i = 0; i < iterations_.size(); ++i) {
-      int downsample = 1 << i;
-      scaled_depth_image_.push_back(se::Image<float>(image_res_.x() / downsample,
-            image_res_.y() / downsample));
-
-      input_point_cloud_C_.push_back(se::Image<Eigen::Vector3f>(image_res_.x() / downsample,
-            image_res_.y() / downsample));
-
-      input_normals_C_.push_back(se::Image<Eigen::Vector3f>(image_res_.x() / downsample,
-            image_res_.y() / downsample));
-    }
-
     // Initialize the Gaussian for the bilateral filter
     constexpr int gaussian_size = gaussian_radius * 2 + 1;
     gaussian_.reserve(gaussian_size);
@@ -117,6 +93,16 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
       gaussian_[i] = expf(-(x * x) / (2 * delta * delta));
     }
 
+    // Initialize the scaled images
+    for (unsigned int i = 0; i < iterations_.size(); ++i) {
+      const int downsample = 1 << i;
+      const Eigen::Vector2i res = image_res_ / downsample;
+      scaled_depth_image_.emplace_back(res.x(), res.y(), 0.0f);
+      input_point_cloud_C_.emplace_back(res.x(), res.y(), Eigen::Vector3f::Zero());
+      input_normals_C_.emplace_back(res.x(), res.y(), Eigen::Vector3f::Zero());
+    }
+
+    // Initialize the map
     map_ = std::make_shared<se::Octree<VoxelImpl::VoxelType> >();
     map_->init(map_size_.x(), map_dim_.x());
 }
