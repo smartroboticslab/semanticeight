@@ -218,23 +218,25 @@ class DenseSLAMSystem {
      */
     void dumpMesh(const std::string filename, const bool print_path = false);
 
-    /**
-     * Render the current 3D reconstruction. This function performs raycasting
-     * if needed, otherwise it uses the point cloud and normal maps created in
-     * DenseSLAMSystem::raycasting.
+    /** \brief Render the current 3D reconstruction.
+     * This function performs raycasting if needed, otherwise it uses the point
+     * cloud and normal maps created in DenseSLAMSystem::raycasting.
      *
-     * \param[out] output_image_data A pointer to an array containing the rendered frame.
-     * The array must be allocated before calling this function. The storage
-     * layout is rgbargbargba.
-     * \param[in] output_image_res The dimensions of the output array (width and
-     * height in pixels).
+     * \param[out] output_image_data A pointer to an array where the image will
+     *                               be rendered. The array must be allocated
+     *                               before calling this function, one uint32_t
+     *                               per pixel.
+     * \param[in] output_image_res   The dimensions of the output array (width
+     *                               and height in pixels).
      */
     void renderVolume(uint32_t*              output_image_data,
                       const Eigen::Vector2i& output_image_res,
                       const SensorImpl&      sensor);
 
     /**
-     * Render the output of the tracking algorithm. The meaning of the colors is as follows:
+     * Render the output of the tracking algorithm. The meaning of the colors
+     * is as follows:
+     *
      * | Color  | Meaning |
      * | ------ | ------- |
      * | grey   | Successful tracking. |
@@ -245,30 +247,29 @@ class DenseSLAMSystem {
      * | yellow | Wrong normal. |
      * | orange | Tracking not performed. |
      *
-     * \param[out] output_image_data A pointer to an array containing the rendered frame.
-     * The array must be allocated before calling this function. The x, y and
-     * z members of each element of the array contain the R, G and B values of
-     * the image respectively. The w member of each element of the array is
-     * always 0 and is used for padding.
-     * \param[in] output_res The dimensions of the output array (width and
-     * height in pixels).
+     * \param[out] output_image_data A pointer to an array where the image will
+     *                               be rendered. The array must be allocated
+     *                               before calling this function, one uint32_t
+     *                               per pixel.
+     * \param[in] output_image_res   The dimensions of the output array (width
+     *                               and height in pixels).
      */
     void renderTrack(uint32_t*              output_image_data,
                      const Eigen::Vector2i& output_image_res);
 
     /**
      * Render the current depth frame. The frame is rendered before
-     * preprocessing while taking into account the values of Configuration::near_plane and
-     * Configuration::far_plane. Regions closer to the camera than Configuration::near_plane appear white
-     * and regions further than Configuration::far_plane appear black.
+     * preprocessing while taking into account the values of
+     * Configuration::near_plane and Configuration::far_plane. Regions closer
+     * to the camera than Configuration::near_plane appear white and regions
+     * further than Configuration::far_plane appear black.
      *
-     * \param[out] output_image_data A pointer to an array containing the rendered frame.
-     * The array must be allocated before calling this function. The x, y and
-     * z members of each element of the array contain the R, G and B values of
-     * the image respectively. The w member of each element of the array is
-     * always 0 and is used for padding.
-     * \param[in] output_image_res The dimensions of the output array (width and
-     * height in pixels).
+     * \param[out] output_image_data A pointer to an array where the image will
+     *                               be rendered. The array must be allocated
+     *                               before calling this function, one uint32_t
+     *                               per pixel.
+     * \param[in] output_image_res   The dimensions of the output array (width
+     *                               and height in pixels).
      */
     void renderDepth(uint32_t*              output_image_data,
                      const Eigen::Vector2i& output_image_res,
@@ -277,11 +278,12 @@ class DenseSLAMSystem {
     /**
      * Render the RGB frame currently in the pipeline.
      *
-     * \param[out] output_RGBA_image_data Pointer to an array containing the rendered
-     * frame, 4 channels, 8 bits per channel. The array must be allocated
-     * before calling this function.
-     * \param[in] output_RGBA_image_res The dimensions of the output image (width and
-     * height in pixels).
+     * \param[out] output_RGBA_image_data A pointer to an array where the image
+     *                                    will be rendered. The array must be
+     *                                    allocated before calling this
+     *                                    function, one uint32_t per pixel.
+     * \param[in] output_RGBA_image_res   The dimensions of the output image
+     *                                    (width and height in pixels).
      */
     void renderRGBA(uint32_t*              output_RGBA_image_data,
                     const Eigen::Vector2i& output_RGBA_image_res);
