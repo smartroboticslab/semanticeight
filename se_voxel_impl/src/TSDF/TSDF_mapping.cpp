@@ -79,13 +79,12 @@ struct TSDFUpdate {
     is_visible = true;
 
     // Update the TSDF
-    const float point_dist = (depth_value - point_C.z())
-      * std::sqrt(1 + se::math::sq(point_C.x() / point_C.z())
-      + se::math::sq(point_C.y() / point_C.z()));
-    if (point_dist > -TSDF::mu) {
-      const float tsdf = fminf(1.f, point_dist / TSDF::mu);
+    const float m = sensor.measurementFromPoint(point_C);
+    const float sdf_value = (depth_value - m) / m * point_C.norm();
+    if (sdf_value > -TSDF::mu) {
+      const float tsdf_value = fminf(1.f, sdf_value / TSDF::mu);
       auto data = handler.get();
-      data.x = (data.y * data.x + tsdf) / (data.y + 1.f);
+      data.x = (data.y * data.x + tsdf_value) / (data.y + 1.f);
       data.x = se::math::clamp(data.x, -1.f, 1.f);
       data.y = fminf(data.y + 1, TSDF::max_weight);
       handler.set(data);
