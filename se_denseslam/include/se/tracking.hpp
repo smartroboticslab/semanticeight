@@ -47,6 +47,18 @@
 
 
 
+struct TrackData {
+	int result;
+	float error;
+	float J[6];
+
+    TrackData()
+      : result(0),
+      error(0.0f),
+      J{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f} {}
+};
+
+
 
 void new_reduce(const int              block_index,
                 float*                 output_data,

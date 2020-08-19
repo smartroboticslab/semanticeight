@@ -45,6 +45,7 @@
 #include "lodepng.h"
 #include "se/timings.h"
 #include "se/image/image.hpp"
+#include "se/tracking.hpp"
 
 #include "voxel_implementations.hpp"
 #include "se/sensor_implementation.hpp"

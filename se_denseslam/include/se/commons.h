@@ -64,12 +64,6 @@
 
 #define INVALID -2
 
-struct TrackData {
-	int result;
-	float error;
-	float J[6];
-};
-
 static const float epsilon = 0.0000001;
 
 #endif
