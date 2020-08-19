@@ -78,6 +78,10 @@ float se::PinholeCamera::farDist(const Eigen::Vector3f& ray_C) const {
   return far_plane / ray_C.normalized().z();
 }
 
+float se::PinholeCamera::measurementFromPoint(const Eigen::Vector3f& point_C) const {
+  return point_C.z();
+}
+
 
 
 se::OusterLidar::OusterLidar(const SensorConfig& c)
@@ -152,4 +156,7 @@ float se::OusterLidar::farDist(const Eigen::Vector3f&) const {
   return far_plane;
 }
 
+float se::OusterLidar::measurementFromPoint(const Eigen::Vector3f& point_C) const {
+  return point_C.norm();
+}
 

@@ -125,6 +125,17 @@ namespace se {
      */
     float farDist(const Eigen::Vector3f& ray_C) const;
 
+    /**
+     * \brief Convert a point in the sensor frame into a depth measurement.
+     * For the PinholeCamera this means returning the z-coordinate
+     * of the point.
+     *
+     * \param[in] point_C A point observed by the sensor expressed in the
+     *                    sensor frame.
+     * \return The depth value that the sensor would get from this point.
+     */
+    float measurementFromPoint(const Eigen::Vector3f& point_C) const;
+
     static std::string type() { return "pinholecamera"; }
 
     srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
@@ -222,6 +233,16 @@ namespace se {
      *         valid measurements may be encountered.
      */
     float farDist(const Eigen::Vector3f& ray_C) const;
+
+    /**
+     * \brief Convert a point in the sensor frame into a depth measurement.
+     * For the OusterLidar this means returning the norm of the point.
+     *
+     * \param[in] point_C A point observed by the sensor expressed in the
+     *                    sensor frame.
+     * \return The depth value that the sensor would get from this point.
+     */
+    float measurementFromPoint(const Eigen::Vector3f& point_C) const;
 
     static std::string type() { return "ousterlidar"; }
 
