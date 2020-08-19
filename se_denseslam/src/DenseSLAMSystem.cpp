@@ -258,7 +258,7 @@ void DenseSLAMSystem::renderVolume(uint32_t*              volume_RGBA_image_data
       render_surface_point_cloud_M, render_surface_normals_M);
 }
 
-void DenseSLAMSystem::renderTrack(unsigned char*         tracking_RGBA_image_data,
+void DenseSLAMSystem::renderTrack(uint32_t*              tracking_RGBA_image_data,
                                   const Eigen::Vector2i& tracking_RGBA_image_res) {
   renderTrackKernel(tracking_RGBA_image_data, tracking_result_.data(), tracking_RGBA_image_res);
 }

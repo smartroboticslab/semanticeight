@@ -253,7 +253,7 @@ class DenseSLAMSystem {
      * \param[in] output_res The dimensions of the output array (width and
      * height in pixels).
      */
-    void renderTrack(unsigned char*         output_image_data,
+    void renderTrack(uint32_t*              output_image_data,
                      const Eigen::Vector2i& output_image_res);
 
     /**

@@ -377,7 +377,7 @@ int processAll(se::Reader*    reader,
     }
     pipeline->renderRGBA(rgba_render, pipeline->getImageResolution());
     pipeline->renderDepth(depth_render, pipeline->getImageResolution(), sensor);
-    pipeline->renderTrack((unsigned char*)track_render, pipeline->getImageResolution());
+    pipeline->renderTrack(track_render, pipeline->getImageResolution());
     if (render_volume) {
       pipeline->renderVolume(volume_render, pipeline->getImageResolution(), sensor);
     }

@@ -132,7 +132,7 @@ void renderDepthKernel(uint32_t*              depth_RGBA_image_data,
 
 
 
-void renderTrackKernel(unsigned char*         tracking_RGBA_image_data,
+void renderTrackKernel(uint32_t*              tracking_RGBA_image_data,
                        const TrackData*       tracking_result_data,
                        const Eigen::Vector2i& tracking_RGBA_image_res);
 
