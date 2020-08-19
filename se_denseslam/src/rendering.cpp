@@ -109,7 +109,7 @@ void renderRGBAKernel(uint8_t*                   output_RGBA_image_data,
 
 
 
-void renderDepthKernel(unsigned char*         depth_RGBA_image_data,
+void renderDepthKernel(uint32_t*              depth_RGBA_image_data,
                        float*                 depth_image_data,
                        const Eigen::Vector2i& depth_RGBA_image_res,
                        const float            near_plane,
@@ -125,29 +125,18 @@ void renderDepthKernel(unsigned char*         depth_RGBA_image_data,
     for (int x = 0; x < depth_RGBA_image_res.x(); x++) {
 
       const unsigned int pixel_idx = row_offset + x;
-      const unsigned int rgba_idx = pixel_idx * 4;
 
       if (depth_image_data[pixel_idx] < near_plane) {
-        depth_RGBA_image_data[rgba_idx + 0] = 255;
-        depth_RGBA_image_data[rgba_idx + 1] = 255;
-        depth_RGBA_image_data[rgba_idx + 2] = 255;
-        depth_RGBA_image_data[rgba_idx + 3] = 255;
+        depth_RGBA_image_data[pixel_idx] = 0xFFFFFFFF;
       } else if (depth_image_data[pixel_idx] > far_plane) {
-        depth_RGBA_image_data[rgba_idx + 0] = 0;
-        depth_RGBA_image_data[rgba_idx + 1] = 0;
-        depth_RGBA_image_data[rgba_idx + 2] = 0;
-        depth_RGBA_image_data[rgba_idx + 3] = 255;
+        depth_RGBA_image_data[pixel_idx] = 0xFF000000;
       } else {
         const float depth_value = (depth_image_data[pixel_idx] - near_plane) * range_scale;
-        const uint32_t rgba = gray_to_RGBA(depth_value);
-        depth_RGBA_image_data[rgba_idx + 0] = se::r_from_rgba(rgba);
-        depth_RGBA_image_data[rgba_idx + 1] = se::g_from_rgba(rgba);
-        depth_RGBA_image_data[rgba_idx + 2] = se::b_from_rgba(rgba);
-        depth_RGBA_image_data[rgba_idx + 3] = se::a_from_rgba(rgba);
+        depth_RGBA_image_data[pixel_idx] = gray_to_RGBA(depth_value);
       }
     }
   }
-  TOCK("renderDepthKernel", depth_RGBA_image_res.x() * depth_RGBA_image_res.y());
+  TOCK("renderDepthKernel", depth_RGBA_image_res.prod());
 }
 
 

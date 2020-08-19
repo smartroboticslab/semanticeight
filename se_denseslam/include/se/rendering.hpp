@@ -124,7 +124,7 @@ void renderRGBAKernel(uint8_t*                   output_RGBA_image_data,
 
 
 
-void renderDepthKernel(unsigned char*         depth_RGBA_image_data,
+void renderDepthKernel(uint32_t*              depth_RGBA_image_data,
                        float*                 depth_image_data,
                        const Eigen::Vector2i& depth_RGBA_image_res,
                        const float            near_plane,

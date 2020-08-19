@@ -265,7 +265,7 @@ void DenseSLAMSystem::renderTrack(unsigned char*         tracking_RGBA_image_dat
 
 
 
-void DenseSLAMSystem::renderDepth(unsigned char*         depth_RGBA_image_data,
+void DenseSLAMSystem::renderDepth(uint32_t*              depth_RGBA_image_data,
                                   const Eigen::Vector2i& depth_RGBA_image_res,
                                   const SensorImpl&      sensor) {
   renderDepthKernel(depth_RGBA_image_data, depth_image_.data(), depth_RGBA_image_res,
