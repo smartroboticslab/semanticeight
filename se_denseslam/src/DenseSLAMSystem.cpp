@@ -69,11 +69,11 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
                                  std::vector<int> & pyramid,
                                  const Configuration& config) :
   image_res_(image_res),
+  depth_image_(image_res_.x(), image_res_.y()),
+  rgba_image_(image_res_.x(), image_res_.y()),
   config_(config),
   surface_point_cloud_M_(image_res_.x(), image_res_.y()),
-  surface_normals_M_(image_res_.x(), image_res_.y()),
-  depth_image_(image_res_.x(), image_res_.y()),
-  rgba_image_(image_res_.x(), image_res_.y())
+  surface_normals_M_(image_res_.x(), image_res_.y())
   {
     // Initalise poses
     T_MW_ = T_MW;

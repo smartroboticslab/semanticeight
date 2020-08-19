@@ -59,37 +59,43 @@ class DenseSLAMSystem {
   using VoxelBlockType = typename VoxelImpl::VoxelType::VoxelBlockType;
 
   private:
+    // Input images
     Eigen::Vector2i image_res_;
-    Eigen::Matrix4f T_MW_;        // World to camera transformation; Convert in/output to map/world frame
-    Eigen::Matrix4f T_MC_;        // Camera pose in map frame
-    Eigen::Matrix4f* render_T_MC_; // Rendering camera pose in map frame
-    Eigen::Matrix4f init_T_MC_;   // Initial camera pose in map frame
+    se::Image<float> depth_image_;
+    se::Image<uint32_t> rgba_image_;
+
+    // Pipeline config
     Eigen::Vector3f map_dim_;
     Eigen::Vector3i map_size_;
-    std::vector<int> iterations_;
-    bool need_render_ = false;
     Configuration config_;
-
-    // input once
     std::vector<float> gaussian_;
 
-    // inter-frame
+    // Camera pose
+    Eigen::Matrix4f init_T_MC_; // Initial camera pose in map frame
+    Eigen::Matrix4f T_MC_;      // Camera pose in map frame
+
+    // Tracking
+    Eigen::Matrix4f previous_T_MC_; // Camera pose of the previous image in map frame
+    std::vector<int> iterations_;
+    std::vector<se::Image<float> > scaled_depth_image_;
+    std::vector<se::Image<Eigen::Vector3f> > input_point_cloud_C_;
+    std::vector<se::Image<Eigen::Vector3f> > input_normals_C_;
+    std::vector<float> reduction_output_;
+    std::vector<TrackData> tracking_result_;
+
+    // Raycasting
+    Eigen::Matrix4f raycast_T_MC_; // Raycasting camera pose in map frame
     se::Image<Eigen::Vector3f> surface_point_cloud_M_;
     se::Image<Eigen::Vector3f> surface_normals_M_;
 
+    // Rendering
+    Eigen::Matrix4f* render_T_MC_; // Rendering camera pose in map frame
+    bool need_render_ = false;
+
+    // Map
+    Eigen::Matrix4f T_MW_; // Constant world to map frame transformation
     std::vector<se::key_t> allocation_list_;
     std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > map_;
-
-    // intra-frame
-    std::vector<float> reduction_output_;
-    std::vector<se::Image<float>  > scaled_depth_image_;
-    std::vector<se::Image<Eigen::Vector3f> > input_point_cloud_C_;
-    std::vector<se::Image<Eigen::Vector3f> > input_normals_C_;
-    se::Image<float> depth_image_;
-    se::Image<uint32_t> rgba_image_;
-    std::vector<TrackData>  tracking_result_;
-    Eigen::Matrix4f previous_T_MC_;
-    Eigen::Matrix4f raycast_T_MC_;
 
   public:
     /**
