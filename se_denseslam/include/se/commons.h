@@ -62,45 +62,7 @@
 #include "se/utils/math_utils.h"
 #include "se/constant_parameters.h"
 
-//External dependencies
-#undef isnan
-#undef isfinite
-////////////////////////// MATh STUFF //////////////////////
-//
-
 #define INVALID -2
-// DATA TYPE
-//
-
-inline
-bool is_file(std::string path) {
-	struct stat buf;
-	stat(path.c_str(), &buf);
-	return S_ISREG(buf.st_mode);
-}
-
-template<typename T>
-std::string NumberToString(T Number, int width = 6) {
-	std::ostringstream ss;
-	ss << std::setfill('0') << std::setw(width) << Number;
-	return ss.str();
-}
-
-template<typename T>
-void read_input(std::string inputfile, T * in) {
-	size_t isize;
-	std::ifstream file(inputfile.c_str(),
-			std::ios::in | std::ios::binary | std::ios::ate);
-	if (file.is_open()) {
-		isize = file.tellg();
-		file.seekg(0, std::ios::beg);
-		file.read((char*) in, isize);
-		file.close();
-	} else {
-		std::cout << "File opening failed : " << inputfile << std::endl;
-		exit(1);
-	}
-}
 
 inline void gs2rgb(double h, unsigned char rgba[4]) {
 	double v = 0;
@@ -169,55 +131,7 @@ struct TrackData {
 	float J[6];
 };
 
-inline Eigen::Matrix4f getCameraMatrix(const Eigen::Vector4f& k) {
-  Eigen::Matrix4f K;
-	K << k.x(), 0, k.z(), 0,
-       0, k.y(), k.w(), 0,
-       0, 0, 1, 0,
-       0, 0, 0, 1;
-	return K;
-}
-
-inline Eigen::Matrix4f getInverseCameraMatrix(const Eigen::Vector4f& k) {
-  Eigen::Matrix4f invK;
-  invK << 1.0f / k.x(), 0, -k.z() / k.x(), 0,
-       0, 1.0f / k.y(), -k.w() / k.y(), 0,
-       0, 0, 1, 0,
-       0, 0, 0, 1;
-	return invK;
-}
-
-//std::ostream& operator<<(std::ostream& os, const uint3 val) {
-//    os << val.x << ", " << val.y << ", " << val.z;
-//    return os;
-//}
-
 static const float epsilon = 0.0000001;
 
-inline void compareTrackData(std::string str, TrackData* l, TrackData* r,
-		unsigned int size) {
-	for (unsigned int i = 0; i < size; i++) {
-		if (std::abs(l[i].error - r[i].error) > epsilon) {
-			std::cout << "Error into " << str << " at " << i << std::endl;
-			std::cout << "l.error =  " << l[i].error << std::endl;
-			std::cout << "r.error =  " << r[i].error << std::endl;
-		}
-
-		if (std::abs(l[i].result - r[i].result) > epsilon) {
-			std::cout << "Error into " << str << " at " << i << std::endl;
-			std::cout << "l.result =  " << l[i].result << std::endl;
-			std::cout << "r.result =  " << r[i].result << std::endl;
-		}
-	}
-}
-
-inline void compareFloat(std::string str, float* l, float * r, unsigned int size) {
-	for (unsigned int i = 0; i < size; i++) {
-		if (std::abs(l[i] - r[i]) > epsilon) {
-			std::cout << "Error into " << str << " at " << i << std::endl;
-			std::cout << "l =  " << l[i] << std::endl;
-			std::cout << "r =  " << r[i] << std::endl;
-		}
-	}
-}
 #endif
+
