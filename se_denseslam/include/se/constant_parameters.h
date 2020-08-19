@@ -15,7 +15,7 @@
 ////////////////////////// COMPILATION PARAMETERS //////////////////////
 
 constexpr float e_delta = 0.1f;
-constexpr int radius = 2;
+constexpr int gaussian_radius = 2;
 constexpr float dist_threshold = 0.1f;
 constexpr float normal_threshold = 0.8f;
 constexpr float track_threshold = 0.15f;

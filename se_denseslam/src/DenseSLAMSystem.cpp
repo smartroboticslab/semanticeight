@@ -109,16 +109,13 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
             image_res_.y() / downsample));
     }
 
-    // ********* BEGIN : Generate the gaussian *************
-    size_t gaussianS = radius * 2 + 1;
-    gaussian_.reserve(gaussianS);
-    int x;
-    for (unsigned int i = 0; i < gaussianS; i++) {
-      x = i - 2;
+    // Initialize the Gaussian for the bilateral filter
+    constexpr int gaussian_size = gaussian_radius * 2 + 1;
+    gaussian_.reserve(gaussian_size);
+    for (int i = 0; i < gaussian_size; i++) {
+      const int x = i - 2;
       gaussian_[i] = expf(-(x * x) / (2 * delta * delta));
     }
-
-    // ********* END : Generate the gaussian *************
 
     map_ = std::make_shared<se::Octree<VoxelImpl::VoxelType> >();
     map_->init(map_size_.x(), map_dim_.x());
@@ -134,7 +131,7 @@ bool DenseSLAMSystem::preprocessDepth(const float*           input_depth_image_d
 
   if (filter_depth) {
     bilateralFilterKernel(scaled_depth_image_[0], depth_image_, gaussian_,
-        e_delta, radius);
+        e_delta, gaussian_radius);
   } else {
     std::memcpy(scaled_depth_image_[0].data(), depth_image_.data(),
         sizeof(float) * image_res_.x() * image_res_.y());
@@ -241,7 +238,7 @@ bool DenseSLAMSystem::raycast(const SensorImpl& sensor) {
 void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBA_image_data,
                                    const Eigen::Vector2i& volume_RGBA_image_res,
                                    const SensorImpl&      sensor) {
-  
+
   se::Image<Eigen::Vector3f> render_surface_point_cloud_M (image_res_.x(), image_res_.y());
   se::Image<Eigen::Vector3f> render_surface_normals_M (image_res_.x(), image_res_.y());
   if (render_T_MC_->isApprox(raycast_T_MC_)) {
