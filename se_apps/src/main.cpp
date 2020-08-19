@@ -379,7 +379,7 @@ int processAll(se::Reader*    reader,
     pipeline->renderDepth(depth_render, pipeline->getImageResolution(), sensor);
     pipeline->renderTrack((unsigned char*)track_render, pipeline->getImageResolution());
     if (render_volume) {
-      pipeline->renderVolume((unsigned char*)volume_render, pipeline->getImageResolution(), sensor);
+      pipeline->renderVolume(volume_render, pipeline->getImageResolution(), sensor);
     }
   }
   timings[6] = std::chrono::steady_clock::now();

@@ -229,7 +229,7 @@ class DenseSLAMSystem {
      * \param[in] output_image_res The dimensions of the output array (width and
      * height in pixels).
      */
-    void renderVolume(unsigned char*         output_image_data,
+    void renderVolume(uint32_t*              output_image_data,
                       const Eigen::Vector2i& output_image_res,
                       const SensorImpl&      sensor);
 

@@ -235,7 +235,7 @@ bool DenseSLAMSystem::raycast(const SensorImpl& sensor) {
 
 
 
-void DenseSLAMSystem::renderVolume(unsigned char*         volume_RGBA_image_data,
+void DenseSLAMSystem::renderVolume(uint32_t*              volume_RGBA_image_data,
                                    const Eigen::Vector2i& volume_RGBA_image_res,
                                    const SensorImpl&      sensor) {
 

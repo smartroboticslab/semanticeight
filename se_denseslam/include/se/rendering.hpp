@@ -139,7 +139,7 @@ void renderTrackKernel(unsigned char*         tracking_RGBA_image_data,
 
 
 template <typename T>
-void renderVolumeKernel(unsigned char*                    volume_RGBA_image_data,
+void renderVolumeKernel(uint32_t*                         volume_RGBA_image_data,
                         const Eigen::Vector2i&            volume_RGBA_image_res,
                         const Eigen::Vector3f&            light_M,
                         const Eigen::Vector3f&            ambient_M,
@@ -152,7 +152,6 @@ void renderVolumeKernel(unsigned char*                    volume_RGBA_image_data
     for (int x = 0; x < volume_RGBA_image_res.x(); x++) {
 
       const size_t pixel_idx = x + volume_RGBA_image_res.x() * y;
-      const size_t idx = pixel_idx * 4;
 
       const Eigen::Vector3f surface_point_M = surface_point_cloud_M[pixel_idx];
       const Eigen::Vector3f surface_normal_M = surface_normals_M[pixel_idx];
@@ -164,19 +163,13 @@ void renderVolumeKernel(unsigned char*                    volume_RGBA_image_data
         Eigen::Vector3f col = dir + ambient_M;
         se::math::clamp(col, Eigen::Vector3f::Zero(), Eigen::Vector3f::Ones());
         col = col.cwiseProduct(se::internal::color_map[se::internal::scale_image(x, y)]);
-        volume_RGBA_image_data[idx + 0] = col.x();
-        volume_RGBA_image_data[idx + 1] = col.y();
-        volume_RGBA_image_data[idx + 2] = col.z();
-        volume_RGBA_image_data[idx + 3] = 255;
+        volume_RGBA_image_data[pixel_idx] = se::pack_rgba(col.x(), col.y(), col.z(), 0xFF);
       } else {
-        volume_RGBA_image_data[idx + 0] = 0;
-        volume_RGBA_image_data[idx + 1] = 0;
-        volume_RGBA_image_data[idx + 2] = 0;
-        volume_RGBA_image_data[idx + 3] = 255;
+        volume_RGBA_image_data[pixel_idx] = 0xFF000000;
       }
     }
   }
-  TOCK("renderVolumeKernel", volume_RGBA_image_res.x() * volume_RGBA_image_res.y());
+  TOCK("renderVolumeKernel", volume_RGBA_image_res.prod());
 }
 
 
