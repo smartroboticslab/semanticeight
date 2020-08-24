@@ -107,10 +107,7 @@ class SEStats:
         axes[0].legend(loc='upper left')
         axes[0].set_xlabel('Frame')
         axes[0].set_ylabel('Time (ms)')
-        if file_basename:
-            axes[0].set_title(file_basename + '\n\nComputation time')
-        else:
-            axes[0].set_title('Computation time')
+        axes[0].set_title('Computation time')
 
         ram_colour = 'tab:blue'
         axes[1].stackplot(self.frames, self.ram_usage, color=ram_colour)
@@ -141,6 +138,8 @@ def parse_arguments():
     parser.add_argument('-A', '--no-equalize-axes', action='store_false',
             dest='equalize_axes',
             help=('Don\'t equalize the vertical axes of subplots.'))
+    parser.add_argument('--show-plot', help='show plot', action="store_true")
+    parser.add_argument('--save-plot', help='save plot', nargs='?', const="./plot.png", dest="plot_file")
     args = parser.parse_args()
     return args
 
@@ -192,7 +191,16 @@ if __name__ == "__main__":
         with warnings.catch_warnings():
             # Hide warnings due to the multiline title in SEStats.plot()
             warnings.simplefilter('ignore', category=UserWarning)
+        if args.plot_file:
+            figure = plt.gcf()
+            figure.set_size_inches(16, 12)
+            plt.savefig(args.plot_file, dpi = 300, bbox_inches='tight')
+        if args.show_plot:
+            file_basename = os.path.basename(file)
+            if file_basename:
+                plt.figure(1).suptitle(file_basename)
             plt.show()
+
     except KeyboardInterrupt:
         pass
 
