@@ -130,15 +130,15 @@ if __name__=="__main__":
     This script computes the absolute trajectory error from the ground truth trajectory and the estimated trajectory. 
     ''')
     parser.add_argument('--result-file', help='estimated trajectory (supereight result file)')
-    parser.add_argument('--save',   help='save ATE values to result file', action="store_true")
-    parser.add_argument('--print',  help='print ATE values to terminal', action="store_true")
+    parser.add_argument('--save-ate',   help='save ATE values to result file', action="store_true")
+    parser.add_argument('--print-ate',  help='print ATE values to terminal', action="store_true")
     args = parser.parse_args()
 
     evaluation = EvaluateATE(args.result_file)
     evaluation.associate()
     evaluation.calculate()
-    if args.print:
+    if args.print_ate:
         evaluation.print_ate()
-    if args.save:
+    if args.save_ate:
         evaluation.save_ate()
 

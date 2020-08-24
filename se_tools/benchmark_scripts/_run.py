@@ -27,7 +27,7 @@ class runCommand:
     def evaluateATE(self):
         executable_cmd = [os.path.dirname(os.path.realpath(__file__)) + '/evaluate_ate.py']
         result_file_arg = ['--result-file ' + self.result_file]
-        save_arg = ['--save']
+        save_arg = ['--save-ate']
         return ' '.join(executable_cmd + result_file_arg + save_arg)
 
 
@@ -41,8 +41,8 @@ class runCommand:
     def evaluateManualATE(self):
         executable_cmd  = [os.path.dirname(os.path.realpath(__file__)) + '/evaluate_ate.py']
         result_file_arg = ['--result-file ' + self.result_manual_file]
-        save_arg        = ['--save']
-        print_arg        = ['--print']
+        save_arg        = ['--save-ate']
+        print_arg        = ['--print-ate']
         return ' '.join(executable_cmd + result_file_arg + save_arg + print_arg)
 
     def withoutBenchmark(self): # Force rendering to be enabled
