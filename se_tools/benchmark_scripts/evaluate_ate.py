@@ -107,8 +107,20 @@ class EvaluateATE:
             err_2 = (err[0] * err[0], err[1] * err[1], err[2] * err[2])
             self.trans_error.append(numpy.sqrt(sum(err_2)))
 
+    def get_trans_error(self):
+        return self.trans_error
+
     def ate_rmse(self):
         return numpy.sqrt(numpy.dot(self.trans_error,self.trans_error) / len(self.trans_error))
+
+    def get_ate(self):
+        ate_data = [self.ate_rmse(),
+                numpy.mean(self.trans_error),
+                numpy.median(self.trans_error),
+                numpy.std(self.trans_error),
+                numpy.min(self.trans_error),
+                numpy.max(self.trans_error)]
+        return  ate_data
 
     def print_ate(self):
         print(str(self))
