@@ -90,6 +90,7 @@ struct ProgressBar {
   }
 
   void end() {
+    update(total_frames_);
     std::cout << "\n\n";
   }
 
