@@ -333,16 +333,18 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << str_utils::str_to_pretty_str(config.sequence_name,           "Sequence name") << "\n";
   out << str_utils::str_to_pretty_str(config.sequence_path,           "Sequence path") << "\n";
   out << str_utils::str_to_pretty_str(config.ground_truth_file,       "Ground truth file") << "\n";
-  if (config.output_mesh_file != "") {
-    out << str_utils::str_to_pretty_str(config.output_mesh_file,      "Output mesh file") << "\n";
-  }
-
   out << str_utils::str_to_pretty_str((config.log_file == "" ? "std::cout" : config.log_file),
                                                                       "Log file") << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_benchmark,       "Enable benchmark") << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_ground_truth,    "Enable ground truth") << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_render,          "Enable render"      ) << "\n";
+  if (config.output_render_file != "") {
+    out << str_utils::str_to_pretty_str(config.output_render_file,    "Output render file") << "\n";
+  }
   out << str_utils::bool_to_pretty_str(config.enable_meshing,         "Enable meshing"     ) << "\n";
+  if (config.output_mesh_file != "") {
+    out << str_utils::str_to_pretty_str(config.output_mesh_file,      "Output mesh file") << "\n";
+  }
   out << "\n";
 
   out << str_utils::value_to_pretty_str(config.integration_rate,      "Integration rate") << "\n";
