@@ -63,7 +63,7 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image) {
     return status_;
   }
   nextFrame();
-  status_ = mergeStatus(nextDepth(depth_image), status_);
+  status_ = nextDepth(depth_image);
   if (!good()) {
     camera_active_ = false;
     camera_open_ = false;
@@ -79,7 +79,7 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>&    depth_image,
     return status_;
   }
   nextFrame();
-  status_ = mergeStatus(nextDepth(depth_image), status_);
+  status_ = nextDepth(depth_image);
   if (!good()) {
     camera_active_ = false;
     camera_open_ = false;
@@ -102,7 +102,7 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>&    depth_image,
     return status_;
   }
   nextFrame();
-  status_ = mergeStatus(nextDepth(depth_image), status_);
+  status_ = nextDepth(depth_image);
   if (!good()) {
     camera_active_ = false;
     camera_open_ = false;
