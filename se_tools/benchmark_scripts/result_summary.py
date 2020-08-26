@@ -125,6 +125,21 @@ if __name__ == '__main__':
 
         # Write the computation time and memory stats
         with doc.create(Subsection('Stats')):
+            # Node block allocation
+            raws = "l l l l l l"
+            table_header = ["Nodes [total]", "Blocks [total]",
+                            "Blocks [s = 0]", "Blocks [s = 1]", "Blocks [s = 2]", "Blocks [s = 3]"]
+            with doc.create(LongTable(raws)) as allocation_table:
+                allocation_table.add_hline()
+                allocation_table.add_row(table_header)
+                allocation_table.add_hline()
+                allocation_table.add_hline()
+                lf_data = result_data.last_frame()
+                allocation_data = lf_data.num_nodes + lf_data.num_blocks_t + lf_data.num_blocks_0 +\
+                                  lf_data.num_blocks_1 + lf_data.num_blocks_2 + lf_data.num_blocks_3
+                allocation_table.add_row(allocation_data)
+                allocation_table.add_hline()
+
             # Computation time
             raws = "l l l l l l l l l"
             table_header = [" ", "Acq [s]", "Pre [s]", "Track [s]", "Int [s]", "Ray [s]", "Rend [s]", "Total [s]",
