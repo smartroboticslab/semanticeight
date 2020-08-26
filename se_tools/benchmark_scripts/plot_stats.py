@@ -37,6 +37,12 @@ class SEStats:
         self.z = []
         self.tracked = []
         self.integrated = []
+        self.num_nodes = []
+        self.num_blocks_t= []
+        self.num_blocks_0= []
+        self.num_blocks_1= []
+        self.num_blocks_2= []
+        self.num_blocks_3= []
 
     def append_line(self, line: str) -> None:
         # Ignore lines not starting with whitespace or digits
@@ -45,7 +51,7 @@ class SEStats:
         # Split the line at whitespace
         columns = line.replace("\t", " ").split()
         # Ignore line with the wrong number of columns
-        if len(columns) != 15:
+        if len(columns) != 21:
             return
         # Append the data
         self.frames.append(int(columns[0]))
@@ -63,6 +69,12 @@ class SEStats:
         self.z.append(float(columns[12]))
         self.tracked.append(bool(columns[13]))
         self.integrated.append(bool(columns[14]))
+        self.num_nodes.append(int(columns[15]))
+        self.num_blocks_t.append(int(columns[16]))
+        self.num_blocks_0.append(int(columns[17]))
+        self.num_blocks_1.append(int(columns[18]))
+        self.num_blocks_2.append(int(columns[19]))
+        self.num_blocks_3.append(int(columns[20]))
 
     def last_frame(self) -> 'SEStats':
         # Create an SEStats object containing the data of the last frame
@@ -83,6 +95,12 @@ class SEStats:
             d.z.append(self.z[-1])
             d.tracked.append(self.tracked[-1])
             d.integrated.append(self.integrated[-1])
+            d.num_nodes.append(self.num_nodes[-1])
+            d.num_blocks_t.append(self.num_blocks_t[-1])
+            d.num_blocks_0.append(self.num_blocks_0[-1])
+            d.num_blocks_1.append(self.num_blocks_1[-1])
+            d.num_blocks_2.append(self.num_blocks_2[-1])
+            d.num_blocks_3.append(self.num_blocks_3[-1])
         return d
 
     def plot(self, axes=None) -> None:
