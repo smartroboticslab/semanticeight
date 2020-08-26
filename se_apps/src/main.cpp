@@ -463,6 +463,18 @@ int processAll(se::Reader*        reader,
                  PerfStats::TIME);
   }
 
+  //  ===  SAVE OCTREE STRUCTURE AND SLICE ===
+  bool save_structure = false;
+  if (config->enable_structure && config->output_structure_file != "") {
+    save_structure = true;
+  }
+  if (save_structure && (mesh_volume || frame == config->max_frame)) {
+    std::stringstream output_structure_file_ss;
+    output_structure_file_ss << config->output_structure_file << "_frame_"
+                             << std::setw(4) << std::setfill('0') << frame;
+    pipeline->saveStructure(output_structure_file_ss.str().c_str());
+  }
+
   first_frame = false;
 
   return false;
