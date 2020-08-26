@@ -67,7 +67,7 @@ class SEStats:
     def last_frame(self) -> 'SEStats':
         # Create an SEStats object containing the data of the last frame
         d = SEStats(self.filename)
-        if d.frames:
+        if self.frames:
             d.frames.append(self.frames[-1])
             d.acquisition_time.append(self.acquisition_time[-1])
             d.preprocessing_time.append(self.preprocessing_time[-1])
