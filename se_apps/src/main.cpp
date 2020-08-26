@@ -212,7 +212,9 @@ int main(int argc, char** argv) {
     }
     *log_stream << "frame\tacquisition\tpreprocessing\ttracking\tintegration"
                       << "\traycasting\trendering\tcomputation\ttotal    \tRAM usage (MB)"
-                      << "\tX          \tY          \tZ         \ttracked   \tintegrated\n";
+                      << "\tX          \tY          \tZ         \ttracked   \tintegrated"
+                      << "\tnum nodes\tnum blocks (total)"
+                      << "\tnum blocks (s=0)\tnum blocks (s=1)\\tnum blocks (s=2)\tnum blocks (s=3)\n";
 
     while (processAll(reader, true, config.enable_render, &config, false) == 0) {}
   } else {
@@ -412,6 +414,12 @@ int processAll(se::Reader*        reader,
       }
     }
     const Eigen::Vector3f t_WC = pipeline->t_WC();
+
+    size_t num_nodes;
+    size_t num_blocks;
+    std::vector<size_t> num_blocks_per_scale(VoxelImpl::VoxelBlockType::max_scale + 1, 0);
+    pipeline->structureStats(num_nodes, num_blocks, num_blocks_per_scale);
+
     *log_stream << frame << "\t"
         << std::chrono::duration<double>(timings[1] - timings[0]).count() << "\t" // acquisition
         << std::chrono::duration<double>(timings[2] - timings[1]).count() << "\t" // preprocessing
@@ -423,7 +431,9 @@ int processAll(se::Reader*        reader,
         << std::chrono::duration<double>(timings[6] - timings[0]).count() << "\t" // total
         << se::ram_usage_self() / 1024.0 / 1024.0 << "\t" // RAM usage (MB)
         << t_WC.x() << "\t" << t_WC.y() << "\t" << t_WC.z() << "\t" // position
-        << tracked << "\t" << integrated // tracked and integrated flags
+        << tracked << "\t" << integrated << "\t"// tracked and integrated flags
+        << num_nodes << "\t" << num_blocks << "\t"  // number blocks and nodes
+        << num_blocks_per_scale[0] << "\t" << num_blocks_per_scale[1] << "\t" << num_blocks_per_scale[2] << "\t" << num_blocks_per_scale[3]
         << std::endl;
   }
 
