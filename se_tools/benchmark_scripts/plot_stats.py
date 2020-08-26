@@ -106,8 +106,8 @@ class SEStats:
     def plot(self, axes=None) -> None:
         # Create a new subplot only if an existing one wasn't provided.
         if axes is None:
-            _, axes = plt.subplots(2, 1)
-            axes = np.append(axes, axes[1].twinx())
+            _, axes = plt.subplots(3, 1)
+            axes = np.append(axes, axes[2].twinx())
 
         # Compute the basename of the file the data came from.
         file_basename = os.path.basename(self.filename)
@@ -127,15 +127,45 @@ class SEStats:
         axes[0].set_ylabel('Time (ms)')
         axes[0].set_title('Computation time')
 
-        ram_colour = 'tab:blue'
-        axes[1].stackplot(self.frames, self.ram_usage, color=ram_colour)
+        num_labels=['Blocks S=0', 'Blocks S=1', 'Blocks S=2',
+                    'Blocks S=3', 'Blocks S=-1', ]
+
+        num_blocks_zip = zip(self.num_blocks_t,
+                             self.num_blocks_0,
+                             self.num_blocks_1,
+                             self.num_blocks_2,
+                             self.num_blocks_3)
+        num_blocks_d = [t - s0 - s1 - s2 - s3 for
+                        (t, s0, s1, s2, s3) in num_blocks_zip]
+
+        axes[1].stackplot(self.frames,
+                          self.num_blocks_0,
+                          self.num_blocks_1,
+                          self.num_blocks_2,
+                          self.num_blocks_3,
+                          num_blocks_d,
+                          labels=num_labels)
+
         axes[1].set_xlabel('Frame')
-        axes[1].set_ylabel('RAM (MiB)', color=ram_colour)
-        axes[1].set_title('Resource usage')
+        axes[1].set_ylabel('Number')
+        axes[1].set_title('Number of nodes and blocks')
+
+        num_nodes_colour = 'tab:cyan'
+        axes[1].plot(self.frames, self.num_nodes, color=num_nodes_colour, label="Nodes [total]")
+        num_blocks_colour = 'tab:grey'
+        axes[1].plot(self.frames, self.num_blocks_t, color=num_blocks_colour, label="Blocks [total]")
+        axes[1].legend(loc='upper left')
+
+        # self.num_nodes,
+        ram_colour = 'tab:blue'
+        axes[2].stackplot(self.frames, self.ram_usage, color=ram_colour)
+        axes[2].set_xlabel('Frame')
+        axes[2].set_ylabel('RAM (MiB)', color=ram_colour)
+        axes[2].set_title('Resource usage')
 
         time_colour = 'tab:green'
-        axes[2].plot(self.frames, [1000 * x for x in self.total_time], color=time_colour)
-        axes[2].set_ylabel('Computation time (ms)', color=time_colour)
+        axes[3].plot(self.frames, [1000 * x for x in self.total_time], color=time_colour)
+        axes[3].set_ylabel('Computation time (ms)', color=time_colour)
         return axes
 
 
@@ -194,12 +224,12 @@ if __name__ == "__main__":
                 data[-1].append_line(line)
 
         # Plot the data.
-        fig, axes = plt.subplots(2, len(data), constrained_layout=True)
+        fig, axes = plt.subplots(3, len(data), constrained_layout=True)
         # Add a second y axis to each lower subplot.
-        axes = axes.reshape(2, len(data))
+        axes = axes.reshape(3, len(data))
         axes = np.vstack((axes, np.zeros([1, len(data)])))
         for i in range(len(data)):
-            axes[2, i] = axes[1, i].twinx()
+            axes[3, i] = axes[2, i].twinx()
         # Plot the data from each file.
         for i, d in enumerate(data):
             d.plot(axes[:, i])
@@ -211,7 +241,7 @@ if __name__ == "__main__":
             warnings.simplefilter('ignore', category=UserWarning)
         if args.plot_file:
             figure = plt.gcf()
-            figure.set_size_inches(16, 12)
+            figure.set_size_inches(15, 20)
             plt.savefig(args.plot_file, dpi = 300, bbox_inches='tight')
         if args.show_plot:
             file_basename = os.path.basename(file)

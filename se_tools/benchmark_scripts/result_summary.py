@@ -118,6 +118,9 @@ if __name__ == '__main__':
         # with doc.create(Subsection('System Description')):
         #     doc.append('Some regular text and some')
 
+        # Create new page for stats
+        doc.append(NewPage())
+
         # Read the result data
         result_data = (SEStats(args.result_file))
         for line in fileinput.input(args.result_file):
@@ -232,9 +235,6 @@ if __name__ == '__main__':
                 result_table.add_row(result_max)
                 result_table.add_hline()
 
-        # Create new page for plots
-        doc.append(NewPage())
-
         fig, axis = plt.subplots(1, 1, constrained_layout=True)
         axis.set_title('Computation time box plot')
 
@@ -258,13 +258,14 @@ if __name__ == '__main__':
         with doc.create(Figure(position='h!')) as time_plot:
             time_plot.add_plot(width=NoEscape( r'0.7\linewidth'))
 
-        # Plot the result_data.
-        fig, axes = plt.subplots(2, 1, constrained_layout=True)
+        doc.append(NewPage())
 
+        # Plot the result_data.
+        fig, axes = plt.subplots(3, 1, constrained_layout=True)
         # Add a second y axis to each lower subplot.
-        axes = axes.reshape(2, 1)
-        axes = np.vstack((axes, np.zeros([1, 1])))
-        axes[2, 0] = axes[1, 0].twinx()
+        axes = axes.reshape(3, 1)
+        axes = np.vstack((axes, 1))
+        axes[3, 0] = axes[2, 0].twinx()
         # Plot the result data from each file.
         result_data.plot(axes[:, 0])
         with warnings.catch_warnings():
@@ -273,7 +274,7 @@ if __name__ == '__main__':
 
         with doc.create(Figure(position='h!')) as stats_plot:
             figure = plt.gcf()
-            figure.set_size_inches(12, 9)
+            figure.set_size_inches(15, 20)
             stats_plot.add_plot(width=NoEscape(r'\linewidth'), dpi = 300)
 
         # Write ATE data if ground truth is disabled -> Tracking activated
