@@ -319,3 +319,11 @@ void DenseSLAMSystem::saveStructure(const std::string base_filename) {
                     Eigen::Vector3i(map_->size(), map_->size(), slice_coord.z() + 1),
                     [](const auto& data) { return data.x; }, scale);
 }
+
+void DenseSLAMSystem::structureStats(size_t&              num_nodes,
+                                     size_t&              num_blocks,
+                                     std::vector<size_t>& num_blocks_per_scale) {
+  num_nodes            = map_->pool().nodeBufferSize();
+  num_blocks           = map_->pool().blockBufferSize();
+  num_blocks_per_scale = map_->pool().blockBufferSizeDetailed();
+}

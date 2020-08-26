@@ -228,6 +228,13 @@ class DenseSLAMSystem {
      */
     void saveStructure(const std::string base_filename);
 
+    /*
+     * TODO Document this.
+     */
+    void structureStats(size_t&              num_nodes,
+                        size_t&              num_blocks,
+                        std::vector<size_t>& num_blocks_per_scale);
+
     /** \brief Render the current 3D reconstruction.
      * This function performs raycasting if needed, otherwise it uses the point
      * cloud and normal maps created in DenseSLAMSystem::raycasting.
