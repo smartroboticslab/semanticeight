@@ -154,7 +154,19 @@ namespace se {
       return node_buffer_.size();
     }
 
+    size_t nodeBufferSize() const {
+      if (!nodes_updated_)
+        updateBuffer();
+      return node_buffer_.size();
+    }
+
     size_t blockBufferSize() {
+      if (!blocks_updated_)
+        updateBuffer();
+      return block_buffer_.size();
+    }
+
+    size_t blockBufferSize() const {
       if (!blocks_updated_)
         updateBuffer();
       return block_buffer_.size();
@@ -162,10 +174,10 @@ namespace se {
 
   private:
     se::Node<T>* root_;
-    bool nodes_updated_;
-    bool blocks_updated_;
-    std::vector<Node<T>*>           node_buffer_;
-    std::vector<VoxelBlockType<T>*> block_buffer_;
+    mutable bool nodes_updated_;
+    mutable bool blocks_updated_;
+    mutable std::vector<Node<T>*>           node_buffer_;
+    mutable std::vector<VoxelBlockType<T>*> block_buffer_;
 
     void updateBuffer() {
       node_buffer_.clear();
@@ -177,7 +189,32 @@ namespace se {
       blocks_updated_ = true;
     }
 
+    void updateBuffer() const {
+      node_buffer_.clear();
+      if (!blocks_updated_) {
+        block_buffer_.clear();
+      }
+      addNodeRecurse(root_);
+      nodes_updated_ = true;
+      blocks_updated_ = true;
+    }
+
     void addNodeRecurse(se::Node<T>* node) {
+      node_buffer_.push_back(node);
+      for (int child_idx = 0; child_idx < 8; child_idx++) {
+        if (node->child(child_idx)) {
+          if (node->child(child_idx)->isBlock()) {
+            if (!blocks_updated_) {
+              block_buffer_.push_back(static_cast<VoxelBlockType<T>*>(node->child(child_idx)));
+            }
+          } else {
+            addNodeRecurse(node->child(child_idx));
+          }
+        }
+      }
+    }
+
+    void addNodeRecurse(se::Node<T>* node) const {
       node_buffer_.push_back(node);
       for (int child_idx = 0; child_idx < 8; child_idx++) {
         if (node->child(child_idx)) {
