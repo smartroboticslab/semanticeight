@@ -54,6 +54,7 @@ static constexpr int          default_rendering_rate = 4;
 static const std::string      default_output_mesh_path = "";
 static const std::string      default_output_render_path = "";
 static const std::string      default_sequence_name = "";
+static const std::string      default_sequence_type = "raw";
 static constexpr int          default_sensor_downsampling_factor = 1;
 static const Eigen::Vector4f  default_sensor_intrinsics = Eigen::Vector4f::Zero();
 static const std::string      default_sequence_path = "";
@@ -421,6 +422,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Sequence name
   config.sequence_name = (has_yaml_general_config && yaml_general_config["sequence_name"])
       ? yaml_general_config["sequence_name"].as<std::string>() : default_sequence_name;
+  // Sequence type
+  config.sequence_type = (has_yaml_general_config && yaml_general_config["sequence_type"])
+      ? yaml_general_config["sequence_type"].as<std::string>() : default_sequence_type;
+  str_utils::to_lower(config.sequence_type);
   // Sequence path file or directory path
   config.sequence_path = (has_yaml_general_config && yaml_general_config["sequence_path"])
       ? yaml_general_config["sequence_path"].as<std::string>() : default_sequence_path;
@@ -658,7 +663,7 @@ Configuration parseArgs(unsigned int argc, char** argv) {
       case 't': // tracking-rate
         config.tracking_rate = atof(optarg);
         break;
-        
+
       case 'u': // disable-meshing
         config.enable_meshing = false;
         break;

@@ -54,6 +54,18 @@ struct Configuration {
   std::string sequence_name;
 
   /**
+   * The type of the sequence.
+   * Valid types are (case insensitive):
+   * - RAW (https://github.com/pamela-project/slambench)
+   * - ICLNUIM (https://www.doc.ic.ac.uk/~ahanda/VaFRIC/iclnuim.html)
+   * - OpenNI (from file or live camera if sequence_path is empty)
+   * - NewerCollege (https://ori-drs.github.io/newer-college-dataset/)
+   *
+   * <br>\em Default: RAW
+   */
+  std::string sequence_type;
+
+  /**
    * The ratio of the input frame size over the frame size used internally.
    * Values greater than 1 result in the input frames being downsampled
    * before processing. Valid values are 1, 2, 4 and 8.
@@ -331,6 +343,7 @@ static std::ostream& operator<<(std::ostream& out, const Configuration& config) 
   out << "\n";
 
   out << str_utils::str_to_pretty_str(config.sequence_name,           "Sequence name") << "\n";
+  out << str_utils::str_to_pretty_str(config.sequence_type,           "Sequence type") << "\n";
   out << str_utils::str_to_pretty_str(config.sequence_path,           "Sequence path") << "\n";
   out << str_utils::str_to_pretty_str(config.ground_truth_file,       "Ground truth file") << "\n";
   out << str_utils::str_to_pretty_str((config.log_file == "" ? "std::cout" : config.log_file),
