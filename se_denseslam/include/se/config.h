@@ -73,7 +73,7 @@ struct Configuration {
    * Integrate a 3D reconstruction every integration_rate frames. Should not
    * be less than tracking_rate.
    *
-   * <br>\em Default: 2
+   * <br>\em Default: 1
    */
   int integration_rate;
 
@@ -120,7 +120,7 @@ struct Configuration {
    * (0.5, 0.5, 0) results in the first pose being placed halfway along the x
    * and y axes and at the beginning of the z axis.
    *
-   * <br>\em Default: (0.5, 0.5, 0)
+   * <br>\em Default: (0.5, 0.5, 0.5)
    */
   Eigen::Vector3f t_MW_factor;
 
