@@ -29,16 +29,18 @@ se::Reader* se::create_reader(const Configuration& config) {
   };
 
   // OpenNI from a camera or a file
-  if (reader_config.sequence_path.empty()
-      || (stdfs::path(reader_config.sequence_path).extension() == ".oni")) {
+  if (config.sequence_type == "openni" && (reader_config.sequence_path.empty()
+        || (stdfs::path(reader_config.sequence_path).extension() == ".oni"))) {
     reader = new se::OpenNIReader(reader_config);
 
   // ICL-NUIM reader
-  } else if (stdfs::is_directory(reader_config.sequence_path)) {
+  } else if (config.sequence_type == "iclnuim"
+        && stdfs::is_directory(reader_config.sequence_path)) {
     reader = new se::ICLNUIMReader(reader_config);
 
   // Slambench 1.0 .raw reader
-  } else if (stdfs::path(reader_config.sequence_path).extension() == ".raw") {
+  } else if (config.sequence_type == "raw"
+        && stdfs::path(reader_config.sequence_path).extension() == ".raw") {
     reader = new se::RAWReader(reader_config);
 
   } else {
