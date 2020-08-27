@@ -133,6 +133,9 @@ int main(int argc, char** argv) {
 
   // ========= READER INITIALIZATION  =========
   reader = se::create_reader(config);
+  if (reader == nullptr) {
+    exit(EXIT_FAILURE);
+  }
 
   // ========= UPDATE MAX FRAME =========
   if (config.max_frame == -1 ||
