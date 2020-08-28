@@ -5,7 +5,7 @@
 
 #include "perfstats.h"
 
-#if defined(SE_ENABLE_TICKTOCK) && SE_ENABLE_TICKTOCK
+#if defined(SE_ENABLE_PERFSTATS) && SE_ENABLE_PERFSTATS
 
 #define TICK() { \
   const auto tickdata = std::chrono::steady_clock::now();

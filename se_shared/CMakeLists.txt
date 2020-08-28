@@ -7,6 +7,7 @@ add_library(${LIB_NAME} STATIC
   "src/sensor.cpp"
   "src/str_utils.cpp"
   "src/point_cloud_utils.cpp"
+  "src/stats.cpp"
 )
 target_include_directories(${LIB_NAME}
   PUBLIC

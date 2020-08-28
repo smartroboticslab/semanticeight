@@ -38,7 +38,6 @@
 
 
 
-PerfStats stats;
 PowerMonitor* power_monitor = nullptr;
 static uint32_t* rgba_render = nullptr;
 static uint32_t* depth_render = nullptr;

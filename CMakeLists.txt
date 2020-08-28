@@ -18,7 +18,7 @@ option(SE_BUILD_QT_GUI "Build the Qt-based GUI" ON)
 option(SE_USE_OMP "Compile with OpenMP" ON)
 
 # Compile without measuring individual function times
-add_definitions(-DSE_ENABLE_TICKTOCK=0)
+add_definitions(-DSE_ENABLE_PERFSTATS=1)
 
 # Compiler options
 add_compile_options(
