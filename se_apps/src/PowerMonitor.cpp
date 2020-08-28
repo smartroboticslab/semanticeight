@@ -34,7 +34,7 @@ bool PowerMonitor::isActive() {
 }
 
 double PowerMonitor::start() {
-  startTime = powerStats.get_time();
+  startTime = powerStats.getTime();
   return (startTime);
 }
 
@@ -42,7 +42,7 @@ double PowerMonitor::sample() {
   double time = 0;
   if (sensingMethod == ODROID) {
     double a15 = getPower(SENSOR_A15);
-    time = powerStats.sample("Sample_time", powerStats.get_time() - startTime, PerfStats::TIME);
+    time = powerStats.sample("Sample_time", powerStats.getTime() - startTime, PerfStats::TIME);
     if (powerA7)
       powerStats.sample("Power_A7", getPower(SENSOR_A7), PerfStats::POWER);
     if (powerA15)

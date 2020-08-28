@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
 
   if (power_monitor && power_monitor->isActive()) {
     std::ofstream powerStream("power.rpt");
-    power_monitor->powerStats.print_all_data(powerStream);
+    power_monitor->powerStats.printAllData(powerStream);
     powerStream.close();
   }
 
@@ -246,7 +246,7 @@ int main(int argc, char** argv) {
     progress_bar->end();
   } else {
     std::cout << "{";
-    stats.print_all_data(std::cout, false);
+    stats.printAllData(std::cout, false);
     std::cout << "}\n";
   }
 

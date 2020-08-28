@@ -260,7 +260,7 @@ void dumpLog() {
 			"*.log (*.log);; All files (*.*)");
 	if (filename != "") {
 		std::ofstream logStream(filename.c_str());
-		stats.print_all_data(logStream);
+		stats.printAllData(logStream);
 		logStream.close();
 	}
 }
@@ -269,7 +269,7 @@ void dumpPowerLog() {
 			"log (*.prpt);; All files (*.*)");
 	if (filename != "" && power_monitor && power_monitor->isActive()) {
 		std::ofstream logStream(filename.c_str());
-		power_monitor->powerStats.print_all_data(logStream);
+		power_monitor->powerStats.printAllData(logStream);
 		logStream.close();
 	}
 }
