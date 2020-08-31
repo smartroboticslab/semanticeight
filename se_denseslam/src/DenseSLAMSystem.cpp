@@ -112,7 +112,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
 bool DenseSLAMSystem::preprocessDepth(const float*           input_depth_image_data,
                                       const Eigen::Vector2i& input_depth_image_res,
                                       const bool             filter_depth){
-
+  TICKD("preprocessDepth")
   downsampleDepthKernel(input_depth_image_data, input_depth_image_res, depth_image_);
 
   if (filter_depth) {
@@ -122,6 +122,7 @@ bool DenseSLAMSystem::preprocessDepth(const float*           input_depth_image_d
     std::memcpy(scaled_depth_image_[0].data(), depth_image_.data(),
         sizeof(float) * image_res_.x() * image_res_.y());
   }
+  TOCK("preprocessDepth")
   return true;
 }
 
@@ -130,8 +131,9 @@ bool DenseSLAMSystem::preprocessDepth(const float*           input_depth_image_d
 bool DenseSLAMSystem::preprocessColor(const uint32_t*        input_RGBA_image_data,
                                       const Eigen::Vector2i& input_RGBA_image_res) {
 
+  TICKD("preprocessColor")
   downsampleImageKernel(input_RGBA_image_data, input_RGBA_image_res, rgba_image_);
-
+  TOCK("preprocessColor")
   return true;
 }
 
@@ -140,6 +142,7 @@ bool DenseSLAMSystem::preprocessColor(const uint32_t*        input_RGBA_image_da
 bool DenseSLAMSystem::track(const SensorImpl& sensor,
                             const float       icp_threshold) {
 
+  TICK("TRACKING")
   // half sample the input depth maps into the pyramid levels
   for (unsigned int i = 1; i < iterations_.size(); ++i) {
     halfSampleRobustImageKernel(scaled_depth_image_[i], scaled_depth_image_[i - 1], e_delta * 3, 1);
@@ -176,6 +179,7 @@ bool DenseSLAMSystem::track(const SensorImpl& sensor,
 
     }
   }
+  TOCK("TRACKING")
   return checkPoseKernel(T_MC_, previous_T_MC_, reduction_output_.data(),
       image_res_, track_threshold);
 }
@@ -185,6 +189,7 @@ bool DenseSLAMSystem::track(const SensorImpl& sensor,
 bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
                                 const unsigned     frame) {
 
+  TICK("INTEGRATION")
   const int num_blocks_per_pixel = map_->size()
     / ((VoxelBlockType::size_li));
   const size_t num_blocks_total = num_blocks_per_pixel
@@ -200,7 +205,11 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
       allocation_list_.data(),
       allocation_list_.capacity());
 
-  map_->allocate(allocation_list_.data(), num_voxel);
+  if (num_voxel > 0) {
+    TICKD("allocate")
+    map_->allocate(allocation_list_.data(), num_voxel);
+    TOCK("allocate")
+  }
 
   VoxelImpl::integrate(
       *map_,
@@ -208,6 +217,7 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
       T_CM,
       sensor,
       frame);
+  TOCK("INTEGRATION")
   return true;
 }
 
@@ -215,9 +225,11 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
 
 bool DenseSLAMSystem::raycast(const SensorImpl& sensor) {
 
+  TICK("RAYCASTING")
   raycast_T_MC_ = T_MC_;
   raycastKernel<VoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_,
       raycast_T_MC_, sensor);
+  TOCK("RAYCASTING")
   return true;
 }
 
@@ -237,18 +249,26 @@ void DenseSLAMSystem::renderVolume(uint32_t*              volume_RGBA_image_data
       render_surface_normals_M[i] = surface_normals_M_[i];
     }
   } else {
+    TICK("RAYCASTING")
     // Raycast the map from the render viewpoint.
     raycastKernel<VoxelImpl>(*map_, render_surface_point_cloud_M,
         render_surface_normals_M, *render_T_MC_, sensor);
+    TOCK("RAYCASTING")
   }
+
+  TICKD("renderVolume")
   renderVolumeKernel<VoxelImpl>(volume_RGBA_image_data, volume_RGBA_image_res,
       se::math::to_translation(*render_T_MC_), ambient,
       render_surface_point_cloud_M, render_surface_normals_M);
+  TOCK("renderVolume")
 }
 
 void DenseSLAMSystem::renderTrack(uint32_t*              tracking_RGBA_image_data,
                                   const Eigen::Vector2i& tracking_RGBA_image_res) {
+
+  TICKD("renderTrack")
   renderTrackKernel(tracking_RGBA_image_data, tracking_result_.data(), tracking_RGBA_image_res);
+  TOCK("renderTrack")
 }
 
 
@@ -256,8 +276,11 @@ void DenseSLAMSystem::renderTrack(uint32_t*              tracking_RGBA_image_dat
 void DenseSLAMSystem::renderDepth(uint32_t*              depth_RGBA_image_data,
                                   const Eigen::Vector2i& depth_RGBA_image_res,
                                   const SensorImpl&      sensor) {
+
+  TICKD("renderDepth")
   renderDepthKernel(depth_RGBA_image_data, depth_image_.data(), depth_RGBA_image_res,
       sensor.near_plane, sensor.far_plane);
+  TOCK("renderDepth")
 }
 
 
@@ -265,13 +288,16 @@ void DenseSLAMSystem::renderDepth(uint32_t*              depth_RGBA_image_data,
 void DenseSLAMSystem::renderRGBA(uint32_t*              output_RGBA_image_data,
                                  const Eigen::Vector2i& output_RGBA_image_res) {
 
+  TICKD("renderRGBA")
   renderRGBAKernel(output_RGBA_image_data, output_RGBA_image_res, rgba_image_);
+  TOCK("renderRGBA")
 }
 
 
 
 void DenseSLAMSystem::dumpMesh(const std::string filename, const bool print_path) {
 
+  TICK("dumpMesh")
   if (print_path) {
     std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
   }
@@ -282,12 +308,14 @@ void DenseSLAMSystem::dumpMesh(const std::string filename, const bool print_path
   } else {
     save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
   }
+  TOCK("dumpMesh")
 }
 
 
 
 void DenseSLAMSystem::saveStructure(const std::string base_filename) {
 
+  TICK("saveStructure")
   std::stringstream f_s;
   f_s << base_filename << ".ply";
   se::save_octree_structure_ply(*map_, f_s.str().c_str());
@@ -345,12 +373,17 @@ void DenseSLAMSystem::saveStructure(const std::string base_filename) {
                           Eigen::Vector3i(0, 0, slice_coord.z()),
                           Eigen::Vector3i(map_->size(), map_->size(), slice_coord.z() + 1),
                           scale);
+  TOCK("saveStructure")
 }
 
-void DenseSLAMSystem::structureStats(size_t&              num_nodes,
-                                     size_t&              num_blocks,
+
+
+void DenseSLAMSystem::structureStats(size_t& num_nodes,
+                                     size_t& num_blocks,
                                      std::vector<size_t>& num_blocks_per_scale) {
+  TICK("structureStats")
   num_nodes            = map_->pool().nodeBufferSize();
   num_blocks           = map_->pool().blockBufferSize();
   num_blocks_per_scale = map_->pool().blockBufferSizeDetailed();
+  TOCK("structureStats")
 }

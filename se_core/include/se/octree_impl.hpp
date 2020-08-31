@@ -585,8 +585,7 @@ std::pair<float, int> Octree<T>::interp(const Eigen::Vector3f& voxel_coord_f,
       return {select_voxel_value(T::initData()), target_scale};
     }
 
-    int interp_scale = se::internal::gather_values(
-        *this, base_coord, target_scale, select_node_value, select_voxel_value, voxel_values);
+    int interp_scale = se::internal::gather_values(*this, base_coord, target_scale, select_node_value, select_voxel_value, voxel_values);
     se::internal::gather_values(
         *this, base_coord, target_scale, select_weight, select_weight, voxel_weights);
 

@@ -54,7 +54,7 @@ void bilateralFilterKernel(se::Image<float>&         output_image,
     exit(1);
   }
 
-  TICK()
+  TICKD("bilateralFilterKernel")
   const int width = input_image.width();
   const int height = input_image.height();
   const float e_d_squared_2 = e_d * e_d * 2.f;
@@ -90,7 +90,7 @@ void bilateralFilterKernel(se::Image<float>&         output_image,
       output_image[pixel_idx] = filter_value_sum / factor_count;
     }
   }
-  TOCK("bilateralFilterKernel", width * height);
+  TOCK("bilateralFilterKernel");
 }
 
 
@@ -99,7 +99,7 @@ void depthToPointCloudKernel(se::Image<Eigen::Vector3f>& point_cloud_C,
                              const se::Image<float>&     depth_image,
                              const SensorImpl&           sensor) {
 
-  TICK();
+  TICKD("depthToPointCloudKernel");
 #pragma omp parallel for
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
@@ -114,7 +114,7 @@ void depthToPointCloudKernel(se::Image<Eigen::Vector3f>& point_cloud_C,
       }
     }
   }
-  TOCK("depthToPointCloudKernel", depth_image.width() * depth_image.height());
+  TOCK("depthToPointCloudKernel");
 }
 
 
@@ -123,14 +123,14 @@ void pointCloudToDepthKernel(se::Image<float>&            depth_image,
                         const se::Image<Eigen::Vector3f>& point_cloud_X,
                         const Eigen::Matrix4f&            T_CX) {
 
-  TICK();
+  TICKD("pointCloudToDepthKernel");
 #pragma omp parallel for
   for (int y = 0; y < depth_image.height(); y++) {
     for (int x = 0; x < depth_image.width(); x++) {
       depth_image(x, y) = (T_CX * point_cloud_X(x, y).homogeneous()).z();
     }
   }
-  TOCK("pointCloudToDepthKernel", depth_image.width() * depth_image.height());
+  TOCK("pointCloudToDepthKernel");
 }
 
 
@@ -145,7 +145,7 @@ template <bool NegY>
 void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>&       normals,
                               const se::Image<Eigen::Vector3f>& point_cloud) {
 
-  TICK();
+  TICKD("pointCloudToNormalKernel");
   const int width = point_cloud.width();
   const int height = point_cloud.height();
 #pragma omp parallel for
@@ -186,7 +186,7 @@ void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>&       normals,
       normals[x + y * width] =  dv_x.cross(dv_y).normalized();
     }
   }
-  TOCK("pointCloudToNormalKernel", width * height);
+  TOCK("pointCloudToNormalKernel");
 }
 
 
@@ -194,7 +194,7 @@ void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>&       normals,
 void downsampleDepthKernel(const float*           input_depth_data,
                            const Eigen::Vector2i& input_depth_res,
                            se::Image<float>&      output_depth) {
-  TICK();
+  TICKD("downsampleDepthKernel")
   // Check for unsupported conditions
   if ((input_depth_res.x() < output_depth.width()) ||
        input_depth_res.y() < output_depth.height()) {
@@ -235,7 +235,7 @@ void downsampleDepthKernel(const float*           input_depth_data,
       box_values.clear();
     }
   }
-  TOCK("downsampleDepthKernel", output_depth.size());
+  TOCK("downsampleDepthKernel");
 }
 
 
@@ -251,7 +251,7 @@ void halfSampleRobustImageKernel(se::Image<float>&       output_image,
     exit(1);
   }
 
-  TICK();
+  TICKD("halfSampleRobustImageKernel");
 #pragma omp parallel for
   for (int y = 0; y < output_image.height(); y++) {
     for (int x = 0; x < output_image.width(); x++) {
@@ -277,7 +277,7 @@ void halfSampleRobustImageKernel(se::Image<float>&       output_image,
       output_image[out_pixel.x() + out_pixel.y() * output_image.width()] = pixel_value_sum / pixel_count;
     }
   }
-  TOCK("halfSampleRobustImageKernel", output_image.width() * output_image.height());
+  TOCK("halfSampleRobustImageKernel");
 }
 
 
@@ -286,7 +286,7 @@ void downsampleImageKernel(const uint32_t*        input_RGBA_image_data,
                            const Eigen::Vector2i& input_RGBA_image_res,
                            se::Image<uint32_t>&   output_RGBA_image) {
 
-  TICK();
+  TICKD("downsampleImageKernel");
   // Check for correct image sizes.
   assert((input_RGBA_image_res.x() >= output_RGBA_image.width())
       && "Error: input width must be greater than output width");
@@ -329,6 +329,6 @@ void downsampleImageKernel(const uint32_t*        input_RGBA_image_data,
       output_RGBA_image(x_out, y_out) = rgba;
     }
   }
-  TOCK("downsampleImageKernel", output_RGBA_image.width() * output_RGBA_image.height());
+  TOCK("downsampleImageKernel");
 }
 

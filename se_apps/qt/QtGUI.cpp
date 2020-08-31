@@ -260,7 +260,7 @@ void dumpLog() {
 			"*.log (*.log);; All files (*.*)");
 	if (filename != "") {
 		std::ofstream logStream(filename.c_str());
-		stats.printAllData(logStream);
+		stats.writeSummaryToOStream(logStream);
 		logStream.close();
 	}
 }
@@ -269,7 +269,7 @@ void dumpPowerLog() {
 			"log (*.prpt);; All files (*.*)");
 	if (filename != "" && power_monitor && power_monitor->isActive()) {
 		std::ofstream logStream(filename.c_str());
-		power_monitor->powerStats.printAllData(logStream);
+		power_monitor->powerStats.writeSummaryToOStream(logStream);
 		logStream.close();
 	}
 }
@@ -379,7 +379,7 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 	appWindow->viewers->setStatEntry("Performance", { "X", "Y", "Z", "tracked",
 			"integrated", "frame" }, false);
 	//this is the default field used for calculating the frame rate
-	appWindow->setFrameRateField((char *) "computation");
+	appWindow->setFrameRateField((char *) "COMPUTATION");
 
 	if (power_monitor != NULL && power_monitor->isActive()) {
 		appWindow->viewers->addViewer(&(power_monitor->powerStats),

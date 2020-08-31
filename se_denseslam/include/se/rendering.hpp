@@ -79,7 +79,7 @@ void raycastKernel(const se::Octree<typename VoxelImplT::VoxelType>& map,
                    const Eigen::Matrix4f&                            raycast_T_MC,
                    const SensorImpl&                                 sensor) {
 
-  TICK();
+  TICKD("raycastKernel");
 #pragma omp parallel for
   for (int y = 0; y < surface_point_cloud_M.height(); y++) {
 #pragma omp simd
@@ -115,7 +115,7 @@ void raycastKernel(const se::Octree<typename VoxelImplT::VoxelType>& map,
       }
     }
   }
-  TOCK("raycastKernel", surface_point_cloud_M.width() * surface_point_cloud_M.height());
+  TOCK("raycastKernel");
 }
 
 
@@ -147,7 +147,7 @@ void renderVolumeKernel(uint32_t*                         volume_RGBA_image_data
                         const Eigen::Vector3f&            ambient_M,
                         const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
                         const se::Image<Eigen::Vector3f>& surface_normals_M) {
-  TICK();
+  TICKD("renderVolumeKernel");
 #pragma omp parallel for
   for (int y = 0; y < volume_RGBA_image_res.y(); y++) {
 #pragma omp simd
@@ -171,7 +171,7 @@ void renderVolumeKernel(uint32_t*                         volume_RGBA_image_data
       }
     }
   }
-  TOCK("renderVolumeKernel", volume_RGBA_image_res.prod());
+  TOCK("renderVolumeKernel");
 }
 
 

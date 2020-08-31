@@ -413,9 +413,7 @@ void Viewer::update() {
 						QString name =
 								optionButton->menu()->actions().at(i)->text();
 
-						_stream->statistics->getSampleTime(
-								name.toStdString().c_str());
-						double value = _stream->statistics->getLastData(
+						double value = _stream->statistics->getLastDataMerged(
 								name.toStdString().c_str());
 
 						if (_stream->statistics->getType(
