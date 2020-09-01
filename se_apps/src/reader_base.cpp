@@ -34,7 +34,8 @@ se::Reader::Reader(const se::ReaderConfig& c)
       status_(se::ReaderStatus::ok),
       frame_(SIZE_MAX),
       num_frames_(0),
-      ground_truth_frame_(SIZE_MAX) {
+      ground_truth_frame_(SIZE_MAX),
+      segmentation_frame_(SIZE_MAX) {
   // Open the ground truth file if supplied
   if (!ground_truth_file_.empty()) {
     ground_truth_fs_.open(ground_truth_file_, std::ios::in);
@@ -45,6 +46,15 @@ se::Reader::Reader(const se::ReaderConfig& c)
       camera_active_ = false;
       camera_open_ = false;
     }
+    segmentation_fs_.open(ground_truth_file_, std::ios::in);
+    if (!segmentation_fs_.good()) {
+      std::cerr << "Error: Could not read segmentation index file "
+          << ground_truth_file_ << "\n";
+      status_ = se::ReaderStatus::error;
+      camera_active_ = false;
+      camera_open_ = false;
+    }
+    segmentation_base_dir_ = str_utils::dirname(ground_truth_file_) + "/segmentation";
   }
   // Ensure the available clock has enough accuracy to measure the requested
   // inter-frame time intervals. Compare the clock tick interval with the
@@ -125,6 +135,41 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>&    depth_image,
 
 
 
+se::ReaderStatus se::Reader::nextData(se::Image<float>&       depth_image,
+                                      se::Image<uint32_t>&    rgba_image,
+                                      Eigen::Matrix4f&        T_WB,
+                                      se::SegmentationResult& segmentation) {
+  if (!good()) {
+    return status_;
+  }
+  nextFrame();
+  status_ = nextDepth(depth_image);
+  if (!good()) {
+    camera_active_ = false;
+    camera_open_ = false;
+    return status_;
+  }
+  status_ = mergeStatus(nextRGBA(rgba_image), status_);
+  if (!good()) {
+    camera_active_ = false;
+    camera_open_ = false;
+    return status_;
+  }
+  status_ = mergeStatus(nextPose(T_WB), status_);
+  if (!good()) {
+    camera_active_ = false;
+    camera_open_ = false;
+  }
+  status_ = mergeStatus(nextSegmentation(segmentation), status_);
+  if (!good()) {
+    camera_active_ = false;
+    camera_open_ = false;
+  }
+  return status_;
+}
+
+
+
 void se::Reader::restart() {
   frame_ = SIZE_MAX;
   ground_truth_frame_ = SIZE_MAX;
@@ -132,6 +177,10 @@ void se::Reader::restart() {
   if (ground_truth_fs_.good() || ground_truth_fs_.eof()) {
     ground_truth_fs_.clear();
     ground_truth_fs_.seekg(0);
+  }
+  if (segmentation_fs_.good() || segmentation_fs_.eof()) {
+    segmentation_fs_.clear();
+    segmentation_fs_.seekg(0);
   }
 }
 
@@ -277,6 +326,50 @@ se::ReaderStatus se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame)
     return se::ReaderStatus::ok;
   }
 }
+
+
+
+se::ReaderStatus se::Reader::nextSegmentation(se::SegmentationResult& segmentation) {
+  std::string line;
+  while (true) {
+    std::getline(segmentation_fs_, line);
+    // EOF reached.
+    if (!segmentation_fs_.good()) {
+      return se::ReaderStatus::eof;
+    }
+    // Ignore comment lines.
+    if (line[0] == '#') {
+      continue;
+    }
+    // Skip segmentation data until the ones corresponding to the current frame
+    // are found. This only happens when frames are dropped.
+    segmentation_frame_++;
+    if (segmentation_frame_ < frame_) {
+      continue;
+    }
+    // Data line read, split on spaces.
+    const std::vector<std::string> line_data = str_utils::split_str(line, ' ');
+    const size_t num_cols = line_data.size();
+    if (num_cols < 2) {
+      std::cerr << "Invalid ground truth file format. "
+          << "Expected at least 2 columns but got " << num_cols << ".\n"
+          << "  Expected line format: ID timestamp ...\n"
+          << "  but got: " << line << std::endl;
+      camera_active_ = false;
+      camera_open_ = false;
+      return se::ReaderStatus::error;
+    }
+    // Read the basename of the RGB image into the file_basename string
+    const std::string file_basename = line_data[1];
+    // Read the segmentation result
+    if (segmentation.read(segmentation_base_dir_, file_basename)) {
+      return se::ReaderStatus::ok;
+    } else {
+      return se::ReaderStatus::error;
+    }
+  }
+}
+
 
 
 void se::Reader::nextFrame() {

@@ -18,6 +18,7 @@
 
 #include "se/image/image.hpp"
 #include "se/str_utils.hpp"
+#include "se/segmentation_result.hpp"
 
 
 
@@ -115,6 +116,22 @@ namespace se {
                             Image<uint32_t>& rgba_image,
                             Eigen::Matrix4f& T_WB);
 
+      /** Read the next depth and RGBA images, ground truth pose and
+       * segmentation data.
+       *
+       * \note The frame number is incremented when calling this function.
+       *
+       * \param[out] depth_image  The next depth image.
+       * \param[out] rgba_image   The next RGBA image.
+       * \param[out] T_WB         The next ground truth pose.
+       * \param[out] segmentation The next RGBA segmentation data.
+       * \return An appropriate status code.
+       */
+      ReaderStatus nextData(Image<float>&           depth_image,
+                            Image<uint32_t>&        rgba_image,
+                            Eigen::Matrix4f&        T_WB,
+                            se::SegmentationResult& segmentation);
+
      /** Read the ground truth pose at the provided frame number.
        * Each line in the ground truth file should correspond to a single
        * depth/RGBA image pair and have a format<br>
@@ -209,6 +226,7 @@ namespace se {
       std::string sequence_path_;
       std::string ground_truth_file_;
       std::ifstream ground_truth_fs_;
+      std::ifstream segmentation_fs_;
       Eigen::Vector2i depth_image_res_;
       Eigen::Vector2i rgba_image_res_;
       float fps_;
@@ -254,8 +272,19 @@ namespace se {
        */
       ReaderStatus nextPose(Eigen::Matrix4f& T_WB);
 
+      /** Read the next segmentation data.
+       *
+       * \note The frame number is NOT incremented inside this function.
+       *
+       * \param[out] segmentation The next RGBA segmentation data.
+       * \return An appropriate status code.
+       */
+      ReaderStatus nextSegmentation(SegmentationResult& segmentation);
+
     private:
       size_t ground_truth_frame_;
+      size_t segmentation_frame_;
+      std::string segmentation_base_dir_;
       std::chrono::steady_clock::time_point prev_frame_timestamp_;
 
       /** Prepare for reading the next frame.
