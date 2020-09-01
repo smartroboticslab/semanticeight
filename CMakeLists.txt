@@ -6,15 +6,15 @@ project(supereight VERSION 0.1.0 LANGUAGES C CXX)
 # to folder names inside se_voxel_impl/include/se/voxel_implementations. When
 # adding a new voxel implementation, appending it to this list is enough to
 # compile supereight with it.
-set(SE_VOXEL_IMPLS MultiresOFusion OFusion MultiresTSDF TSDF CACHE STRING "The voxel implementations to compile")
+set(SE_VOXEL_IMPLS MultiresOFusion CACHE STRING "The voxel implementations to compile")
 
 # The camera implementations to compile. The valid values are the names of the
 # *Sensor classes defined in se_shared/include/se/sensor.hpp.
-set(SE_SENSOR_IMPLS PinholeCamera OusterLidar CACHE STRING "The camera implementations to compile")
+set(SE_SENSOR_IMPLS PinholeCamera CACHE STRING "The camera implementations to compile")
 
-option(SE_BUILD_TESTS "Build the supereight unit tests" ON)
+option(SE_BUILD_TESTS "Build the supereight unit tests" OFF)
 option(SE_BUILD_GLUT_GUI "Build the OpenGL-based GUI" ON)
-option(SE_BUILD_QT_GUI "Build the Qt-based GUI" ON)
+option(SE_BUILD_QT_GUI "Build the Qt-based GUI" OFF)
 option(SE_USE_OMP "Compile with OpenMP" ON)
 
 # Compile without measuring individual function times
@@ -94,7 +94,7 @@ add_subdirectory(se_shared)
 add_subdirectory(se_voxel_impl)
 add_subdirectory(se_denseslam)
 add_subdirectory(se_apps)
-add_subdirectory(se_tools)
+#add_subdirectory(se_tools)
 
 
 
