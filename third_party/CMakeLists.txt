@@ -13,6 +13,9 @@ endif()
 # LodePNG
 add_subdirectory(lodepng)
 
+# cnpy
+add_subdirectory(cnpy)
+
 # SRL Projection
 option(SRL_PROJECTION_BUILD_TESTS "Enable testing" OFF)
 add_subdirectory(srl_projection)

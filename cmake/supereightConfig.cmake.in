@@ -6,6 +6,7 @@ find_dependency(LodePNG)
 find_dependency(SRLProjection)
 find_dependency(octomap)
 find_dependency(yaml-cpp)
+find_dependency(ZLIB)
 
 set(SE_VOXEL_IMPLS @SE_VOXEL_IMPLS@)
 set(SE_SENSOR_IMPLS @SE_SENSOR_IMPLS@)
