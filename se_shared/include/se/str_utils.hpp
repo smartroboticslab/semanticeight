@@ -65,6 +65,10 @@ namespace str_utils {
   std::string header_to_pretty_str(const std::string header_name,
                                    const int width = default_width);
 
+  /**
+   * Strip last component from file name. Similar to dirname from coreutils.
+   */
+  std::string dirname(const std::string& path);
 
 } // namespace str_utils
 

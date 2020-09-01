@@ -104,6 +104,18 @@ namespace str_utils {
     return l_side + header_name + r_side;
   }
 
-} // namespace str_utils
 
+  std::string dirname(const std::string& path) {
+    // Find the last occurrence of '/' in the path.
+    const size_t last_index = path.rfind('/');
+    if (last_index == std::string::npos) {
+      // '/' was not found in the path.
+      return path;
+    } else {
+      // Get the substring without the last '/'.
+      return path.substr(0, last_index);
+    }
+  }
+
+} // namespace str_utils
 
