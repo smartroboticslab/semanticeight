@@ -95,13 +95,15 @@ void drawit(const T*               scene,
 
 
 
-template<typename A, typename B, typename C, typename D>
+template<typename A, typename B, typename C, typename D, typename E, typename F>
 void drawthem(const A* scene_1, const Eigen::Vector2i& res_1,
               const B* scene_2, const Eigen::Vector2i& res_2,
               const C* scene_3, const Eigen::Vector2i& res_3,
-              const D* scene_4, const Eigen::Vector2i& res_4) {
+              const D* scene_4, const Eigen::Vector2i& res_4,
+              const E* scene_5, const Eigen::Vector2i& res_5,
+              const F* scene_6, const Eigen::Vector2i& res_6) {
 
-  const Eigen::Vector2i grid_res (2, 2);
+  const Eigen::Vector2i grid_res (2, 3);
   const Eigen::Vector2i image_res (res_2);
   const Eigen::Vector2i content_res = grid_res.cwiseProduct(image_res);
   const Eigen::Vector2f grid_step (1.f / grid_res.x(), 1.f / grid_res.y());
@@ -136,27 +138,39 @@ void drawthem(const A* scene_1, const Eigen::Vector2i& res_1,
   glClear(GL_COLOR_BUFFER_BIT);
 
   if (scene_1 != nullptr) {
-    glRasterPos2f(0 * grid_step.x(), 2 * grid_step.y());
+    glRasterPos2f(0 * grid_step.x(), 3 * grid_step.y());
     glPixelZoom(factor, -factor);
     glDrawPixels(res_1.x(), res_1.y(), gl<A>::format, gl<A>::type, scene_1);
   }
 
   if (scene_2 != nullptr) {
-    glRasterPos2f(1 * grid_step.x(), 2 * grid_step.y());
+    glRasterPos2f(1 * grid_step.x(), 3 * grid_step.y());
     glPixelZoom(factor, -factor);
     glDrawPixels(res_2.x(), res_2.y(), gl<B>::format, gl<B>::type, scene_2);
   }
 
   if (scene_3 != nullptr) {
-    glRasterPos2f(0 * grid_step.x(), 1 * grid_step.y());
+    glRasterPos2f(0 * grid_step.x(), 2 * grid_step.y());
     glPixelZoom(factor, -factor);
     glDrawPixels(res_3.x(), res_3.y(), gl<C>::format, gl<C>::type, scene_3);
   }
 
   if (scene_4 != nullptr) {
-    glRasterPos2f(1 * grid_step.x(), 1 * grid_step.y());
+    glRasterPos2f(1 * grid_step.x(), 2 * grid_step.y());
     glPixelZoom(factor, -factor);
     glDrawPixels(res_4.x(), res_4.y(), gl<D>::format, gl<D>::type, scene_4);
+  }
+
+  if (scene_5 != nullptr) {
+    glRasterPos2f(0 * grid_step.x(), 1 * grid_step.y());
+    glPixelZoom(factor, -factor);
+    glDrawPixels(res_5.x(), res_5.y(), gl<C>::format, gl<C>::type, scene_5);
+  }
+
+  if (scene_6 != nullptr) {
+    glRasterPos2f(1 * grid_step.x(), 1 * grid_step.y());
+    glPixelZoom(factor, -factor);
+    glDrawPixels(res_6.x(), res_6.y(), gl<D>::format, gl<D>::type, scene_6);
   }
 
   glutSwapBuffers();

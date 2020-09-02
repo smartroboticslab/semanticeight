@@ -219,6 +219,8 @@ int main(int argc, char** argv) {
       drawthem(rgba_render,   image_res,
                depth_render,  image_res,
                track_render,  image_res,
+               track_render,  image_res,
+               track_render,  image_res,
                volume_render, image_res);
 #endif
     }
