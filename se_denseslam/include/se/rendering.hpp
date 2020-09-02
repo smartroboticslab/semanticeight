@@ -223,5 +223,55 @@ void raycast_full(
   }
 }
 
+
+
+// Semanticeight-only /////////////////////////////////////////////////////////
+template <typename T>
+void renderMaskKernel(uint32_t*                  output_image_data,
+                      const Eigen::Vector2i&     output_image_res,
+                      const se::Image<uint32_t>& rgba_image,
+                      const cv::Mat&             mask,
+                      const float                mask_opacity = 0.5f) {
+  TICKD("renderMaskKernel");
+  const bool valid_mask = (mask.cols != 0 && mask.rows != 0);
+  assert((output_image_res.x() == rgba_image.width())
+      && "Input and output image dimension mismatch");
+  assert((output_image_res.y() == rgba_image.height())
+      && "Input and output image dimension mismatch");
+  assert((output_image_res.x() == mask.cols) && valid_mask
+      && "Mask and output image dimension mismatch");
+  assert((output_image_res.y() == mask.rows) && valid_mask
+      && "Mask and output image dimension mismatch");
+
+  const int h = output_image_res.y(); // clang complains if this is inside the for loop
+  const int w = output_image_res.x(); // clang complains if this is inside the for loop
+#pragma omp parallel for
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
+
+      const size_t pixel_idx = x + w * y;
+
+      // Initialize color to pink for invalid.
+      uint32_t new_color = 0xFF8080FF;
+
+      const uint64_t mask_value = valid_mask ? mask.at<T>(y, x) : static_cast<T>(-1);
+      if (mask_value < 0) {
+        // Show RGB image.
+        new_color = rgba_image[pixel_idx];
+      } else if (mask_value == 0) {
+        // Blend RGB image with black.
+        new_color = se::blend(rgba_image[pixel_idx], 0xFF000000, 1.f - mask_opacity);
+      } else {
+        // Blend RGB image with color.
+        const Eigen::Vector3i obj_color
+            = se::internal::color_map[mask_value % se::internal::color_map.size() - 1].cast<int>();
+        new_color = se::blend(rgba_image[pixel_idx], se::pack_rgba(obj_color), 1.f - mask_opacity);
+      }
+      output_image_data[pixel_idx] = new_color;
+    }
+  }
+  TOCK("renderMaskKernel");
+}
+
 #endif
 

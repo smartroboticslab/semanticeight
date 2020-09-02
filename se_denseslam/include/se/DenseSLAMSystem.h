@@ -50,6 +50,7 @@
 #include "se/config.h"
 #include "se/octree.hpp"
 #include "se/image/image.hpp"
+#include "se/segmentation_result.hpp"
 #include "se/sensor_implementation.hpp"
 #include "se/voxel_implementations.hpp"
 #include "preprocessing.hpp"
@@ -99,6 +100,12 @@ class DenseSLAMSystem {
     Eigen::Matrix4f T_MW_; // Constant world to map frame transformation
     std::vector<se::key_t> allocation_list_;
     std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > map_;
+
+    // Semanticeight-only /////////////////////////////////////////////////////
+    /**
+     * The input segmentation for the current frame.
+     */
+    se::SegmentationResult input_segmentation_;
 
   public:
     /**
@@ -602,6 +609,45 @@ class DenseSLAMSystem {
     Eigen::Vector2i getImageResolution() {
       return (image_res_);
     }
+
+
+
+    // Semanticeight-only /////////////////////////////////////////////////////
+    /**
+     * Add the semantic masks for the RGB image to the pipeline. This is the
+     * first stage of the pipeline.
+     *
+     * \param[in] segmentation The segmentation output for the RGB frame.
+     * \return true (does not fail).
+     */
+    bool preprocessSegmentation(const se::SegmentationResult& segmentation);
+
+    /**
+     * Render the predicted class of each object overlaid on the current RGB
+     * frame with a different colour.
+     *
+     * \param[out] output_RGBA_image_data A pointer to an array where the image
+     *                                    will be rendered. The array must be
+     *                                    allocated before calling this
+     *                                    function, one uint32_t per pixel.
+     * \param[in] output_RGBA_image_res   The dimensions of the output image
+     *                                    (width and height in pixels).
+     */
+    void renderObjectClasses(uint32_t*              output_image_data,
+                             const Eigen::Vector2i& output_image_res) const;
+
+    /**
+     * Render the object instances blended with the current RGB frame.
+     *
+     * \param[out] output_RGBA_image_data A pointer to an array where the image
+     *                                    will be rendered. The array must be
+     *                                    allocated before calling this
+     *                                    function, one uint32_t per pixel.
+     * \param[in] output_RGBA_image_res   The dimensions of the output image
+     *                                    (width and height in pixels).
+     */
+    void renderObjectInstances(uint32_t*              output_image_data,
+                               const Eigen::Vector2i& output_image_res) const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

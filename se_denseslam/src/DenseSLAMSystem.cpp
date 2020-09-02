@@ -48,6 +48,7 @@
 #include "se/timings.h"
 #include "se/perfstats.h"
 #include "se/rendering.hpp"
+#include "se/semanticeight_definitions.hpp"
 
 
 extern PerfStats stats;
@@ -85,7 +86,8 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     surface_point_cloud_M_(image_res_.x(), image_res_.y(), Eigen::Vector3f::Zero()),
     surface_normals_M_(image_res_.x(), image_res_.y(), Eigen::Vector3f::Zero()),
     render_T_MC_(&T_MC_),
-    T_MW_(T_MW)
+    T_MW_(T_MW),
+    input_segmentation_(image_res_.x(), image_res_.y())
   {
 
     bool has_yaml_voxel_impl_config = false;
@@ -432,3 +434,50 @@ void DenseSLAMSystem::structureStats(size_t& num_nodes,
   num_blocks_per_scale = map_->pool().blockBufferSizeDetailed();
   TOCK("structureStats")
 }
+
+
+
+// Semanticeight-only /////////////////////////////////////////////////////
+bool DenseSLAMSystem::preprocessSegmentation(
+    const se::SegmentationResult& segmentation) {
+
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << "Preprocessing in: "
+      << "   Masks " << segmentation.width << "x" << segmentation.height
+      << "   Objects " << segmentation.object_instances.size()
+      << "\n";
+#endif
+  //updateValidDepthMask(depth_image_); // TODO implement and comment out
+  // Copy the segmentation output and resize if needed
+  input_segmentation_ = segmentation;
+  input_segmentation_.resize(image_res_.x(), image_res_.y());
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << input_segmentation_;
+  std::cout << "Preprocessing out:"
+      << "   RGB " << rgba_image_.width() << "x" << rgba_image_.height()
+      << "   Depth " << depth_image_.width() << "x" << depth_image_.height()
+      << "   Masks " << input_segmentation_.width << "x" << input_segmentation_.height
+      << "   Objects " << input_segmentation_.object_instances.size()
+      << "\n\n";
+#endif
+  return true;
+}
+
+
+
+void DenseSLAMSystem::renderObjectClasses(uint32_t*              output_image_data,
+                                          const Eigen::Vector2i& output_image_res) const {
+  renderMaskKernel<se::class_mask_elem_t>(output_image_data, output_image_res,
+      rgba_image_, input_segmentation_.classMask());
+      //rgba_image_, final_masks_.classMask()); // TODO implement and comment out
+}
+
+
+
+void DenseSLAMSystem::renderObjectInstances(uint32_t*              output_image_data,
+                                            const Eigen::Vector2i& output_image_res) const {
+  renderMaskKernel<se::instance_mask_elem_t>(output_image_data, output_image_res,
+      rgba_image_, input_segmentation_.instanceMask());
+      //rgba_image_, final_masks_.instanceMask()); // TODO implement and comment out
+}
+
