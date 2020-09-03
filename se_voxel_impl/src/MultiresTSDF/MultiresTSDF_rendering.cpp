@@ -75,7 +75,8 @@ Eigen::Vector4f MultiresTSDF::raycast(const OctreeType&      map,
   if (value_t > 0) { // ups, if we were already in it, then don't render anything here
     for (; t < t_max; t += step_size) {
       ray_pos_M = ray_origin_M + ray_dir_M * t;
-      VoxelData data = map.getFineAtPoint(ray_pos_M);
+      VoxelData data;
+      map.getAtPoint(ray_pos_M, data);
       if (data.y == 0) {
         t += step_size;
         if (!find_valid_point(map, select_node_tsdf, select_voxel_tsdf,

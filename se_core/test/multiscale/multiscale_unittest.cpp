@@ -62,7 +62,9 @@ class MultiscaleTest : public ::testing::Test {
 };
 
 TEST_F(MultiscaleTest, Init) {
-  EXPECT_EQ(octree_.get(137, 138, 130), TestVoxelT::initData());
+  TestVoxelT::VoxelData test_data;
+  octree_.get(137, 138, 130, test_data);
+  EXPECT_EQ(test_data, TestVoxelT::initData());
 }
 
 TEST_F(MultiscaleTest, PlainAlloc) {
@@ -75,9 +77,13 @@ TEST_F(MultiscaleTest, PlainAlloc) {
 
   octree_.set(56, 12, 254, 3.f);
 
-  EXPECT_EQ(octree_.get(56, 12, 254), 3.f);
-  EXPECT_EQ(octree_.get(106, 12, 254), TestVoxelT::initData());
-  EXPECT_NE(octree_.get(106, 12, 254), 3.f);
+  TestVoxelT::VoxelData test_data;
+  octree_.get(56, 12, 254, test_data);
+  EXPECT_EQ(test_data, 3.f);
+  octree_.get(106, 12, 254, test_data);
+  EXPECT_EQ(test_data, TestVoxelT::initData());
+  octree_.get(106, 12, 254, test_data);
+  EXPECT_NE(test_data, 3.f);
 }
 
 TEST_F(MultiscaleTest, ScaledAlloc) {
@@ -91,7 +97,9 @@ TEST_F(MultiscaleTest, ScaledAlloc) {
   se::Node<TestVoxelT>* node = octree_.fetch_node(87, 32, 420, 5);
   ASSERT_TRUE(node != NULL);
   node->childData(0, 10.f);
-  EXPECT_EQ(octree_.get(87, 32, 420), 10.f);
+  TestVoxelT::VoxelData test_data;
+  octree_.get(87, 32, 420, test_data);
+  EXPECT_EQ(test_data, 10.f);
 }
 
 TEST_F(MultiscaleTest, Iterator) {

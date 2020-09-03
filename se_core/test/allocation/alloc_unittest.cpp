@@ -51,7 +51,8 @@ TEST(AllocationTest, EmptySingleVoxel) {
   OctreeF octree;
   octree.init(256, 5);
   const Eigen::Vector3i voxel_coord = {25, 65, 127};
-  const TestVoxelT::VoxelData data = octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+  TestVoxelT::VoxelData data;
+  octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), data);
   EXPECT_EQ(data, TestVoxelT::invalid());
 }
 
@@ -68,7 +69,8 @@ TEST(AllocationTest, SetSingleVoxel) {
   TestVoxelT::VoxelData written_data = 2.f;
   block->setData(voxel_coord, written_data);
 
-  const TestVoxelT::VoxelData read_data = octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+  TestVoxelT::VoxelData read_data;
+  octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), read_data);
   EXPECT_EQ(written_data, read_data);
 }
 

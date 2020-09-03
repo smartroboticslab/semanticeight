@@ -76,7 +76,9 @@ namespace internal {
       return;
     }
     Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[0];
-    ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+    typename FieldType::VoxelData data;
+    octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), data);
+    ValueT value = select_node_value(data);
     values[0] = value;
     values[1] = value;
     values[2] = value;
@@ -112,7 +114,9 @@ namespace internal {
       return;
     }
     Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[offsets[0]];
-    ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+    typename FieldType::VoxelData data;
+    octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), data);
+    ValueT value = select_node_value(data);
     values[offsets[0]] = value;
     values[offsets[1]] = value;
     values[offsets[2]] = value;
@@ -143,7 +147,9 @@ namespace internal {
       return;
     }
     Eigen::Vector3i voxel_coord = base_coord + stride * interp_offsets[offsets[0]];
-    ValueT value = select_node_value(octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z()));
+    typename FieldType::VoxelData data;
+    octree.get(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), data);
+    ValueT value = select_node_value(data);
     values[offsets[0]] = value;
     values[offsets[1]] = value;
     return;
@@ -324,7 +330,9 @@ namespace internal {
             if (block) {
               values[i] = select_voxel_value(block->data(voxels_coord[i], scale));
             } else {
-              values[i] = select_node_value(octree.get(voxels_coord[i].x(), voxels_coord[i].y(), voxels_coord[i].z()));
+              typename FieldType::VoxelData data;
+              octree.get(voxels_coord[i].x(), voxels_coord[i].y(), voxels_coord[i].z(), data);
+              values[i] = select_node_value(data);
             }
           }
         }

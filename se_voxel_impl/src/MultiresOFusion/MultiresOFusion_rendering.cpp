@@ -189,10 +189,11 @@ void advance_ray(const se::Octree<MultiresOFusion::VoxelType>& map,
   v_far = std::min(std::min(std::min(v_map.x(), v_map.y()), v_map.z()) + v, v_far); // [voxel]
   t_far = voxel_dim * v_far;                                                          // [m]
 
-  auto value = map.getFine(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), max_scale);
-  while (value.x_max > -0.2f && scale > 2) {
+  MultiresOFusion::VoxelType::VoxelData data;
+  map.get(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), data, max_scale);
+  while (data.x_max > -0.2f && scale > 2) {
     scale -= 1;
-    value = map.getFine(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), scale);
+    map.get(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), data, scale);
   }
 
   Eigen::Vector3f ray_coord_f = ray_origin_coord_f;
@@ -239,18 +240,18 @@ void advance_ray(const se::Octree<MultiresOFusion::VoxelType>& map,
     v_add += V_min + 0.01;
     ray_coord_f = (v + v_add) * ray_dir_M + ray_origin_coord_f;
 
-    value = map.getFine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), scale);
+    map.get(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, scale);
 
-    if (value.x_max > -0.2f) {
-      while (value.x_max > -0.2f && scale > 2) {
+    if (data.x_max > -0.2f) {
+      while (data.x_max > -0.2f && scale > 2) {
         scale -= 1;
-        value = map.getFine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), scale);
+        map.get(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, scale);
       }
     } else {
       for (int s = scale + 1; s <= max_scale; s++) {
-        value = map.getFine(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), s);
+        map.get(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, s);
 
-        if (value.x_max > -0.2f) {
+        if (data.x_max > -0.2f) {
           break;
         }
         scale += 1;
@@ -322,7 +323,8 @@ Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
   if (value_t <= MultiresOFusion::surface_boundary) {
     for (; t < t_far; t += step_size) {
       ray_pos_M = ray_origin_M + ray_dir_M * t;
-      VoxelData data = map.getFineAtPoint(ray_pos_M);
+      VoxelData data;
+      map.getAtPoint(ray_pos_M, data);
       if (data.y == 0) {
         t += step_size;
         if (!find_valid_point(map, select_node_occupancy, select_voxel_occupancy,

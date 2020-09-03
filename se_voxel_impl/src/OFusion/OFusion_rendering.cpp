@@ -74,7 +74,8 @@ Eigen::Vector4f OFusion::raycast(const OctreeType&      map,
   if (value_t <= OFusion::surface_boundary) {
     for (; t < t_max; t += step_size) {
       ray_pos_M = ray_origin_M + ray_dir_M * t;
-      VoxelData data = map.getFineAtPoint(ray_pos_M);
+      VoxelData data;
+      map.getAtPoint(ray_pos_M, data);
       if (data.y == 0) {
         t += step_size;
         if (!find_valid_point(map, select_node_occupancy, select_voxel_occupancy,

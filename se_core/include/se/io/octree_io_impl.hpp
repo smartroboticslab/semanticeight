@@ -56,10 +56,16 @@ int se::save_3d_slice_vtk(const se::Octree<VoxelT>& octree,
     ss_z_coord << z << " ";
   }
 
+  auto get_value = [&](int x, int y, int z) {
+    typename VoxelT::VoxelData data;
+    octree.get(x, y, z, data, scale);
+    return select_value(data);
+  };
+
   for (int z = lower_coord.z(); z < upper_coord.z(); z += stride) {
     for (int y = lower_coord.y(); y < upper_coord.y(); y += stride) {
       for (int x = lower_coord.x(); x < upper_coord.x(); x += stride) {
-        const auto value = select_value(octree.getFine(x, y, z, scale));
+        const auto value = get_value(x, y, z);
         ss_scalars << value << std::endl;
       }
     }

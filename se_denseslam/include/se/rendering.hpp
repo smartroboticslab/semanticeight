@@ -200,8 +200,11 @@ void raycast_full(
   for (; t < far_plane; t += step_size) {
     f_tt = map.interpAtPoint(ray_origin_M + ray_dir_M * t, [](const auto& data){ return data.x;}).first;
     if (f_tt < 0.f && f_t > 0.f && std::abs(f_tt - f_t) < 0.5f) {     // got it, jump out of inner loop
-      const auto data_t  = map.getFineAtPoint(ray_origin_M + ray_dir_M * (t - step_size));
-      const auto data_tt = map.getFineAtPoint(ray_origin_M + ray_dir_M * t);
+      typename T::VoxelType::VoxelData data_t;
+      map.getAtPoint(ray_origin_M + ray_dir_M * (t - step_size), data_t);
+      typename T::VoxelType::VoxelData data_tt;
+      map.getAtPoint(ray_origin_M + ray_dir_M * t, data_tt);
+
       if (f_t == 1.0 || f_tt == 1.0 || data_t.y == 0 || data_tt.y == 0 ) {
         f_t = f_tt;
         continue;
