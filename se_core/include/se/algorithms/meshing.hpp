@@ -146,9 +146,9 @@ namespace meshing {
 
     const float voxel_dim = map.dim() / map.size();
     Eigen::Vector3f source_point_M =
-        voxel_dim * (source_coord.cast<float>() + OctreeT<FieldType>::sample_offset_frac_); // TODO: scale by size
+        voxel_dim * (source_coord.cast<float>() + size_0 * OctreeT<FieldType>::sample_offset_frac_);
     Eigen::Vector3f dest_point_M =
-        voxel_dim * (dest_coord.cast<float>()   + OctreeT<FieldType>::sample_offset_frac_); // TODO: scale by size
+        voxel_dim * (dest_coord.cast<float>()   + size_1 * OctreeT<FieldType>::sample_offset_frac_);
 
     return source_point_M + (0.0 - value_0) * (dest_point_M - source_point_M) / (value_1 - value_0);
   }
