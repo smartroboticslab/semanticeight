@@ -9,6 +9,7 @@
 #include <Eigen/Dense>
 #include "se/image_utils.hpp"
 #include "se/image/image.hpp"
+#include "se/segmentation.hpp"
 #include "se/projection.hpp"
 
 
@@ -49,6 +50,12 @@ namespace se {
      * \param point_C         3D coordinates of the point to be projected in camera frame.
      * \param depth_image     Image
      * \param depth_value     Reference to the depth value to be determined.
+     * \param rgba_image      Corresponding RGBA image.
+     * \param rgba_value      Reference to the corresponding RGBA value.
+     * \param mask            Always returns false where the mask value is
+     *                        negative, even if the projection is valid and the
+     *                        predicate is satisfied.
+     * \param mask_value      Reference to the corresponding mask value.
      * \param valid_predicate Functor indicating if the fetched pixel value is valid.
      *
      * \return is_valid   Returns true if the projection is successful and false if the projection is unsuccessful
@@ -58,15 +65,21 @@ namespace se {
     bool projectToPixelValue(const Eigen::Vector3f&  point_C,
                              const se::Image<float>& image,
                              float&                  image_value,
+                             const se::Image<uint32_t>& rgba_image,
+                             uint32_t&                  rgba_value,
+                             const cv::Mat&           mask,
+                             se::integration_mask_elem_t& mask_value,
                              ValidPredicate          valid_predicate) const {
       Eigen::Vector2f pixel_f;
       if (model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
         return false;
       }
       const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+      mask_value = mask.at<se::integration_mask_elem_t>(pixel.y(), pixel.x());
       image_value = image(pixel.x(), pixel.y());
+      rgba_value = rgba_image(pixel.x(), pixel.y());
       // Return false for invalid depth measurement
-      if (!valid_predicate(image_value)) {
+      if (!valid_predicate(image_value, rgba_value, mask_value)) {
         return false;
       }
       return true;
@@ -249,6 +262,10 @@ namespace se {
     bool projectToPixelValue(const Eigen::Vector3f&  point_C,
                              const se::Image<float>& image,
                              float&                  image_value,
+                             const se::Image<uint32_t>& /* rgba_image */,
+                             uint32_t&                  rgba_value,
+                             const cv::Mat&           /* mask */,
+                             se::integration_mask_elem_t& mask_value,
                              ValidPredicate          valid_predicate) const {
       Eigen::Vector2f pixel_f;
       if (model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
@@ -257,7 +274,7 @@ namespace se {
       const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
       image_value = image(pixel.x(), pixel.y());
       // Return false for invalid depth measurement
-      if (!valid_predicate(image_value)) {
+      if (!valid_predicate(image_value, rgba_value, mask_value)) {
         return false;
       }
       return true;

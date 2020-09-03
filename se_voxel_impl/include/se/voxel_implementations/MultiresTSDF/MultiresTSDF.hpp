@@ -35,6 +35,7 @@
 #include "se/algorithms/meshing.hpp"
 #include "se/sensor_implementation.hpp"
 
+#include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
 
 /** Kinect Fusion Truncated Signed Distance Function voxel implementation for
@@ -53,13 +54,17 @@ struct MultiresTSDF {
       float x_last;
       int   y;
       int   delta_y;
+      float    fg;  // Foreground probability
+      uint8_t  r;   // Red channel
+      uint8_t  g;   // Green channel
+      uint8_t  b;   // Blue channel
 
       bool operator==(const VoxelData& other) const;
       bool operator!=(const VoxelData& other) const;
     };
 
-    static inline VoxelData invalid()  { return {1.f, 1.f, 0, 0}; }
-    static inline VoxelData initData() { return {1.f, 1.f, 0, 0}; }
+    static inline VoxelData invalid()  { return {1.f, 1.f, 0, 0, 0.f, 0u, 0u, 0u}; }
+    static inline VoxelData initData() { return {1.f, 1.f, 0, 0, 0.f, 0u, 0u, 0u}; }
 
     static float selectNodeValue(const VoxelData& /* data */) {
       return VoxelType::initData().x;
@@ -142,6 +147,8 @@ struct MultiresTSDF {
    */
   static void integrate(OctreeType&             map,
                         const se::Image<float>& depth_image,
+                        const se::Image<uint32_t>& rgba_image,
+                        const cv::Mat&             fg_image,
                         const Eigen::Matrix4f&  T_CM,
                         const SensorImpl&       sensor,
                         const unsigned          frame);

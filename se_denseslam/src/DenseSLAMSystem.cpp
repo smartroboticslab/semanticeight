@@ -236,6 +236,8 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
   VoxelImpl::integrate(
       *map_,
       depth_image_,
+      rgba_image_,
+      cv::Mat(image_res_.x(), image_res_.y(), se::integration_mask_t, cv::Scalar(0.0f)),
       T_CM,
       sensor,
       frame);

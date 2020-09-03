@@ -136,6 +136,8 @@ public:
   static inline bool updateVoxel(const float range_diff,
                                  const float tau,
                                  const float three_sigma,
+                                 const uint32_t rgba_value,
+                                 const se::integration_mask_elem_t fg_value,
                                  VoxelData&  voxel_data) {
 
     float sample_value;
@@ -158,6 +160,13 @@ public:
       return false;
 
     }
+
+    // Update the foreground probability.
+    voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.y) / (voxel_data.y + 1);
+    // Update the color.
+    voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y) / (voxel_data.y + 1);
+    voxel_data.g = (se::g_from_rgba(rgba_value) + voxel_data.g * voxel_data.y) / (voxel_data.y + 1);
+    voxel_data.b = (se::b_from_rgba(rgba_value) + voxel_data.b * voxel_data.y) / (voxel_data.y + 1);
 
     return weightedMeanUpdate(voxel_data, sample_value);
   }
@@ -210,6 +219,10 @@ public:
 
     float x_max = 0;
     short y_max = 0;
+    float fg_max = 0.0f;
+    uint8_t r_max = 0u;
+    uint8_t g_max = 0u;
+    uint8_t b_max = 0u;
     float o_max = -std::numeric_limits<float>::max();
     unsigned int observed_count = 0;
     unsigned int data_count = 0;
@@ -219,6 +232,10 @@ public:
         data_count++;
         x_max = child_data.x;
         y_max = child_data.y;
+        fg_max = child_data.fg;
+        r_max = child_data.r;
+        g_max = child_data.g;
+        b_max = child_data.b;
         o_max = x_max * y_max;
       }
       if (child_data.observed == true) {
@@ -232,6 +249,10 @@ public:
     if (data_count > 0) {
       node_data.x = x_max; // TODO: Need to check update?
       node_data.y = y_max;
+      node_data.fg = fg_max;
+      node_data.r = r_max;
+      node_data.g = g_max;
+      node_data.b = b_max;
       if (observed_count == 8) {
         node_data.observed = true;
       }
@@ -272,6 +293,10 @@ public:
 
             float x_max = 0;
             short y_max = 0;
+            float fg_max = 0.0f;
+            uint8_t r_max = 0u;
+            uint8_t g_max = 0u;
+            uint8_t b_max = 0u;
             float o_max = -std::numeric_limits<float>::max();
 
             int observed_count = 0;
@@ -289,6 +314,10 @@ public:
                       // Update max
                       x_max = child_data.x;
                       y_max = child_data.y;
+                      fg_max = child_data.fg;
+                      r_max = child_data.r;
+                      g_max = child_data.g;
+                      b_max = child_data.b;
                       o_max = x_max * y_max;
                   }
 
@@ -303,6 +332,10 @@ public:
             if (data_count > 0) {
               target_max_data.x = x_max;
               target_max_data.y = y_max;
+              target_max_data.fg = fg_max;
+              target_max_data.r = r_max;
+              target_max_data.g = g_max;
+              target_max_data.b = b_max;
               if (observed_count == 8) {
                 target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
               }
@@ -329,9 +362,17 @@ public:
 
             float x_mean = 0;
             short y_mean = 0;
+            float fg_mean = 0.0f;
+            uint16_t r_mean = 0u;
+            uint16_t g_mean = 0u;
+            uint16_t b_mean = 0u;
 
             float x_max = 0;
             short y_max = 0;
+            float fg_max = 0.0f;
+            uint8_t r_max = 0u;
+            uint8_t g_max = 0u;
+            uint8_t b_max = 0u;
             float o_max = -std::numeric_limits<float>::max();
 
             int observed_count = 0;
@@ -349,11 +390,19 @@ public:
                     data_count++;
                     x_mean += child_data.x;
                     y_mean += child_data.y;
+                    fg_mean += child_data.fg;
+                    r_mean += child_data.r;
+                    g_mean += child_data.g;
+                    b_mean += child_data.b;
 
                     if ((child_data.x * child_data.y) > o_max) {
                       // Update max
                       x_max = child_data.x;
                       y_max = child_data.y;
+                      fg_max = child_data.fg;
+                      r_max = child_data.r;
+                      g_max = child_data.g;
+                      b_max = child_data.b;
                       o_max = x_max * y_max;
                     }
                   }
@@ -370,6 +419,10 @@ public:
 
               target_data.x = x_mean / data_count;
               target_data.y = ceil((float) y_mean) / data_count;
+              target_data.fg = fg_mean / data_count;
+              target_data.r = r_mean / data_count;
+              target_data.g = g_mean / data_count;
+              target_data.b = b_mean / data_count;
               target_data.observed = false;
 
 //              target_data.x = x_mean / data_count;
@@ -386,6 +439,10 @@ public:
 
               target_max_data.x = x_max;
               target_max_data.y = y_max;
+              target_max_data.fg = fg_max;
+              target_max_data.r = r_max;
+              target_max_data.g = g_max;
+              target_max_data.b = b_max;
               if (observed_count == 8) {
                 target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
               }
@@ -440,9 +497,17 @@ public:
 
             float x_mean = 0;
             short y_mean = 0;
+            float fg_mean = 0.0f;
+            uint16_t r_mean = 0u;
+            uint16_t g_mean = 0u;
+            uint16_t b_mean = 0u;
 
             float x_max = 0;
             short y_max = 0;
+            float fg_max = 0.0f;
+            uint8_t r_max = 0u;
+            uint8_t g_max = 0u;
+            uint8_t b_max = 0u;
             float o_max = -std::numeric_limits<float>::max();
 
             int observed_count = 0;
@@ -461,11 +526,19 @@ public:
                     data_count++;
                     x_mean += child_data.x;
                     y_mean += child_data.y;
+                    fg_mean += child_data.fg;
+                    r_mean += child_data.r;
+                    g_mean += child_data.g;
+                    b_mean += child_data.b;
 
                     if ((child_max_data.x * child_max_data.y) > o_max) {
                       // Update max
                       x_max = child_max_data.x;
                       y_max = child_max_data.y;
+                      fg_max = child_max_data.fg;
+                      r_max = child_max_data.r;
+                      g_max = child_max_data.g;
+                      b_max = child_max_data.b;
                       o_max = x_max * y_max;
                     }
 
@@ -482,6 +555,10 @@ public:
             if (data_count > 0) {
               target_data.x = x_mean / data_count;
               target_data.y = ceil((float) y_mean) / data_count;
+              target_data.fg = fg_mean / data_count;
+              target_data.r = r_mean / data_count;
+              target_data.g = g_mean / data_count;
+              target_data.b = b_mean / data_count;
               target_data.observed = false;
 
 //              target_data.x = x_mean / data_count;
@@ -498,6 +575,10 @@ public:
 
               target_max_data.x = x_max;
               target_max_data.y = y_max;
+              target_max_data.fg = fg_max;
+              target_max_data.r = r_max;
+              target_max_data.g = g_max;
+              target_max_data.b = b_max;
               if (observed_count == 8) {
                 target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
               }
@@ -539,6 +620,10 @@ public:
 
     float x_max = -std::numeric_limits<float>::max();
     short y_max = 0;
+    float fg_max = 0.0f;
+    uint8_t r_max = 0u;
+    uint8_t g_max = 0u;
+    uint8_t b_max = 0u;
     float o_max = -std::numeric_limits<float>::max();
     unsigned int observed_count = 0;
     unsigned int data_count = 0;
@@ -557,6 +642,10 @@ public:
             data_count++;
             x_max = child_data.x;
             y_max = child_data.y;
+            fg_max = child_data.fg;
+            r_max = child_data.r;
+            g_max = child_data.g;
+            b_max = child_data.b;
             o_max = x_max * y_max;
           }
 
@@ -571,6 +660,10 @@ public:
     if (data_count > 0) {
       target_data.x = x_max;
       target_data.y = y_max;
+      target_data.fg = fg_max;
+      target_data.r = r_max;
+      target_data.g = g_max;
+      target_data.b = b_max;
       if (observed_count == 8) { ///<< If all children have been observed, set parent/target to observed.
         target_data.observed = true;
       }
@@ -587,6 +680,10 @@ public:
 
     float x_mean = 0;
     short y_mean = 0;
+    float fg_mean = 0.0f;
+    uint16_t r_mean = 0u;
+    uint16_t g_mean = 0u;
+    uint16_t b_mean = 0u;
     unsigned int observed_count = 0;
     unsigned int data_count = 0;
 
@@ -601,6 +698,10 @@ public:
             data_count++;
             x_mean += child_data.x;
             y_mean += child_data.y;
+            fg_mean += child_data.fg;
+            r_mean += child_data.r;
+            g_mean += child_data.g;
+            b_mean += child_data.b;
           }
           if (child_data.observed) {
             observed_count++;
@@ -612,6 +713,10 @@ public:
     if (data_count == 8) {
       target_data.x = x_mean / data_count;
       target_data.y = ((float) y_mean) / data_count;
+      target_data.fg = fg_mean / data_count;
+      target_data.r = r_mean / data_count;
+      target_data.g = g_mean / data_count;
+      target_data.b = b_mean / data_count;
       target_data.observed = true;
 
 //      // TODO: ^SWITCH 2 - Set observed if all children are known.

@@ -36,6 +36,7 @@
 #include "se/perfstats.h"
 #include "se/timings.h"
 
+#include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
 
 
@@ -54,14 +55,19 @@ struct OFusion {
      */
     struct VoxelData {
       float  x; /**< The occupancy value in log-odds. */
+      float    fg;  // Foreground probability
       double y; /**< The timestamp of the last update. */
+      uint16_t num; // Number of measurements fused for the foreground probability and color
+      uint8_t  r;   // Red channel
+      uint8_t  g;   // Green channel
+      uint8_t  b;   // Blue channel
 
       bool operator==(const VoxelData& other) const;
       bool operator!=(const VoxelData& other) const;
     };
 
-    static inline VoxelData invalid()     { return {0.f, 0.f}; }
-    static inline VoxelData initData() { return {0.f, 0.f}; }
+    static inline VoxelData invalid()  { return {0.f, 0.f, 0.f, 0u, 0u, 0u, 0u}; }
+    static inline VoxelData initData() { return {0.f, 0.f, 0.f, 0u, 0u, 0u, 0u}; }
 
     static inline float selectValue(const VoxelData& data) {
       return data.x;
@@ -162,6 +168,8 @@ struct OFusion {
    */
   static void integrate(OctreeType&             map,
                         const se::Image<float>& depth_image,
+                        const se::Image<uint32_t>& rgba_image,
+                        const cv::Mat&             fg_image,
                         const Eigen::Matrix4f&  T_CM,
                         const SensorImpl&       sensor,
                         const unsigned          frame);

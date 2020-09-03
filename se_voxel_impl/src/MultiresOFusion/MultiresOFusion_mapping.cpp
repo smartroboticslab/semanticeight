@@ -69,6 +69,8 @@ struct MultiresOFusionUpdate {
                         std::vector<bool>&                 low_variance_list,
                         std::vector<bool>&                 projects_inside_list,
                         const se::Image<float>&            depth_image,
+                        const se::Image<uint32_t>&         rgba_image,
+                        const cv::Mat&                     fg_image,
                         const se::DensePoolingImage<SensorImpl>* const pooling_depth_image,
                         const SensorImplType               sensor,
                         const Eigen::Matrix4f&             T_CM,
@@ -84,6 +86,8 @@ struct MultiresOFusionUpdate {
       low_variance_list_(low_variance_list),
       projects_inside_list_(projects_inside_list),
       depth_image_(depth_image),
+      rgba_image_(rgba_image),
+      fg_image_(fg_image),
       pooling_depth_image_(pooling_depth_image),
       sensor_(sensor),
       T_CM_(T_CM),
@@ -108,6 +112,8 @@ struct MultiresOFusionUpdate {
   std::vector<bool>& low_variance_list_;
   std::vector<bool>& projects_inside_list_;
   const se::Image<float>& depth_image_;
+  const se::Image<uint32_t>& rgba_image_;
+  const cv::Mat& fg_image_;
   const se::DensePoolingImage<SensorImpl>* const pooling_depth_image_;
   const SensorImplType sensor_;
   const Eigen::Matrix4f& T_CM_;
@@ -189,7 +195,11 @@ struct MultiresOFusionUpdate {
                       auto& buffer_data = block->bufferData(buffer_idx); ///<< Fetch value from buffer.
 
                       buffer_data.x = parent_data.x;
+                      buffer_data.fg = parent_data.fg;
                       buffer_data.y = parent_data.y; // (parent_data.y > 0) ? 1 : 0;
+                      buffer_data.r = parent_data.r;
+                      buffer_data.g = parent_data.g;
+                      buffer_data.b = parent_data.b;
                       buffer_data.observed = false; ///<< Set falls such that the observe count can work properly
 
                     } // i
@@ -340,7 +350,11 @@ struct MultiresOFusionUpdate {
                       auto& buffer_data = block->bufferData(buffer_idx); ///<< Fetch value from buffer.
 
                       buffer_data.x = parent_data.x;
+                      buffer_data.fg = parent_data.fg;
                       buffer_data.y = parent_data.y; // (parent_data.y > 0) ? 1 : 0;
+                      buffer_data.r = parent_data.r;
+                      buffer_data.g = parent_data.g;
+                      buffer_data.b = parent_data.b;
                       buffer_data.observed = false; ///<< Set falls such that the observe count can work properly
 
                     } // i
@@ -369,7 +383,7 @@ struct MultiresOFusionUpdate {
                                                                                                0, recommended_stride, 0,
                                                                                                0, 0, recommended_stride).finished()));
 
-      auto valid_predicate = [&](float depth_value){ return depth_value >= sensor_.near_plane; };
+      auto valid_predicate = [&](float depth_value, uint32_t /* rgba_value */, se::integration_mask_elem_t fg_value){ return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; };
 
       for (unsigned int z = 0; z < size_at_recommended_scale_li; z++) {
         for (unsigned int y = 0; y < size_at_recommended_scale_li; y++) {
@@ -380,7 +394,9 @@ struct MultiresOFusionUpdate {
 
             // Fetch image value
             float depth_value(0);
-            if (!sensor_.projectToPixelValue(sample_point_C, depth_image_, depth_value, valid_predicate)) {
+            uint32_t rgba_value(0);
+            se::integration_mask_elem_t fg_value(0);
+            if (!sensor_.projectToPixelValue(sample_point_C, depth_image_, depth_value, rgba_image_, rgba_value, fg_image_, fg_value, valid_predicate)) {
               continue;
             }
 
@@ -393,7 +409,7 @@ struct MultiresOFusionUpdate {
               const float sample_point_C_m = sensor_.measurementFromPoint(sample_point_C);
               const float range = sample_point_C.norm();
               const float range_diff = (sample_point_C_m - depth_value) * (range / sample_point_C_m);
-              block->incrBufferObservedCount(updating_model::updateVoxel(range_diff, tau, three_sigma, buffer_data));
+              block->incrBufferObservedCount(updating_model::updateVoxel(range_diff, tau, three_sigma, rgba_value, fg_value, buffer_data));
             }
           } // x
         } // y
@@ -423,7 +439,7 @@ struct MultiresOFusionUpdate {
                                                                                              0, integration_stride, 0,
                                                                                              0, 0, integration_stride).finished()));
 
-    auto valid_predicate = [&](float depth_value){ return depth_value >= sensor_.near_plane; };
+    auto valid_predicate = [&](float depth_value, uint32_t /* rgba_value */, se::integration_mask_elem_t fg_value){ return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; };
 
     for (unsigned int z = 0; z < size_at_integration_scale_li; z++) {
       for (unsigned int y = 0; y < size_at_integration_scale_li; y++) {
@@ -435,7 +451,9 @@ struct MultiresOFusionUpdate {
 
           // Fetch image value
           float depth_value(0);
-          if (!sensor_.projectToPixelValue(sample_point_C, depth_image_, depth_value, valid_predicate)) {
+          uint32_t rgba_value(0);
+          se::integration_mask_elem_t fg_value(0);
+          if (!sensor_.projectToPixelValue(sample_point_C, depth_image_, depth_value, rgba_image_, rgba_value, fg_image_, fg_value, valid_predicate)) {
             continue;
           }
 
@@ -448,7 +466,7 @@ struct MultiresOFusionUpdate {
             const float sample_point_C_m = sensor_.measurementFromPoint(sample_point_C);
             const float range = sample_point_C.norm();
             const float range_diff = (sample_point_C_m - depth_value) * (range / sample_point_C_m);
-            block->incrCurrObservedCount(updating_model::updateVoxel(range_diff, tau, three_sigma, voxel_data));
+            block->incrCurrObservedCount(updating_model::updateVoxel(range_diff, tau, three_sigma, rgba_value, fg_value, voxel_data));
           }
 
         } // x
@@ -546,8 +564,6 @@ struct MultiresOFusionUpdate {
       {
         auto init_data = parent->childData(node_idx); // Initalise child with parent value
         // Initialise remaining values that are not kept track of at node depth
-        init_data.x = init_data.x;
-        init_data.y = init_data.y;
         node = map_.pool().acquireBlock(init_data);
         VoxelBlockType* block =
             dynamic_cast<VoxelBlockType*>(node);
@@ -1157,6 +1173,8 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
  */
 void MultiresOFusion::integrate(OctreeType&             map,
                                 const se::Image<float>& depth_image,
+                                const se::Image<uint32_t>& rgba_image,
+                                const cv::Mat&             fg_image,
                                 const Eigen::Matrix4f&  T_CM,
                                 const SensorImpl&       sensor,
                                 const unsigned          frame) {
@@ -1174,7 +1192,7 @@ void MultiresOFusion::integrate(OctreeType&             map,
   std::vector<bool> projects_inside_list;  ///< Does the updated block reproject completely into the image? <bool>
   std::vector<std::set<NodeType*>> node_list(map.blockDepth());
   MultiresOFusionUpdate<SensorImpl> funct(map, block_list, node_list, free_list, low_variance_list, projects_inside_list,
-                                          depth_image, pooling_depth_image.get(), sensor, T_CM,
+                                          depth_image, rgba_image, fg_image, pooling_depth_image.get(), sensor, T_CM,
                                           voxel_dim, map.voxelDepth(), max_depth_value, frame);
 
   // Launch on the 8 voxels of the first depth

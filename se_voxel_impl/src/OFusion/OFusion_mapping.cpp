@@ -138,7 +138,9 @@ struct OFusionUpdate {
   template <typename DataHandlerT>
   void operator()(DataHandlerT&          handler,
                   const Eigen::Vector3f& point_C,
-                  const float            depth_value) {
+                  const float            depth_value,
+                  const uint32_t         rgba_value,
+                  const se::integration_mask_elem_t fg_value) {
 
     // Compute the occupancy probability for the current measurement.
     const float m = sensor_.measurementFromPoint(point_C);
@@ -158,6 +160,13 @@ struct OFusionUpdate {
     data.x = ofusion_update_logs(data.x, sample);
     data.x = se::math::clamp(data.x, OFusion::min_occupancy, OFusion::max_occupancy);
     data.y = timestamp_;
+    // Update the foreground probability.
+    data.fg = (fg_value + data.fg * data.num) / (data.num + 1);
+    // Update the color.
+    data.r = (se::r_from_rgba(rgba_value) + data.r * data.num) / (data.num + 1);
+    data.g = (se::g_from_rgba(rgba_value) + data.g * data.num) / (data.num + 1);
+    data.b = (se::b_from_rgba(rgba_value) + data.b * data.num) / (data.num + 1);
+    data.num = fminf(data.num + 1, 100);
 
     handler.set(data);
   }
@@ -167,6 +176,8 @@ struct OFusionUpdate {
 
 void OFusion::integrate(OctreeType&             map,
                         const se::Image<float>& depth_image,
+                        const se::Image<uint32_t>& rgba_image,
+                        const cv::Mat&             fg_image,
                         const Eigen::Matrix4f&  T_CM,
                         const SensorImpl&       sensor,
                         const unsigned          frame) {
@@ -175,7 +186,7 @@ void OFusion::integrate(OctreeType&             map,
 
   struct OFusionUpdate funct(sensor, timestamp);
 
-  se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image, funct);
+  se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image, rgba_image, fg_image, funct);
   TOCK("integrate")
 }
 

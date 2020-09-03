@@ -37,7 +37,7 @@
 #include "se/voxel_implementations/MultiresOFusion/DensePoolingImage.hpp"
 #include "se/sensor_implementation.hpp"
 
-
+#include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
 #include <chrono>
 #include <ctime>
@@ -70,19 +70,20 @@ struct MultiresOFusion {
    */
   struct VoxelType {
     struct VoxelData {
-      VoxelData() {};
-      VoxelData(float x, short y, bool observed) : x(x), y(y), observed(observed) {};
-
       float  x;             // Latest mean occupancy
+      float    fg;  // Foreground probability
       short  y;             // Mean number of integrations
+      uint8_t  r;   // Red channel
+      uint8_t  g;   // Green channel
+      uint8_t  b;   // Blue channel
       bool   observed;      // All children have been observed at least once
 
       bool operator==(const VoxelData& other) const;
       bool operator!=(const VoxelData& other) const;
     };
 
-    static inline VoxelData invalid()  { return {0.f, 0, false}; }
-    static inline VoxelData initData() { return {0.f, 0, false}; }
+    static inline VoxelData invalid()  { return {0.f, 0.f, 0, 0u, 0u, 0u, false}; }
+    static inline VoxelData initData() { return {0.f, 0.f, 0, 0u, 0u, 0u, false}; }
 
     static float selectNodeValue(const VoxelData& data) {
       return data.x;
@@ -224,6 +225,8 @@ struct MultiresOFusion {
    */
   static void integrate(OctreeType&             map,
                         const se::Image<float>& depth_image,
+                        const se::Image<uint32_t>& rgba_image,
+                        const cv::Mat&             fg_image,
                         const Eigen::Matrix4f&  T_CM,
                         const SensorImpl&       sensor,
                         const unsigned          frame);

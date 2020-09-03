@@ -53,12 +53,16 @@ public:
                      const Eigen::Matrix4f&  T_CM,
                      const SensorImpl        sensor,
                      const se::Image<float>& image,
+                     const se::Image<uint32_t>& rgba_image,
+                     const cv::Mat&             fg_image,
                      const Eigen::Vector3f&  sample_offset_frac) :
     octree_(octree),
     update_funct_(update_funct),
     T_CM_(T_CM),
     sensor_(sensor),
     image_(image),
+    rgba_image_(rgba_image),
+    fg_image_(fg_image),
     sample_offset_frac_(sample_offset_frac) {
   }
 
@@ -96,7 +100,7 @@ public:
 
     const Eigen::Vector3i voxel_coord_base = block->coordinates();
     const unsigned int scale_voxel_size    = block->scaleVoxelSize(block->current_scale());
-    auto valid_predicate = [&](float depth_value){ return depth_value >= sensor_.near_plane; };
+    auto valid_predicate = [&](float depth_value, uint32_t /* rgba_value */, se::integration_mask_elem_t fg_value){ return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; };
 
     const Eigen::Vector3f voxel_sample_coord_base_f   = se::get_sample_coord(voxel_coord_base, scale_voxel_size, sample_offset_frac_);
     const Eigen::Vector3f sample_point_base_C         = (T_CM_ * (voxel_dim * voxel_sample_coord_base_f).homogeneous()).head(3);
@@ -123,7 +127,9 @@ public:
 
           // Fetch image value
           float image_value(0);
-          if (!sensor_.projectToPixelValue(sample_point_C, image_, image_value, valid_predicate)) {
+          uint32_t rgba_value(0);
+          se::integration_mask_elem_t fg_value(0);
+          if (!sensor_.projectToPixelValue(sample_point_C, image_, image_value, rgba_image_, rgba_value, fg_image_, fg_value, valid_predicate)) {
             continue;
           }
 
@@ -131,7 +137,7 @@ public:
 
           /* Update the voxel. */
           VoxelBlockHandler<DataType> handler = {block, voxel_coord};
-          update_funct_(handler, sample_point_C, image_value);
+          update_funct_(handler, sample_point_C, image_value, rgba_value, fg_value);
 
         } // i
       } // j
@@ -161,14 +167,16 @@ public:
       }
 
       float image_value(0);
-      if (!sensor_.projectToPixelValue(child_point_C, image_, image_value,
-          [&](float depth_value){ return depth_value >= sensor_.near_plane; })) {
+      uint32_t rgba_value(0);
+      se::integration_mask_elem_t fg_value(0);
+      if (!sensor_.projectToPixelValue(child_point_C, image_, image_value, rgba_image_, rgba_value, fg_image_, fg_value,
+          [&](float depth_value, uint32_t /* rgba_value */, se::integration_mask_elem_t fg_value){ return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; })) {
         continue;
       }
 
       /* Update the child Node. */
       NodeHandler<DataType> handler = {node, child_idx};
-      update_funct_(handler, child_point_C, image_value);
+      update_funct_(handler, child_point_C, image_value, rgba_value, fg_value);
     }
   }
 
@@ -204,6 +212,8 @@ private:
   const Eigen::Matrix4f& T_CM_;
   const SensorImpl sensor_;
   const se::Image<float>& image_;
+  const se::Image<uint32_t>& rgba_image_;
+  const cv::Mat&             fg_image_;
   const Eigen::Vector3f sample_offset_frac_;
   std::vector<VoxelBlockType*> active_list_;
 };
@@ -217,10 +227,12 @@ void projective_octree(OctreeT<DataType>&      octree,
                        const Eigen::Matrix4f&  T_CM,
                        const SensorImpl&       sensor,
                        const se::Image<float>& image,
+                       const se::Image<uint32_t>& rgba_image,
+                       const cv::Mat&             fg_image,
                        UpdateF&                funct) {
 
   projective_functor<DataType, OctreeT, UpdateF>
-    it(octree, funct, T_CM, sensor, image, sample_offset_frac);
+    it(octree, funct, T_CM, sensor, image, rgba_image, fg_image, sample_offset_frac);
   it.apply();
 }
 }

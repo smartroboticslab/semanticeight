@@ -50,11 +50,15 @@ struct MultiresTSDFUpdate {
 
   MultiresTSDFUpdate(const OctreeType&       map,
                      const se::Image<float>& depth_image,
+                     const se::Image<uint32_t>& rgba_image,
+                     const cv::Mat&             fg_image,
                      const Eigen::Matrix4f&  T_CM,
                      const SensorImpl        sensor,
                      const float             voxel_dim) :
       map_(map),
       depth_image_(depth_image),
+      rgba_image_(rgba_image),
+      fg_image_(fg_image),
       T_CM_(T_CM),
       sensor_(sensor),
       voxel_dim_(voxel_dim),
@@ -62,6 +66,8 @@ struct MultiresTSDFUpdate {
 
   const OctreeType& map_;
   const se::Image<float>& depth_image_;
+  const se::Image<uint32_t>& rgba_image_;
+  const cv::Mat&             fg_image_;
   const Eigen::Matrix4f& T_CM_;
   const SensorImpl sensor_;
   const float voxel_dim_;
@@ -266,8 +272,11 @@ struct MultiresTSDFUpdate {
                 }
 
                 float depth_value(0);
-                if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value,
-                    [](float depth_value){ return depth_value > 0; })) {
+                uint32_t rgba_value(0);
+                se::integration_mask_elem_t fg_value(0);
+                if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value, rgba_image_, rgba_value, fg_image_, fg_value,
+                    [&](float depth_value, uint32_t, se::integration_mask_elem_t fg_value)
+                    { return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; })) {
                   continue;
                 }
 
@@ -281,6 +290,12 @@ struct MultiresTSDFUpdate {
                   voxel_data.x = se::math::clamp(
                       (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
                       (static_cast<float>(voxel_data.y) + 1.f), -1.f, 1.f);
+                  // Update the foreground probability.
+                  voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.y) / (voxel_data.y + 1);
+                  // Update the color.
+                  voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y) / (voxel_data.y + 1);
+                  voxel_data.g = (se::g_from_rgba(rgba_value) + voxel_data.g * voxel_data.y) / (voxel_data.y + 1);
+                  voxel_data.b = (se::b_from_rgba(rgba_value) + voxel_data.b * voxel_data.y) / (voxel_data.y + 1);
                   voxel_data.y = fminf(voxel_data.y + 1, MultiresTSDF::max_weight);
                   voxel_data.delta_y++;
                 }
@@ -333,8 +348,11 @@ struct MultiresTSDFUpdate {
             continue;
           }
           float depth_value(0);
-          if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value,
-              [&](float depth_value){ return depth_value >= sensor_.near_plane; })) {
+          uint32_t rgba_value(0);
+          se::integration_mask_elem_t fg_value(0);
+          if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value, rgba_image_, rgba_value, fg_image_, fg_value,
+              [&](float depth_value, uint32_t, se::integration_mask_elem_t fg_value)
+              { return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; })) {
             continue;
           }
 
@@ -350,6 +368,12 @@ struct MultiresTSDFUpdate {
                 (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
                 (static_cast<float>(voxel_data.y) + 1.f),
                 -1.f, 1.f);
+            // Update the foreground probability.
+            voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.y) / (voxel_data.y + 1);
+            // Update the color.
+            voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y) / (voxel_data.y + 1);
+            voxel_data.g = (se::g_from_rgba(rgba_value) + voxel_data.g * voxel_data.y) / (voxel_data.y + 1);
+            voxel_data.b = (se::b_from_rgba(rgba_value) + voxel_data.b * voxel_data.y) / (voxel_data.y + 1);
             voxel_data.y = fminf(voxel_data.y + 1, MultiresTSDF::max_weight);
             voxel_data.delta_y++;
             block->setData(voxel_coord, scale, voxel_data);
@@ -364,6 +388,8 @@ struct MultiresTSDFUpdate {
 
 void MultiresTSDF::integrate(OctreeType&             map,
                              const se::Image<float>& depth_image,
+                             const se::Image<uint32_t>& rgba_image,
+                             const cv::Mat&             fg_image,
                              const Eigen::Matrix4f&  T_CM,
                              const SensorImpl&       sensor,
                              const unsigned          frame) {
@@ -387,7 +413,7 @@ void MultiresTSDF::integrate(OctreeType&             map,
 
   std::deque<se::Node<VoxelType> *> node_queue;
   struct MultiresTSDFUpdate block_update_funct(
-      map, depth_image, T_CM, sensor, voxel_dim);
+      map, depth_image, rgba_image, fg_image, T_CM, sensor, voxel_dim);
   se::functor::internal::parallel_for_each(active_list, block_update_funct);
 
   for (const auto& block : active_list) {
