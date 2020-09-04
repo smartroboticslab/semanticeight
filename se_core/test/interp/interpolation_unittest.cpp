@@ -50,6 +50,10 @@ struct TestVoxelT {
   using MemoryPoolType = se::PagedMemoryPool<TestVoxelT>;
   template <typename BufferT>
   using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
+
+  static double selectValue(VoxelData& data) {
+    return data;
+  };
 };
 
 float test_fun(float x, float y, float z) {

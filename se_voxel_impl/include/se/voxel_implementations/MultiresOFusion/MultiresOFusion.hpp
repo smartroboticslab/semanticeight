@@ -88,6 +88,22 @@ struct MultiresOFusion {
     static inline VoxelData invalid()  { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
     static inline VoxelData initData() { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
 
+    static float selectNodeValue(const VoxelData& data) {
+      return (data.y > 0.f) ? data.x / data.y : VoxelType::initData().x; // TODO: Is it x or x_max
+    };
+
+    static float selectVoxelValue(const VoxelData& data) {
+      return data.x;
+    };
+
+    static bool isInside(const VoxelData& data) {
+      return data.x_max > surface_boundary;
+    };
+
+    static bool isValid(const VoxelData& data) {
+      return data.observed;
+    };
+
     using VoxelBlockType = se::VoxelBlockSingle<MultiresOFusion::VoxelType>;
 
     using MemoryPoolType = se::MemoryPool<MultiresOFusion::VoxelType>;
