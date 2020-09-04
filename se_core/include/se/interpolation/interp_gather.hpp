@@ -353,22 +353,28 @@ namespace internal {
     return gather_values(octree, base_coord, scale, select_value, select_value, values);
   }
 
-  /*! \brief Fetch the field sample corresponding to the octant neighbour along the
-   * specified direction. If the search fails the second element of the returned
-   * is set to false.
-   * \param stack stack of ancestor nodes of octant
-   * \param octant base_coord octant.
-   * \param max_depth maximum depth of the tree.
-   * \param dir direction along which to fetch the neighbou. Only positive
-   * search directions are allowed along any axes.
+  /**
+   * \brief Fetch the node value corresponding to the octant neighbour along the
+   * specified direction.
+   *
+   * \param[in] stack             The stack of ancestor nodes of octant
+   * \param[in] octant            The base_coord octant.
+   * \param[in] max_depth         The maximum depth of the tree.
+   * \param[in] dir               The direction along which to fetch the neighbour.
+   * \param[in] select_node_value Lambda function selecting the node's value.
+   *
+   * \note Only positive search directions are allowed along any axes.
+   *
+   * \return The siblings note value. If the search fails the second element of the returned
+   *         is set to Eigen::Vector3i::Constant(INVALID_SAMPLE).
    */
-  template <typename Precision, typename FieldType, typename VoxelValueSelector>
+  template <typename Precision, typename FieldType, typename NodeValueSelector>
   static inline std::pair<Precision, Eigen::Vector3i> fetch_neighbour_sample(
-      Node<FieldType>*   stack[],
-      Node<FieldType>*   octant,
-      const int          max_depth,
-      const int          dir,
-      VoxelValueSelector select_voxel_value) {
+      Node<FieldType>*  stack[],
+      Node<FieldType>*  octant,
+      const int         max_depth,
+      const int         dir,
+      NodeValueSelector select_node_value) {
 
     int depth = se::keyops::depth(octant->code());
     while (depth > 0) {
@@ -378,7 +384,7 @@ namespace internal {
         const int child_size = 1 << (max_depth - depth);
         const Eigen::Vector3i coords = se::keyops::decode(stack[depth-1]->code())
             + child_size * Eigen::Vector3i((sibling & 1), (sibling & 2) >> 1, (sibling & 4) >> 2);
-        return {select_voxel_value(stack[depth - 1]->childData(sibling)), coords};
+        return {select_node_value(stack[depth - 1]->childData(sibling)), coords};
       }
       depth--;
     }
@@ -387,13 +393,18 @@ namespace internal {
 
 
 
-  /*! \brief Fetch the neighbour of octant in the desired direction which is at
+  /**
+   * \brief Fetch the neighbour of octant in the desired direction which is at
    * most refined as the starting octant.
-   * \param stack stack of ancestor nodes of octant
-   * \param octant base_coord octant.
-   * \param max_depth maximum depth of the tree.
-   * \param dir direction along which to fetch the neighbou. Only positive
-   * search directions are allowed along any axes.
+   *
+   * \param[in] stack     The stack of ancestor nodes of octant
+   * \param[in] octant    The base_coord octant.
+   * \param[in] max_depth The maximum depth of the tree.
+   * \param[in] dir       The direction along which to fetch the neighbour.
+   *
+   * \note Only positive search directions are allowed along any axes.
+   *
+   * \result The siblings node pointer. If the search fails a nullptr is returned.
    */
   template <typename FieldType>
   static inline Node<FieldType>* fetch_neighbour(Node<FieldType>* stack[],
