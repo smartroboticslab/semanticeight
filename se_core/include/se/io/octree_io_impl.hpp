@@ -37,6 +37,30 @@ int se::save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
 
 
 
+template <typename VoxelT, typename NodeValueSelector, typename VoxelValueSelector>
+int se::save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
+                                const std::string         filename,
+                                const Eigen::Vector3i&    lower_coord,
+                                const Eigen::Vector3i&    upper_coord,
+                                NodeValueSelector         select_node_value,
+                                VoxelValueSelector        select_voxel_value,
+                                const int                 min_scale) {
+
+  auto get_value = [&](int x, int y, int z) {
+    typename VoxelT::VoxelData data;
+    const unsigned scale = octree.get(x, y, z, data, min_scale);
+    if (scale >= VoxelT::VoxelBlockType::max_scale) { // scale == max_scale should be the same value in the node and voxel
+      return select_node_value(data);
+    } else {
+      return select_voxel_value(data);
+    }
+  };
+
+  return se::save_3d_slice_vtk(filename, lower_coord, upper_coord, get_value, min_scale);
+}
+
+
+
 template <typename VoxelT>
 int se::save_3d_scale_slice_vtk(const se::Octree<VoxelT>& octree,
                                 const std::string         filename,
