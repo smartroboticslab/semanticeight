@@ -139,8 +139,7 @@ class InterpolationTest : public ::testing::Test {
 
 TEST_F(InterpolationTest, IDWInterp) {
   Eigen::Vector3f voxel_coord_f(128.4f, 129.1f, 127.5f);
-  auto select_value =  [](const TestVoxelT::VoxelData& data) { return data; };
-  se::internal::idw_interp<TestVoxelT::VoxelData>(octree_, voxel_coord_f, select_value);
+  se::internal::idw_interp<TestVoxelT::VoxelData>(octree_, voxel_coord_f, TestVoxelT::selectValue);
 
 }
 
