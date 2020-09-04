@@ -274,39 +274,47 @@ public:
    * used in interp_gather should be used.
    */
   template <bool safe>
-  std::array<VoxelData, 6> getFaceNeighbours(const int x,
-                                             const int y,
-                                             const int z) const;
+  std::array<VoxelData, 6> getFaceNeighbours(const int x, const int y, const int z) const;
 
   /*! \brief Fetch the voxel block which contains voxel (x,y,z)
-   * \param x x coordinate in interval [0, size - 1]
-   * \param y y coordinate in interval [0, size - 1]
-   * \param z z coordinate in interval [0, size - 1]
+   *
+   * \param x The x coordinate in interval [0, size - 1]
+   * \param y The y coordinate in interval [0, size - 1]
+   * \param z The z coordinate in interval [0, size - 1]
+   *
+   * \return The fetched voxel block. If the voxel block is not allocated a nullptr is returned.
    */
   VoxelBlockType* fetch(const int x, const int y, const int z) const;
 
   /*! \brief Fetch the voxel block which contains voxel (x,y,z)
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
    *                        be in the interval [0, size).
+   *
+   * \return The fetched voxel block. If the voxel block is not allocated a nullptr is returned.
    */
   VoxelBlockType* fetch(const Eigen::Vector3i& voxel_coord) const;
 
   /*! \brief Fetch the node (x,y,z) at depth
-   * \param x x coordinate in interval [0, size - 1]
-   * \param y y coordinate in interval [0, size - 1]
-   * \param z z coordinate in interval [0, size - 1]
-   * \param depth depth to be searched
+   *
+   * \param x     The x coordinate in interval [0, size - 1]
+   * \param y     The y coordinate in interval [0, size - 1]
+   * \param z     The z coordinate in interval [0, size - 1]
+   * \param depth The depth to be searched.
+   *
+   * \return The fetched node. If the node at depth is not allocated a nullptr is returned.
    */
-  Node<T>* fetch_node(const int x, const int y, const int z,
-      const int depth) const;
+  Node<T>* fetchNode(const int x, const int y, const int z, const int depth) const;
 
   /*! \brief Fetch the node (x,y,z) at depth
+   *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
    *                        be in the interval [0, size).
-   * \param[in] depth depth to be searched
+   * \param[in] depth       The depth to be searched.
+   *
+   * \return The fetched node. If the node at depth is not allocated a nullptr is returned.
    */
-  Node<T>* fetch_node(const Eigen::Vector3i& voxel_coord,
-                      const int depth) const;
+  Node<T>* fetchNode(const Eigen::Vector3i& voxel_coord,
+                     const int              depth) const;
 
   /*! \brief Insert the octant at (x,y,z). Not thread safe.
    * \param x x coordinate in interval [0, size - 1]

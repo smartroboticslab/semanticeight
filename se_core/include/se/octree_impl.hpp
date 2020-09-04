@@ -348,7 +348,7 @@ inline typename Octree<T>::VoxelBlockType* Octree<T>::fetch(const int x, const i
 
   Node<T>* node = root_;
   if(!node) {
-    return NULL;
+    return nullptr;
   }
 
   // Get the block.
@@ -356,7 +356,7 @@ inline typename Octree<T>::VoxelBlockType* Octree<T>::fetch(const int x, const i
   for(; node_size >= block_size; node_size /= 2){
     node = node->child((x & node_size) > 0u, (y & node_size) > 0u, (z & node_size) > 0u);
     if(!node){
-      return NULL;
+      return nullptr;
     }
   }
   return static_cast<VoxelBlockType* > (node);
@@ -372,12 +372,11 @@ inline typename Octree<T>::VoxelBlockType* Octree<T>::fetch(const Eigen::Vector3
 
 
 template <typename T>
-inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
-   const int z, const int depth) const {
+inline Node<T>* Octree<T>::fetchNode(const int x, const int y, const int z, const int depth) const {
 
   Node<T>* node = root_;
   if(!node) {
-    return NULL;
+    return nullptr;
   }
 
   // Get the block.
@@ -385,7 +384,7 @@ inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
   for(int d = 1; node_size >= block_size && d <= depth; node_size /= 2, ++d){
     node = node->child((x & node_size) > 0u, (y & node_size) > 0u, (z & node_size) > 0u);
     if(!node){
-      return NULL;
+      return nullptr;
     }
   }
   return node;
@@ -394,9 +393,9 @@ inline Node<T>* Octree<T>::fetch_node(const int x, const int y,
 
 
 template <typename T>
-inline Node<T>* Octree<T>::fetch_node(const Eigen::Vector3i& voxel_coord,
-                                      const int              depth) const {
-  return fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
+inline Node<T>* Octree<T>::fetchNode(const Eigen::Vector3i& voxel_coord,
+                                     const int              depth) const {
+  return fetchNode(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
 }
 
 

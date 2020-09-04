@@ -86,7 +86,7 @@ TEST(AllocationTest, FetchOctant) {
   octree.allocate(allocation_list, 1);
 
   const int depth = 3; /* 32 voxels per side */
-  se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
+  se::Node<TestVoxelT>* node = octree.fetchNode(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
   se::key_t fetched_code = node->code();
 
   const se::key_t gt_code = octree.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
@@ -148,7 +148,7 @@ TEST(AllocationTest, ParentInsert) {
   EXPECT_NE(block, nullptr);
   se::Node<TestVoxelT>* parent = block->parent();
   for(int depth = block_depth - 1; depth >= 0; depth--){
-    se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
+    se::Node<TestVoxelT>* node = octree.fetchNode(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
     ASSERT_EQ(parent, node);
     parent = parent->parent();
   }
@@ -171,7 +171,7 @@ TEST(AllocationTest, ParentAllocation) {
   EXPECT_NE(block, nullptr);
   se::Node<TestVoxelT>* parent = block->parent();
   for(int depth = block_depth - 1; depth >= 0; depth--){
-    se::Node<TestVoxelT>* node = octree.fetch_node(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
+    se::Node<TestVoxelT>* node = octree.fetchNode(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), depth);
     ASSERT_EQ(parent, node);
     parent = parent->parent();
   }
