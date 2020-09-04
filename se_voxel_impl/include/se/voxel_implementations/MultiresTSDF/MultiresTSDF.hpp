@@ -58,7 +58,7 @@ struct MultiresTSDF {
       bool operator!=(const VoxelData& other) const;
     };
 
-    static inline VoxelData invalid()     { return {1.f, 1.f, 0, 0}; }
+    static inline VoxelData invalid()  { return {1.f, 1.f, 0, 0}; }
     static inline VoxelData initData() { return {1.f, 1.f, 0, 0}; }
 
     static float selectNodeValue(const VoxelData& /* data */) {

@@ -300,8 +300,6 @@ Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
     // Ray passes only through free space or intersects with the map before t_near or after t_far.
     return Eigen::Vector4f::Zero();
   }
-  auto select_node_occupancy = [](const auto& data){ return (data.y > 0.f) ? data.x / data.y : VoxelType::initData().x; };
-  auto select_voxel_occupancy = [](const auto& data){ return data.x; };
 
   Eigen::Vector3f ray_pos_M = Eigen::Vector3f::Zero();
 
@@ -313,7 +311,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
   Eigen::Vector3f point_M_tt = Eigen::Vector3f::Zero();
   int scale_tt = 0;
 
-  if (!find_valid_point(map, select_node_occupancy, select_voxel_occupancy,
+  if (!find_valid_point(map, VoxelType::selectNodeValue, VoxelType::selectVoxelValue,
                         ray_origin_M, ray_dir_M, step_size, t_far, t, value_t, point_M_t)) {
     return Eigen::Vector4f::Zero();
   }
@@ -327,7 +325,7 @@ Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
       map.getAtPoint(ray_pos_M, data);
       if (data.y == 0) {
         t += step_size;
-        if (!find_valid_point(map, select_node_occupancy, select_voxel_occupancy,
+        if (!find_valid_point(map, VoxelType::selectNodeValue, VoxelType::selectVoxelValue,
                               ray_origin_M, ray_dir_M, step_size, t_far, t, value_t, point_M_t)) {
           return Eigen::Vector4f::Zero();
         }
@@ -340,12 +338,12 @@ Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
       point_M_tt = ray_pos_M;
       if (value_tt > -0.2f) {
         bool is_valid = false;
-        auto interp_res = map.interpAtPoint(ray_pos_M, select_node_occupancy, select_voxel_occupancy, 0, is_valid);
+        auto interp_res = map.interpAtPoint(ray_pos_M, VoxelType::selectNodeValue, VoxelType::selectVoxelValue, 0, is_valid);
         value_tt = interp_res.first;
         scale_tt = interp_res.second;
         if (!is_valid) {
           t += step_size;
-          if (!find_valid_point(map, select_node_occupancy, select_voxel_occupancy,
+          if (!find_valid_point(map, VoxelType::selectNodeValue, VoxelType::selectVoxelValue,
                                 ray_origin_M, ray_dir_M, step_size, t_far, t, value_t, point_M_t)) {
             return Eigen::Vector4f::Zero();
           }
