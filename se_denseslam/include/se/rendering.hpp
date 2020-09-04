@@ -97,8 +97,9 @@ void raycastKernel(const se::Octree<typename VoxelImplT::VoxelType>& map,
       if (surface_intersection_M.w() >= 0.f) {
         surface_point_cloud_M[x + y * surface_point_cloud_M.width()] = surface_intersection_M.head<3>();
         Eigen::Vector3f surface_normal = map.gradAtPoint(surface_intersection_M.head<3>(),
-            [](const auto& data){ return data.x; },
-            static_cast<int>(surface_intersection_M.w() + 0.5f));
+                                                         VoxelImplT::VoxelType::selectNodeValue,
+                                                         VoxelImplT::VoxelType::selectVoxelValue,
+                                                         static_cast<int>(surface_intersection_M.w() + 0.5f));
         se::internal::scale_image(x, y) = static_cast<int>(surface_intersection_M.w());
         if (surface_normal.norm() == 0.f) {
           surface_normals_M[pixel.x() + pixel.y() * surface_normals_M.width()] = Eigen::Vector3f(INVALID, 0.f, 0.f);

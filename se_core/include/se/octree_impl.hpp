@@ -674,10 +674,150 @@ inline std::pair<float, int> Octree<T>::interpAtPoint(
 
 
 template <typename T>
-template <typename FieldSelector>
+template <typename ValueSelector>
 Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
-                                FieldSelector          select_value,
+                                ValueSelector          select_value,
                                 const int              min_scale) const {
+
+  auto get_value = [&](int x, int y, int z, VoxelBlockType* block) {
+    VoxelData data;
+    get(x, y, z, block, data, min_scale);
+    select_value(data);
+  };
+
+  return gradImpl(voxel_coord_f, get_value, min_scale);
+}
+
+template <typename T>
+template <typename ValueSelector, typename ValidChecker>
+Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
+                                ValueSelector          select_value,
+                                ValidChecker           check_is_valid,
+                                bool&                  is_valid,
+                                const int              min_scale) const {
+
+  is_valid = true;
+
+  auto get_values = [&](int x, int y, int z, VoxelBlockType* block) {
+    VoxelData data;
+    get(x, y, z, block, data, min_scale);
+    if (is_valid) {
+      is_valid = check_is_valid(data);
+    }
+    return select_value(data);
+  };
+
+  return gradImpl(voxel_coord_f, get_values, min_scale);
+}
+
+template <typename T>
+template <typename NodeValueSelector, typename VoxelValueSelector>
+Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
+                                NodeValueSelector      select_node_value,
+                                VoxelValueSelector     select_voxel_value,
+                                const int              min_scale) const {
+
+  auto get_values = [&](int x, int y, int z, VoxelBlockType* block) {
+    VoxelData data;
+    const unsigned int scale = get(x, y, z, block, data, min_scale);
+    if (scale > VoxelBlockType::max_scale) {
+      return select_node_value(data);
+    } else {
+      return select_voxel_value(data);
+    }
+  };
+
+  return gradImpl(voxel_coord_f, get_values, min_scale);
+}
+
+template <typename T>
+template <typename NodeValueSelector, typename VoxelValueSelector, typename ValidChecker>
+Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
+                                NodeValueSelector      select_node_value,
+                                VoxelValueSelector     select_voxel_value,
+                                ValidChecker           check_is_valid,
+                                bool&                  is_valid,
+                                const int              min_scale) const {
+
+  is_valid = true;
+
+  auto get_values = [&](int x, int y, int z, VoxelBlockType* block) {
+    VoxelData data;
+    const unsigned int scale = get(x, y, z, block, data, scale);
+    if (is_valid) {
+      is_valid = check_is_valid(data);
+    }
+    if (scale > VoxelBlockType::max_scale_) {
+      return select_node_value(data);
+    } else {
+      return select_voxel_value(data);
+    }
+  };
+
+  return gradImpl(voxel_coord_f, get_values, min_scale);
+}
+
+
+
+template <typename T>
+template <typename ValueSelector>
+inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
+                                              ValueSelector          select_value,
+                                              const int              min_scale) const {
+
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  return grad(voxel_coord_f, select_value, min_scale);
+}
+
+
+
+template <typename T>
+template <typename ValueSelector, typename ValidChecker>
+inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
+                                              ValueSelector          select_value,
+                                              ValidChecker           check_is_valid,
+                                              bool&                  is_valid,
+                                              const int              min_scale) const {
+
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  return grad(voxel_coord_f, select_value, min_scale);
+}
+
+
+
+template <typename T>
+template <typename NodeValueSelector, typename VoxelValueSelector>
+inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
+                                              NodeValueSelector      select_node_value,
+                                              VoxelValueSelector     select_voxel_value,
+                                              const int              min_scale) const {
+
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  return grad(voxel_coord_f, select_node_value, select_voxel_value, min_scale);
+}
+
+
+
+template <typename T>
+template <typename NodeValueSelector, typename VoxelValueSelector, typename ValidChecker>
+inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
+                                              NodeValueSelector      select_node_value,
+                                              VoxelValueSelector     select_voxel_value,
+                                              ValidChecker           check_is_valid,
+                                              bool&                  is_valid,
+                                              const int              min_scale) const {
+
+  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  return grad(voxel_coord_f, select_node_value, select_voxel_value, check_is_valid, is_valid, min_scale);
+}
+
+
+
+template <typename T>
+template <typename ValuesGetter>
+Eigen::Vector3f Octree<T>::gradImpl(const Eigen::Vector3f& voxel_coord_f,
+                                    ValuesGetter           get_values,
+                                    const int              min_scale) const {
 
   int iter = 0;
   int scale = min_scale;
@@ -686,7 +826,7 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
   Eigen::Vector3f gradient = Eigen::Vector3f::Constant(0);
   while (iter < 3) {
     const int stride = 1 << scale;
-    const Eigen::Vector3f scaled_voxel_coord_f = 1.f/stride * voxel_coord_f - sample_offset_frac_;
+    const Eigen::Vector3f scaled_voxel_coord_f = 1.f / stride * voxel_coord_f - sample_offset_frac_;
     factor =  math::fracf(scaled_voxel_coord_f);
     const Eigen::Vector3i base_coord = stride * scaled_voxel_coord_f.cast<int>();
     Eigen::Vector3i lower_lower_coord = (base_coord - stride * Eigen::Vector3i::Constant(1)).cwiseMax(Eigen::Vector3i::Constant(0));
@@ -698,75 +838,68 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
     Eigen::Vector3i & lower_coord = lower_upper_coord;
     Eigen::Vector3i & upper_coord = upper_lower_coord;
 
-
     VoxelBlockType* block = fetch(base_coord.x(), base_coord.y(), base_coord.z());
 
-    auto get_value = [&](int x, int y, int z) {
-      VoxelData data;
-      get(x, y, z, block, data, scale);
-      return select_value(data);
-    };
-
-    gradient.x() = (((get_value(upper_lower_coord.x(), lower_coord.y(), lower_coord.z())
-                    - get_value(lower_lower_coord.x(), lower_coord.y(), lower_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_upper_coord.x(), lower_coord.y(), lower_coord.z())
-                    - get_value(lower_upper_coord.x(), lower_coord.y(), lower_coord.z())) * factor.x()) * (1 - factor.y())
-                  + ((get_value(upper_lower_coord.x(), upper_coord.y(), lower_coord.z())
-                    - get_value(lower_lower_coord.x(), upper_coord.y(), lower_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_upper_coord.x(), upper_coord.y(), lower_coord.z())
-                    - get_value(lower_upper_coord.x(), upper_coord.y(), lower_coord.z())) * factor.x()) * factor.y()) * (1 - factor.z())
-                 + (((get_value(upper_lower_coord.x(), lower_coord.y(), upper_coord.z())
-                    - get_value(lower_lower_coord.x(), lower_coord.y(), upper_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_upper_coord.x(), lower_coord.y(), upper_coord.z())
-                    - get_value(lower_upper_coord.x(), lower_coord.y(), upper_coord.z())) * factor.x()) * (1 - factor.y())
-                  + ((get_value(upper_lower_coord.x(), upper_coord.y(), upper_coord.z())
-                    - get_value(lower_lower_coord.x(), upper_coord.y(), upper_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_upper_coord.x(), upper_coord.y(), upper_coord.z())
-                    - get_value(lower_upper_coord.x(), upper_coord.y(), upper_coord.z())) * factor.x()) * factor.y()) * factor.z();
+    gradient.x() = (((get_values(upper_lower_coord.x(), lower_coord.y(), lower_coord.z(), block)
+                    - get_values(lower_lower_coord.x(), lower_coord.y(), lower_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_upper_coord.x(), lower_coord.y(), lower_coord.z(), block)
+                    - get_values(lower_upper_coord.x(), lower_coord.y(), lower_coord.z(), block)) * factor.x()) * (1 - factor.y())
+                  + ((get_values(upper_lower_coord.x(), upper_coord.y(), lower_coord.z(), block)
+                    - get_values(lower_lower_coord.x(), upper_coord.y(), lower_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_upper_coord.x(), upper_coord.y(), lower_coord.z(), block)
+                    - get_values(lower_upper_coord.x(), upper_coord.y(), lower_coord.z(), block)) * factor.x()) * factor.y()) * (1 - factor.z())
+                 + (((get_values(upper_lower_coord.x(), lower_coord.y(), upper_coord.z(), block)
+                    - get_values(lower_lower_coord.x(), lower_coord.y(), upper_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_upper_coord.x(), lower_coord.y(), upper_coord.z(), block)
+                    - get_values(lower_upper_coord.x(), lower_coord.y(), upper_coord.z(), block)) * factor.x()) * (1 - factor.y())
+                  + ((get_values(upper_lower_coord.x(), upper_coord.y(), upper_coord.z(), block)
+                    - get_values(lower_lower_coord.x(), upper_coord.y(), upper_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_upper_coord.x(), upper_coord.y(), upper_coord.z(), block)
+                    - get_values(lower_upper_coord.x(), upper_coord.y(), upper_coord.z(), block)) * factor.x()) * factor.y()) * factor.z();
     if (scale != last_scale) {
       last_scale = scale;
       iter++;
       continue;
     }
 
-    gradient.y() = (((get_value(lower_coord.x(), upper_lower_coord.y(), lower_coord.z())
-                    - get_value(lower_coord.x(), lower_lower_coord.y(), lower_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_coord.x(), upper_lower_coord.y(), lower_coord.z())
-                    - get_value(upper_coord.x(), lower_lower_coord.y(), lower_coord.z())) * factor.x()) * (1 - factor.y())
-                  + ((get_value(lower_coord.x(), upper_upper_coord.y(), lower_coord.z())
-                    - get_value(lower_coord.x(), lower_upper_coord.y(), lower_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_coord.x(), upper_upper_coord.y(), lower_coord.z())
-                    - get_value(upper_coord.x(), lower_upper_coord.y(), lower_coord.z())) * factor.x()) * factor.y()) * (1 - factor.z())
-                 + (((get_value(lower_coord.x(), upper_lower_coord.y(), upper_coord.z())
-                    - get_value(lower_coord.x(), lower_lower_coord.y(), upper_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_coord.x(), upper_lower_coord.y(), upper_coord.z())
-                    - get_value(upper_coord.x(), lower_lower_coord.y(), upper_coord.z())) * factor.x()) * (1 - factor.y())
-                  + ((get_value(lower_coord.x(), upper_upper_coord.y(), upper_coord.z())
-                    - get_value(lower_coord.x(), lower_upper_coord.y(), upper_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_coord.x(), upper_upper_coord.y(), upper_coord.z())
-                    - get_value(upper_coord.x(), lower_upper_coord.y(), upper_coord.z())) * factor.x()) * factor.y()) * factor.z();
+    gradient.y() = (((get_values(lower_coord.x(), upper_lower_coord.y(), lower_coord.z(), block)
+                    - get_values(lower_coord.x(), lower_lower_coord.y(), lower_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_coord.x(), upper_lower_coord.y(), lower_coord.z(), block)
+                    - get_values(upper_coord.x(), lower_lower_coord.y(), lower_coord.z(), block)) * factor.x()) * (1 - factor.y())
+                  + ((get_values(lower_coord.x(), upper_upper_coord.y(), lower_coord.z(), block)
+                    - get_values(lower_coord.x(), lower_upper_coord.y(), lower_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_coord.x(), upper_upper_coord.y(), lower_coord.z(), block)
+                    - get_values(upper_coord.x(), lower_upper_coord.y(), lower_coord.z(), block)) * factor.x()) * factor.y()) * (1 - factor.z())
+                 + (((get_values(lower_coord.x(), upper_lower_coord.y(), upper_coord.z(), block)
+                    - get_values(lower_coord.x(), lower_lower_coord.y(), upper_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_coord.x(), upper_lower_coord.y(), upper_coord.z(), block)
+                    - get_values(upper_coord.x(), lower_lower_coord.y(), upper_coord.z(), block)) * factor.x()) * (1 - factor.y())
+                  + ((get_values(lower_coord.x(), upper_upper_coord.y(), upper_coord.z(), block)
+                    - get_values(lower_coord.x(), lower_upper_coord.y(), upper_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_coord.x(), upper_upper_coord.y(), upper_coord.z(), block)
+                    - get_values(upper_coord.x(), lower_upper_coord.y(), upper_coord.z(), block)) * factor.x()) * factor.y()) * factor.z();
     if (scale != last_scale) {
       last_scale = scale;
       iter++;
       continue;
     }
 
-    gradient.z() = (((get_value(lower_coord.x(), lower_coord.y(), upper_lower_coord.z())
-                    - get_value(lower_coord.x(), lower_coord.y(), lower_lower_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_coord.x(), lower_coord.y(), upper_lower_coord.z())
-                    - get_value(upper_coord.x(), lower_coord.y(), lower_lower_coord.z())) * factor.x()) * (1 - factor.y())
-                  + ((get_value(lower_coord.x(), upper_coord.y(), upper_lower_coord.z())
-                    - get_value(lower_coord.x(), upper_coord.y(), lower_lower_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_coord.x(), upper_coord.y(), upper_lower_coord.z())
-                    - get_value(upper_coord.x(), upper_coord.y(), lower_lower_coord.z())) * factor.x()) * factor.y()) * (1 - factor.z())
-                 + (((get_value(lower_coord.x(), lower_coord.y(), upper_upper_coord.z())
-                    - get_value(lower_coord.x(), lower_coord.y(), lower_upper_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_coord.x(), lower_coord.y(), upper_upper_coord.z())
-                    - get_value(upper_coord.x(), lower_coord.y(), lower_upper_coord.z())) * factor.x()) * (1 - factor.y())
-                   +((get_value(lower_coord.x(), upper_coord.y(), upper_upper_coord.z())
-                    - get_value(lower_coord.x(), upper_coord.y(), lower_upper_coord.z())) * (1 - factor.x())
-                    +(get_value(upper_coord.x(), upper_coord.y(), upper_upper_coord.z())
-                    - get_value(upper_coord.x(), upper_coord.y(), lower_upper_coord.z())) * factor.x()) * factor.y()) * factor.z();
+    gradient.z() = (((get_values(lower_coord.x(), lower_coord.y(), upper_lower_coord.z(), block)
+                    - get_values(lower_coord.x(), lower_coord.y(), lower_lower_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_coord.x(), lower_coord.y(), upper_lower_coord.z(), block)
+                    - get_values(upper_coord.x(), lower_coord.y(), lower_lower_coord.z(), block)) * factor.x()) * (1 - factor.y())
+                  + ((get_values(lower_coord.x(), upper_coord.y(), upper_lower_coord.z(), block)
+                    - get_values(lower_coord.x(), upper_coord.y(), lower_lower_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_coord.x(), upper_coord.y(), upper_lower_coord.z(), block)
+                    - get_values(upper_coord.x(), upper_coord.y(), lower_lower_coord.z(), block)) * factor.x()) * factor.y()) * (1 - factor.z())
+                 + (((get_values(lower_coord.x(), lower_coord.y(), upper_upper_coord.z(), block)
+                    - get_values(lower_coord.x(), lower_coord.y(), lower_upper_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_coord.x(), lower_coord.y(), upper_upper_coord.z(), block)
+                    - get_values(upper_coord.x(), lower_coord.y(), lower_upper_coord.z(), block)) * factor.x()) * (1 - factor.y())
+                   +((get_values(lower_coord.x(), upper_coord.y(), upper_upper_coord.z(), block)
+                    - get_values(lower_coord.x(), upper_coord.y(), lower_upper_coord.z(), block)) * (1 - factor.x())
+                    +(get_values(upper_coord.x(), upper_coord.y(), upper_upper_coord.z(), block)
+                    - get_values(upper_coord.x(), upper_coord.y(), lower_upper_coord.z(), block)) * factor.x()) * factor.y()) * factor.z();
     if (scale != last_scale) {
       last_scale = scale;
       iter++;
@@ -776,17 +909,6 @@ Eigen::Vector3f Octree<T>::grad(const Eigen::Vector3f& voxel_coord_f,
   }
 
   return (0.5f * voxel_dim_) * gradient;
-}
-
-
-
-template <typename T>
-template <typename FieldSelect>
-inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
-                                              FieldSelect            select_value,
-                                              const int              min_scale) const {
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
-  return grad(voxel_coord_f, select_value, min_scale);
 }
 
 
