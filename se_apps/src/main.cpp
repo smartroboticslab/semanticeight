@@ -260,7 +260,7 @@ int processAll(se::Reader*        reader,
   bool tracked = false;
   bool integrated = false;
   const bool track = !config->enable_ground_truth;
-  const bool raycast = (track || render_images);
+  const bool raycast = track;
   int frame = 0;
   const Eigen::Vector2i input_image_res = (reader != nullptr)
       ? reader->depthImageRes()
