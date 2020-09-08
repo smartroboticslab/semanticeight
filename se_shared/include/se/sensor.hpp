@@ -250,7 +250,7 @@ namespace se {
     bool  left_hand_frame;
     float near_plane;
     float far_plane;
-    float max_elevation_diff;
+    float min_ray_angle;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
