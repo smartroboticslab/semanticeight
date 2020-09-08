@@ -93,13 +93,13 @@ se::OusterLidar::OusterLidar(const SensorConfig& c)
   assert(c.far_plane > c.near_plane);
   assert(c.beam_azimuth_angles.size()   > 0);
   assert(c.beam_elevation_angles.size() > 0);
-  max_elevation_diff = abs(c.beam_elevation_angles[1] - c.beam_elevation_angles[0]);
-    for (int i = 2; i < c.beam_elevation_angles.size(); i++) {
-      const int diff = abs(c.beam_elevation_angles[i-1] - c.beam_elevation_angles[i]);
-      if (diff > max_elevation_diff) {
-        max_elevation_diff = diff;
-      }
+  max_elevation_diff = fabsf(c.beam_elevation_angles[1] - c.beam_elevation_angles[0]);
+  for (int i = 2; i < c.beam_elevation_angles.size(); i++) {
+    const float diff = fabsf(c.beam_elevation_angles[i-1] - c.beam_elevation_angles[i]);
+    if (diff > max_elevation_diff) {
+      max_elevation_diff = diff;
     }
+  }
 }
 
 se::OusterLidar::OusterLidar(const OusterLidar& ol, const float sf)
