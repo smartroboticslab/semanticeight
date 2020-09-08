@@ -138,19 +138,18 @@ namespace meshing {
                                               const Eigen::Vector3i&    dest_coord){
 
     typename FieldType::VoxelData data_0;
-    unsigned int size_0  = 1 << map.get(source_coord, data_0);
+    map.get(source_coord, data_0);
     float value_0 = select_value(data_0);
+
     typename FieldType::VoxelData data_1;
-    unsigned int size_1  = 1 << map.get(source_coord, data_1);
+    map.get(dest_coord, data_1);
     float value_1 = select_value(data_1);
 
-    const float voxel_dim = map.dim() / map.size();
-    Eigen::Vector3f source_point_M =
-        voxel_dim * (source_coord.cast<float>() + size_0 * OctreeT<FieldType>::sample_offset_frac_);
-    Eigen::Vector3f dest_point_M =
-        voxel_dim * (dest_coord.cast<float>()   + size_1 * OctreeT<FieldType>::sample_offset_frac_);
+    Eigen::Vector3f source_sample_coord_f = (source_coord.cast<float>() + OctreeT<FieldType>::sample_offset_frac_);
+    Eigen::Vector3f dest_sample_coord_f = (dest_coord.cast<float>()   + OctreeT<FieldType>::sample_offset_frac_);
 
-    return source_point_M + (0.0 - value_0) * (dest_point_M - source_point_M) / (value_1 - value_0);
+    // TODO: 0.0 -> VoxelImplT::surface_crossing
+    return source_sample_coord_f + (0.0 - value_0) * (dest_sample_coord_f - source_sample_coord_f) / (value_1 - value_0);
   }
 
   template <typename OctreeT, typename FieldSelector>
@@ -883,7 +882,6 @@ namespace algorithms {
     std::vector<VoxelBlockType<FieldType>*> block_list;
     std::mutex lck;
     const int map_size = map.size();
-    const float map_dim = map.dim();
     map.getBlockList(block_list, false);
 
 #pragma omp parallel for
@@ -903,7 +901,7 @@ namespace algorithms {
               Eigen::Vector3f vertex_0 = interp_vertexes(map, select_value, x, y, z, edges[e]);
               Eigen::Vector3f vertex_1 = interp_vertexes(map, select_value, x, y, z, edges[e + 1]);
               Eigen::Vector3f vertex_2 = interp_vertexes(map, select_value, x, y, z, edges[e + 2]);
-              if (checkVertex(vertex_0, map_dim) || checkVertex(vertex_1, map_dim) || checkVertex(vertex_2, map_dim))
+              if (checkVertex(vertex_0, map_size) || checkVertex(vertex_1, map_size) || checkVertex(vertex_2, map_size))
                 continue;
               Triangle temp = Triangle();
               temp.vertexes[0] = vertex_0;
