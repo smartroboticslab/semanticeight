@@ -273,12 +273,11 @@ namespace meshing {
                                                    const float            value_1,
                                                    const Eigen::Vector3f& dual_corner_coord_0,
                                                    const Eigen::Vector3f& dual_corner_coord_1,
-                                                   const float            voxel_dim,
-                                                   const int              /* edge_case */){
-    Eigen::Vector3f dual_point_0_M = voxel_dim * dual_corner_coord_0;
-    Eigen::Vector3f dual_point_1_M = voxel_dim * dual_corner_coord_1;
+                                                   const int              /* edge_case */) {
+
+    // TODO: 0.0 -> VoxelImplT::surface_crossing
     float iso_value = 0.f;
-    return dual_point_0_M + (iso_value - value_0) * (dual_point_1_M - dual_point_0_M) / (value_1 - value_0);
+    return dual_corner_coord_0 + (iso_value - value_0) * (dual_corner_coord_1 - dual_corner_coord_0) / (value_1 - value_0);
   }
 
   template <typename DataT,
@@ -287,33 +286,32 @@ namespace meshing {
                                               const DataT                                 data[8],
                                               const std::vector<Eigen::Vector3f,
                                               Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f,
-                                              const float                                 voxel_dim,
                                               ValueSelector                               select_value) {
     switch(edge){
       case 0:  return compute_dual_intersection(select_value(data[0]), select_value(data[1]),
-          dual_corner_coords_f[0], dual_corner_coords_f[1], voxel_dim, 0);
+          dual_corner_coords_f[0], dual_corner_coords_f[1], 0);
       case 1:  return compute_dual_intersection(select_value(data[1]), select_value(data[2]),
-          dual_corner_coords_f[1], dual_corner_coords_f[2], voxel_dim, 1);
+          dual_corner_coords_f[1], dual_corner_coords_f[2], 1);
       case 2:  return compute_dual_intersection(select_value(data[2]), select_value(data[3]),
-          dual_corner_coords_f[2], dual_corner_coords_f[3], voxel_dim, 2);
+          dual_corner_coords_f[2], dual_corner_coords_f[3], 2);
       case 3:  return compute_dual_intersection(select_value(data[0]), select_value(data[3]),
-          dual_corner_coords_f[0], dual_corner_coords_f[3], voxel_dim, 3);
+          dual_corner_coords_f[0], dual_corner_coords_f[3], 3);
       case 4:  return compute_dual_intersection(select_value(data[4]), select_value(data[5]),
-          dual_corner_coords_f[4], dual_corner_coords_f[5], voxel_dim, 4);
+          dual_corner_coords_f[4], dual_corner_coords_f[5], 4);
       case 5:  return compute_dual_intersection(select_value(data[5]), select_value(data[6]),
-          dual_corner_coords_f[5], dual_corner_coords_f[6], voxel_dim, 5);
+          dual_corner_coords_f[5], dual_corner_coords_f[6], 5);
       case 6:  return compute_dual_intersection(select_value(data[6]), select_value(data[7]),
-          dual_corner_coords_f[6], dual_corner_coords_f[7], voxel_dim, 6);
+          dual_corner_coords_f[6], dual_corner_coords_f[7], 6);
       case 7:  return compute_dual_intersection(select_value(data[4]), select_value(data[7]),
-          dual_corner_coords_f[4], dual_corner_coords_f[7], voxel_dim, 7);
+          dual_corner_coords_f[4], dual_corner_coords_f[7], 7);
       case 8:  return compute_dual_intersection(select_value(data[0]), select_value(data[4]),
-          dual_corner_coords_f[0], dual_corner_coords_f[4], voxel_dim, 8);
+          dual_corner_coords_f[0], dual_corner_coords_f[4], 8);
       case 9:  return compute_dual_intersection(select_value(data[1]), select_value(data[5]),
-          dual_corner_coords_f[1], dual_corner_coords_f[5], voxel_dim, 9);
+          dual_corner_coords_f[1], dual_corner_coords_f[5], 9);
       case 10: return compute_dual_intersection(select_value(data[2]), select_value(data[6]),
-          dual_corner_coords_f[2], dual_corner_coords_f[6], voxel_dim, 10);
+          dual_corner_coords_f[2], dual_corner_coords_f[6], 10);
       case 11: return compute_dual_intersection(select_value(data[3]), select_value(data[7]),
-          dual_corner_coords_f[3], dual_corner_coords_f[7], voxel_dim, 11);
+          dual_corner_coords_f[3], dual_corner_coords_f[7], 11);
     }
     return Eigen::Vector3f::Constant(0);
   }
@@ -930,8 +928,6 @@ namespace algorithms {
     std::vector<VoxelBlockType<FieldType>*> block_list;
     std::mutex lck;
     const int map_size = map.size();
-    const float map_dim = map.dim();
-    const float voxel_dim = map_dim / map_size;
     map.getBlockList(block_list, false);
 
 #pragma omp parallel for
@@ -959,11 +955,11 @@ namespace algorithms {
             meshing::compute_dual_index(map, block, voxel_scale, inside, primal_corner_coord, edge_pattern_idx, data, dual_corner_coords_f);
             const int* edges = triTable[edge_pattern_idx];
             for (unsigned int e = 0; edges[e] != -1 && e < 16; e += 3) {
-              Eigen::Vector3f vertex_0 = interp_dual_vertexes(edges[e], data, dual_corner_coords_f, voxel_dim, select_value);
-              Eigen::Vector3f vertex_1 = interp_dual_vertexes(edges[e + 1], data, dual_corner_coords_f, voxel_dim, select_value);
-              Eigen::Vector3f vertex_2 = interp_dual_vertexes(edges[e + 2], data, dual_corner_coords_f, voxel_dim, select_value);
+              Eigen::Vector3f vertex_0 = interp_dual_vertexes(edges[e], data, dual_corner_coords_f, select_value);
+              Eigen::Vector3f vertex_1 = interp_dual_vertexes(edges[e + 1], data, dual_corner_coords_f, select_value);
+              Eigen::Vector3f vertex_2 = interp_dual_vertexes(edges[e + 2], data, dual_corner_coords_f, select_value);
 
-              if (checkVertex(vertex_0, map_dim) || checkVertex(vertex_1, map_dim) || checkVertex(vertex_2, map_dim))
+              if (checkVertex(vertex_0, map_size) || checkVertex(vertex_1, map_size) || checkVertex(vertex_2, map_size))
                 continue;
               Triangle temp = Triangle();
               temp.vertexes[0] = vertex_0;
