@@ -507,7 +507,7 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor) {
 
   // Create object instances for all existing visible objects that were not
   // present in the segmentation.
-  // TODO
+  generateUndetectedInstances(processed_segmentation_);
 
   // Add the new detected objects to the object list and to the
   // visible_objects_.
@@ -833,6 +833,30 @@ void DenseSLAMSystem::updateValidDepthMask(const se::Image<float>& depth) {
         valid_depth_mask_.at<se::mask_elem_t>(y, x) = 0;
       }
     }
+  }
+}
+
+
+
+void DenseSLAMSystem::generateUndetectedInstances(se::SegmentationResult& detections) {
+  // Find the set of visible but not detected/matched objects. No need to
+  // consider the background.
+  std::set<int> undetected_objects (visible_objects_);
+  undetected_objects.erase(se::instance_bg);
+  for (const auto& detection : detections) {
+    if (detection.instance_id != se::instance_new) {
+      undetected_objects.erase(detection.instance_id);
+    }
+  }
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  std::cout << "Unmatched objects " << undetected_objects.size() << "\n";
+#endif
+
+  // Create a detection for each undetected object.
+  for (const auto& undetected_id : undetected_objects) {
+    const cv::Mat undetected_mask = se::extract_instance(raycasted_instance_mask_, undetected_id);
+    const se::InstanceSegmentation undetected_instance (undetected_id, undetected_mask);
+    detections.object_instances.push_back(undetected_instance);
   }
 }
 

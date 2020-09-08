@@ -213,6 +213,8 @@ class DenseSLAMSystem {
 
     void updateValidDepthMask(const se::Image<float>& depth);
 
+    void generateUndetectedInstances(se::SegmentationResult& detections);
+
 
 
   public:
