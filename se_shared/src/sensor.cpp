@@ -40,8 +40,10 @@ int se::PinholeCamera::computeIntegrationScale(
     const int              min_scale,
     const int              max_block_scale) const {
   const float dist = block_centre.z();
+  // Compute the side length in metres of a pixel projected dist metres from the camera
+  const float pixel_dim = dist * scaled_pixel;
+  const float pv_ratio = pixel_dim / voxel_dim;
   int scale = 0;
-  const float pv_ratio = dist * scaled_pixel / voxel_dim;
   if (pv_ratio < 1.5) {
     scale = 0;
   } else if (pv_ratio < 3) {
