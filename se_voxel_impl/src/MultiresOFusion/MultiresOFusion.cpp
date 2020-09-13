@@ -33,6 +33,16 @@
 
 
 
+bool MultiresOFusion::VoxelType::VoxelData::operator==(const MultiresOFusion::VoxelType::VoxelData& other) const {
+  return (x == other.x) && (x_last == other.x_last) && (x_max == other.x_max)
+      && (y == other.y) && (y_last == other.y_last)
+      && (frame == other.frame) && (observed == other.observed);
+}
+
+bool MultiresOFusion::VoxelType::VoxelData::operator!=(const MultiresOFusion::VoxelType::VoxelData& other) const {
+  return !(*this == other);
+}
+
 // Initialize static data members.
 constexpr bool   MultiresOFusion::invert_normals;
 float            MultiresOFusion::surface_boundary;

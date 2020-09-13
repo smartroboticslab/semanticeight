@@ -81,8 +81,8 @@ struct MultiresOFusion {
       int    frame;         // Latest integration frame
       bool   observed;      // All children have been observed at least once
 
-      // Any other data stored in each voxel go here. Make sure to also update
-      // invalid() and initData() to initialize all data members.
+      bool operator==(const VoxelData& other) const;
+      bool operator!=(const VoxelData& other) const;
     };
 
     static inline VoxelData invalid()  { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
