@@ -34,6 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 
+#include "se/octant_ops.hpp"
+
 namespace se {
 // Node implementation
 
@@ -69,6 +71,35 @@ void Node<T>::initFromNode(const se::Node<T>& node) {
   active_         = node.active();
   std::copy(node.childrenData(), node.childrenData() + 8, children_data_);
 }
+
+template <typename T>
+Eigen::Vector3i Node<T>::coordinates() const {
+  return se::keyops::decode(code_);
+}
+
+template <typename T>
+Eigen::Vector3i Node<T>::centreCoordinates() const {
+  return coordinates() + Eigen::Vector3i::Constant(size_ / 2);
+}
+
+template <typename T>
+Eigen::Vector3i Node<T>::childCoord(const int child_idx) const {
+  const std::div_t d1 = std::div(child_idx, 4);
+  const std::div_t d2 = std::div(d1.rem, 2);
+  const int rel_z = d1.quot;
+  const int rel_y = d2.quot;
+  const int rel_x = d2.rem;
+  const int child_size = size_ / 2;
+  return coordinates() + child_size * Eigen::Vector3i(rel_x, rel_y, rel_z);
+}
+
+template <typename T>
+Eigen::Vector3i Node<T>::childCentreCoord(const int child_idx) const {
+  const int child_size = size_ / 2;
+  return childCoord(child_idx) + Eigen::Vector3i::Constant(child_size / 2);
+}
+
+
 
 // Voxel block base implementation
 

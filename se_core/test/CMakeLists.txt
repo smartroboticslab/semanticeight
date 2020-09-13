@@ -26,6 +26,7 @@ add_subdirectory(interp)
 add_subdirectory(io)
 add_subdirectory(multiscale)
 add_subdirectory(neighbors)
+add_subdirectory(node)
 add_subdirectory(octree)
 add_subdirectory(utils)
 

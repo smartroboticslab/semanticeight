@@ -88,6 +88,12 @@ public:
   void size(int size) { size_ = size; }
   int size() const { return size_; }
 
+  Eigen::Vector3i coordinates() const;
+  Eigen::Vector3i centreCoordinates() const;
+
+  Eigen::Vector3i childCoord(const int child_idx) const;
+  Eigen::Vector3i childCentreCoord(const int child_idx) const;
+
   void children_mask(const unsigned char cm) { children_mask_ = cm; }
   unsigned char children_mask() const { return children_mask_; }
 
