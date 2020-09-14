@@ -149,6 +149,9 @@ public:
   Eigen::Vector3i coordinates() const { return coordinates_; }
   void coordinates(const Eigen::Vector3i& block_coord){ coordinates_ = block_coord; }
 
+  Eigen::Vector3i voxelCoordinates(const int voxel_idx) const;
+  Eigen::Vector3i voxelCoordinates(const int voxel_idx, const int scale) const;
+
   int current_scale() const { return current_scale_; }
   void current_scale(const int s) { current_scale_ = s; }
 

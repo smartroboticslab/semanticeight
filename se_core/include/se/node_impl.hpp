@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NODE_IMPL_HPP
 
 #include <algorithm>
+#include <cstdlib>
 
 #include "se/octant_ops.hpp"
 
@@ -120,6 +121,29 @@ void VoxelBlock<T>::operator=(const VoxelBlock<T>& block) {
 }
 
 template <typename T>
+Eigen::Vector3i VoxelBlock<T>::voxelCoordinates(const int voxel_idx) const {
+  int remaining_voxel_idx = voxel_idx;
+  int scale = 0;
+  int size_at_scale_cu = this->size_cu;
+  while (remaining_voxel_idx / size_at_scale_cu >= 1) {
+    scale += 1;
+    remaining_voxel_idx -= size_at_scale_cu;
+    size_at_scale_cu = scaleNumVoxels(scale);
+  }
+  return voxelCoordinates(remaining_voxel_idx, scale);
+}
+
+template <typename T>
+Eigen::Vector3i VoxelBlock<T>::voxelCoordinates(const int voxel_idx, const int scale) const {
+  const std::div_t d1 = std::div(voxel_idx, se::math::sq(scaleSize(scale)));
+  const std::div_t d2 = std::div(d1.rem, scaleSize(scale));
+  const int z = d1.quot;
+  const int y = d2.quot;
+  const int x = d2.rem;
+  return this->coordinates_ + scaleVoxelSize(scale) * Eigen::Vector3i(x, y, z);
+}
+
+template <typename T>
 constexpr int VoxelBlock<T>::scaleSize(const int scale) {
   return size_li >> scale;
 }
@@ -155,6 +179,8 @@ void VoxelBlock<T>::initFromBlock(const VoxelBlock<T>& block) {
   current_scale_ = block.current_scale();
   std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
 }
+
+
 
 // Voxel block full scale allocation implementation
 
