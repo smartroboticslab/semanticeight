@@ -164,6 +164,9 @@ public:
   virtual VoxelData data(const int voxel_idx) const = 0;
   virtual void setData(const int voxel_idx, const VoxelData& voxel_data) = 0;
 
+  virtual VoxelData data(const int voxel_idx, const int scale) const = 0;
+  virtual void setData(const int voxel_idx, const int scale, const VoxelData& voxel_data) = 0;
+
   /*! \brief The number of voxels per side at scale.
    */
   static constexpr int scaleSize(const int scale);
@@ -216,6 +219,9 @@ public:
 
   VoxelData data(const int voxel_idx) const;
   void setData(const int voxel_idx, const VoxelData& voxel_data);
+
+  VoxelData data(const int voxel_idx, const int scale) const;
+  void setData(const int voxel_idx, const int scale, const VoxelData& voxel_data);
 
   VoxelData* blockData() { return block_data_; }
   const VoxelData* blockData() const { return block_data_; }
@@ -274,6 +280,10 @@ public:
   VoxelData data(const int voxel_idx) const;
   void setData(const int voxel_idx, const VoxelData& voxel_data);
   void setDataSafe(const int voxel_idx, const VoxelData& voxel_data);
+
+  VoxelData data(const int voxel_idx, const int scale) const;
+  void setData(const int voxel_idx, const int scale, const VoxelData& voxel_data);
+  void setDataSafe(const int voxel_idx, const int scale, const VoxelData& voxel_data);
 
   void allocateDownTo();
   void allocateDownTo(const int scale);

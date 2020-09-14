@@ -244,6 +244,19 @@ inline void VoxelBlockFull<T>::setData(const int voxel_idx, const VoxelData& vox
 }
 
 template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockFull<T>::data(const int voxel_idx, const int scale) const {
+  return block_data_[this->scaleOffset(scale) + voxel_idx];
+}
+
+template <typename T>
+inline void VoxelBlockFull<T>::setData(const int        voxel_idx,
+                                       const int        scale,
+                                       const VoxelData& voxel_data) {
+  block_data_[this->scaleOffset(scale) + voxel_idx] = voxel_data;
+}
+
+template <typename T>
 void VoxelBlockFull<T>::initFromBlock(const VoxelBlockFull<T>& block) {
   this->code_          = block.code();
   this->size_          = block.size_;
@@ -401,6 +414,33 @@ inline void VoxelBlockSingle<T>::setDataSafe(const int        voxel_idx,
   }
   allocateDownTo(scale);
   block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx] = voxel_data;
+}
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingle<T>::data(const int voxel_idx, const int scale) const {
+  const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
+  if (scale_idx < block_data_.size()) {
+    return block_data_[scale_idx][voxel_idx];
+  } else {
+    return init_data_;
+  }
+}
+
+template <typename T>
+inline void VoxelBlockSingle<T>::setData(const int        voxel_idx,
+                                         const int        scale,
+                                         const VoxelData& voxel_data) {
+  const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
+  block_data_[scale_idx][voxel_idx] = voxel_data;
+}
+
+template <typename T>
+inline void VoxelBlockSingle<T>::setDataSafe(const int        voxel_idx,
+                                             const int        scale,
+                                             const VoxelData& voxel_data) {
+  allocateDownTo(scale);
+  setData(voxel_idx, scale, voxel_data);
 }
 
 template <typename T>
