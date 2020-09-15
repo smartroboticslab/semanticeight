@@ -67,8 +67,7 @@ namespace se {
   int save_3d_slice_vtk(const std::string         filename,
                         const Eigen::Vector3i&    lower_coord,
                         const Eigen::Vector3i&    upper_coord,
-                        ValueGetter               get_value,
-                        const int                 min_scale);
+                        ValueGetter               get_value);
 
   /**
    * \brief Save the octree structure as a PLY file.

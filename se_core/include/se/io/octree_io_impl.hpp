@@ -32,7 +32,7 @@ int se::save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
     return select_value(data);
   };
 
-  return se::save_3d_slice_vtk(filename, lower_coord, upper_coord, get_value, min_scale);
+  return se::save_3d_slice_vtk(filename, lower_coord, upper_coord, get_value);
 }
 
 
@@ -56,7 +56,7 @@ int se::save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
     }
   };
 
-  return se::save_3d_slice_vtk(filename, lower_coord, upper_coord, get_value, min_scale);
+  return se::save_3d_slice_vtk(filename, lower_coord, upper_coord, get_value);
 }
 
 
@@ -73,7 +73,7 @@ int se::save_3d_scale_slice_vtk(const se::Octree<VoxelT>& octree,
     return octree.get(x, y, z, data, min_scale);
   };
 
-  return se::save_3d_slice_vtk(filename, lower_coord, upper_coord, get_value, min_scale);
+  return se::save_3d_slice_vtk(filename, lower_coord, upper_coord, get_value);
 }
 
 
@@ -82,8 +82,7 @@ template <typename ValueGetter>
 int se::save_3d_slice_vtk(const std::string         filename,
                           const Eigen::Vector3i&    lower_coord,
                           const Eigen::Vector3i&    upper_coord,
-                          ValueGetter               get_value,
-                          const int                 min_scale) {
+                          ValueGetter               get_value) {
 
   // Open the file for writing.
   std::ofstream file (filename.c_str());
@@ -94,10 +93,10 @@ int se::save_3d_slice_vtk(const std::string         filename,
 
   std::stringstream ss_x_coord, ss_y_coord, ss_z_coord, ss_scalars;
 
-  const int stride = 1 << min_scale;
-  const int dimX = std::max(1, (upper_coord.x() - lower_coord.x()) / stride);
-  const int dimY = std::max(1, (upper_coord.y() - lower_coord.y()) / stride);
-  const int dimZ = std::max(1, (upper_coord.z() - lower_coord.z()) / stride);
+  const int stride = 1;
+  const int dimX = std::max(1, upper_coord.x() - lower_coord.x());
+  const int dimY = std::max(1, upper_coord.y() - lower_coord.y());
+  const int dimZ = std::max(1, upper_coord.z() - lower_coord.z());
 
   file << "# vtk DataFile Version 1.0" << std::endl;
   file << "vtk mesh generated from KFusion" << std::endl;
