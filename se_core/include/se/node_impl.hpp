@@ -307,7 +307,7 @@ VoxelBlockSingle<T>::data(const int voxel_idx) const {
   int remaining_voxel_idx = voxel_idx;
   int scale = 0;
   int size_at_scale_cu = this->size_cu;
-  while (voxel_idx / size_at_scale_cu >= 1) {
+  while (remaining_voxel_idx / size_at_scale_cu >= 1) {
     scale += 1;
     remaining_voxel_idx -= size_at_scale_cu;
     size_at_scale_cu = se::math::cu(this->size_li >> scale);
