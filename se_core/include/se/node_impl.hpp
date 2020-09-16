@@ -89,6 +89,30 @@ void VoxelBlock<T>::operator=(const VoxelBlock<T>& block) {
 }
 
 template <typename T>
+constexpr int VoxelBlock<T>::scaleSize(const int scale) {
+  return size_li >> scale;
+}
+
+template <typename T>
+constexpr int VoxelBlock<T>::scaleVoxelSize(const int scale) {
+  return 1 << scale;
+}
+
+template <typename T>
+constexpr int VoxelBlock<T>::scaleNumVoxels(const int scale) {
+  return se::math::cu(scaleSize(scale));
+}
+
+template <typename T>
+constexpr int VoxelBlock<T>::scaleOffset(const int scale) {
+  int scale_offset = 0;
+  for (int s = 0; s < scale; ++s) {
+    scale_offset += scaleNumVoxels(s);
+  }
+  return scale_offset;
+}
+
+template <typename T>
 void VoxelBlock<T>::initFromBlock(const VoxelBlock<T>& block) {
   this->code_          = block.code();
   this->size_          = block.size_;

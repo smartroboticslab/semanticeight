@@ -158,6 +158,22 @@ public:
   virtual VoxelData data(const int voxel_idx) const = 0;
   virtual void setData(const int voxel_idx, const VoxelData& voxel_data) = 0;
 
+  /*! \brief The number of voxels per side at scale.
+   */
+  static constexpr int scaleSize(const int scale);
+  /*! \brief The side length of a voxel at scale expressed in primitive voxels.
+   * This is e.g. 1 for scale 0 and 8 for scale 3.
+   */
+  static constexpr int scaleVoxelSize(const int scale);
+  /*! \brief The total number of voxels contained in scale.
+   * This is equivalent to scaleSize()^3.
+   */
+  static constexpr int scaleNumVoxels(const int scale);
+  /*! \brief The offset needed to get to the first voxel of scale when using
+   * a linear index.
+   */
+  static constexpr int scaleOffset(const int scale);
+
 protected:
   Eigen::Vector3i coordinates_;
   int current_scale_;
