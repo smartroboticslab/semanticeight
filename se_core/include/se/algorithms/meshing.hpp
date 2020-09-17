@@ -45,6 +45,7 @@ typedef struct Triangle {
   Eigen::Vector3f normal;
   float color;
   float surface_area;
+  int   max_vertex_scale;
 
   Triangle(){
     vertexes[0] = Eigen::Vector3f::Constant(0);
@@ -52,6 +53,7 @@ typedef struct Triangle {
     vertexes[2] = Eigen::Vector3f::Constant(0);
     normal = Eigen::Vector3f::Constant(0);
     surface_area = -1.f;
+    max_vertex_scale = 0;
   }
 
   inline bool iszero(const Eigen::Vector3f& v){
@@ -753,7 +755,9 @@ namespace meshing {
                                const Eigen::Vector3i&                      primal_corner_coord,
                                DataT                                       data[8],
                                std::vector<Eigen::Vector3f,
-                               Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f) {
+                               Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f,
+                               int&                                        dual_max_scale) {
+
     const Eigen::Vector3i primal_corner_coord_rel = primal_corner_coord - block->coordinates();
 
     std::vector<int> lower_priority_neighbours, higher_priority_neighbours;
@@ -797,6 +801,7 @@ namespace meshing {
       Eigen::Vector3i logical_dual_corner_coord = primal_corner_coord + logical_dual_offset[neighbours[neighbour_idx][0]];
       VoxelBlockType<FieldType>* neighbour = map.fetch(logical_dual_corner_coord);
       int stride = 1 << neighbour->current_scale();
+      dual_max_scale = std::max(neighbour->current_scale(), dual_max_scale);
       for(const auto& offset_idx: neighbours[neighbour_idx]) {
         logical_dual_corner_coord = primal_corner_coord + logical_dual_offset[offset_idx];
         dual_corner_coords_f[offset_idx] = ((logical_dual_corner_coord / stride) * stride).cast<float>() +
@@ -818,7 +823,8 @@ namespace meshing {
                           uint8_t&                                    edge_pattern_idx,
                           DataT                                       data[8],
                           std::vector<Eigen::Vector3f,
-                          Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f) {
+                          Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f,
+                          int&                                        dual_max_scale) {
     const unsigned int block_size =  VoxelBlockType<FieldType>::size_li;
     // The local case is independent of the scale.
     // lower or upper x boundary (block_coord.x() +0 or +block size) -> (binary) 100 -> local += 4
@@ -837,8 +843,11 @@ namespace meshing {
                                ( primal_corner_coord.z() % block_size == 0);
 
     edge_pattern_idx = 0;
-    if(!local) gather_dual_data(block, scale, primal_corner_coord.cast<float>(), data, dual_corner_coords_f);
-    else gather_dual_data(map, block, scale, primal_corner_coord, data, dual_corner_coords_f);
+    if(!local) {
+      gather_dual_data(block, scale, primal_corner_coord.cast<float>(), data, dual_corner_coords_f);
+    } else {
+      gather_dual_data(map, block, scale, primal_corner_coord, data, dual_corner_coords_f, dual_max_scale);
+    }
 
     // Only compute dual index if all data is valid/observed
     for (int corner_idx = 0; corner_idx < 8; corner_idx++) {
@@ -925,15 +934,17 @@ namespace algorithms {
                           std::vector<TriangleType>& triangles) {
 
     using namespace meshing;
-    std::vector<VoxelBlockType<FieldType>*> block_list;
     std::mutex lck;
+
     const int map_size = map.size();
+    const int block_size = VoxelBlockType<FieldType>::size_li;
+
+    std::vector<VoxelBlockType<FieldType>*> block_list;
     map.getBlockList(block_list, false);
 
 #pragma omp parallel for
-    for (size_t i = 0; i < block_list.size(); i++) {
+    for (size_t i = 0; i < block_list.size(); i++) { ///<< Iterate through all allocated blocks.
       VoxelBlockType<FieldType>* block = static_cast<VoxelBlockType<FieldType> *>(block_list[i]);
-      const int block_size = VoxelBlockType<FieldType>::size_li;
       const int voxel_scale = block->current_scale();
       const int voxel_stride = 1 << voxel_scale;
       const Eigen::Vector3i& start_coord = block->coordinates();
@@ -943,30 +954,39 @@ namespace algorithms {
       for (int x = start_coord.x(); x <= last_coord.x(); x += voxel_stride) {
         for (int y = start_coord.y(); y <= last_coord.y(); y += voxel_stride) {
           for (int z = start_coord.z(); z <= last_coord.z(); z += voxel_stride) {
+
             const Eigen::Vector3i primal_corner_coord = Eigen::Vector3i(x, y, z);
             if (x == last_coord.x() || y == last_coord.y() || z == last_coord.z()) {
               if (map.fetch(x,y,z) == nullptr) {
-                continue;
+                continue; /// << Reaching upper block boundary, continue if the neighbour is not allocated.
               }
             }
+
             uint8_t edge_pattern_idx;
             typename FieldType::VoxelData data[8];
             std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> dual_corner_coords_f(8, Eigen::Vector3f::Constant(0));
-            meshing::compute_dual_index(map, block, voxel_scale, inside, primal_corner_coord, edge_pattern_idx, data, dual_corner_coords_f);
+            int dual_max_scale = voxel_scale; ///<< Keep track of the max dual scale of each triangle to colouise the mesh by scale.
+                                              ///   Initialise with block scale and update if coarser dual neighbours are fetched.
+            meshing::compute_dual_index(map, block, voxel_scale, inside, primal_corner_coord, edge_pattern_idx, data, dual_corner_coords_f, dual_max_scale);
+
             const int* edges = triTable[edge_pattern_idx];
             for (unsigned int e = 0; edges[e] != -1 && e < 16; e += 3) {
               Eigen::Vector3f vertex_0 = interp_dual_vertexes(edges[e], data, dual_corner_coords_f, select_value);
               Eigen::Vector3f vertex_1 = interp_dual_vertexes(edges[e + 1], data, dual_corner_coords_f, select_value);
               Eigen::Vector3f vertex_2 = interp_dual_vertexes(edges[e + 2], data, dual_corner_coords_f, select_value);
 
-              if (checkVertex(vertex_0, map_size) || checkVertex(vertex_1, map_size) || checkVertex(vertex_2, map_size))
+              if (checkVertex(vertex_0, map_size) || checkVertex(vertex_1, map_size) || checkVertex(vertex_2, map_size)) {
                 continue;
-              Triangle temp = Triangle();
-              temp.vertexes[0] = vertex_0;
-              temp.vertexes[1] = vertex_1;
-              temp.vertexes[2] = vertex_2;
+              }
+
+              Triangle triangle = Triangle();
+              triangle.vertexes[0] = vertex_0;
+              triangle.vertexes[1] = vertex_1;
+              triangle.vertexes[2] = vertex_2;
+              triangle.max_vertex_scale = dual_max_scale;
+
               lck.lock();
-              triangles.push_back(temp);
+              triangles.push_back(triangle);
               lck.unlock();
             }
           }

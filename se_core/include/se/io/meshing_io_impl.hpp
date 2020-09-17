@@ -6,6 +6,20 @@
 #ifndef __MESHING_IO_IMPL_HPP
 #define __MESHING_IO_IMPL_HPP
 
+
+static std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>
+color_fraction_map =
+{
+  {0.40, 0.76, 0.65},
+  {0.99, 0.55, 0.38},
+  {0.55, 0.63, 0.80},
+  {0.91, 0.54, 0.76},
+  {0.65, 0.84, 0.33},
+  {1.00, 0.85, 0.18},
+  {0.89, 0.77, 0.58},
+  {0.70, 0.70, 0.70},
+};
+
 int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
                       const std::string            filename,
                       const Eigen::Matrix4f&       T_WM,
@@ -22,6 +36,7 @@ int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
 
   std::stringstream ss_points_W;
   std::stringstream ss_polygons;
+  std::stringstream ss_scale_colors;
   std::stringstream ss_point_data;
   std::stringstream ss_cell_data;
   int point_count = 0;
@@ -50,6 +65,9 @@ int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
 
     ss_polygons << "3 " << point_count << " " << point_count+1 <<
                 " " << point_count+2 << std::endl;
+
+    const Eigen::Vector3f RGB = color_fraction_map[triangle_M.max_vertex_scale];
+    ss_scale_colors << RGB[0] << " " << RGB[1] << " " << RGB[2] << " " << 1.0 << std::endl;
 
     if(has_point_data){
       ss_point_data << point_data[i*3] << std::endl;
@@ -82,8 +100,10 @@ int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
     file << ss_point_data.str();
   }
 
+  file << "CELL_DATA " << triangle_count << std::endl;
+  file << "COLOR_SCALARS RGBA 4" << std::endl;
+  file << ss_scale_colors.str() << std::endl;
   if(has_cell_data){
-    file << "CELL_DATA " << triangle_count << std::endl;
     file << "SCALARS cell_scalars float 1" << std::endl;
     file << "LOOKUP_TABLE default" << std::endl;
     file << ss_cell_data.str();
