@@ -65,7 +65,7 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
-  const Configuration default_config;
+  const se::Configuration default_config;
   std::cerr << "-b  (--disable-benchmark)                         : use to override --enable-benchmark in YAML file\n";
   std::cerr << "-B  (--enable-benchmark) <blank, =filename, =dir> : default is autogen log filename\n";
   std::cerr << "-c  (--sensor-downsampling-factor)                : default is " << default_config.sensor_downsampling_factor << " (same size)\n";
@@ -255,7 +255,7 @@ std::string to_filename(std::string s) {
   return s;
 }
 
-std::string autogen_filename(Configuration& config, std::string type) {
+std::string autogen_filename(se::Configuration& config, std::string type) {
   if (config.sequence_name == "") {
     std::cout << "Please provide a sequence name to autogen " << type << " filename.\n"
                  "Options: \n"
@@ -279,7 +279,7 @@ std::string autogen_filename(Configuration& config, std::string type) {
   return to_filename(auto_filename_ss.str());
 }
 
-void generate_log_file(Configuration& config) {
+void generate_log_file(se::Configuration& config) {
   stdfs::path log_path = config.log_file;
   if (config.log_file == "" || !stdfs::is_directory(log_path)) {
     return;
@@ -289,7 +289,7 @@ void generate_log_file(Configuration& config) {
   }
 }
 
-void generate_render_file(Configuration& config) {
+void generate_render_file(se::Configuration& config) {
   // If rendering is disabled no render can be saved.
   if (!config.enable_render) {
     return; // Render is disabled. Keep render path indepentent of content.
@@ -318,7 +318,7 @@ void generate_render_file(Configuration& config) {
   config.output_render_file = output_render_path;
 }
 
-void generate_mesh_file(Configuration& config) {
+void generate_mesh_file(se::Configuration& config) {
   // Check if meshing is enabled
   if (!config.enable_meshing) {
     return; // Meshing is disabled. Keep meshing path indepentent of content.
@@ -347,8 +347,8 @@ void generate_mesh_file(Configuration& config) {
   config.output_mesh_file = output_mesh_path;
 }
 
-Configuration parseArgs(unsigned int argc, char** argv) {
-  Configuration config;
+se::Configuration parseArgs(unsigned int argc, char** argv) {
+	se::Configuration config;
 
   // Read the settings from all supplied YAML files
   int c;
