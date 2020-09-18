@@ -28,7 +28,7 @@
 #include "se/utils/math_utils.h"
 
 // Put colons after options with arguments
-static std::string short_options = "bB:c:dfgG:Fhl:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";
+static std::string short_options = "bB:c:df:FgGhl:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";
 
 static struct option long_options[] = {
   {"disable-benchmark",          no_argument,       0, 'b'},
