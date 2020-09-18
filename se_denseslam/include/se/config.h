@@ -240,11 +240,6 @@ struct Configuration {
   bool left_hand_frame;
 
   /**
-   * Whether the default intrinsic sensor parameters have been overriden.
-   */
-  bool sensor_intrinsics_overrided;
-
-  /**
    * Nearest z-distance to the sensor along the sensor frame z-axis, that voxels are updated.
    */
   float near_plane;
@@ -332,47 +327,45 @@ struct Configuration {
    */
   bool bilateral_filter;
 
-  Configuration();
+  Configuration()
+    : sensor_type(""),
+      voxel_impl_type(""),
+      sequence_name(""),
+      sequence_type("raw"),
+      sensor_downsampling_factor(1),
+      tracking_rate(1),
+      integration_rate(1),
+      rendering_rate(4),
+      meshing_rate(100),
+      map_size(256, 256, 256),
+      map_dim(2.0f, 2.0f, 2.0f),
+      t_MW_factor(0.5f, 0.5f, 0.5f),
+      pyramid({10, 5, 4}),
+      output_mesh_file(""),
+      sequence_path(""),
+      enable_benchmark(false),
+      log_file(""),
+      ground_truth_file(""),
+      enable_ground_truth(true),
+      T_BC(Eigen::Matrix4f::Identity()),
+      init_T_WB(Eigen::Matrix4f::Identity()),
+      sensor_intrinsics(0.0f, 0.0f, 0.0f, 0.0f),
+      left_hand_frame(false),
+      near_plane(0.4f),
+      far_plane(4.0f),
+      fps(0.0f),
+      drop_frames(false),
+      max_frame(-1),
+      icp_threshold(1e-5),
+      enable_meshing(false),
+      enable_render(true),
+      output_render_file(""),
+      render_volume_fullsize(false),
+      bilateral_filter(false) {}
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-Configuration::Configuration()
-  : sensor_type(""),
-    voxel_impl_type(""),
-    sequence_name(""),
-    sequence_type("raw"),
-    sensor_downsampling_factor(1),
-    tracking_rate(1),
-    integration_rate(1),
-    rendering_rate(4),
-    meshing_rate(100),
-    map_size(256, 256, 256),
-    map_dim(2.0f, 2.0f, 2.0f),
-    t_MW_factor(0.5f, 0.5f, 0.5f),
-    pyramid({10, 5, 4}),
-    output_mesh_file(""),
-    sequence_path(""),
-    enable_benchmark(false),
-    log_file(""),
-    ground_truth_file(""),
-    enable_ground_truth(true),
-    T_BC(Eigen::Matrix4f::Identity()),
-    init_T_WB(Eigen::Matrix4f::Identity()),
-    sensor_intrinsics(0.0f, 0.0f, 0.0f, 0.0f),
-    left_hand_frame(false),
-    sensor_intrinsics_overrided(false),
-    near_plane(0.4f),
-    far_plane(4.0f),
-    fps(0.0f),
-    drop_frames(false),
-    max_frame(-1),
-    icp_threshold(1e-5),
-    enable_meshing(false),
-    enable_render(true),
-    output_render_file(""),
-    render_volume_fullsize(false),
-    bilateral_filter(false) {}
 
 
 

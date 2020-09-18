@@ -501,13 +501,10 @@ Configuration parseArgs(unsigned int argc, char** argv) {
   // Sensor intrinsics
   if (has_yaml_sensor_config && yaml_sensor_config["intrinsics"]) {
     config.sensor_intrinsics = Eigen::Vector4f((yaml_sensor_config["intrinsics"].as<std::vector<float>>()).data());
-    config.sensor_intrinsics_overrided = true;
     if (config.sensor_intrinsics.y() < 0) {
       config.left_hand_frame = true;
     }
   }
-  // Sensor overrided
-  config.sensor_intrinsics_overrided = false; // TODO wat? remove
   // Sensor downsamling factor
   if (has_yaml_sensor_config && yaml_sensor_config["downsampling_factor"]) {
     config.sensor_downsampling_factor = yaml_sensor_config["downsampling_factor"].as<int>();
