@@ -27,42 +27,6 @@
 #include "se/str_utils.hpp"
 #include "se/utils/math_utils.h"
 
-// Default option values.
-static constexpr bool         default_enable_benchmark = false;
-static constexpr bool         default_bilateral_filter = false;
-static constexpr bool         default_drop_frames = false;
-static constexpr float        default_far_plane = 4.0f;
-static constexpr float        default_fps = 0.0f;
-static const std::string      default_ground_truth_file = "";
-static const bool             default_enable_ground_truth = true;
-static constexpr bool         default_enable_meshing = false;
-static constexpr bool         default_enable_render = true;
-static constexpr float        default_icp_threshold = 1e-5;
-static const Eigen::Matrix4f  default_init_T_WB = Eigen::Matrix4f::Identity();
-static constexpr int          default_integration_rate = 1;
-static constexpr int          default_iteration_count = 3;
-static constexpr int          default_iterations[default_iteration_count] = { 10, 5, 4 };
-static constexpr bool         default_left_hand_frame = false;
-static const std::string      default_log_path = "";
-static constexpr float        default_near_plane = 0.4f;
-static const Eigen::Vector3i  default_map_size(256, 256, 256);
-static const Eigen::Vector3f  default_map_dim(2.f, 2.f, 2.f);
-static const int              default_max_frame = -1;
-static constexpr int          default_meshing_rate = 100;
-static constexpr bool         default_render_volume_fullsize = false;
-static constexpr int          default_rendering_rate = 4;
-static const std::string      default_output_mesh_path = "";
-static const std::string      default_output_render_path = "";
-static const std::string      default_sequence_name = "";
-static const std::string      default_sequence_type = "raw";
-static constexpr int          default_sensor_downsampling_factor = 1;
-static const Eigen::Vector4f  default_sensor_intrinsics = Eigen::Vector4f::Zero();
-static const std::string      default_sequence_path = "";
-static const Eigen::Matrix4f  default_T_BC = Eigen::Matrix4f::Identity();
-static const Eigen::Vector3f  default_t_MW_factor(0.5f, 0.5f, 0.5f);
-
-static constexpr int          default_tracking_rate = 1;
-
 // Put colons after options with arguments
 static std::string short_options = "bB:c:dfgG:Fhl:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";
 
@@ -101,33 +65,34 @@ static struct option long_options[] = {
 
 
 inline void print_arguments() {
+  const Configuration default_config;
   std::cerr << "-b  (--disable-benchmark)                         : use to override --enable-benchmark in YAML file\n";
   std::cerr << "-B  (--enable-benchmark) <blank, =filename, =dir> : default is autogen log filename\n";
-  std::cerr << "-c  (--sensor-downsampling-factor)                : default is " << default_sensor_downsampling_factor << " (same size)\n";
+  std::cerr << "-c  (--sensor-downsampling-factor)                : default is " << default_config.sensor_downsampling_factor << " (same size)\n";
   std::cerr << "-d  (--drop-frames)                               : default is false: don't drop frames\n";
-  std::cerr << "-f  (--fps)                                       : default is " << default_fps << "\n";
+  std::cerr << "-f  (--fps)                                       : default is " << default_config.fps << "\n";
   std::cerr << "-F  (--bilateral-filter                           : default is disabled\n";
   std::cerr << "-g  (--disable-ground-truth)                      : default is true if ground truth is provided\n";
   std::cerr << "-G  (--enable-ground-truth)                       : default is true if ground truth is provided\n";
   std::cerr << "-h  (--help)                                      : show this help message\n";
-  std::cerr << "-l  (--icp-threshold)                             : default is " << default_icp_threshold << "\n";
+  std::cerr << "-l  (--icp-threshold)                             : default is " << default_config.icp_threshold << "\n";
   std::cerr << "-m  (--max-frame)                                 : default is full dataset (-1)\n";
   std::cerr << "-M  (--output-mesh-path) <filename/dir>           : output mesh path\n";
-  std::cerr << "-n  (--near-plane)                                : default is " << default_near_plane << "\n";
-  std::cerr << "-N  (--far-plane)                                 : default is " << default_far_plane << "\n";
+  std::cerr << "-n  (--near-plane)                                : default is " << default_config.near_plane << "\n";
+  std::cerr << "-N  (--far-plane)                                 : default is " << default_config.far_plane << "\n";
   std::cerr << "-o  (--log-path) <filename/dir>                   : default is stdout\n";
   std::cerr << "-q  (--disable-render)                            : default is to render images\n";
   std::cerr << "-Q  (--enable-render)                             : use to override --disable-render in YAML file\n";
-  std::cerr << "-r  (--integration-rate)                          : default is " << default_integration_rate << "\n";
-  std::cerr << "-s  (--map-dim)                                   : default is " << default_map_dim.x() << "," << default_map_dim.y() << "," << default_map_dim.z() << "\n";
-  std::cerr << "-t  (--tracking-rate)                             : default is " << default_tracking_rate << "\n";
+  std::cerr << "-r  (--integration-rate)                          : default is " << default_config.integration_rate << "\n";
+  std::cerr << "-s  (--map-dim)                                   : default is " << default_config.map_dim.x() << "," << default_config.map_dim.y() << "," << default_config.map_dim.z() << "\n";
+  std::cerr << "-t  (--tracking-rate)                             : default is " << default_config.tracking_rate << "\n";
   std::cerr << "-u  (--disable-meshing)                           : use to override --enable-meshing in YAML file\n";
   std::cerr << "-U  (--enable-meshing)                            : default is to not generate mesh\n";
-  std::cerr << "-v  (--map-size)                                  : default is " << default_map_size.x() << "," << default_map_size.y() << "," << default_map_size.z() << "\n";
+  std::cerr << "-v  (--map-size)                                  : default is " << default_config.map_size.x() << "," << default_config.map_size.y() << "," << default_config.map_size.z() << "\n";
   std::cerr << "-V  (--output-render-path) <filename/dir>         : output render path\n";
   std::cerr << "-Y  (--yaml-file)                                 : YAML file\n";
-  std::cerr << "-z  (--rendering-rate)                            : default is " << default_rendering_rate << "\n";
-  std::cerr << "-Z  (--meshing-rate)                              : default is " << default_meshing_rate << "\n";
+  std::cerr << "-z  (--rendering-rate)                            : default is " << default_config.rendering_rate << "\n";
+  std::cerr << "-Z  (--meshing-rate)                              : default is " << default_config.meshing_rate << "\n";
 }
 
 
@@ -420,102 +385,119 @@ Configuration parseArgs(unsigned int argc, char** argv) {
 
   // CONFIGURE GENERAL
   // Sequence name
-  config.sequence_name = (has_yaml_general_config && yaml_general_config["sequence_name"])
-      ? yaml_general_config["sequence_name"].as<std::string>() : default_sequence_name;
+  if (has_yaml_general_config && yaml_general_config["sequence_name"]) {
+  config.sequence_name = yaml_general_config["sequence_name"].as<std::string>();
+  }
   // Sequence type
-  config.sequence_type = (has_yaml_general_config && yaml_general_config["sequence_type"])
-      ? yaml_general_config["sequence_type"].as<std::string>() : default_sequence_type;
-  str_utils::to_lower(config.sequence_type);
+  if (has_yaml_general_config && yaml_general_config["sequence_type"]) {
+    config.sequence_type = yaml_general_config["sequence_type"].as<std::string>();
+    str_utils::to_lower(config.sequence_type);
+  }
   // Sequence path file or directory path
-  config.sequence_path = (has_yaml_general_config && yaml_general_config["sequence_path"])
-      ? yaml_general_config["sequence_path"].as<std::string>() : default_sequence_path;
+  if (has_yaml_general_config && yaml_general_config["sequence_path"]) {
+    config.sequence_path = yaml_general_config["sequence_path"].as<std::string>();
+  }
 
   // En/disable ground truth
-  config.enable_ground_truth = (has_yaml_general_config && yaml_general_config["enable_ground_truth"])
-                               ? yaml_general_config["enable_ground_truth"].as<bool>() : default_enable_ground_truth;
+  if (has_yaml_general_config && yaml_general_config["enable_ground_truth"]) {
+    config.enable_ground_truth = yaml_general_config["enable_ground_truth"].as<bool>();
+  }
   // Ground truth file path
-  config.ground_truth_file = (has_yaml_general_config && yaml_general_config["ground_truth_file"])
-      ? yaml_general_config["ground_truth_file"].as<std::string>() : default_ground_truth_file;
+  if (has_yaml_general_config && yaml_general_config["ground_truth_file"]) {
+    config.ground_truth_file = yaml_general_config["ground_truth_file"].as<std::string>();
+  }
 
   // Benchmark and result file or directory path
-  config.enable_benchmark = (has_yaml_general_config && yaml_general_config["enable_benchmark"])
-      ? yaml_general_config["enable_benchmark"].as<bool>() : default_enable_benchmark;
+  if (has_yaml_general_config && yaml_general_config["enable_benchmark"]) {
+    config.enable_benchmark = yaml_general_config["enable_benchmark"].as<bool>();
+  }
   // Log path
-  config.log_file = (has_yaml_general_config && yaml_general_config["log_path"])
-      ? yaml_general_config["log_path"].as<std::string>() : default_log_path;
+  if (has_yaml_general_config && yaml_general_config["log_path"]) {
+    config.log_file = yaml_general_config["log_path"].as<std::string>();
+  }
   // En/disable render
-  config.enable_render = (has_yaml_general_config && yaml_general_config["enable_render"])
-      ? yaml_general_config["enable_render"].as<bool>() : default_enable_render; // default true
+  if (has_yaml_general_config && yaml_general_config["enable_render"]) {
+    config.enable_render = yaml_general_config["enable_render"].as<bool>();
+  }
   // Render path
-  config.output_render_file = (has_yaml_general_config && yaml_general_config["output_render_path"])
-      ? yaml_general_config["output_render_path"].as<std::string>() : default_output_render_path;
+  if (has_yaml_general_config && yaml_general_config["output_render_path"]) {
+    config.output_render_file = yaml_general_config["output_render_path"].as<std::string>();
+  }
   // Enable render
-  config.enable_meshing = (has_yaml_general_config && yaml_general_config["enable_meshing"])
-      ? yaml_general_config["enable_meshing"].as<bool>() : default_enable_meshing; // default false
+  if (has_yaml_general_config && yaml_general_config["enable_meshing"]) {
+    config.enable_meshing = yaml_general_config["enable_meshing"].as<bool>();
+  }
   // Output mesh file path
-  config.output_mesh_file = (has_yaml_general_config && yaml_general_config["output_mesh_path"])
-      ? yaml_general_config["output_mesh_path"].as<std::string>() : default_output_mesh_path;
+  if (has_yaml_general_config && yaml_general_config["output_mesh_path"]) {
+    config.output_mesh_file = yaml_general_config["output_mesh_path"].as<std::string>();
+  }
 
 
   // Integration rate
-  config.integration_rate = (has_yaml_general_config && yaml_general_config["integration_rate"])
-      ? yaml_general_config["integration_rate"].as<int>() : default_integration_rate;
+  if (has_yaml_general_config && yaml_general_config["integration_rate"]) {
+    config.integration_rate = yaml_general_config["integration_rate"].as<int>();
+  }
   // Tracking rate
-  config.tracking_rate = (has_yaml_general_config && yaml_general_config["tracking_rate"])
-      ? yaml_general_config["tracking_rate"].as<int>() : default_tracking_rate;
+  if (has_yaml_general_config && yaml_general_config["tracking_rate"]) {
+    config.tracking_rate = yaml_general_config["tracking_rate"].as<int>();
+  }
   // Meshing rate
-  config.meshing_rate = (has_yaml_general_config && yaml_general_config["meshing_rate"])
-      ? yaml_general_config["meshing_rate"].as<int>() : default_meshing_rate;
+  if (has_yaml_general_config && yaml_general_config["meshing_rate"]) {
+    config.meshing_rate = yaml_general_config["meshing_rate"].as<int>();
+  }
   // Rendering rate
-  config.rendering_rate = (has_yaml_general_config && yaml_general_config["rendering_rate"])
-      ? yaml_general_config["rendering_rate"].as<int>() : default_rendering_rate;
+  if (has_yaml_general_config && yaml_general_config["rendering_rate"]) {
+    config.rendering_rate = yaml_general_config["rendering_rate"].as<int>();
+  }
   // Frames per second
-  config.fps = (has_yaml_general_config && yaml_general_config["fps"])
-      ? yaml_general_config["fps"].as<float>() : default_fps;
+  if (has_yaml_general_config && yaml_general_config["fps"]) {
+    config.fps = yaml_general_config["fps"].as<float>();
+  }
 
   // Drop frames
-  config.drop_frames = (has_yaml_general_config && yaml_general_config["drop_frames"])
-      ? yaml_general_config["drop_frames"].as<bool>() : default_drop_frames;
+  if (has_yaml_general_config && yaml_general_config["drop_frames"]) {
+    config.drop_frames = yaml_general_config["drop_frames"].as<bool>();
+  }
   // Max frame
-  config.max_frame = (has_yaml_general_config && yaml_general_config["max_frame"])
-      ? yaml_general_config["max_frame"].as<int>() : default_max_frame;
+  if (has_yaml_general_config && yaml_general_config["max_frame"]) {
+    config.max_frame = yaml_general_config["max_frame"].as<int>();
+  }
 
   // ICP threshold
-  config.icp_threshold = (has_yaml_general_config && yaml_general_config["icp_threshold"])
-      ? yaml_general_config["icp_threshold"].as<float>() : default_icp_threshold;
+  if (has_yaml_general_config && yaml_general_config["icp_threshold"]) {
+    config.icp_threshold = yaml_general_config["icp_threshold"].as<float>();
+  }
   // Render volume fullsize
-  config.render_volume_fullsize = (has_yaml_general_config && yaml_general_config["render_volume_fullsize"])
-      ? yaml_general_config["render_volume_fullsize"].as<bool>() : default_render_volume_fullsize;
+  if (has_yaml_general_config && yaml_general_config["render_volume_fullsize"]) {
+    config.render_volume_fullsize = yaml_general_config["render_volume_fullsize"].as<bool>();
+  }
   // Bilateral filter
-  config.bilateral_filter = (has_yaml_general_config && yaml_general_config["bilateral_filter"])
-      ? yaml_general_config["bilateral_filter"].as<bool>() : default_bilateral_filter;
+  if (has_yaml_general_config && yaml_general_config["bilateral_filter"]) {
+    config.bilateral_filter = yaml_general_config["bilateral_filter"].as<bool>();
+  }
 
-  config.pyramid.clear();
   if (has_yaml_general_config && yaml_general_config["pyramid"]) {
     config.pyramid = yaml_general_config["pyramid"].as<std::vector<int>>();
-  } else {
-    for (int i = 0; i < default_iteration_count; i++) {
-      config.pyramid.push_back(default_iterations[i]);
-    }
   }
 
   // CONFIGURE MAP
   // Map size
-  config.map_size = (has_yaml_map_config && yaml_map_config["size"])
-      ? Eigen::Vector3i::Constant(yaml_map_config["size"].as<int>()) : default_map_size;
+  if (has_yaml_map_config && yaml_map_config["size"]) {
+    config.map_size = Eigen::Vector3i::Constant(yaml_map_config["size"].as<int>());
+  }
   // Map dimension
-  config.map_dim = (has_yaml_map_config && yaml_map_config["dim"])
-      ? Eigen::Vector3f::Constant(yaml_map_config["dim"].as<float>()) : default_map_dim;
+  if (has_yaml_map_config && yaml_map_config["dim"]) {
+    config.map_dim = Eigen::Vector3f::Constant(yaml_map_config["dim"].as<float>());
+  }
   // World to Map frame translation
-  config.t_MW_factor = (has_yaml_map_config && yaml_map_config["t_MW_factor"])
-      ? Eigen::Vector3f(yaml_map_config["t_MW_factor"].as<std::vector<float>>().data()) : default_t_MW_factor;
+  if (has_yaml_map_config && yaml_map_config["t_MW_factor"]) {
+    config.t_MW_factor = Eigen::Vector3f(yaml_map_config["t_MW_factor"].as<std::vector<float>>().data());
+  }
 
 
   // CONFIGURE SENSOR
   // Sensor type
   config.sensor_type = SensorImpl::type();
-  // Left hand coordinate frame
-  config.left_hand_frame = default_left_hand_frame;
   // Sensor intrinsics
   if (has_yaml_sensor_config && yaml_sensor_config["intrinsics"]) {
     config.sensor_intrinsics = Eigen::Vector4f((yaml_sensor_config["intrinsics"].as<std::vector<float>>()).data());
@@ -523,26 +505,29 @@ Configuration parseArgs(unsigned int argc, char** argv) {
     if (config.sensor_intrinsics.y() < 0) {
       config.left_hand_frame = true;
     }
-  } else {
-    config.sensor_intrinsics = default_sensor_intrinsics;
   }
   // Sensor overrided
-  config.sensor_intrinsics_overrided = false;
+  config.sensor_intrinsics_overrided = false; // TODO wat? remove
   // Sensor downsamling factor
-  config.sensor_downsampling_factor = (has_yaml_sensor_config && yaml_sensor_config["downsampling_factor"])
-      ? yaml_sensor_config["downsampling_factor"].as<int>() : default_sensor_downsampling_factor;
+  if (has_yaml_sensor_config && yaml_sensor_config["downsampling_factor"]) {
+    config.sensor_downsampling_factor = yaml_sensor_config["downsampling_factor"].as<int>();
+  }
   // Camera to Body frame transformation
-  config.T_BC = (has_yaml_sensor_config && yaml_sensor_config["T_BC"])
-      ? Eigen::Matrix4f(toT(yaml_sensor_config["T_BC"].as<std::vector<float>>())) : default_T_BC;
+  if (has_yaml_sensor_config && yaml_sensor_config["T_BC"]) {
+    config.T_BC = Eigen::Matrix4f(toT(yaml_sensor_config["T_BC"].as<std::vector<float>>()));
+  }
   // Initial Body pose
-  config.init_T_WB = (has_yaml_sensor_config && yaml_sensor_config["init_T_WB"])
-      ? Eigen::Matrix4f(toT(yaml_sensor_config["init_T_WB"].as<std::vector<float>>())) : default_init_T_WB;
+  if (has_yaml_sensor_config && yaml_sensor_config["init_T_WB"]) {
+    config.init_T_WB = Eigen::Matrix4f(toT(yaml_sensor_config["init_T_WB"].as<std::vector<float>>()));
+  }
   // Near plane
-  config.near_plane = (has_yaml_sensor_config && yaml_sensor_config["near_plane"])
-      ? yaml_sensor_config["near_plane"].as<float>() : default_near_plane;
+  if (has_yaml_sensor_config && yaml_sensor_config["near_plane"]) {
+    config.near_plane = yaml_sensor_config["near_plane"].as<float>();
+  }
   // Far plane
-  config.far_plane = (has_yaml_sensor_config && yaml_sensor_config["far_plane"])
-      ? yaml_sensor_config["far_plane"].as<float>() : default_far_plane;
+  if (has_yaml_sensor_config && yaml_sensor_config["far_plane"]) {
+    config.far_plane = yaml_sensor_config["far_plane"].as<float>();
+  }
 
 
   // Reset getopt_long state to start parsing from the beginning
