@@ -29,11 +29,11 @@ namespace se {
    * \param[in] cell_data  The scalar values of the cells/faces.
    * \return 0 on success, nonzero on error.
    */
-  int save_mesh_vtk(const std::vector<Triangle> &mesh,
-                    const std::string filename,
-                    const Eigen::Matrix4f &T_WM,
-                    const float *point_data = nullptr,
-                    const float *cell_data = nullptr);
+  static int save_mesh_vtk(const std::vector<Triangle> &mesh,
+                           const std::string filename,
+                           const Eigen::Matrix4f &T_WM,
+                           const float *point_data = nullptr,
+                           const float *cell_data = nullptr);
 
   /**
    * \brief Save a mesh as a PLY file.
@@ -51,11 +51,11 @@ namespace se {
    * \param[in] cell_data  The scalar values of the cells/faces.
    * \return 0 on success, nonzero on error.
    */
-  int save_mesh_ply(const std::vector<Triangle> &mesh,
-                    const std::string filename,
-                    const Eigen::Matrix4f &T_WM,
-                    const float *point_data = nullptr,
-                    const float *cell_data = nullptr);
+  static int save_mesh_ply(const std::vector<Triangle> &mesh,
+                           const std::string filename,
+                           const Eigen::Matrix4f &T_WM,
+                           const float *point_data = nullptr,
+                           const float *cell_data = nullptr);
 
   /**
    * \brief Save a mesh as a OBJ file.
@@ -64,8 +64,8 @@ namespace se {
    * \param[in] filename The output filename.
    * \return 0 on success, nonzero on error.
    */
-  int save_mesh_obj(const std::vector<Triangle> &mesh,
-                    const std::string filename);
+  static int save_mesh_obj(const std::vector<Triangle> &mesh,
+                           const std::string filename);
 
 }
 
