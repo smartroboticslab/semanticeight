@@ -74,6 +74,27 @@ namespace se {
       return true;
     }
 
+
+
+    template <typename ValidPredicate>
+    bool getPixelValue(const Eigen::Vector2f&  pixel_f,
+                       const se::Image<float>& image,
+                       float&                  image_value,
+                       ValidPredicate          valid_predicate) const {
+      if (!model.isInImage(pixel_f)) {
+        return false;
+      }
+      Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+      image_value = image(pixel.x(), pixel.y());
+      // Return false for invalid depth measurement
+      if (!valid_predicate(image_value)) {
+        return false;
+      }
+      return true;
+    }
+
+
+
     /**
      * \brief Computes the scale corresponding to the back-projected pixel size
      * in voxel space
