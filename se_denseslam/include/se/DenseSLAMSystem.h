@@ -222,6 +222,12 @@ class DenseSLAMSystem {
      */
     void dumpMesh(const std::string filename, const bool print_path = false);
 
+    /** \brief Export the octree structure and slices.
+     *
+     * \param[in] base_filename   The base name of the file without suffix.
+     */
+    void saveStructure(const std::string base_filename);
+
     /** \brief Render the current 3D reconstruction.
      * This function performs raycasting if needed, otherwise it uses the point
      * cloud and normal maps created in DenseSLAMSystem::raycasting.

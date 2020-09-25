@@ -283,3 +283,39 @@ void DenseSLAMSystem::dumpMesh(const std::string filename, const bool print_path
     save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
   }
 }
+
+
+
+void DenseSLAMSystem::saveStructure(const std::string base_filename) {
+
+  std::stringstream f_s;
+  f_s << base_filename << ".ply";
+  se::save_octree_structure_ply(*map_, f_s.str().c_str());
+
+  Eigen::Vector3i slice_coord = (map_->size() / map_->dim() * t_MC()).cast<int>();
+
+  int scale = 0;
+  // Save x plane
+  std::stringstream f_x;
+  f_x << base_filename << "_x.vtk";
+  save_3d_slice_vtk(*map_, f_x.str().c_str(),
+                    Eigen::Vector3i(slice_coord.x(), 0, 0),
+                    Eigen::Vector3i(slice_coord.x() + 1, map_->size(), map_->size()),
+                    [](const auto& data) { return data.x; }, scale);
+
+  // Save y plane
+  std::stringstream f_y;
+  f_y << base_filename << "_y.vtk";
+  save_3d_slice_vtk(*map_, f_y.str().c_str(),
+                    Eigen::Vector3i(0, slice_coord.y(), 0),
+                    Eigen::Vector3i(map_->size(), slice_coord.y() + 1, map_->size()),
+                    [](const auto& data) { return data.x; }, scale);
+
+  // Save z plane
+  std::stringstream f_z;
+  f_z << base_filename << "_z.vtk";
+  save_3d_slice_vtk(*map_, f_z.str().c_str(),
+                    Eigen::Vector3i(0, 0, slice_coord.z()),
+                    Eigen::Vector3i(map_->size(), map_->size(), slice_coord.z() + 1),
+                    [](const auto& data) { return data.x; }, scale);
+}
