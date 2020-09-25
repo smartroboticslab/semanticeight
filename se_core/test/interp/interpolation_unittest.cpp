@@ -107,7 +107,7 @@ class InterpolationTest : public ::testing::Test {
       {
         std::stringstream f;
         f << "./sphere-interp.vtk";
-        save_3d_slice_vtk(octree_, f.str().c_str(),
+        save_3d_value_slice_vtk(octree_, f.str().c_str(),
                           Eigen::Vector3i(0, octree_.size() / 2, 0),
                           Eigen::Vector3i(octree_.size(), octree_.size()/2 + 1, octree_.size()),
                           [](const float& data) { return data; }, octree_.maxBlockScale());
@@ -120,7 +120,7 @@ class InterpolationTest : public ::testing::Test {
       {
         std::stringstream f;
         f << "./sphere-interp-balanced.vtk";
-        save_3d_slice_vtk(octree_, f.str().c_str(),
+        save_3d_value_slice_vtk(octree_, f.str().c_str(),
                           Eigen::Vector3i(0, octree_.size() / 2, 0),
                           Eigen::Vector3i(octree_.size(), octree_.size()/2 + 1, octree_.size()),
                           [](const float& data) { return data; }, octree_.maxBlockScale());

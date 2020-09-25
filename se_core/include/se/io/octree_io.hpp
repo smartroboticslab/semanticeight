@@ -28,12 +28,27 @@ namespace se {
    * \return 0 on success, nonzero on error.
    */
   template <typename VoxelT, typename ValueSelector>
-  int save_3d_slice_vtk(const se::Octree<VoxelT>& octree,
-                        const std::string         filename,
+  int save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
+                              const std::string         filename,
+                              const Eigen::Vector3i&    lower_coord,
+                              const Eigen::Vector3i&    upper_coord,
+                              ValueSelector             select_value,
+                              const int                 min_scale);
+
+  template <typename VoxelT>
+  int save_3d_scale_slice_vtk(const se::Octree<VoxelT>& octree,
+                              const std::string         filename,
+                              const Eigen::Vector3i&    lower_coord,
+                              const Eigen::Vector3i&    upper_coord,
+                              const int                 min_scale);
+
+
+  template <typename ValueGetter>
+  int save_3d_slice_vtk(const std::string         filename,
                         const Eigen::Vector3i&    lower_coord,
                         const Eigen::Vector3i&    upper_coord,
-                        ValueSelector             select_value,
-                        const int                 scale);
+                        ValueGetter               get_value,
+                        const int                 min_scale);
 
   /**
    * \brief Save the octree structure as a PLY file.

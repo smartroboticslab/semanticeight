@@ -534,7 +534,7 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereTranslation) {
 
     f << "./out/scale_"  + std::to_string(SCALE) + "-sphere-linear_back_move-" + std::to_string(frame) + ".vtk";
 
-    save_3d_slice_vtk(octree_, f.str().c_str(),
+    save_3d_value_slice_vtk(octree_, f.str().c_str(),
                       Eigen::Vector3i(0, 0, octree_.size() / 2),
                       Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size() / 2 + 1),
                       [](const auto& data) { return data.x; }, octree_.maxBlockScale());
@@ -585,7 +585,7 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereRotation) {
 
     f << "./out/scale_"  + std::to_string(SCALE) + "-sphere-rotational_move-" + std::to_string(frame) + ".vtk";
 
-    save_3d_slice_vtk(octree_, f.str().c_str(),
+    save_3d_value_slice_vtk(octree_, f.str().c_str(),
                       Eigen::Vector3i(0, 0, octree_.size() / 2),
                       Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size() / 2 + 1),
                       [](const auto& data) { return data.x; }, octree_.maxBlockScale());
@@ -629,7 +629,7 @@ TEST_F(MultiscaleTSDFMovingCameraTest, BoxTranslation) {
 
     f << "./out/scale_"  + std::to_string(SCALE) + "-box-linear_back_move-" + std::to_string(frame) + ".vtk";
 
-    save_3d_slice_vtk(octree_, f.str().c_str(),
+    save_3d_value_slice_vtk(octree_, f.str().c_str(),
                       Eigen::Vector3i(0, 0, octree_.size() / 2),
                       Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size() / 2 + 1),
                       [](const auto& data) { return data.x; }, octree_.maxBlockScale());
@@ -672,7 +672,7 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereBoxTranslation) {
 
     f << "./out/scale_"  + std::to_string(SCALE) + "-sphere-and-box-linear_back_move-" + std::to_string(frame) + ".vtk";
 
-    save_3d_slice_vtk(octree_, f.str().c_str(),
+    save_3d_value_slice_vtk(octree_, f.str().c_str(),
                       Eigen::Vector3i(0, 0, octree_.size() / 2),
                       Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size() / 2 + 1),
                       [](const auto& data) { return data.x; }, octree_.maxBlockScale());
