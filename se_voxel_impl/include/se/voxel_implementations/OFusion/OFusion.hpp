@@ -59,7 +59,7 @@ struct OFusion {
     static inline VoxelData invalid()     { return {0.f, 0.f}; }
     static inline VoxelData initData() { return {0.f, 0.f}; }
 
-    using VoxelBlockType = se::VoxelBlockFull<OFusion::VoxelType>;
+    using VoxelBlockType = se::VoxelBlockFinest<OFusion::VoxelType>;
 
     using MemoryPoolType = se::PagedMemoryPool<OFusion::VoxelType>;
     template <typename ElemT>
