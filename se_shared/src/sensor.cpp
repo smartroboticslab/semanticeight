@@ -290,24 +290,24 @@ float se::OusterLidar::measurementFromPoint(const Eigen::Vector3f& point_C) cons
   return point_C.norm();
 }
 
-bool se::OusterLidar::pointInFrustum(const Eigen::Vector3f& point_C) const {
+bool se::OusterLidar::pointInFrustum(const Eigen::Vector3f& /*point_C*/) const {
   // TODO Implement
   return false;
 }
 
-bool se::OusterLidar::pointInFrustumInf(const Eigen::Vector3f& point_C) const {
+bool se::OusterLidar::pointInFrustumInf(const Eigen::Vector3f& /*point_C*/) const {
   // TODO Implement
   return false;
 }
 
-bool se::OusterLidar::sphereInFrustum(const Eigen::Vector3f& center_C,
-                                      const float            radius) const {
+bool se::OusterLidar::sphereInFrustum(const Eigen::Vector3f& /*center_C*/,
+                                      const float            /*radius*/) const {
   // TODO Implement
   return false;
 }
 
-bool se::OusterLidar::sphereInFrustumInf(const Eigen::Vector3f& center_C,
-                                         const float            radius) const {
+bool se::OusterLidar::sphereInFrustumInf(const Eigen::Vector3f& /*center_C*/,
+                                         const float            /*radius*/) const {
   // TODO Implement
   return false;
 }
