@@ -108,7 +108,8 @@ TEST_F(MultiresESDFMovingSphereTest, Integration) {
       save_3d_value_slice_vtk(octree_, f.str().c_str(),
                         Eigen::Vector3i(0, octree_.size() / 2, 0),
                         Eigen::Vector3i(octree_.size(), octree_.size() / 2 + 1, octree_.size()),
-                        [](const auto& data) { return data.x; }, octree_.maxBlockScale());
+                        MultiresTSDF::VoxelType::selectNodeValue, MultiresTSDF::VoxelType::selectVoxelValue,
+                        octree_.maxBlockScale());
     }
   }
 
@@ -127,7 +128,8 @@ TEST_F(MultiresESDFMovingSphereTest, Integration) {
       save_3d_value_slice_vtk(octree_, f.str().c_str(),
                         Eigen::Vector3i(0, octree_.size() / 2, 0),
                         Eigen::Vector3i(octree_.size(), octree_.size() / 2 + 1, octree_.size()),
-                        [](const auto& data) { return data.x; }, octree_.maxBlockScale());
+                        MultiresTSDF::VoxelType::selectNodeValue, MultiresTSDF::VoxelType::selectVoxelValue,
+                        octree_.maxBlockScale());
     }
   }
   se::save_octree_structure_ply(octree_, "./out/test-sphere.ply");

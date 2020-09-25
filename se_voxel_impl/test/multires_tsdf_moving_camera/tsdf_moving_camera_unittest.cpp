@@ -537,7 +537,8 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereTranslation) {
     save_3d_value_slice_vtk(octree_, f.str().c_str(),
                       Eigen::Vector3i(0, 0, octree_.size() / 2),
                       Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size() / 2 + 1),
-                      [](const auto& data) { return data.x; }, octree_.maxBlockScale());
+                      MultiresTSDF::VoxelType::selectNodeValue, MultiresTSDF::VoxelType::selectVoxelValue,
+                      octree_.maxBlockScale());
   }
 
   for (std::vector<obstacle*>::iterator sphere = spheres.begin(); sphere != spheres.end(); ++sphere) {
@@ -588,7 +589,8 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereRotation) {
     save_3d_value_slice_vtk(octree_, f.str().c_str(),
                       Eigen::Vector3i(0, 0, octree_.size() / 2),
                       Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size() / 2 + 1),
-                      [](const auto& data) { return data.x; }, octree_.maxBlockScale());
+                      MultiresTSDF::VoxelType::selectNodeValue, MultiresTSDF::VoxelType::selectVoxelValue,
+                      octree_.maxBlockScale());
   }
 
   for (std::vector<obstacle*>::iterator sphere = spheres.begin(); sphere != spheres.end(); ++sphere) {
@@ -632,7 +634,8 @@ TEST_F(MultiscaleTSDFMovingCameraTest, BoxTranslation) {
     save_3d_value_slice_vtk(octree_, f.str().c_str(),
                       Eigen::Vector3i(0, 0, octree_.size() / 2),
                       Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size() / 2 + 1),
-                      [](const auto& data) { return data.x; }, octree_.maxBlockScale());
+                      MultiresTSDF::VoxelType::selectNodeValue, MultiresTSDF::VoxelType::selectVoxelValue,
+                      octree_.maxBlockScale());
   }
 
   for (std::vector<obstacle*>::iterator box = boxes.begin(); box != boxes.end(); ++box) {
@@ -675,7 +678,8 @@ TEST_F(MultiscaleTSDFMovingCameraTest, SphereBoxTranslation) {
     save_3d_value_slice_vtk(octree_, f.str().c_str(),
                       Eigen::Vector3i(0, 0, octree_.size() / 2),
                       Eigen::Vector3i(octree_.size(), octree_.size(), octree_.size() / 2 + 1),
-                      [](const auto& data) { return data.x; }, octree_.maxBlockScale());
+                      MultiresTSDF::VoxelType::selectNodeValue, MultiresTSDF::VoxelType::selectVoxelValue,
+                      octree_.maxBlockScale());
   }
 
   for (std::vector<obstacle*>::iterator obstacle = obstacles.begin(); obstacle != obstacles.end(); ++obstacle) {
