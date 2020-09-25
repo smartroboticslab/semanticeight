@@ -296,28 +296,52 @@ void DenseSLAMSystem::saveStructure(const std::string base_filename) {
 
   int scale = 0;
   // Save x plane
-  std::stringstream f_x;
-  f_x << base_filename << "_x.vtk";
-  save_3d_value_slice_vtk(*map_, f_x.str().c_str(),
+  std::stringstream fv_x;
+  fv_x << base_filename << "_value_x.vtk";
+  save_3d_value_slice_vtk(*map_, fv_x.str().c_str(),
                           Eigen::Vector3i(slice_coord.x(), 0, 0),
                           Eigen::Vector3i(slice_coord.x() + 1, map_->size(), map_->size()),
                           [](const auto& data) { return data.x; }, scale);
 
   // Save y plane
-  std::stringstream f_y;
-  f_y << base_filename << "_y.vtk";
-  save_3d_value_slice_vtk(*map_, f_y.str().c_str(),
+  std::stringstream fv_y;
+  fv_y << base_filename << "_value_y.vtk";
+  save_3d_value_slice_vtk(*map_, fv_y.str().c_str(),
                           Eigen::Vector3i(0, slice_coord.y(), 0),
                           Eigen::Vector3i(map_->size(), slice_coord.y() + 1, map_->size()),
                           [](const auto& data) { return data.x; }, scale);
 
   // Save z plane
-  std::stringstream f_z;
-  f_z << base_filename << "_z.vtk";
-  save_3d_value_slice_vtk(*map_, f_z.str().c_str(),
+  std::stringstream fv_z;
+  fv_z << base_filename << "_value_z.vtk";
+  save_3d_value_slice_vtk(*map_, fv_z.str().c_str(),
                           Eigen::Vector3i(0, 0, slice_coord.z()),
                           Eigen::Vector3i(map_->size(), map_->size(), slice_coord.z() + 1),
                           [](const auto& data) { return data.x; }, scale);
+
+  // Save x plane
+  std::stringstream fs_x;
+  fs_x << base_filename << "_scale_x.vtk";
+  save_3d_scale_slice_vtk(*map_, fs_x.str().c_str(),
+                          Eigen::Vector3i(slice_coord.x(), 0, 0),
+                          Eigen::Vector3i(slice_coord.x() + 1, map_->size(), map_->size()),
+                          scale);
+
+  // Save y plane
+  std::stringstream fs_y;
+  fs_y << base_filename << "_scale_y.vtk";
+  save_3d_scale_slice_vtk(*map_, fs_y.str().c_str(),
+                          Eigen::Vector3i(0, slice_coord.y(), 0),
+                          Eigen::Vector3i(map_->size(), slice_coord.y() + 1, map_->size()),
+                          scale);
+
+  // Save z plane
+  std::stringstream fs_z;
+  fs_z << base_filename << "_scale_z.vtk";
+  save_3d_scale_slice_vtk(*map_, fs_z.str().c_str(),
+                          Eigen::Vector3i(0, 0, slice_coord.z()),
+                          Eigen::Vector3i(map_->size(), map_->size(), slice_coord.z() + 1),
+                          scale);
 }
 
 void DenseSLAMSystem::structureStats(size_t&              num_nodes,
