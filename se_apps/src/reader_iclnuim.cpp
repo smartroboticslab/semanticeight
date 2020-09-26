@@ -117,8 +117,8 @@ se::ReaderStatus se::ICLNUIMReader::nextRGBA(se::Image<uint32_t>& rgba_image) {
   basename << "scene_00_" << std::setfill('0') << std::setw(4) << frame_;
   const std::string filename (sequence_path_ + "/" + basename.str() + ".png");
   // Read the image data.
-  unsigned w = 0;
-  unsigned h = 0;
+  unsigned int w = 0;
+  unsigned int h = 0;
   unsigned char* image_data = nullptr;
   if (lodepng_decode32_file(&image_data, &w, &h, filename.c_str())) {
     free(image_data);
