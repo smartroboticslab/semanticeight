@@ -161,7 +161,9 @@ public:
    *
    * \return The scale the data was extracted from.
    */
-  int get(const int x, const int y, const int z, VoxelData& data, const int min_scale = 0) const;
+  int get(const int x, const int y, const int z,
+          VoxelData& data,
+          const int  min_scale = 0) const;
 
   /*! \brief Return the data at the supplied voxel coordinates and scale.
    *
@@ -174,7 +176,9 @@ public:
    *
    * \return The scale the data was extracted from.
    */
-  int get(const Eigen::Vector3i& voxel_coord, VoxelData& data, const int min_scale = 0) const;
+  int get(const Eigen::Vector3i& voxel_coord,
+          VoxelData&             data,
+          const int              min_scale = 0) const;
 
   /*! \brief Return the data at the supplied 3D point and scale.
    *
@@ -184,10 +188,65 @@ public:
    *                      allocated up to the supplied scale, return the data at the lowest
    *                      allocated scale.
    * \param[in] min_scale The minimum octree scale to get the data at.
-   *
-   * \return The scale the data was extracted from.
+   * \return The data contained in corresponding the voxel. If the octree
+   *         hasn't been allocated up to the supplied scale, return the data
+   *         at the lowest allocated scale.
    */
-  int getAtPoint(const Eigen::Vector3f& point_M, VoxelData& data, const int min_scale = 0) const;
+  int getAtPoint(const Eigen::Vector3f& point_M,
+                 VoxelData&             data,
+                 const int              min_scale = 0) const;
+
+  /*! \brief Return the max data at the supplied voxel coordinates and scale.
+   *
+   * \warning CURRENTLY THE FUNCTION ONLY RETURN THE MAX DATA FOR MULTIRESOFUSION.
+   *          For all other implementation the same data as for get is returned.
+   *
+   * \param[in] x         The voxel x coordinate in the interval [0, size - 1].
+   * \param[in] y         The voxel y coordinate in the interval [0, size - 1].
+   * \param[in] z         The voxel z coordinate in the interval [0, size - 1].
+   * \param[in] min_scale The minimum octree scale to get the data at.
+   *
+   * \return The max data contained in the voxel. If the octree hasn't been
+   *         allocated up to the supplied scale, return the data at the lowest
+   *         allocated scale.
+   */
+  int getMax(const int x, const int y, const int z,
+             VoxelData& data,
+             const int  min_scale = 0) const;
+
+  /*! \brief Return the max data at the supplied voxel coordinates and scale.
+   *
+   * \warning CURRENTLY THE FUNCTION ONLY RETURN THE MAX DATA FOR MULTIRESOFUSION.
+   *          For all other implementation the same data as for get is returned.
+   *
+   * \param[in] voxel_coord The coordinates of the voxel. Each component must
+   *                        be in the interval [0, size - 1].
+   * \param[in] min_scale   The minimum octree scale to get the data at.
+   *
+   * \return The max data contained in the voxel. If the octree hasn't been
+   *         allocated up to the supplied scale, return the data at the lowest
+   *         allocated scale.
+   */
+  int getMax(const Eigen::Vector3i& voxel_coord,
+             VoxelData&             data,
+             const int              min_scale = 0) const;
+
+  /*! \brief Return the max data at the supplied 3D point and scale.
+   *
+   * \warning CURRENTLY THE FUNCTION ONLY RETURN THE MAX DATA FOR MULTIRESOFUSION.
+   *          For all other implementation the same data as for get is returned.
+   *
+   * \param[in] point_M   The coordinates of the point. Each component must be in
+   *                      the interval [0, dim).
+   * \param[in] min_scale The minimum octree scale to get the data at.
+   *
+   * \return The max data contained in corresponding the voxel. If the octree
+   *         hasn't been allocated up to the supplied scale, return the data
+   *         at the lowest allocated scale.
+   */
+  int getMaxAtPoint(const Eigen::Vector3f& point_M,
+                    VoxelData&             data,
+                    const int              min_scale = 0) const;
 
   /*! \brief Set the data at the supplied voxel coordinates.
    * If the voxel hasn't been allocated, no action is performed.

@@ -145,6 +145,67 @@ inline int Octree<T>::getAtPoint(const Eigen::Vector3f& point_M,
 
 
 template <typename T>
+inline int Octree<T>::getMax(const int  x,
+                             const int  y,
+                             const int  z,
+                             VoxelData& data,
+                             const int  min_scale) const {
+
+  assert(min_scale < voxel_depth_);
+
+  Node<T>* node = root_;
+  if (!node) {
+    data = T::initData();
+    return size_; // size_ := map size
+  }
+
+  const unsigned min_node_size = std::max((1 << min_scale), (int) block_size);
+  unsigned node_size = size_ >> 1; // size_ := map size
+  // Initialize just to stop the compiler from complaining.
+  int child_idx = -1;
+  for (; node_size >= min_node_size; node_size = node_size >> 1) {
+    child_idx  = ((x & node_size) > 0) + 2 * ((y & node_size) > 0) + 4 * ((z & node_size) > 0);
+    Node<T>* node_tmp = node->child(child_idx);
+    if (!node_tmp) {
+      const int scale = se::math::log2_const(node->size() / 2);
+      data = node->childData(child_idx);
+      return scale;
+    }
+    node = node_tmp;
+  }
+
+  if (min_node_size == block_size) {
+    const auto block = static_cast<VoxelBlockType *>(node);
+    const int scale = std::max(min_scale, block->current_scale());
+    data = block->maxData(Eigen::Vector3i(x, y, z), scale);
+    return scale;
+  } else {
+    const int scale = se::math::log2_const(node->size() / 2);
+    data = (node->parent())->childData(child_idx);
+    return scale;
+  }
+}
+
+
+
+template <typename T>
+inline int Octree<T>::getMax(const Eigen::Vector3i& voxel_coord,
+                             VoxelData&             data,
+                             const int              scale) const {
+  return getMax(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), data, scale);
+}
+
+
+
+template <typename T>
+inline int Octree<T>::getMaxAtPoint(const Eigen::Vector3f& point_M,
+                                    VoxelData&             data,
+                                    const int              scale) const {
+  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point_M).cast<int>();
+  return getMax(voxel_coord, data, scale);
+}
+
+template <typename T>
 inline void Octree<T>::set(const int        x,
                            const int        y,
                            const int        z,

@@ -173,6 +173,11 @@ public:
   virtual VoxelData data(const int voxel_idx_at_scale, const int scale) const = 0;
   virtual void setData(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data) = 0;
 
+  virtual VoxelData maxData(const Eigen::Vector3i& voxel_coord) const = 0;
+  virtual VoxelData maxData(const Eigen::Vector3i& voxel_coord, const int scale) const = 0;
+  virtual VoxelData maxData(const int voxel_idx) const = 0;
+  virtual VoxelData maxData(const int voxel_idx_at_scale, const int scale) const = 0;
+
   /*! \brief The number of voxels per side at scale.
    */
   static constexpr int scaleSize(const int scale);
@@ -236,6 +241,15 @@ public:
   VoxelData data(const int voxel_idx_at_scale_0, const int scale_0) const;
   void setData(const int voxel_idx_at_scale_0, const int scale_0, const VoxelData& voxel_data);
 
+  /**
+   * \note Data will always retrieved and set at scale 0.
+   *       Function only exist to keep API consistent.
+   */
+  VoxelData  maxData(const Eigen::Vector3i& voxel_coord) const { return data(voxel_coord); };
+  VoxelData  maxData(const Eigen::Vector3i& voxel_coord, const int /* scale_0 */) const { return data(voxel_coord); };
+  VoxelData  maxData(const int voxel_idx) const { return data(voxel_idx); };
+  VoxelData  maxData(const int voxel_idx, const int /* scale_0 */) const { return data(voxel_idx); };
+
   VoxelData* blockData() { return block_data_; }
   const VoxelData* blockData() const { return block_data_; }
   static constexpr int data_size() { return sizeof(VoxelBlockFinest<T>); }
@@ -282,6 +296,12 @@ public:
 
   VoxelData data(const int voxel_idx_at_scale, const int scale) const;
   void setData(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
+
+  /// \warning These functions only return the regular data.
+  VoxelData  maxData(const Eigen::Vector3i& voxel_coord) const { return data(voxel_coord); };
+  VoxelData  maxData(const Eigen::Vector3i& voxel_coord, const int scale) const { return data(voxel_coord, scale); };
+  VoxelData  maxData(const int voxel_idx) const { return data(voxel_idx); };
+  VoxelData  maxData(const int voxel_idx_at_scale, const int scale) const { return data(voxel_idx_at_scale, scale); };
 
   VoxelData* blockData() { return block_data_; }
   const VoxelData* blockData() const { return block_data_; }
@@ -346,6 +366,12 @@ public:
   VoxelData data(const int voxel_idx_at_scale, const int scale) const;
   void setData(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
   void setDataSafe(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
+
+  /// \warning These functions only return the regular data.
+  VoxelData  maxData(const Eigen::Vector3i& voxel_coord) const { return data(voxel_coord); };
+  VoxelData  maxData(const Eigen::Vector3i& voxel_coord, const int scale) const { return data(voxel_coord, scale); };
+  VoxelData  maxData(const int voxel_idx) const { return data(voxel_idx); };
+  VoxelData  maxData(const int voxel_idx_at_scale, const int scale) const { return data(voxel_idx_at_scale, scale); };
 
   void allocateDownTo();
   void allocateDownTo(const int scale);
