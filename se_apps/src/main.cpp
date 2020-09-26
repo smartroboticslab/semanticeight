@@ -425,10 +425,14 @@ int processAll(se::Reader*        reader,
   }
 
   if (mesh_volume && config->output_mesh_file != "") {
-    std::stringstream output_mesh_file_ss;
-    output_mesh_file_ss << config->output_mesh_file << "_frame_"
-                          << std::setw(4) << std::setfill('0') << frame << ".vtk";
-    pipeline->dumpMesh(output_mesh_file_ss.str().c_str(), !config->enable_benchmark);
+    std::stringstream output_mesh_voxel_file_ss;
+    std::stringstream output_mesh_meter_file_ss;
+    output_mesh_voxel_file_ss << config->output_mesh_file << "_voxel_frame_"
+                              << std::setw(4) << std::setfill('0') << frame << ".vtk";
+    output_mesh_meter_file_ss << config->output_mesh_file << "_meter_frame_"
+                              << std::setw(4) << std::setfill('0') << frame << ".vtk";
+    pipeline->dumpMesh(
+        output_mesh_voxel_file_ss.str().c_str(), output_mesh_meter_file_ss.str().c_str(), !config->enable_benchmark);
   }
 
   //  ===  SAVE OCTREE STRUCTURE AND SLICE ===

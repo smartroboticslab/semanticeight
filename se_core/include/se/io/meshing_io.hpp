@@ -22,18 +22,23 @@ namespace se {
    * \note The resulting mesh is unoptimized and contains many duplicate
    * vertices.
    *
+   * \note If only a mesh and filename is provided the mesh is saved in voxel units.
+   *
    * \param[in] mesh       The mesh in map frame to be saved.
    * \param[in] filename   The output filename.
    * \param[in] T_WM       The transformation from map to world frame.
+   * \param[in] voxel_dim  The size of a voxel in meters.
    * \param[in] point_data The scalar values of the points/vertices.
    * \param[in] cell_data  The scalar values of the cells/faces.
+   *
    * \return 0 on success, nonzero on error.
    */
-  static int save_mesh_vtk(const std::vector<Triangle> &mesh,
-                           const std::string filename,
-                           const Eigen::Matrix4f &T_WM,
-                           const float *point_data = nullptr,
-                           const float *cell_data = nullptr);
+  int save_mesh_vtk(const std::vector<Triangle>& mesh,
+                    const std::string            filename,
+                    const Eigen::Matrix4f&       T_WM = Eigen::Matrix4f::Identity(),
+                    const float                  voxel_dim = 1,
+                    const float*                 point_data = nullptr,
+                    const float*                 cell_data = nullptr);
 
   /**
    * \brief Save a mesh as a PLY file.
@@ -44,18 +49,23 @@ namespace se {
    * \note The resulting mesh is unoptimized and contains many duplicate
    * vertices.
    *
+   * \note If only a mesh and filename is provided the mesh is saved in voxel units.
+   *
    * \param[in] mesh       The mesh in map frame to be saved.
    * \param[in] filename   The output filename.
    * \param[in] T_WM       The transformation from map to world frame.
+   * \param[in] voxel_dim  The size of a voxel in meters.
    * \param[in] point_data The scalar values of the points/vertices.
    * \param[in] cell_data  The scalar values of the cells/faces.
+   *
    * \return 0 on success, nonzero on error.
    */
-  static int save_mesh_ply(const std::vector<Triangle> &mesh,
-                           const std::string filename,
-                           const Eigen::Matrix4f &T_WM,
-                           const float *point_data = nullptr,
-                           const float *cell_data = nullptr);
+  static int save_mesh_ply(const std::vector<Triangle>& mesh,
+                           const std::string            filename,
+                           const Eigen::Matrix4f&       T_WM = Eigen::Matrix4f::Identity(),
+                           const float                  voxel_dim = 1,
+                           const float*                 point_data = nullptr,
+                           const float*                 cell_data = nullptr);
 
   /**
    * \brief Save a mesh as a OBJ file.

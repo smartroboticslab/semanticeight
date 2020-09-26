@@ -200,40 +200,40 @@ class DenseSLAMSystem {
                    const unsigned    frame);
 
     /**
-     * Raycast the map from the current pose to create a point cloud (point cloud
-     * map) and respective normal vectors (normal map). The point cloud and normal
-     * maps are then used to track the next frame in DenseSLAMSystem::tracking.
-     * This is the fourth stage of the pipeline.
+     * \brief Raycast the map from the current pose to create a point cloud (point cloud map)
+     *        and respective normal vectors (normal map). The point cloud and normal
+     *        maps are then used to track the next frame in DenseSLAMSystem::tracking.
+     *        This is the fourth stage of the pipeline.
      *
-     * @note Raycast is not performed on the first 3 frames (those with an
-     * index up to 2).
+     * \note Raycast is not performed on the first 3 frames (those with an index up to 2).
      *
-     * \param[in] k The intrinsic camera parameters. See
-     * se::Configuration.camera for details.
-     * \param[in] mu TSDF truncation bound. See se::Configuration.mu for more
-     * details.
+     * \param[in] k  The intrinsic camera parameters. See ::Configuration.camera for details.
+     * \param[in] mu TSDF truncation bound. See ::Configuration.mu for more details.
+     *
      * \return true (does not fail).
      */
     bool raycast(const SensorImpl& sensor);
 
     /** \brief Export a mesh of the current state of the map.
      *
-     * \param[in] filename   The name of the file where the mesh will be saved.
-     *                       A PLY mesh will be saved if it ends in `.ply`,
-     *                       otherwise a VTK mesh will be saved.
+     * \param[in] filename_voxel   The name of the file where the mesh in voxel units and map frame will be saved.
+     *                             A PLY mesh will be saved if it ends in `.ply`,
+     *                             otherwise a VTK mesh will be saved. Set "" to not save.
+     * \param[in] filename_meter   The name of the file where the mesh in meter units and world frame will be saved.
+     *                             A PLY mesh will be saved if it ends in `.ply`,
+     *                             otherwise a VTK mesh will be saved. Set "" to not save.
      * \param[in] print_path Print the filename to stdout before saving.
      */
-    void dumpMesh(const std::string filename, const bool print_path = false);
+    void dumpMesh(const std::string filename_voxel,
+                  const std::string filename_meter = "",
+                  const bool        print_path = false);
 
     /** \brief Export the octree structure and slices.
      *
-     * \param[in] base_filename   The base name of the file without suffix.
+     * \param[in] base_filename The base name of the file without suffix.
      */
     void saveStructure(const std::string base_filename);
 
-    /*
-     * TODO Document this.
-     */
     void structureStats(size_t&              num_nodes,
                         size_t&              num_blocks,
                         std::vector<size_t>& num_blocks_per_scale);

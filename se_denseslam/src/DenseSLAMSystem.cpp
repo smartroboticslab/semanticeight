@@ -315,19 +315,44 @@ void DenseSLAMSystem::renderRGBA(uint32_t*              output_RGBA_image_data,
 
 
 
-void DenseSLAMSystem::dumpMesh(const std::string filename, const bool print_path) {
+void DenseSLAMSystem::dumpMesh(const std::string filename_voxel,
+                               const std::string filename_meter,
+                               const bool print_path) {
 
   TICK("dumpMesh")
-  if (print_path) {
-    std::cout << "Saving triangle mesh to file :" << filename  << std::endl;
-  }
+
   std::vector<se::Triangle> mesh;
   VoxelImpl::dumpMesh(*map_, mesh);
-  if (str_utils::ends_with(filename, ".ply")) {
-    save_mesh_ply(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
-  } else {
-    save_mesh_vtk(mesh, filename.c_str(), se::math::to_inverse_transformation(this->T_MW_));
+
+  if (filename_voxel != "") {
+
+    if (print_path) {
+      std::cout << "Saving triangle mesh in map frame to file [voxel]:" << filename_voxel  << std::endl;
+    }
+
+    if (str_utils::ends_with(filename_voxel, ".ply")) {
+      save_mesh_ply(mesh, filename_voxel.c_str());
+    } else {
+      save_mesh_vtk(mesh, filename_voxel.c_str());
+    }
+
+
   }
+
+  if (filename_meter != "") {
+
+    if (print_path) {
+      std::cout << "Saving triangle mesh in world frame to file [meter]:" << filename_meter  << std::endl;
+    }
+
+    if (str_utils::ends_with(filename_meter, ".ply")) {
+      save_mesh_ply(mesh, filename_meter.c_str(), se::math::to_inverse_transformation(this->T_MW_), map_->voxelDepth());
+    } else {
+      save_mesh_vtk(mesh, filename_meter.c_str(), se::math::to_inverse_transformation(this->T_MW_), map_->voxelDepth());
+    }
+
+  }
+
   TOCK("dumpMesh")
 }
 

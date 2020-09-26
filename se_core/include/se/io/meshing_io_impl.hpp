@@ -9,6 +9,7 @@
 int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
                       const std::string            filename,
                       const Eigen::Matrix4f&       T_WM,
+                      const float                  voxel_dim,
                       const float*                 point_data,
                       const float*                 cell_data) {
 
@@ -31,9 +32,9 @@ int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
   for(unsigned int i = 0; i < mesh.size(); ++i ){
     const Triangle& triangle_M = mesh[i];
 
-    Eigen::Vector3f vertex_0_W = (T_WM * triangle_M.vertexes[0].homogeneous()).head(3);
-    Eigen::Vector3f vertex_1_W = (T_WM * triangle_M.vertexes[1].homogeneous()).head(3);
-    Eigen::Vector3f vertex_2_W = (T_WM * triangle_M.vertexes[2].homogeneous()).head(3);
+    Eigen::Vector3f vertex_0_W = (T_WM * (voxel_dim * triangle_M.vertexes[0]).homogeneous()).head(3);
+    Eigen::Vector3f vertex_1_W = (T_WM * (voxel_dim * triangle_M.vertexes[1]).homogeneous()).head(3);
+    Eigen::Vector3f vertex_2_W = (T_WM * (voxel_dim * triangle_M.vertexes[2]).homogeneous()).head(3);
 
     ss_points_W << vertex_0_W.x() << " "
                 << vertex_0_W.y() << " "
@@ -97,6 +98,7 @@ int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
 int se::save_mesh_ply(const std::vector<Triangle>& mesh,
                       const std::string            filename,
                       const Eigen::Matrix4f&       T_WM,
+                      const float                  voxel_dim,
                       const float*                 point_data,
                       const float*                 cell_data) {
 
@@ -129,13 +131,12 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
     file << "property float face_value\n";
   }
   file << "end_header\n";
-
   // Write vertices and vertex data
   for (size_t i = 0; i < num_faces; ++i ) {
     const Triangle& triangle_M = mesh[i];
     // Write each triangle vertex
     for (int v = 0; v < 3; ++v) {
-      const Eigen::Vector3f vertex_W = (T_WM * triangle_M.vertexes[v].homogeneous()).head(3);
+      const Eigen::Vector3f vertex_W = (T_WM * (voxel_dim * triangle_M.vertexes[v]).homogeneous()).head(3);
       file << vertex_W.x() << " " << vertex_W.y() << " " << vertex_W.z();
       if (has_point_data) {
         file << " " << point_data[3*i + v] << "\n";
