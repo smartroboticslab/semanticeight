@@ -61,6 +61,8 @@ namespace se {
     size_t num_pixel = image_width_ * image_height_;
     Img default_image = std::vector<Pixel>(num_pixel, Pixel::crossingKnownPixel()); // state_1 := crossing (1); state_2 := known (0)
 
+    pooling_image_[1] = default_image;
+
     // Initalize first pixel batch at 3x3 batch resolution
     for (int y = 0; y < image_height_; y++) {
 #pragma omp parallel for
