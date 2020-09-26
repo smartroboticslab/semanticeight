@@ -34,7 +34,7 @@
 #include <se/octree.hpp>
 #include <se/image/image.hpp>
 #include "se/algorithms/meshing.hpp"
-#include <se/voxel_implementations/MultiresOFusion/kernel_image.hpp>
+#include <se/voxel_implementations/MultiresOFusion/DensePoolingImage.hpp>
 #include "se/sensor_implementation.hpp"
 
 #include <yaml-cpp/yaml.h>

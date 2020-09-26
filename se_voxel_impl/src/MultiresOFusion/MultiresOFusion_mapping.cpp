@@ -42,7 +42,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                          std::vector<MultiresOFusion::VoxelBlockType*>&                 block_list,
                          std::vector<std::set<se::Node<MultiresOFusion::VoxelType>*>>&  node_list,
                          const se::Image<float>&                                        depth_image,
-                         const se::KernelImage* const                                   kernel_depth_image,
+                         const se::DensePoolingImage* const                             dense_pooling_image,
                          SensorImpl                                                     sensor,
                          const Eigen::Matrix4f&                                         T_CM,
                          const float                                                    voxel_dim,
@@ -55,7 +55,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
                          block_list_(block_list),
                          node_list_(node_list),
                          depth_image_(depth_image),
-                         kernel_depth_image_(kernel_depth_image),
+                         dense_pooling_image_(dense_pooling_image),
                          sensor_(sensor),
                          T_CM_(T_CM),
                          voxel_dim_(voxel_dim),
@@ -75,7 +75,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
   std::vector<MultiresOFusion::VoxelBlockType*>& block_list_;
   std::vector<std::set<se::Node<MultiresOFusion::VoxelType>*>>& node_list_;
   const se::Image<float>& depth_image_;
-  const se::KernelImage* const kernel_depth_image_;
+  const se::DensePoolingImage* const dense_pooling_image_;
   const SensorImpl sensor_;
   const Eigen::Matrix4f& T_CM_;
   const float voxel_dim_;
@@ -597,7 +597,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
     sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
 
     int low_variance; // -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface
-    se::KernelImage::Pixel kernel_pixel; // min, max pixel batch depth + crossing frustum state + contains unknown values state
+    se::DensePoolingImage::Pixel kernel_pixel; // min, max pixel batch depth + crossing frustum state + contains unknown values state
 
     if (depth < map_.blockDepth() + 1) {
       if (num_node_corners_infront < 8) {
@@ -621,7 +621,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         const float node_dist_min = node_corners_diff.minCoeff();
         const float node_dist_max = node_corners_diff.maxCoeff();
 
-        kernel_pixel = kernel_depth_image_->conservativeQuery(image_bb_min, image_bb_max);
+        kernel_pixel = dense_pooling_image_->conservativeQuery(image_bb_min, image_bb_max);
 
         // CASE 0.3 (OUT OF BOUNDS): The node is behind surface
         if (approx_depth_value_min > kernel_pixel.max + MultiresOFusion::tau_max) {
@@ -629,7 +629,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         }
 
         // CASE 0.4 (OUT OF BOUNDS): The node is outside frustum (i.e left, right, below, above) or all pixel values are unknown -> return intermediately
-        if (kernel_pixel.status_known == se::KernelImage::Pixel::statusKnown::unknown) {
+        if (kernel_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::unknown) {
           return;
         }
 
@@ -649,7 +649,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         }
 
         // CASE 2 (FRUSTUM BOUNDARY): The node is crossing the frustum boundary
-        if (kernel_pixel.status_crossing == se::KernelImage::Pixel::statusCrossing::crossing) {
+        if (kernel_pixel.status_crossing == se::DensePoolingImage::Pixel::statusCrossing::crossing) {
           // EXCEPTION: The node is crossing the frustum boundary, but already reached the min allocation scale for crossing nodes
 //          if (node_size == MultiresOFusion::VoxelBlockType::size_li) {
 //            return;
@@ -658,7 +658,7 @@ AllocateAndUpdateRecurse(se::Octree<MultiresOFusion::VoxelType>&                
         }
 
         // CASE 3: The node is inside the frustum, but projects into partially known pixel
-        else if (kernel_pixel.status_known == se::KernelImage::Pixel::statusKnown::part_known) {
+        else if (kernel_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::part_known) {
           should_split = true;
         }
 
@@ -794,15 +794,15 @@ void MultiresOFusion::integrate(OctreeType&             map,
                                 const SensorImpl&       sensor,
                                 const unsigned          frame) {
   // Create min/map depth pooling image for different bounding box sizes
-  const std::unique_ptr<se::KernelImage> kernel_depth_image(new se::KernelImage(depth_image));
+  const std::unique_ptr<se::DensePoolingImage> dense_pooling_image(new se::DensePoolingImage(depth_image));
 
-  const float max_depth_value = std::min(sensor.far_plane, kernel_depth_image->maxValue() + MultiresOFusion::tau_max);
+  const float max_depth_value = std::min(sensor.far_plane, dense_pooling_image->maxValue() + MultiresOFusion::tau_max);
   const float voxel_dim = map.dim() / map.size();
   const Eigen::Vector3f sample_offset_frac = OctreeType::sample_offset_frac_;
 
   std::vector<VoxelBlockType*> block_list;
   std::vector<std::set<se::Node<VoxelType>*>> node_list(map.blockDepth());
-  AllocateAndUpdateRecurse funct(map, block_list, node_list, depth_image, kernel_depth_image.get(), sensor, T_CM,
+  AllocateAndUpdateRecurse funct(map, block_list, node_list, depth_image, dense_pooling_image.get(), sensor, T_CM,
       voxel_dim, sample_offset_frac, map.voxelDepth(), max_depth_value, frame);
 
   // Launch on the 8 voxels of the first depth

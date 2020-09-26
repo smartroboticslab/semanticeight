@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef KERNEL_IMAGE
-#define KERNEL_IMAGE
+#ifndef DENSE_POOLING_IMAGE
+#define DENSE_POOLING_IMAGE
 
 #include <Eigen/Dense>
 #include <se/image/image.hpp>
@@ -37,7 +37,7 @@
 
 namespace se {
 
-  class KernelImage {
+  class DensePoolingImage {
   public:
     using Value = float;
     using Status= int;
@@ -114,13 +114,13 @@ namespace se {
     };
 
     using Img = std::vector<Pixel>;
-    using Pyramid = std::vector<Img>;
+    using Imgs = std::vector<Img>;
 
-    KernelImage(const se::Image<float>& depth_image);
+    DensePoolingImage(const se::Image<float>& depth_image);
 
     bool inImage(const int u, const int v) const;
-    KernelImage::Pixel conservativeQuery(const Eigen::Vector2i& bb_min, const Eigen::Vector2i& bb_max) const;
-    KernelImage::Pixel poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const;
+    DensePoolingImage::Pixel conservativeQuery(const Eigen::Vector2i& bb_min, const Eigen::Vector2i& bb_max) const;
+    DensePoolingImage::Pixel poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const;
 
     int width() const {return image_width_;};
     int height() const {return image_height_;};
@@ -128,13 +128,13 @@ namespace se {
     int maxLevel() const {return image_max_level_;}
 
   private:
-    int     image_max_level_;
-    int     image_width_;
-    int     image_height_;
-    Pyramid pyramid_image_;
-    Value   image_max_value_;
+    int   image_max_level_;
+    int   image_width_;
+    int   image_height_;
+    Imgs  pooling_image_;
+    Value image_max_value_;
   };
 
 } // namespace se
 
-#endif // KERNEL_IMAGE
+#endif // DENSE_POOLING_IMAGE

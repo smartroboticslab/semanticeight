@@ -28,16 +28,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "se/voxel_implementations/MultiresOFusion/kernel_image.hpp"
+#include "se/voxel_implementations/MultiresOFusion/DensePoolingImage.hpp"
 
 namespace se {
-  KernelImage::KernelImage(const se::Image<float>& depth_map) :
+  DensePoolingImage::DensePoolingImage(const se::Image<float>& depth_map) :
       image_width_(depth_map.width()), image_height_(depth_map.height()) {
     const int image_max_dim = std::min(image_width_, image_height_);
     image_max_level_ = static_cast<int>(log2((image_max_dim - 1) / 2) + 2) - 1;
 
     for (int l = 0; l <= image_max_level_; l++)
-      pyramid_image_.emplace_back(image_width_ * image_height_);
+      pooling_image_.emplace_back(image_width_ * image_height_);
 
     // Initalize image frame at single pixel resolution
     for (int v = 0; v < image_height_; v++) {
@@ -45,9 +45,9 @@ namespace se {
       for (int u = 0; u < image_width_; u++) {
         Value pixel_depth = (depth_map.data())[u + v * image_width_];
         if (pixel_depth <= 0)
-          pyramid_image_[0][u + v * image_width_] = Pixel::unknownPixel(); // state_1 := inside (0); state_2 := unknown (2)
+          pooling_image_[0][u + v * image_width_] = Pixel::unknownPixel(); // state_1 := inside (0); state_2 := unknown (2)
         else {
-          Pixel& pixel = pyramid_image_[0][u + v * image_width_];
+          Pixel& pixel = pooling_image_[0][u + v * image_width_];
           pixel = Pixel::knownPixel(); // state_1 := inside (0); state_2 := known (0)
           pixel.min     = pixel_depth;
           pixel.max     = pixel_depth;
@@ -62,7 +62,7 @@ namespace se {
     for (int y = 0; y < image_height_; y++) {
 #pragma omp parallel for
       for (int x = 0; x < image_width_; x++) {
-        Pixel& pixel = pyramid_image_[1][x + image_width_ * y];
+        Pixel& pixel = pooling_image_[1][x + image_width_ * y];
 
         if (y >= 1 && y < image_height_ - 1 && x >= 1 && x < image_width_ - 1) {
           pixel.status_crossing = Pixel::statusCrossing::inside; // inside (0)
@@ -74,21 +74,21 @@ namespace se {
         int left   = (x > 0) ? x - 1 : 0;
         int right  = (x < image_width_ - 1 ? x + 1 : image_width_ - 1);
 
-        pixel.min = std::min(pyramid_image_[0][x + y * image_width_].min,
-                             std::min(std::min(std::min(pyramid_image_[0][left  + top * image_width_].min, pyramid_image_[0][x + top * image_width_].min),
-                                               std::min(pyramid_image_[0][right + top * image_width_].min, pyramid_image_[0][right + y * image_width_].min)),
-                                      std::min(std::min(pyramid_image_[0][right + bottom * image_width_].min, pyramid_image_[0][x + bottom * image_width_].min),
-                                               std::min(pyramid_image_[0][left  + bottom * image_width_].min, pyramid_image_[0][left + y * image_width_].min))));
-        pixel.max = std::max(pyramid_image_[0][x + y * image_width_].max,
-                             std::max(std::max(std::max(pyramid_image_[0][left  + top * image_width_].max, pyramid_image_[0][x + top * image_width_].max),
-                                               std::max(pyramid_image_[0][right + top * image_width_].max, pyramid_image_[0][right + y * image_width_].max)),
-                                      std::max(std::max(pyramid_image_[0][right + bottom * image_width_].max, pyramid_image_[0][x + bottom * image_width_].max),
-                                               std::max(pyramid_image_[0][left  + bottom * image_width_].max, pyramid_image_[0][left + y * image_width_].max))));
-        int unknown_factor = pyramid_image_[0][x + y * image_width_].status_known +
-                             pyramid_image_[0][left  + top * image_width_].status_known + pyramid_image_[0][x + top * image_width_].status_known +
-                             pyramid_image_[0][right + top * image_width_].status_known + pyramid_image_[0][right + y * image_width_].status_known +
-                             pyramid_image_[0][right + bottom * image_width_].status_known + pyramid_image_[0][x + bottom * image_width_].status_known +
-                             pyramid_image_[0][left  + bottom * image_width_].status_known + pyramid_image_[0][left + y * image_width_].status_known;
+        pixel.min = std::min(pooling_image_[0][x + y * image_width_].min,
+                             std::min(std::min(std::min(pooling_image_[0][left  + top * image_width_].min, pooling_image_[0][x + top * image_width_].min),
+                                               std::min(pooling_image_[0][right + top * image_width_].min, pooling_image_[0][right + y * image_width_].min)),
+                                      std::min(std::min(pooling_image_[0][right + bottom * image_width_].min, pooling_image_[0][x + bottom * image_width_].min),
+                                               std::min(pooling_image_[0][left  + bottom * image_width_].min, pooling_image_[0][left + y * image_width_].min))));
+        pixel.max = std::max(pooling_image_[0][x + y * image_width_].max,
+                             std::max(std::max(std::max(pooling_image_[0][left  + top * image_width_].max, pooling_image_[0][x + top * image_width_].max),
+                                               std::max(pooling_image_[0][right + top * image_width_].max, pooling_image_[0][right + y * image_width_].max)),
+                                      std::max(std::max(pooling_image_[0][right + bottom * image_width_].max, pooling_image_[0][x + bottom * image_width_].max),
+                                               std::max(pooling_image_[0][left  + bottom * image_width_].max, pooling_image_[0][left + y * image_width_].max))));
+        int unknown_factor = pooling_image_[0][x + y * image_width_].status_known +
+                             pooling_image_[0][left  + top * image_width_].status_known + pooling_image_[0][x + top * image_width_].status_known +
+                             pooling_image_[0][right + top * image_width_].status_known + pooling_image_[0][right + y * image_width_].status_known +
+                             pooling_image_[0][right + bottom * image_width_].status_known + pooling_image_[0][x + bottom * image_width_].status_known +
+                             pooling_image_[0][left  + bottom * image_width_].status_known + pooling_image_[0][left + y * image_width_].status_known;
         if (unknown_factor == 18) // All pixel are unknown -> 9 * unknown (2) = 18
           pixel.status_known = Pixel::statusKnown::unknown; // unknown (2)
         else if (unknown_factor > 0) // Some pixel are unknown
@@ -97,12 +97,12 @@ namespace se {
     }
     // Compute remaining pixel batch for remaining resolutions (5x5, 9x9, 17x17, 33x33, ...)
     for (int l = 2, s = 2; l <= image_max_level_; ++l, (s <<= 1U)) {
-      pyramid_image_[l] = default_image;
+      pooling_image_[l] = default_image;
       int s_half = s / 2;
       for (int y = 0; y < image_height_; y++) {
 #pragma omp parallel for
         for (int x = 0; x < image_width_; x++) {
-          Pixel& pixel = pyramid_image_[l][x + y * image_width_];
+          Pixel& pixel = pooling_image_[l][x + y * image_width_];
 
           int left, right, top, bottom;
           if (x - s_half < 0) {
@@ -146,16 +146,16 @@ namespace se {
         |________|_|________|
 
 */
-          pixel.min = std::min(std::min(pyramid_image_[l-1][left + top * image_width_].min,
-                                        pyramid_image_[l-1][right + top * image_width_].min),
-                               std::min(pyramid_image_[l-1][left + bottom * image_width_].min,
-                                        pyramid_image_[l-1][right + bottom * image_width_].min));
-          pixel.max = std::max(std::max(pyramid_image_[l-1][left + top * image_width_].max,
-                                        pyramid_image_[l-1][right + top * image_width_].max),
-                               std::max(pyramid_image_[l-1][left + bottom * image_width_].max,
-                                        pyramid_image_[l-1][right + bottom * image_width_].max));
-          int unknown_factor = pyramid_image_[l-1][left + top * image_width_].status_known + pyramid_image_[l-1][right + top * image_width_].status_known +
-                               pyramid_image_[l-1][left + bottom * image_width_].status_known + pyramid_image_[l-1][right + bottom * image_width_].status_known;
+          pixel.min = std::min(std::min(pooling_image_[l-1][left + top * image_width_].min,
+                                        pooling_image_[l-1][right + top * image_width_].min),
+                               std::min(pooling_image_[l-1][left + bottom * image_width_].min,
+                                        pooling_image_[l-1][right + bottom * image_width_].min));
+          pixel.max = std::max(std::max(pooling_image_[l-1][left + top * image_width_].max,
+                                        pooling_image_[l-1][right + top * image_width_].max),
+                               std::max(pooling_image_[l-1][left + bottom * image_width_].max,
+                                        pooling_image_[l-1][right + bottom * image_width_].max));
+          int unknown_factor = pooling_image_[l-1][left + top * image_width_].status_known + pooling_image_[l-1][right + top * image_width_].status_known +
+                               pooling_image_[l-1][left + bottom * image_width_].status_known + pooling_image_[l-1][right + bottom * image_width_].status_known;
           if (unknown_factor == 8) // All pixel are unknown -> 4 * unknown (2) = 8
             pixel.status_known = Pixel::statusKnown::unknown; // unknown (2)
           else if (unknown_factor > 0) // Some pixel are unknown
@@ -183,7 +183,7 @@ namespace se {
           u = image_width_ - s - 1;
         }
         int pixel_pos = u + image_width_ * v;
-        KernelImage::Pixel pixel = pyramid_image_[image_max_level_][pixel_pos];
+        DensePoolingImage::Pixel pixel = pooling_image_[image_max_level_][pixel_pos];
         if (image_max_value_ < pixel.max) {
           image_max_value_ = pixel.max;
         }
@@ -197,7 +197,7 @@ namespace se {
     }
   }
 
-  bool KernelImage::inImage(const int u, const int v) const {
+  bool DensePoolingImage::inImage(const int u, const int v) const {
     if (   u >= 0 && u < static_cast<Value>(image_width_)
         && v >= 0 && v < static_cast<Value>(image_height_)) {
       return true;
@@ -205,8 +205,8 @@ namespace se {
     return false;
   }
 
-  KernelImage::Pixel KernelImage::conservativeQuery(const Eigen::Vector2i& bb_min,
-                                                    const Eigen::Vector2i& bb_max) const {
+  DensePoolingImage::Pixel DensePoolingImage::conservativeQuery(const Eigen::Vector2i& bb_min,
+                                                                const Eigen::Vector2i& bb_max) const {
     bool u_in = true;   // << Pixel batch width is entirely contained within the image
     bool u_out = false; // << Pixel batch width is entirely outside the image
 
@@ -248,10 +248,10 @@ namespace se {
 
     // Check if the pixel batch is entirely outside the image
     if (u_out || v_out || u_min == u_max || v_min == v_max) {
-      return KernelImage::Pixel::outsidePixelBatch();
+      return DensePoolingImage::Pixel::outsidePixelBatch();
     }
 
-    KernelImage::Pixel pix = poolBoundingBox(u_min, u_max, v_min, v_max);
+    DensePoolingImage::Pixel pix = poolBoundingBox(u_min, u_max, v_min, v_max);
 
     // Check if the pixel batch is partly inside the image. Given the previous check this is equivalent to
     // not entirely inside or outside the image
@@ -264,7 +264,7 @@ namespace se {
     }
   }
 
-  KernelImage::Pixel KernelImage::poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const {
+  DensePoolingImage::Pixel DensePoolingImage::poolBoundingBox(int u_min, int u_max, int v_min, int v_max) const {
 
     const int u_diff = u_max - u_min;
     const int v_diff = v_max - v_min;
@@ -290,7 +290,7 @@ namespace se {
         }
 
         int pixel_pos = u + image_width_ * v;
-        KernelImage::Pixel pixel = pyramid_image_[level][pixel_pos];
+        DensePoolingImage::Pixel pixel = pooling_image_[level][pixel_pos];
         if (pixel_batch.max < pixel.max) {
           pixel_batch.max = pixel.max;
         }
