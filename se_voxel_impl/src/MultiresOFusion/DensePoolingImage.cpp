@@ -33,6 +33,8 @@
 namespace se {
   DensePoolingImage::DensePoolingImage(const se::Image<float>& depth_map) :
       image_width_(depth_map.width()), image_height_(depth_map.height()) {
+
+    TICKD("DensePoolingImage")
     const int image_max_dim = std::min(image_width_, image_height_);
     image_max_level_ = static_cast<int>(log2((image_max_dim - 1) / 2) + 2) - 1;
 
@@ -195,6 +197,8 @@ namespace se {
         break;
       }
     }
+
+    TOCK("DensePoolingImage")
   }
 
   bool DensePoolingImage::inImage(const int u, const int v) const {

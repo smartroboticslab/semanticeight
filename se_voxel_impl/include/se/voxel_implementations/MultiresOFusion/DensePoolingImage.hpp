@@ -31,8 +31,11 @@
 #ifndef DENSE_POOLING_IMAGE
 #define DENSE_POOLING_IMAGE
 
+#include "se/image/image.hpp"
+#include "se/perfstats.h"
+#include "se/timings.h"
+
 #include <Eigen/Dense>
-#include <se/image/image.hpp>
 #include <iostream>
 
 namespace se {
