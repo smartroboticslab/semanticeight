@@ -46,8 +46,9 @@ namespace se {
 #pragma omp parallel for
       for (int u = 0; u < image_width_; u++) {
         Value pixel_depth = (depth_map.data())[u + v * image_width_];
-        if (pixel_depth <= 0)
+        if (pixel_depth <= 0) {
           pooling_image_[0][u + v * image_width_] = Pixel::unknownPixel(); // state_1 := inside (0); state_2 := unknown (2)
+        }
         else {
           Pixel& pixel = pooling_image_[0][u + v * image_width_];
           pixel = Pixel::knownPixel(); // state_1 := inside (0); state_2 := known (0)
