@@ -136,7 +136,7 @@ public:
   static constexpr unsigned int size_li   = BLOCK_SIZE;
   static constexpr unsigned int size_sq   = se::math::sq(size_li);
   static constexpr unsigned int size_cu   = se::math::cu(size_li);
-  static constexpr unsigned int max_scale = se::math::log2_const(size_li);
+  static constexpr int max_scale = se::math::log2_const(size_li);
 
   VoxelBlock(const int current_scale,
              const int min_scale);
