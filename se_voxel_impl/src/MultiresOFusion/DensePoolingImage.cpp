@@ -282,8 +282,9 @@ namespace se {
 
     Pixel pixel_batch = Pixel::knownPixel();
 
-    int num_pix = 0;
-    int num_unknown_pix = 0;
+    size_t count_pixel = 0;
+    size_t count_unknown_pixel = 0;
+    size_t count_partly_known_pixel = 0;
 
     int step = std::max(2*s, 1);
     for (int v = v_min + s; true ; v += step) {
@@ -298,6 +299,7 @@ namespace se {
 
         int pixel_pos = u + image_width_ * v;
         DensePoolingImage::Pixel pixel = pooling_image_[level][pixel_pos];
+
         if (pixel_batch.max < pixel.max) {
           pixel_batch.max = pixel.max;
         }
@@ -306,9 +308,13 @@ namespace se {
         }
 
         if (pixel.status_known == 2) {
-          num_unknown_pix++;
+          count_unknown_pixel++;
+          count_partly_known_pixel++;
+        } else if (pixel.status_known == 1) {
+          count_partly_known_pixel++;
         }
-        num_pix++;
+
+        count_pixel++;
 
         if (u == u_max - s) {
           break;
@@ -318,8 +324,13 @@ namespace se {
         break;
       }
     }
-    if (num_pix == num_unknown_pix)
+
+    if (count_pixel == count_unknown_pixel) {
       pixel_batch.status_known = Pixel::statusKnown::unknown;
+    } else if (count_partly_known_pixel > 0) {
+      pixel_batch.status_known = Pixel::statusKnown::part_known;
+    }
+
     return pixel_batch;
   }
 

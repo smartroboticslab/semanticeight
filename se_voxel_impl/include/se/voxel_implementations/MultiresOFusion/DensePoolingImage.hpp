@@ -38,6 +38,8 @@
 #include <Eigen/Dense>
 #include <iostream>
 
+
+
 namespace se {
 
   class DensePoolingImage {
@@ -81,7 +83,7 @@ namespace se {
       // Init unknown pixel
       static Pixel unknownPixel() {
         Pixel unknownPixel(std::numeric_limits<Value>::max(), std::numeric_limits<Value>::min(),
-            statusCrossing::inside, statusKnown::known);
+            statusCrossing::inside, statusKnown::unknown);
         return unknownPixel;
       };
 
