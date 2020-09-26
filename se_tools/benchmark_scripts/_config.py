@@ -7,7 +7,7 @@ import warnings
 from _common import *
 
 LIST_VALUES = ["pyramid", "t_MW_factor", "init_T_WB",
-               "occupancy_min_max", "tau_min_max", "sigma_min_max",
+               "occupancy_min_max", "tau_min_max_factor",
                "sigma_min_max_factor", "intrinsics", "T_BC"]
 
 def list_values(obj):
@@ -420,8 +420,8 @@ class MultiresOFusion(VoxelImpl):
         self.max_weight              = None
         self.free_space_integr_scale = None
         self.const_surface_thickness = None
-        self.tau_min_max             = None
+        self.tau_min_max_factor      = None
         self.k_tau                   = None
         self.uncertainty_model       = None
-        self.sigma_min_max           = None
+        self.sigma_min_max_factor    = None
         self.k_sigma                 = None

@@ -34,7 +34,7 @@
 #include <se/utils/math_utils.h>
 #include <type_traits>
 
-
+#include "se/voxel_block_ray_iterator.hpp"
 
 /*!
  * \brief Compute the distance t in [m] travelled along the ray from the origin until the ray intersecs with the map.
@@ -190,10 +190,10 @@ void advance_ray(const se::Octree<MultiresOFusion::VoxelType>& map,
   t_far = voxel_dim * v_far;                                                          // [m]
 
   MultiresOFusion::VoxelType::VoxelData data;
-  map.get(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), data, max_scale);
-  while (data.x_max > -0.2f && scale > 2) {
+  map.getMax(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), data, max_scale);
+  while (data.x * data.y > -0.2f && scale > 2) { // TODO Verify
     scale -= 1;
-    map.get(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), data, scale);
+    map.getMax(ray_origin_coord_f.x(), ray_origin_coord_f.y(), ray_origin_coord_f.z(), data, scale);
   }
 
   Eigen::Vector3f ray_coord_f = ray_origin_coord_f;
@@ -240,18 +240,18 @@ void advance_ray(const se::Octree<MultiresOFusion::VoxelType>& map,
     v_add += V_min + 0.01;
     ray_coord_f = (v + v_add) * ray_dir_M + ray_origin_coord_f;
 
-    map.get(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, scale);
+    map.getMax(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, scale);
 
-    if (data.x_max > -0.2f) {
-      while (data.x_max > -0.2f && scale > 2) {
+    if (data.x * data.y > -0.2f) {
+      while (data.x * data.y > -0.2f && scale > 2) {
         scale -= 1;
-        map.get(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, scale);
+        map.getMax(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, scale);
       }
     } else {
       for (int s = scale + 1; s <= max_scale; s++) {
-        map.get(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, s);
+        map.getMax(ray_coord_f.x(), ray_coord_f.y(), ray_coord_f.z(), data, s);
 
-        if (data.x_max > -0.2f) {
+        if (data.x * data.y > -0.2f) {
           break;
         }
         scale += 1;
@@ -273,10 +273,10 @@ void advance_ray(const se::Octree<MultiresOFusion::VoxelType>& map,
  * \return              Surface intersection point in [m] and scale
  */
 Eigen::Vector4f MultiresOFusion::raycast(const OctreeType&      map,
-                                         const Eigen::Vector3f& ray_origin_M,
-                                         const Eigen::Vector3f& ray_dir_M,
-                                         float,
-                                         float                  t_far) {
+                                              const Eigen::Vector3f& ray_origin_M,
+                                              const Eigen::Vector3f& ray_dir_M,
+                                              float                  /* t_near */,
+                                              float                  t_far) {
   const float voxel_dim = map.voxelDim(); // voxel_dim   := [m / voxel];
   // inv_voxel_dim := [m] to [voxel]; voxel_dim := [voxel] to [m]
   //float t_near = near_plane;                       // max travel distance in [m]

@@ -225,6 +225,10 @@ namespace se {
     OusterLidar(const OusterLidar& ouster_lidar,
                 const float        scaling_factor);
 
+    Eigen::Matrix3f K() const {
+      return Eigen::Matrix3f::Zero();
+    }
+
     /**
      * \brief Determine the corresponding image value of the projected pixel for a point_C in camera frame.
      *
@@ -254,6 +258,27 @@ namespace se {
       }
       return true;
     }
+
+
+
+    template <typename ValidPredicate>
+    bool getPixelValue(const Eigen::Vector2f&  pixel_f,
+                       const se::Image<float>& image,
+                       float&                  image_value,
+                       ValidPredicate          valid_predicate) const {
+      if (!model.isInImage(pixel_f)) {
+        return false;
+      }
+      Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+      image_value = image(pixel.x(), pixel.y());
+      // Return false for invalid depth measurement
+      if (!valid_predicate(image_value)) {
+        return false;
+      }
+      return true;
+    }
+
+
 
     /**
      * \brief Computes the scale corresponding to the back-projected pixel size

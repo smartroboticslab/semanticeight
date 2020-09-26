@@ -31,11 +31,12 @@
 #ifndef __MultiresOFusion_HPP
 #define __MultiresOFusion_HPP
 
-#include <se/octree.hpp>
-#include <se/image/image.hpp>
+#include "se/octree.hpp"
+#include "se/image/image.hpp"
 #include "se/algorithms/meshing.hpp"
-#include <se/voxel_implementations/MultiresOFusion/DensePoolingImage.hpp>
+#include "se/voxel_implementations/MultiresOFusion/DensePoolingImage.hpp"
 #include "se/sensor_implementation.hpp"
+
 
 #include <yaml-cpp/yaml.h>
 #include <chrono>
@@ -67,44 +68,63 @@ struct MultiresOFusion {
    *
    * \warning The struct name must always be `VoxelType`.
    */
-  struct VoxelType{
+  struct VoxelType {
     struct VoxelData {
       VoxelData() {};
-      VoxelData(float x, float x_last, float x_max, float y, float y_last, int frame, bool observed) :
-            x(x), x_last(x_last), x_max(x_max), y(y), y_last(y_last), frame(frame), observed(observed) {};
+      VoxelData(float x, short y, bool observed) : x(x), y(y), observed(observed) {};
 
       float  x;             // Latest mean occupancy
-      float  x_last;        // Child mean at time of up-propagation
-      float  x_max;         // Max occupancy of children
-      float  y;             // Mean number of integrations
-      float  y_last;        // Child mean number of integrations at time of up-propagation
-      int    frame;         // Latest integration frame
+      short  y;             // Mean number of integrations
       bool   observed;      // All children have been observed at least once
 
       bool operator==(const VoxelData& other) const;
       bool operator!=(const VoxelData& other) const;
     };
 
-    static inline VoxelData invalid()  { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
-    static inline VoxelData initData() { return {0.f, 0.f, 0.f, 0.f, 0.f, 0, false}; }
+    static inline VoxelData invalid()  { return {0.f, 0, false}; }
+    static inline VoxelData initData() { return {0.f, 0, false}; }
 
     static float selectNodeValue(const VoxelData& data) {
-      return (data.y > 0.f) ? data.x / data.y : VoxelType::initData().x; // TODO: Is it x or x_max
+      return data.x;
     };
 
     static float selectVoxelValue(const VoxelData& data) {
       return data.x;
     };
 
+    static float selectNodeWeight(const VoxelData& data) {
+      return data.y;
+    };
+
+    static float selectVoxelWeight(const VoxelData& data) {
+      return data.y;
+    };
+
+    static float selectSliceNodeValue(const VoxelData& data) {
+      if (data.observed) {
+        return data.x * data.y;
+      } else {
+        return 0.f;
+      }
+    };
+
+    static float selectSliceVoxelValue(const VoxelData& data) {
+      if (data.observed) {
+        return data.x * data.y;
+      } else {
+        return 0.f;
+      }
+    };
+
     static bool isInside(const VoxelData& data) {
-      return data.x_max > surface_boundary;
+      return data.x > surface_boundary;
     };
 
     static bool isValid(const VoxelData& data) {
       return data.observed;
     };
 
-    using VoxelBlockType = se::VoxelBlockSingle<MultiresOFusion::VoxelType>;
+    using VoxelBlockType = se::VoxelBlockSingleMax<MultiresOFusion::VoxelType>;
 
     using MemoryPoolType = se::MemoryPool<MultiresOFusion::VoxelType>;
     template <typename ElemT>
@@ -137,7 +157,7 @@ struct MultiresOFusion {
    */
   static float min_occupancy;
 
-  static float max_weight;
+  static short max_weight;
 
   static int   fs_integr_scale; // Minimum integration scale for free-space
 
@@ -149,6 +169,10 @@ struct MultiresOFusion {
 
   static bool const_surface_thickness;
 
+  static float tau_min_factor;
+
+  static float tau_max_factor;
+
   static float tau_min;
 
   static float tau_max;
@@ -156,6 +180,10 @@ struct MultiresOFusion {
   static float k_tau;
 
   static UncertaintyModel uncertainty_model;
+
+  static float sigma_min_factor;
+
+  static float sigma_max_factor;
 
   static float sigma_min;
 
