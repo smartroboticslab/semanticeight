@@ -277,8 +277,10 @@ namespace se {
     const int v_diff = v_max - v_min;
 
     const int min_side = std::min(u_diff, v_diff);
-    const int level = std::max((int) 0, std::min((int) image_max_level_, (int) (ceil(log2(min_side / 2)))));
-    const int s = 1 << std::max((int) level - 1, 0);
+
+    int level = std::max((int) 0, std::min((int) image_max_level_, (int) (ceil(log2(min_side / 2)))));
+
+    const int s = (level > 0) ? 1 << std::max((int) level - 1, 0) : 0;
 
     Pixel pixel_batch = Pixel::knownPixel();
 
@@ -286,7 +288,8 @@ namespace se {
     size_t count_unknown_pixel = 0;
     size_t count_partly_known_pixel = 0;
 
-    int step = std::max(2*s, 1);
+    int step = 2 * s + 1;
+
     for (int v = v_min + s; true ; v += step) {
       if (v > v_max - s)
       {
