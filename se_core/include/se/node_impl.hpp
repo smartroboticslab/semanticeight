@@ -662,6 +662,595 @@ void VoxelBlockSingle<T>::initialiseData(VoxelData* voxel_data, const int num_vo
   }
 }
 
+
+
+
+// Voxel block single scale allocation implementation
+
+template <typename T>
+VoxelBlockSingleMax<T>::VoxelBlockSingleMax(const typename T::VoxelData init_data)
+    : VoxelBlock<T>(0, -1), buffer_scale_(-1), init_data_(init_data) {}
+
+
+
+template <typename T>
+VoxelBlockSingleMax<T>::VoxelBlockSingleMax(const VoxelBlockSingleMax<T>& block) {
+  initFromBlock(block);
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::operator=(const VoxelBlockSingleMax<T>& block) {
+  initFromBlock(block);
+}
+
+
+
+template <typename T>
+VoxelBlockSingleMax<T>::~VoxelBlockSingleMax() {
+  for (auto& data_at_scale : block_data_) {
+    delete[] data_at_scale;
+  }
+
+  block_max_data_.pop_back(); ///<< Avoid double free as the min scale data points to the same data.
+  for (auto& max_data_at_scale : block_max_data_) {
+    delete[] max_data_at_scale;
+  }
+
+  if (buffer_data_ && buffer_scale_ < this->min_scale_) {
+    delete[] buffer_data_;
+  }
+}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::initData() const { return init_data_; }
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setInitData(const VoxelData& init_data) { init_data_ = init_data;}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::data(const Eigen::Vector3i& voxel_coord) const {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
+    return init_data_;
+  } else {
+    Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+    return block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
+                                                 voxel_offset.y() * this->size_li +
+                                                 voxel_offset.z() * this->size_sq];
+  }
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setData(const Eigen::Vector3i& voxel_coord,
+                                            const VoxelData&       voxel_data) {
+
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
+                                        voxel_offset.y() * this->size_li +
+                                        voxel_offset.z() * this->size_sq] = voxel_data;
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setDataSafe(const Eigen::Vector3i& voxel_coord,
+                                                const VoxelData&       voxel_data) {
+
+  allocateDownTo(0);
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
+                                        voxel_offset.y() * this->size_li +
+                                        voxel_offset.z() * this->size_sq] = voxel_data;
+}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::data(const Eigen::Vector3i& voxel_coord,
+                             const int              scale) const {
+
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
+    return init_data_;
+  } else {
+    Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+    voxel_offset = voxel_offset / (1 << scale);
+    const int size_at_scale = this->size_li >> scale;
+    return block_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
+                                                         voxel_offset.y() * size_at_scale +
+                                                         voxel_offset.z() * se::math::sq(size_at_scale)];
+  }
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setData(const Eigen::Vector3i& voxel_coord,
+                                            const int              scale,
+                                            const VoxelData&       voxel_data) {
+
+  int size_at_scale = this->size_li >> scale;
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  voxel_offset = voxel_offset / (1 << scale);
+  block_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
+                                                voxel_offset.y() * size_at_scale +
+                                                voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
+}
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setDataSafe(const Eigen::Vector3i& voxel_coord,
+                                                const int              scale,
+                                                const VoxelData&       voxel_data) {
+
+  allocateDownTo(scale);
+  int size_at_scale = this->size_li >> scale;
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  voxel_offset = voxel_offset / (1 << scale);
+  block_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
+                                                voxel_offset.y() * size_at_scale +
+                                                voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
+}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::data(const int voxel_idx) const {
+  int remaining_voxel_idx = voxel_idx;
+  int scale = 0;
+  int size_at_scale_cu = this->size_cu;
+  while (voxel_idx / size_at_scale_cu >= 1) {
+    scale += 1;
+    remaining_voxel_idx -= size_at_scale_cu;
+    size_at_scale_cu = se::math::cu(this->size_li >> scale);
+  }
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
+    return init_data_;
+  } else {
+    return block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx];
+  }
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setData(const int        voxel_idx,
+                                            const VoxelData& voxel_data) {
+  int remaining_voxel_idx = voxel_idx;
+  int scale = 0;
+  int size_at_scale_cu = this->size_cu;
+  while (remaining_voxel_idx / size_at_scale_cu >= 1) {
+    scale += 1;
+    remaining_voxel_idx -= size_at_scale_cu;
+    size_at_scale_cu = se::math::cu(this->size_li >> scale);
+  }
+  block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx] = voxel_data;
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setDataSafe(const int        voxel_idx,
+                                                const VoxelData& voxel_data) {
+  int remaining_voxel_idx = voxel_idx;
+  int scale = 0;
+  int size_at_scale_cu = this->size_cu;
+  while (remaining_voxel_idx / size_at_scale_cu >= 1) {
+    scale += 1;
+    remaining_voxel_idx -= size_at_scale_cu;
+    size_at_scale_cu = se::math::cu(this->size_li >> scale);
+  }
+  allocateDownTo(scale);
+  block_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx] = voxel_data;
+}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::data(const int voxel_idx_at_scale,
+                             const int scale) const {
+  const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
+  if (scale_idx < block_data_.size()) {
+    return block_data_[scale_idx][voxel_idx_at_scale];
+  } else {
+    return init_data_;
+  }
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setData(const int voxel_idx_at_scale,
+                                            const int scale,
+                                            const VoxelData& voxel_data) {
+  const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
+  block_data_[scale_idx][voxel_idx_at_scale] = voxel_data;
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setDataSafe(const int voxel_idx_at_scale,
+                                                const int scale,
+                                                const VoxelData& voxel_data) {
+  allocateDownTo(scale);
+  setData(voxel_idx_at_scale, scale, voxel_data);
+}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::maxData(const Eigen::Vector3i& voxel_coord) const {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
+    return init_data_;
+  } else {
+    Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+    return block_max_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
+                                                     voxel_offset.y() * this->size_li +
+                                                     voxel_offset.z() * this->size_sq];
+  }
+}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::maxData(const Eigen::Vector3i& voxel_coord,
+                                const int              scale) const {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
+    return init_data_;
+  } else {
+    Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+    voxel_offset = voxel_offset / (1 << scale);
+    const int size_at_scale = this->size_li >> scale;
+    return block_max_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
+                                                             voxel_offset.y() * size_at_scale +
+                                                             voxel_offset.z() * se::math::sq(size_at_scale)];
+  }
+}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::maxData(const int voxel_idx) const {
+  int remaining_voxel_idx = voxel_idx;
+  int scale = 0;
+  int size_at_scale_cu = this->size_cu;
+  while (voxel_idx / size_at_scale_cu >= 1) {
+    scale += 1;
+    remaining_voxel_idx -= size_at_scale_cu;
+    size_at_scale_cu = se::math::cu(this->size_li >> scale);
+  }
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
+    return init_data_;
+  } else {
+    return block_max_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx];
+  }
+}
+
+
+
+template <typename T>
+inline typename VoxelBlock<T>::VoxelData
+VoxelBlockSingleMax<T>::maxData(const int voxel_idx_at_scale,
+                                const int scale) const {
+  const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
+  if (scale_idx < block_max_data_.size()) {
+    return block_max_data_[scale_idx][voxel_idx_at_scale];
+  } else {
+    return init_data_;
+  }
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::allocateDownTo() {
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
+
+    for (int scale = VoxelBlock<T>::max_scale - block_data_.size(); scale >= 0; scale --) {
+      int size_at_scale = this->size_li >> scale;
+      int num_voxels_at_scale = se::math::cu(size_at_scale);
+
+      if (scale == 0) {
+        VoxelData* voxel_data = new VoxelData[num_voxels_at_scale];
+        initialiseData(voxel_data, num_voxels_at_scale);
+        block_data_.push_back(voxel_data);
+        block_max_data_.push_back(voxel_data); ///<< Mean and max data are the same at the min scale.
+      } else {
+        VoxelData* voxel_data     = new VoxelData[num_voxels_at_scale];
+        VoxelData* voxel_max_data = new VoxelData[num_voxels_at_scale];
+        initialiseData(voxel_data, num_voxels_at_scale);
+        block_data_.push_back(voxel_data);
+        std::copy(voxel_data, voxel_data + num_voxels_at_scale, voxel_max_data); ///<< Copy init content.
+        block_max_data_.push_back(voxel_max_data);
+      }
+    }
+
+    this->min_scale_ = 0;
+  }
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::allocateDownTo(const int min_scale) {
+
+  if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(min_scale)) {
+    for (int scale = VoxelBlock<T>::max_scale - block_data_.size(); scale >= min_scale; scale --) {
+      int size_at_scale = this->size_li >> scale;
+      int num_voxels_at_scale = se::math::cu(size_at_scale);
+
+      if (scale == min_scale) {
+        VoxelData* voxel_data = new VoxelData[num_voxels_at_scale];
+        initialiseData(voxel_data, num_voxels_at_scale);
+        block_data_.push_back(voxel_data);
+        block_max_data_.push_back(voxel_data); ///<< Mean and max data are the same at the min scale.
+      } else {
+        VoxelData* voxel_data     = new VoxelData[num_voxels_at_scale];
+        VoxelData* voxel_max_data = new VoxelData[num_voxels_at_scale];
+        initialiseData(voxel_data, num_voxels_at_scale);
+        block_data_.push_back(voxel_data);
+        std::copy(voxel_data, voxel_data + num_voxels_at_scale, voxel_max_data); ///<< Copy init content.
+        block_max_data_.push_back(voxel_max_data);
+      }
+    }
+
+
+    this->current_scale_ = min_scale;
+    this->min_scale_     = min_scale;
+    curr_data_ = block_data_[this->max_scale - min_scale];
+  }
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::deleteUpTo(const int min_scale) {
+
+  if (this->min_scale_ == -1 || this->min_scale_ >= min_scale) return;
+
+  auto& data_at_scale = block_data_[this->max_scale - this->min_scale_];
+  delete[] data_at_scale;
+  block_data_.pop_back();
+  block_max_data_.pop_back(); ///<< Avoid double free as the min scale data points to the same data.
+
+  for (int scale = this->min_scale_ + 1; scale < min_scale; scale++) {
+
+    // Delete mean data
+    data_at_scale = block_data_[this->max_scale - scale];
+    delete[] data_at_scale;
+    block_data_.pop_back();
+
+    // Delete max data
+    auto& max_data_at_scale = block_max_data_[this->max_scale - scale];
+    delete[] max_data_at_scale;
+    block_max_data_.pop_back();
+
+  }
+
+  // Replace max data at min scale with same as mean data.
+  auto& max_data_at_scale = block_max_data_[this->max_scale - min_scale];
+  delete[] max_data_at_scale;
+  block_max_data_.pop_back();
+  block_max_data_.push_back(block_data_[this->max_scale - min_scale]);
+
+  this->min_scale_ = min_scale;
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::incrCurrObservedCount(bool do_increment) {
+  if (do_increment) {
+    curr_observed_count_++;
+  }
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::resetCurrCount() {
+  curr_integr_count_ = 0;
+  curr_observed_count_ = 0;
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::initCurrCout() {
+  if (init_data_.observed) {
+    int size_at_scale = this->size_li >> this->current_scale_;
+    int num_voxels_at_scale = se::math::cu(size_at_scale);
+    curr_integr_count_   = init_data_.y;
+    curr_observed_count_ = num_voxels_at_scale;
+  } else {
+    resetCurrCount();
+  }
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::incrBufferIntegrCount() {
+  if (buffer_observed_count_ * se::math::cu(1 << buffer_scale_) >= 0.95 * curr_observed_count_ * se::math::cu(1 << this->current_scale_)) {
+    buffer_integr_count_++;
+  }
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::incrBufferObservedCount(bool do_increment) {
+  if (do_increment) {
+    buffer_observed_count_++;
+  }
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::resetBufferCount() {
+  buffer_integr_count_ = 0;
+  buffer_observed_count_ = 0;
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::resetBuffer() {
+  if (buffer_scale_ < this->current_scale_) {
+    delete[] buffer_data_;
+  }
+  buffer_data_ = nullptr;
+  buffer_scale_ = -1;
+  resetBufferCount();
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::initBuffer(const int buffer_scale) {
+  resetBuffer();
+
+  buffer_scale_ = buffer_scale;
+
+  if (buffer_scale < this->current_scale_) {
+    // Initialise all data to init data.
+    int size_at_scale = this->size_li >> buffer_scale;
+    int num_voxels_at_scale = se::math::cu(size_at_scale);
+    buffer_data_ = new VoxelData[num_voxels_at_scale]; ///<< Data must still be initialised.
+  } else {
+    buffer_data_ = block_data_[VoxelBlock<T>::max_scale - buffer_scale_];
+  }
+}
+
+
+
+template <typename T>
+bool VoxelBlockSingleMax<T>::switchData() {
+  if (buffer_observed_count_ * se::math::cu(1 << buffer_scale_) >= 0.95 * curr_observed_count_  * se::math::cu(1 << this->current_scale_)) {
+    if (buffer_integr_count_ >= 10) { // TODO: Find threshold
+      /// !!! We'll switch !!!
+      if (buffer_scale_ < this->current_scale_) { ///<< Switch to finer scale.
+        block_data_.push_back(buffer_data_);
+        block_max_data_.push_back(buffer_data_);
+
+        int size_at_scale = this->size_li >> (buffer_scale_ + 1);
+        int num_voxels_at_scale = se::math::cu(size_at_scale);
+        block_max_data_[this->max_scale - (buffer_scale_ + 1)] = new VoxelData[num_voxels_at_scale]; ///<< Data must still be initialised.
+
+      } else { ///<< Switch to coarser scale.
+        deleteUpTo(buffer_scale_);
+      }
+
+      this->current_scale_ = buffer_scale_;
+      this->min_scale_     = buffer_scale_;
+
+      curr_data_           = buffer_data_;
+      curr_integr_count_   = buffer_integr_count_;
+      curr_observed_count_ = buffer_observed_count_;
+      buffer_data_ = nullptr;
+      buffer_scale_ = -1;
+      resetBufferCount();
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
+template <typename T>
+typename VoxelBlock<T>::VoxelData&
+VoxelBlockSingleMax<T>::bufferData(const Eigen::Vector3i& voxel_coord) const {
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  voxel_offset = voxel_offset / (1 << buffer_scale_);
+  const int size_at_scale = this->size_li >> buffer_scale_;
+  return buffer_data_[voxel_offset.x() + voxel_offset.y() * size_at_scale + voxel_offset.z() * se::math::sq(size_at_scale)];
+}
+
+
+
+template <typename T>
+typename VoxelBlock<T>::VoxelData&
+VoxelBlockSingleMax<T>::bufferData(const Eigen::Vector3i& voxel_coord) {
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  voxel_offset = voxel_offset / (1 << buffer_scale_);
+  const int size_at_scale = this->size_li >> buffer_scale_;
+  return buffer_data_[voxel_offset.x() + voxel_offset.y() * size_at_scale + voxel_offset.z() * se::math::sq(size_at_scale)];
+}
+
+
+
+template <typename T>
+typename VoxelBlock<T>::VoxelData*
+VoxelBlockSingleMax<T>::blockDataAtScale(const int scale) {
+  if (scale < this->min_scale_) {
+    return nullptr;
+  } else {
+    return block_data_[this->max_scale - scale];
+  }
+}
+
+
+
+template <typename T>
+typename VoxelBlock<T>::VoxelData*
+VoxelBlockSingleMax<T>::blockMaxDataAtScale(const int scale) {
+  if (scale < this->min_scale_) {
+    return nullptr;
+  } else {
+    return block_max_data_[this->max_scale - scale];
+  }
+}
+
+
+
+template <typename T>
+void VoxelBlockSingleMax<T>::initFromBlock(const VoxelBlockSingleMax<T>& block) {
+  this->code_          = block.code();
+  this->size_          = block.size_;
+  this->children_mask_ = block.children_mask();
+  this->timestamp_     = block.timestamp();
+  this->active_        = block.active();
+  this->coordinates_   = block.coordinates();
+  this->min_scale_     = block.min_scale();
+  this->current_scale_ = block.current_scale();
+  std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
+  if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initialised.
+    for (int scale = this->max_scale; scale >= block.min_scale(); scale--) {
+      int size_at_scale = this->size_li >> scale;
+      int num_voxels_at_scale = se::math::cu(size_at_scale);
+      blockData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
+      std::copy(
+          block.blockData()[VoxelBlock<T>::max_scale - scale],
+          block.blockData()[VoxelBlock<T>::max_scale - scale] + num_voxels_at_scale,
+          blockData()[VoxelBlock<T>::max_scale - scale]);
+    }
+  }
+}
+
+template <typename T>
+void VoxelBlockSingleMax<T>::initialiseData(VoxelData* voxel_data, const int num_voxels) {
+  std::fill(voxel_data, voxel_data+num_voxels, init_data_);
+}
+
+
 } // namespace se
 
 #endif // OCTREE_IMPL_HPP

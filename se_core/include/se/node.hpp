@@ -393,6 +393,267 @@ private:
   friend void internal::deserialise <> (VoxelBlockSingle& node, std::ifstream& in);
 };
 
+
+/*! \brief A leaf node of the Octree. Each VoxelBlock contains compute_num_voxels_in_block() voxels
+* voxels.
+*/
+template <typename T>
+class VoxelBlockSingleMax: public VoxelBlock<T> {
+
+public:
+  using VoxelData = typename VoxelBlock<T>::VoxelData;
+
+  VoxelBlockSingleMax(const typename T::VoxelData init_data = T::initData());
+
+  VoxelBlockSingleMax(const VoxelBlockSingleMax<T>& block);
+
+  void operator=(const VoxelBlockSingleMax<T>& block);
+
+  ~VoxelBlockSingleMax();
+
+  VoxelData initData() const;
+  void setInitData(const VoxelData& init_data);
+
+  VoxelData data(const Eigen::Vector3i& voxel_coord) const;
+  void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+  void setDataSafe(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+
+  VoxelData data(const Eigen::Vector3i& voxel_coord, const int scale) const;
+  void setData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+  void setDataSafe(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+
+  VoxelData data(const int voxel_idx) const;
+  void setData(const int voxel_idx, const VoxelData& voxel_data);
+  void setDataSafe(const int voxel_idx, const VoxelData& voxel_data);
+
+  VoxelData data(const int voxel_idx_at_scale, const int scale) const;
+  void setData(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
+  void setDataSafe(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
+
+  VoxelData  maxData(const Eigen::Vector3i& voxel_coord) const;
+  VoxelData  maxData(const Eigen::Vector3i& voxel_coord, const int scale) const;
+  VoxelData  maxData(const int voxel_idx) const;
+  VoxelData  maxData(const int voxel_idx_at_scale, const int scale) const;
+
+  void allocateDownTo();
+  void allocateDownTo(const int scale);
+
+  void deleteUpTo(const int scale);
+
+  VoxelData meanData() { return block_max_data_[0][0]; }
+  VoxelData maxData()  { return block_max_data_[0][0]; }
+
+  decltype(T::selectVoxelValue(T::initData())) meanValue() { return T::selectVoxelValue(block_data_[0][0]); }
+  decltype(T::selectVoxelValue(T::initData())) maxValue()  { return T::selectVoxelValue(block_max_data_[0][0]); }
+
+  std::vector<VoxelData*>& blockData() { return block_data_; }
+  const std::vector<VoxelData*>& blockData() const { return block_data_; }
+  static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
+
+  const size_t& currIntegrCount() const { return curr_integr_count_; } ///< \brief Get the number of integrations at the current scale.
+  const size_t& currObservedCount() const { return curr_observed_count_; } ///< \brief Get the number of observed voxels at the current scale.
+
+  void incrCurrIntegrCount() { curr_integr_count_++; } ///< \brief Increment the number of integrations at the current scale by 1.
+
+  /**
+   * \brief Increment the number of observed voxels in at the current scale by 1.
+   *
+   * \param[in] do_increment The optional flag indicating if the counter should be incremented.
+   */
+  void incrCurrObservedCount(bool do_increment = true);
+
+  /**
+   * \brief Reset the current integration and observation count to 0.
+   */
+  void resetCurrCount();
+
+  /**
+   * \brief When a block is initialised from an observed block (i.e. init_data_.observed == true), set the current
+   *        observed count to all voxels observed and the integration count to the nodes value. Otherwise reset the current
+   *        count.
+   */
+  void initCurrCout();
+
+  /**
+   * \return The integration scale of the buffer.
+   */
+  const int& buffer_scale() const { return buffer_scale_; }
+  const size_t& bufferIntegrCount() const { return buffer_integr_count_; }
+  const size_t& bufferObservedCount() const { return buffer_observed_count_; }
+
+  /**
+   * \brief Increment the buffer count if incrementation criterion is met.
+   *        I.e. the scale normalised number of observations at the buffer scale >= 95% observations at the current scale.
+   */
+  void incrBufferIntegrCount();
+
+  /**
+   * \brief Increment the number of observed voxels at the buffers scale by 1.
+   *
+   * \param[in] do_increment The optional flag indicating if the counter should be incremented.
+   */
+  void incrBufferObservedCount(bool do_increment = true);
+
+  /**
+   * \brief Reset the buffer integration and observation count to 0.
+   */
+  void resetBufferCount();
+
+  /**
+   *  \brief Reset buffer variables to the initial values and free the buffer data if applicable.
+   */
+  void resetBuffer();
+
+  /**
+   * \brief Init buffer variables.
+   *
+   * \param[in] buffer_scale The scale the buffer should be initialised at.
+   */
+  void initBuffer(const int buffer_scale);
+
+  /**
+   * \brief Check if the scale should be switched from the current scale to the recommended.
+   *
+   * \return True is data is switched to recommended scale.
+   */
+  bool switchData();
+
+  /**
+   * \brief Get a `const` reference to the voxel data in the buffer at the voxel coordinates.
+   *
+   * \param[in] voxel_coord The voxel coordinates of the data to be accessed.
+   *
+   * \warning The function does not not check if the voxel_idx exceeds the array size.
+   *
+   * \return `const` reference to the voxel data in the buffer for the provided voxel coordinates.
+   */
+  VoxelData& bufferData(const Eigen::Vector3i& voxel_coord) const;
+
+  /**
+   * \brief Get a reference to the voxel data in the buffer at the voxel coordinates.
+   *
+   * \param[in] voxel_coord The voxel coordinates of the data to be accessed.
+   *
+   * \warning The function does not not check if the voxel_idx exceeds the array size.
+   *
+   * \return Reference to the voxel data in the buffer for the provided voxel coordinates.
+   */
+  VoxelData& bufferData(const Eigen::Vector3i& voxel_coord);
+
+  /**
+   * \brief Get a `const` reference to the voxel data in the buffer at the voxel index.
+   *
+   * \param[in] voxel_idx The voxel index of the data to be accessed.
+   *
+   * \warning The function does not not check if the voxel_idx exceeds the array size.
+   *
+   * \return `const` reference to the voxel data in the buffer for the provided voxel index.
+   */
+  VoxelData& bufferData(const int voxel_idx) const { return buffer_data_[voxel_idx]; }
+
+  /**
+   * \brief Get a reference to the voxel data in the buffer at the voxel index.
+   *
+   * \param[in] voxel_idx The voxel index of the data to be accessed.
+   *
+   * \warning The function does not not check if the voxel_idx exceeds the array size.
+   *
+   * \return Reference to the voxel data in the buffer for the provided voxel index.
+   */
+  VoxelData& bufferData(const int voxel_idx) { return buffer_data_[voxel_idx]; }
+
+  /**
+   * \brief Get a `const` reference to the mean voxel data at the current scale via the voxel index.
+   *
+   * \param[in] voxel_idx The voxel index of the data to be accessed.
+   *
+   * \warning The function does not not check if the voxel_idx exceeds the array size.
+   *
+   * \return `const` reference to the voxel data in the buffer for the provided voxel index.
+   */
+  VoxelData& currData(const int voxel_idx) const { return curr_data_[voxel_idx]; }
+
+  /**
+   * \brief Get a reference to the mean voxel data at the current scale via the voxel index.
+   *
+   * \param[in] voxel_idx The voxel index of the data to be accessed.
+   *
+   * \warning The function does not not check if the voxel_idx exceeds the array size.
+   *
+   * \return Reference to the mean voxel data at the current scale for the provided voxel index.
+   */
+  VoxelData& currData(const int voxel_idx) { return curr_data_[voxel_idx]; }
+
+  /**
+   * \brief Get a pointer to the mean block data array at a given scale.
+   *
+   * \param[in] scale The scale to return the mean block data array from.
+   *
+   * \return The pointer to the mean block data array at the provided scale.
+   *         Returns a nullptr if the scale smaller than the min allocated scale.
+   */
+  VoxelData* blockDataAtScale(const int scale);
+
+  /**
+   * \brief Get a pointer to the max block data array at a given scale.
+   *
+   * \param[in] scale The scale to return the max block data array from.
+   *
+   * \return The pointer to the max block data array at the provided scale.
+   *         Returns a nullptr if the scale smaller than the min allocated scale.
+   */
+  VoxelData* blockMaxDataAtScale(const int scale);
+
+private:
+  // Internal copy helper function
+  void initFromBlock(const VoxelBlockSingleMax<T>& block);
+  void initialiseData(VoxelData* voxel_data, const int num_voxels); ///<< Initalise array of data with `init_data_`.
+
+
+  /// \note the block_data_ and block_max_data_ point to the same data at the finest scale as they are equivalent.
+  std::vector<VoxelData*> block_data_; ///<< Vector containing the mean data at block scales.
+                                       ///< \note block_data_[0] returns the data at scale = max_scale and not scale = 0
+  std::vector<VoxelData*> block_max_data_; ///<< Vector containing the max data at block scales.
+                                           ///< \note block_data_[0] returns the data at scale = max_scale and not scale = 0
+
+  VoxelData* curr_data_ = nullptr; ///<< Pointer to the data at the current integration scale.
+  size_t curr_integr_count_; ///<< Number of integrations at that current scale.
+  size_t curr_observed_count_; ///<< Number of observed voxels at the current scale
+
+  /**
+   * \brief Rather than switching directly to a different integration scale once the integration scale computation
+   *        recommends a different scale, data is continued to be integrated at the current scale and additionally into
+   *        a buffer at the recommended scale.
+   *        Recommended scale == current scale:
+   *            The buffer_data_ points to a `nullptr`
+   *        Recommended scale < current scale:
+   *            The buffer_data_ points to a independently allocated array of voxel data. The data is initialised with
+   *            the parent data at the current integration scale. Once the scale changes the data is inserted into the
+   *            block_data_ and block_max_data_ vector.
+   *        Recommended scale > current scale:
+   *            The buffer_data_ points to according scale in the block_data_ vector. The data integration starts from
+   *            the mean up-propagated value. Up until the recommened scale > current scale the mean up-propagation starts
+   *            from the recommened scale such that the data is not overwritten by the up-propagation from the current scale.
+   *            However the max up-propagation continues from the current integration scale. Once the scale changes the
+   *            current_data_ and current_scale_ is set to the buffer setup, the finest scale in the block_data_ and
+   *            block_max_data_ is deleted and the new finest scales in the buffers adjusted accordingly.
+   *
+   * \note  The recommended scale can only differ by +/-1 scale from the current scale.
+   *        The overhead of integrating at two different scales is insignificant compared to switching immediately as
+   *        the double integration only happens in areas where the recommended integration scale changed and stops
+   *        as soon as the criteria for switching to the finer or coarser scale.
+   */
+  VoxelData* buffer_data_ = nullptr; ///<< Pointer to the buffer data.
+  int    buffer_scale_; ///<< The scale of the buffer.
+  size_t buffer_integr_count_; ///<< Number of integrations at the buffer scale. \note Is only incremented when 95% of the current observations are reached.
+  size_t buffer_observed_count_; ///<< Number of observed voxels in the buffer.
+
+  VoxelData init_data_; ///<< The value the block data is initalised with.
+
+  friend std::ofstream& internal::serialise <> (std::ofstream& out, VoxelBlockSingleMax& node);
+  friend void internal::deserialise <> (VoxelBlockSingleMax& node, std::ifstream& in);
+};
+
 } // namespace se
 
 #include "node_impl.hpp"
