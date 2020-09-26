@@ -73,6 +73,7 @@ size_t OFusion::buildAllocationList(OctreeType&             map,
                                     se::key_t*              allocation_list,
                                     size_t                  reserved) {
 
+  TICKD("buildAllocationList")
   const Eigen::Vector2i depth_image_res (depth_image.width(), depth_image.height());
   const float voxel_dim = map.dim() / map.size();
   const float inverse_voxel_dim = 1.f / voxel_dim;
@@ -146,6 +147,8 @@ size_t OFusion::buildAllocationList(OctreeType&             map,
       }
     }
   }
+
+  TOCK("buildAllocationList")
   return (size_t) voxel_count >= reserved ? reserved : (size_t) voxel_count;
 }
 

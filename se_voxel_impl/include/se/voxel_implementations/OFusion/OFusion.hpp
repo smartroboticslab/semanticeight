@@ -33,6 +33,8 @@
 #include "se/image/image.hpp"
 #include "se/algorithms/meshing.hpp"
 #include "se/sensor_implementation.hpp"
+#include "se/perfstats.h"
+#include "se/timings.h"
 
 #include <yaml-cpp/yaml.h>
 

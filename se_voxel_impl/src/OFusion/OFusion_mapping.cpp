@@ -170,11 +170,12 @@ void OFusion::integrate(OctreeType&             map,
                         const Eigen::Matrix4f&  T_CM,
                         const SensorImpl&       sensor,
                         const unsigned          frame) {
-
+  TICKD("integrate")
   const float timestamp = (1.f / 30.f) * frame;
 
   struct OFusionUpdate funct(sensor, timestamp);
 
   se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image, funct);
+  TOCK("integrate")
 }
 
