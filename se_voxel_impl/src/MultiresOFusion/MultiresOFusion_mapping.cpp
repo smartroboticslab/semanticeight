@@ -43,6 +43,7 @@ using VoxelData      = MultiresOFusion::VoxelType::VoxelData;
 using NodeType       = se::Node<MultiresOFusion::VoxelType>;
 using VoxelBlockType = MultiresOFusion::VoxelType::VoxelBlockType;
 
+template<typename SensorImplType>
 struct MultiresOFusionUpdate {
 
   /**
@@ -59,16 +60,16 @@ struct MultiresOFusionUpdate {
    * \param[in]  frame               The frame number to be integrated.
    */
   MultiresOFusionUpdate(OctreeType&                        map,
-                             std::vector<VoxelBlockType*>&      block_list,
-                             std::vector<std::set<NodeType*>>&  node_list,
-                             const se::Image<float>&            depth_image,
-                             const se::DensePoolingImage* const pooling_depth_image,
-                             const SensorImpl                   sensor,
-                             const Eigen::Matrix4f&             T_CM,
-                             const float                        voxel_dim,
-                             const size_t                       voxel_depth,
-                             const float                        max_depth_value,
-                             const unsigned                     frame) :
+                        std::vector<VoxelBlockType*>&      block_list,
+                        std::vector<std::set<NodeType*>>&  node_list,
+                        const se::Image<float>&            depth_image,
+                        const se::DensePoolingImage* const pooling_depth_image,
+                        const SensorImplType               sensor,
+                        const Eigen::Matrix4f&             T_CM,
+                        const float                        voxel_dim,
+                        const size_t                       voxel_depth,
+                        const float                        max_depth_value,
+                        const unsigned                     frame) :
       map_(map),
       pool_(map.pool()),
       block_list_(block_list),
@@ -96,7 +97,7 @@ struct MultiresOFusionUpdate {
   std::vector<std::set<NodeType*>>& node_list_;
   const se::Image<float>& depth_image_;
   const se::DensePoolingImage* const pooling_depth_image_;
-  const SensorImpl sensor_;
+  const SensorImplType sensor_;
   const Eigen::Matrix4f& T_CM_;
   const float voxel_dim_;
   const Eigen::Vector3f& sample_offset_frac_;
@@ -617,233 +618,7 @@ struct MultiresOFusionUpdate {
                   const int              node_size,
                   const int              depth,
                   const Eigen::Vector3i& rel_step,
-                  NodeType*              parent) {
-
-    /// Approximate max and min depth to quickly check if the node is behind the camera or maximum depth.
-    // Compute the node centre's depth in the camera frame
-    const Eigen::Vector3f node_centre_point_M = voxel_dim_ *
-                                                (node_coord.cast<float>() + Eigen::Vector3f(node_size, node_size, node_size) / 2.f);
-    const Eigen::Vector3f node_centre_point_C = (T_CM_ * node_centre_point_M.homogeneous()).head(3);
-
-    // Extend and reduce the depth by the sphere radius covering the entire cube
-    const float approx_depth_value_max = node_centre_point_C.z() + node_size * size_to_radius_ * voxel_dim_;
-    const float approx_depth_value_min = node_centre_point_C.z() - node_size * size_to_radius_ * voxel_dim_;
-
-    /// CASE 0.1 (OUT OF BOUNDS): Block is behind the camera or behind the maximum depth value
-    if (approx_depth_value_min > max_depth_value_ ||
-        approx_depth_value_max <= sensor_.near_plane) { // TODO: Verify, 0 before.
-
-      return;
-    }
-
-    /// Approximate a 2D bounding box covering the projected node in the image plane.
-    bool should_split = false;
-
-    // Compute the 8 corners of the node to be evaluated
-    Eigen::Matrix<float, 3, 8> node_corner_coords_f =
-        (node_size * corner_rel_steps_).colwise() + node_coord.cast<float>();
-    Eigen::Matrix<float, 3, 8> node_corner_points_C =
-        (T_CM_  * Eigen::Vector4f(voxel_dim_, voxel_dim_, voxel_dim_, 1.f).asDiagonal() *
-         node_corner_coords_f.colwise().homogeneous()).topRows(3);
-
-    Eigen::VectorXi node_corners_infront(8);
-    node_corners_infront << 1, 1, 1, 1, 1, 1, 1, 1;
-    for (int corner_idx = 0; corner_idx < 8; corner_idx++) {
-      if (node_corner_points_C(2, corner_idx) < zero_depth_band_) {
-        node_corners_infront(corner_idx) = 0;
-      }
-    }
-
-    int num_node_corners_infront = node_corners_infront.sum();
-
-    /// CASE 0.2 (OUT OF BOUNDS): Node is behind the camera.
-    if (num_node_corners_infront == 0) {
-
-      return;
-    }
-
-    // Project the 8 corners into the image plane
-    Eigen::Matrix2Xf proj_node_corner_pixels_f(2, 8);
-    const Eigen::VectorXf node_corners_diff = node_corner_points_C.row(2);
-    std::vector<srl::projection::ProjectionStatus> proj_node_corner_stati;
-    sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
-
-    int low_variance = 0; ///<< -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface.
-    se::DensePoolingImage::Pixel pooling_pixel; ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
-
-    if (depth < map_.blockDepth() + 1) {
-      if (num_node_corners_infront < 8) {
-        /// CASE 1 (CAMERA IN NODE):
-        if (cameraInNode(node_coord, node_size, se::math::to_inverse_transformation(T_CM_))) {
-
-          should_split = true;
-
-          /// CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary
-        } else if (crossesFrustum(proj_node_corner_stati)) {
-
-          should_split = true;
-
-          /// CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary without a corner reprojecting
-        } else if (sensor_.sphereInFrustumInf(node_centre_point_C, node_size * size_to_radius_ * voxel_dim_)) {
-
-          should_split = true;
-
-        } else {
-
-          return;
-        }
-
-      } else {
-        // Compute the minimum and maximum pixel values to generate the bounding box
-        const Eigen::Vector2i image_bb_min = proj_node_corner_pixels_f.rowwise().minCoeff().cast<int>();
-        const Eigen::Vector2i image_bb_max = proj_node_corner_pixels_f.rowwise().maxCoeff().cast<int>();
-        const float node_dist_min_m = node_corners_diff.minCoeff();
-        const float node_dist_max_m = node_corners_diff.maxCoeff();
-
-        pooling_pixel = pooling_depth_image_->conservativeQuery(image_bb_min, image_bb_max);
-
-        /// CASE 0.3 (OUT OF BOUNDS): The node is outside frustum (i.e left, right, below, above) or
-        ///                           all pixel values are unknown -> return intermediately
-        if(pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::unknown) {
-
-          return;
-        }
-
-        /// CASE 0.4 (OUT OF BOUNDS): The node is behind surface
-        if (node_dist_min_m > pooling_pixel.max + MultiresOFusion::tau_max) { // TODO: Can be changed to node_dist_max_m?
-
-          return;
-        }
-
-        low_variance = updating_model::lowVariance(
-            pooling_pixel.min, pooling_pixel.max, node_dist_min_m, node_dist_max_m);
-
-        const se::key_t node_key = se::keyops::encode(
-            node_coord.x(), node_coord.y(), node_coord.z(), depth, voxel_depth_);
-        const unsigned int child_idx = se::child_idx(node_key, depth, map_.voxelDepth());
-
-        /// CASE 1 (REDUNDANT DATA): Depth values in the bounding box are far away from the node or unknown (1).
-        ///                          The node to be evaluated is free (2) and fully observed (3),
-        if (   low_variance != 0
-               && parent->childData(child_idx).observed
-               && parent->childData(child_idx).x * parent->childData(child_idx).y <= 0.95 * MultiresOFusion::min_occupancy) {
-
-          return;
-        }
-
-        // TODO: ^SWITCH 1 - Alternative approach (conservative)
-        // Don't free node even more under given conditions.
-//        if (   low_variance != 0
-//            && parent->childData(child_idx).observed
-//            && parent->childData(child_idx).x <= 0.95 * MultiresOFusion::log_odd_min
-//            && parent->childData(child_idx).y > MultiresOFusion::max_weight / 2) {
-//          return;
-//        }
-
-        /// CASE 2 (FRUSTUM BOUNDARY): The node is crossing the frustum boundary
-        if(pooling_pixel.status_crossing == se::DensePoolingImage::Pixel::statusCrossing::crossing) {
-
-          should_split = true;
-
-        }
-
-          /// CASE 3: The node is inside the frustum, but projects into partially known pixel
-        else if (pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::part_known) {
-
-          // TODO: SWITCH 1 - Alternative approach (conservative)
-          // If the entire node is already free don't bother splitting it to free only parts of it even more because
-          // of missing data and just move on.
-          // Approach only saves time.
-//          if (   low_variance != 0
-//              && parent->childData(child_idx).observed
-//              && parent->childData(child_idx).x <= 0.95 * MultiresOFusion::log_odd_min
-//              && parent->childData(child_idx).y > MultiresOFusion::max_weight / 2) {
-//            return;
-//          }
-
-          should_split = true;
-        }
-
-          /// CASE 4: The node is inside the frustum with only known data + node has a potential high variance
-        else if (low_variance == 0){
-
-          should_split = true;
-        }
-      }
-    }
-
-    if (should_split) {
-      // Returns a pointer to the according node if it has previously been allocated.
-      NodeType* node = allocateNode(parent, node_coord, rel_step, node_size, depth);
-      if(node->isBlock()) { // Evaluate the node directly if it is a voxel block
-        node->active(true);
-        // Cast from node to voxel block
-        VoxelBlockType* block =
-            dynamic_cast<VoxelBlockType*>(node);
-        if (low_variance != 0) {
-          // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
-          // free space integration scale or coarser (depending on later scale selection).
-          updateBlock(block, (low_variance == -1));
-        } else {
-          // Otherwise update values at the finest integration scale or coarser (depending on later scale selection).
-          updateBlock(block);
-        }
-#pragma omp critical (voxel_lock)
-        { // Add voxel block to voxel block list for later up propagation
-          block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
-        }
-      }
-      else {
-        // Split! Start recursive process
-#pragma omp parallel for
-        for (int child_idx = 0; child_idx < 8; ++child_idx) {
-          int child_size = node_size / 2;
-          const Eigen::Vector3i child_rel_step =
-              Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0);
-          const Eigen::Vector3i child_coord = node_coord + child_rel_step * child_size;
-          (*this)(child_coord, child_size, depth + 1, child_rel_step, node);
-        }
-      }
-    } else {
-      assert(depth);
-      int node_idx = rel_step.x() + rel_step.y() * 2 + rel_step.z() * 4;
-      NodeType* node = parent->child(node_idx);
-      if (!node) {
-        // Node does not exist -> Does NOT have children that need to be updated
-        if (low_variance == -1) {
-          // Free node
-          VoxelData& node_value = getChildValue(parent, rel_step);
-          updating_model::freeNode(node_value);
-#pragma omp critical (node_lock)
-          { // Add node to node list for later up propagation (finest node for this branch)
-            node_list_[depth - 1].insert(parent);
-          }
-        } // else node has low variance behind surface (ignore)
-      } else {
-        // Node does exist -> Does POTENTIALLY have children that that need to be updated
-        if (node->isBlock()) {
-          // Node is a voxel block -> Does NOT have children that need to be updated
-          VoxelBlockType* block =
-              dynamic_cast<VoxelBlockType*>(node);
-          // Node has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
-          // free space integration scale or coarser (depending on later scale selection).
-          updateBlock(block, (low_variance == -1));
-#pragma omp critical (voxel_lock)
-          { // Add voxel block to voxel block list for later up propagation
-            block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
-          }
-        } else {
-          // Node has children
-          if (low_variance == -1) {
-            //Free node recursively
-            freeNodeRecurse(node, depth);
-          } // else node has low variance behind surface (ignore)
-        }
-      }
-    }
-  };
-
-
+                  NodeType*              parent) { }
 
   /**
    * \brief Propage all newly integrated values from the voxel block depth up to the root of the octree.
@@ -910,7 +685,467 @@ struct MultiresOFusionUpdate {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
+template<>
+void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i& node_coord,
+                                                          const int              node_size,
+                                                          const int              depth,
+                                                          const Eigen::Vector3i& rel_step,
+                                                          NodeType*              parent) {
 
+  /// Approximate max and min depth to quickly check if the node is behind the camera or maximum depth.
+  // Compute the node centre's depth in the camera frame
+  const Eigen::Vector3f node_centre_point_M = voxel_dim_ *
+                                              (node_coord.cast<float>() + Eigen::Vector3f(node_size, node_size, node_size) / 2.f);
+  const Eigen::Vector3f node_centre_point_C = (T_CM_ * node_centre_point_M.homogeneous()).head(3);
+
+  // Extend and reduce the depth by the sphere radius covering the entire cube
+  const float approx_depth_value_max = node_centre_point_C.z() + node_size * size_to_radius_ * voxel_dim_;
+  const float approx_depth_value_min = node_centre_point_C.z() - node_size * size_to_radius_ * voxel_dim_;
+
+  /// CASE 0.1 (OUT OF BOUNDS): Block is behind the camera or behind the maximum depth value
+  if (approx_depth_value_min > max_depth_value_ ||
+      approx_depth_value_max < zero_depth_band_) { // TODO: Alternative sensor_.near_plane.
+
+    return;
+  }
+
+  /// Approximate a 2D bounding box covering the projected node in the image plane.
+  bool should_split = false;
+
+  // Compute the 8 corners of the node to be evaluated
+  Eigen::Matrix<float, 3, 8> node_corner_coords_f =
+      (node_size * corner_rel_steps_).colwise() + node_coord.cast<float>();
+  Eigen::Matrix<float, 3, 8> node_corner_points_C =
+      (T_CM_  * Eigen::Vector4f(voxel_dim_, voxel_dim_, voxel_dim_, 1.f).asDiagonal() *
+       node_corner_coords_f.colwise().homogeneous()).topRows(3);
+
+  Eigen::VectorXi node_corners_infront(8);
+  node_corners_infront << 1, 1, 1, 1, 1, 1, 1, 1;
+  for (int corner_idx = 0; corner_idx < 8; corner_idx++) {
+    if (node_corner_points_C(2, corner_idx) < zero_depth_band_) {
+      node_corners_infront(corner_idx) = 0;
+    }
+  }
+
+  int num_node_corners_infront = node_corners_infront.sum();
+
+  /// CASE 0.2 (OUT OF BOUNDS): Node is behind the camera.
+  if (num_node_corners_infront == 0) {
+
+    return;
+  }
+
+  // Project the 8 corners into the image plane
+  Eigen::Matrix2Xf proj_node_corner_pixels_f(2, 8);
+  const Eigen::VectorXf node_corners_diff = node_corner_points_C.row(2);
+  std::vector<srl::projection::ProjectionStatus> proj_node_corner_stati;
+  sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
+
+  int low_variance = 0; ///<< -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface.
+  se::DensePoolingImage::Pixel pooling_pixel; ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
+
+  if (depth < map_.blockDepth() + 1) {
+    if (num_node_corners_infront < 8) {
+      /// CASE 1 (CAMERA IN NODE):
+      if (cameraInNode(node_coord, node_size, se::math::to_inverse_transformation(T_CM_))) {
+
+        should_split = true;
+
+        /// CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary
+      } else if (crossesFrustum(proj_node_corner_stati)) {
+
+        should_split = true;
+
+        /// CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary without a corner reprojecting
+      } else if (sensor_.sphereInFrustumInf(node_centre_point_C, node_size * size_to_radius_ * voxel_dim_)) {
+
+        should_split = true;
+
+      } else {
+
+        return;
+      }
+
+    } else {
+      // Compute the minimum and maximum pixel values to generate the bounding box
+      const Eigen::Vector2i image_bb_min = proj_node_corner_pixels_f.rowwise().minCoeff().cast<int>();
+      const Eigen::Vector2i image_bb_max = proj_node_corner_pixels_f.rowwise().maxCoeff().cast<int>();
+      const float node_dist_min_m = node_corners_diff.minCoeff();
+      const float node_dist_max_m = node_corners_diff.maxCoeff();
+
+      pooling_pixel = pooling_depth_image_->conservativeQuery(image_bb_min, image_bb_max);
+
+      /// CASE 0.3 (OUT OF BOUNDS): The node is outside frustum (i.e left, right, below, above) or
+      ///                           all pixel values are unknown -> return intermediately
+      if(pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::unknown) {
+
+        return;
+      }
+
+      /// CASE 0.4 (OUT OF BOUNDS): The node is behind surface
+      if (node_dist_min_m > pooling_pixel.max + MultiresOFusion::tau_max) { // TODO: Can be changed to node_dist_max_m?
+
+        return;
+      }
+
+      low_variance = updating_model::lowVariance(
+          pooling_pixel.min, pooling_pixel.max, node_dist_min_m, node_dist_max_m);
+
+      const se::key_t node_key = se::keyops::encode(
+          node_coord.x(), node_coord.y(), node_coord.z(), depth, voxel_depth_);
+      const unsigned int child_idx = se::child_idx(node_key, depth, map_.voxelDepth());
+
+      /// CASE 1 (REDUNDANT DATA): Depth values in the bounding box are far away from the node or unknown (1).
+      ///                          The node to be evaluated is free (2) and fully observed (3),
+      if (   low_variance != 0
+             && parent->childData(child_idx).observed
+             && parent->childData(child_idx).x * parent->childData(child_idx).y <= 0.95 * MultiresOFusion::min_occupancy) {
+
+        return;
+      }
+
+      // TODO: ^SWITCH 1 - Alternative approach (conservative)
+      // Don't free node even more under given conditions.
+//        if (   low_variance != 0
+//            && parent->childData(child_idx).observed
+//            && parent->childData(child_idx).x <= 0.95 * MultiresOFusion::log_odd_min
+//            && parent->childData(child_idx).y > MultiresOFusion::max_weight / 2) {
+//          return;
+//        }
+
+      /// CASE 2 (FRUSTUM BOUNDARY): The node is crossing the frustum boundary
+      if(pooling_pixel.status_crossing == se::DensePoolingImage::Pixel::statusCrossing::crossing) {
+
+        should_split = true;
+
+      }
+
+        /// CASE 3: The node is inside the frustum, but projects into partially known pixel
+      else if (pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::part_known) {
+
+        // TODO: SWITCH 1 - Alternative approach (conservative)
+        // If the entire node is already free don't bother splitting it to free only parts of it even more because
+        // of missing data and just move on.
+        // Approach only saves time.
+//          if (   low_variance != 0
+//              && parent->childData(child_idx).observed
+//              && parent->childData(child_idx).x <= 0.95 * MultiresOFusion::log_odd_min
+//              && parent->childData(child_idx).y > MultiresOFusion::max_weight / 2) {
+//            return;
+//          }
+
+        should_split = true;
+      }
+
+        /// CASE 4: The node is inside the frustum with only known data + node has a potential high variance
+      else if (low_variance == 0){
+
+        should_split = true;
+      }
+    }
+  }
+
+  if (should_split) {
+    // Returns a pointer to the according node if it has previously been allocated.
+    NodeType* node = allocateNode(parent, node_coord, rel_step, node_size, depth);
+    if(node->isBlock()) { // Evaluate the node directly if it is a voxel block
+      node->active(true);
+      // Cast from node to voxel block
+      VoxelBlockType* block =
+          dynamic_cast<VoxelBlockType*>(node);
+      if (low_variance != 0) {
+        // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
+        // free space integration scale or coarser (depending on later scale selection).
+        updateBlock(block, (low_variance == -1));
+      } else {
+        // Otherwise update values at the finest integration scale or coarser (depending on later scale selection).
+        updateBlock(block);
+      }
+#pragma omp critical (voxel_lock)
+      { // Add voxel block to voxel block list for later up propagation
+        block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
+      }
+    }
+    else {
+      // Split! Start recursive process
+#pragma omp parallel for
+      for (int child_idx = 0; child_idx < 8; ++child_idx) {
+        int child_size = node_size / 2;
+        const Eigen::Vector3i child_rel_step =
+            Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0);
+        const Eigen::Vector3i child_coord = node_coord + child_rel_step * child_size;
+        (*this)(child_coord, child_size, depth + 1, child_rel_step, node);
+      }
+    }
+  } else {
+    assert(depth);
+    int node_idx = rel_step.x() + rel_step.y() * 2 + rel_step.z() * 4;
+    NodeType* node = parent->child(node_idx);
+    if (!node) {
+      // Node does not exist -> Does NOT have children that need to be updated
+      if (low_variance == -1) {
+        // Free node
+        VoxelData& node_value = getChildValue(parent, rel_step);
+        updating_model::freeNode(node_value);
+#pragma omp critical (node_lock)
+        { // Add node to node list for later up propagation (finest node for this branch)
+          node_list_[depth - 1].insert(parent);
+        }
+      } // else node has low variance behind surface (ignore)
+    } else {
+      // Node does exist -> Does POTENTIALLY have children that that need to be updated
+      if (node->isBlock()) {
+        // Node is a voxel block -> Does NOT have children that need to be updated
+        VoxelBlockType* block =
+            dynamic_cast<VoxelBlockType*>(node);
+        // Node has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
+        // free space integration scale or coarser (depending on later scale selection).
+        updateBlock(block, (low_variance == -1));
+#pragma omp critical (voxel_lock)
+        { // Add voxel block to voxel block list for later up propagation
+          block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
+        }
+      } else {
+        // Node has children
+        if (low_variance == -1) {
+          //Free node recursively
+          freeNodeRecurse(node, depth);
+        } // else node has low variance behind surface (ignore)
+      }
+    }
+  }
+}
+
+template<>
+void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& node_coord,
+                                                        const int              node_size,
+                                                        const int              depth,
+                                                        const Eigen::Vector3i& rel_step,
+                                                        NodeType*              parent) {
+
+  /// Approximate max and min depth to quickly check if the node is behind the camera or maximum depth.
+  // Compute the node centre's depth in the camera frame
+  const Eigen::Vector3f node_centre_point_M = voxel_dim_ *
+                                              (node_coord.cast<float>() + Eigen::Vector3f(node_size, node_size, node_size) / 2.f);
+  const Eigen::Vector3f node_centre_point_C = (T_CM_ * node_centre_point_M.homogeneous()).head(3);
+
+  // Extend and reduce the depth by the sphere radius covering the entire cube
+  const float approx_depth_value_max = node_centre_point_C.z() + node_size * size_to_radius_ * voxel_dim_;
+  const float approx_depth_value_min = node_centre_point_C.z() - node_size * size_to_radius_ * voxel_dim_;
+
+  /// CASE 0.1 (OUT OF BOUNDS): Block is behind the camera or behind the maximum depth value
+  if (approx_depth_value_min > max_depth_value_ ||
+      approx_depth_value_max < zero_depth_band_) { // TODO: Alternative sensor_.near_plane.
+
+    return;
+  }
+
+  /// Approximate a 2D bounding box covering the projected node in the image plane.
+  bool should_split = false;
+
+  // Compute the 8 corners of the node to be evaluated
+  Eigen::Matrix<float, 3, 8> node_corner_coords_f =
+      (node_size * corner_rel_steps_).colwise() + node_coord.cast<float>();
+  Eigen::Matrix<float, 3, 8> node_corner_points_C =
+      (T_CM_  * Eigen::Vector4f(voxel_dim_, voxel_dim_, voxel_dim_, 1.f).asDiagonal() *
+       node_corner_coords_f.colwise().homogeneous()).topRows(3);
+
+  Eigen::VectorXi node_corners_infront(8);
+  node_corners_infront << 1, 1, 1, 1, 1, 1, 1, 1;
+  for (int corner_idx = 0; corner_idx < 8; corner_idx++) {
+    if (node_corner_points_C(2, corner_idx) < zero_depth_band_) {
+      node_corners_infront(corner_idx) = 0;
+    }
+  }
+
+  int num_node_corners_infront = node_corners_infront.sum();
+
+  /// CASE 0.2 (OUT OF BOUNDS): Node is behind the camera.
+  if (num_node_corners_infront == 0) {
+
+    return;
+  }
+
+  // Project the 8 corners into the image plane
+  Eigen::Matrix2Xf proj_node_corner_pixels_f(2, 8);
+  const Eigen::VectorXf node_corners_diff = node_corner_points_C.row(2);
+  std::vector<srl::projection::ProjectionStatus> proj_node_corner_stati;
+  sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
+
+  int low_variance = 0; ///<< -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface.
+  se::DensePoolingImage::Pixel pooling_pixel; ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
+
+  if (depth < map_.blockDepth() + 1) {
+    if (num_node_corners_infront < 8) {
+      /// CASE 1 (CAMERA IN NODE):
+      if (cameraInNode(node_coord, node_size, se::math::to_inverse_transformation(T_CM_))) {
+
+        should_split = true;
+
+        /// CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary
+      } else if (crossesFrustum(proj_node_corner_stati)) {
+
+        should_split = true;
+
+        /// CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary without a corner reprojecting
+      } else if (sensor_.sphereInFrustumInf(node_centre_point_C, node_size * size_to_radius_ * voxel_dim_)) {
+
+        should_split = true;
+
+      } else {
+
+        return;
+      }
+
+    } else {
+      // Compute the minimum and maximum pixel values to generate the bounding box
+      const Eigen::Vector2i image_bb_min = proj_node_corner_pixels_f.rowwise().minCoeff().cast<int>();
+      const Eigen::Vector2i image_bb_max = proj_node_corner_pixels_f.rowwise().maxCoeff().cast<int>();
+      const float node_dist_min_m = node_corners_diff.minCoeff();
+      const float node_dist_max_m = node_corners_diff.maxCoeff();
+
+      pooling_pixel = pooling_depth_image_->conservativeQuery(image_bb_min, image_bb_max);
+
+      /// CASE 0.3 (OUT OF BOUNDS): The node is outside frustum (i.e left, right, below, above) or
+      ///                           all pixel values are unknown -> return intermediately
+      if(pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::unknown) {
+
+        return;
+      }
+
+      /// CASE 0.4 (OUT OF BOUNDS): The node is behind surface
+      if (node_dist_min_m > pooling_pixel.max + MultiresOFusion::tau_max) { // TODO: Can be changed to node_dist_max_m?
+
+        return;
+      }
+
+      low_variance = updating_model::lowVariance(
+          pooling_pixel.min, pooling_pixel.max, node_dist_min_m, node_dist_max_m);
+
+      const se::key_t node_key = se::keyops::encode(
+          node_coord.x(), node_coord.y(), node_coord.z(), depth, voxel_depth_);
+      const unsigned int child_idx = se::child_idx(node_key, depth, map_.voxelDepth());
+
+      /// CASE 1 (REDUNDANT DATA): Depth values in the bounding box are far away from the node or unknown (1).
+      ///                          The node to be evaluated is free (2) and fully observed (3),
+      if (   low_variance != 0
+             && parent->childData(child_idx).observed
+             && parent->childData(child_idx).x * parent->childData(child_idx).y <= 0.95 * MultiresOFusion::min_occupancy) {
+
+        return;
+      }
+
+      // TODO: ^SWITCH 1 - Alternative approach (conservative)
+      // Don't free node even more under given conditions.
+//        if (   low_variance != 0
+//            && parent->childData(child_idx).observed
+//            && parent->childData(child_idx).x <= 0.95 * MultiresOFusion::log_odd_min
+//            && parent->childData(child_idx).y > MultiresOFusion::max_weight / 2) {
+//          return;
+//        }
+
+      /// CASE 2 (FRUSTUM BOUNDARY): The node is crossing the frustum boundary
+      if(pooling_pixel.status_crossing == se::DensePoolingImage::Pixel::statusCrossing::crossing) {
+
+        should_split = true;
+
+      }
+
+        /// CASE 3: The node is inside the frustum, but projects into partially known pixel
+      else if (pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::part_known) {
+
+        // TODO: SWITCH 1 - Alternative approach (conservative)
+        // If the entire node is already free don't bother splitting it to free only parts of it even more because
+        // of missing data and just move on.
+        // Approach only saves time.
+//          if (   low_variance != 0
+//              && parent->childData(child_idx).observed
+//              && parent->childData(child_idx).x <= 0.95 * MultiresOFusion::log_odd_min
+//              && parent->childData(child_idx).y > MultiresOFusion::max_weight / 2) {
+//            return;
+//          }
+
+        should_split = true;
+      }
+
+        /// CASE 4: The node is inside the frustum with only known data + node has a potential high variance
+      else if (low_variance == 0){
+
+        should_split = true;
+      }
+    }
+  }
+
+  if (should_split) {
+    // Returns a pointer to the according node if it has previously been allocated.
+    NodeType* node = allocateNode(parent, node_coord, rel_step, node_size, depth);
+    if(node->isBlock()) { // Evaluate the node directly if it is a voxel block
+      node->active(true);
+      // Cast from node to voxel block
+      VoxelBlockType* block =
+          dynamic_cast<VoxelBlockType*>(node);
+      if (low_variance != 0) {
+        // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
+        // free space integration scale or coarser (depending on later scale selection).
+        updateBlock(block, (low_variance == -1));
+      } else {
+        // Otherwise update values at the finest integration scale or coarser (depending on later scale selection).
+        updateBlock(block);
+      }
+#pragma omp critical (voxel_lock)
+      { // Add voxel block to voxel block list for later up propagation
+        block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
+      }
+    }
+    else {
+      // Split! Start recursive process
+#pragma omp parallel for
+      for (int child_idx = 0; child_idx < 8; ++child_idx) {
+        int child_size = node_size / 2;
+        const Eigen::Vector3i child_rel_step =
+            Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0);
+        const Eigen::Vector3i child_coord = node_coord + child_rel_step * child_size;
+        (*this)(child_coord, child_size, depth + 1, child_rel_step, node);
+      }
+    }
+  } else {
+    assert(depth);
+    int node_idx = rel_step.x() + rel_step.y() * 2 + rel_step.z() * 4;
+    NodeType* node = parent->child(node_idx);
+    if (!node) {
+      // Node does not exist -> Does NOT have children that need to be updated
+      if (low_variance == -1) {
+        // Free node
+        VoxelData& node_value = getChildValue(parent, rel_step);
+        updating_model::freeNode(node_value);
+#pragma omp critical (node_lock)
+        { // Add node to node list for later up propagation (finest node for this branch)
+          node_list_[depth - 1].insert(parent);
+        }
+      } // else node has low variance behind surface (ignore)
+    } else {
+      // Node does exist -> Does POTENTIALLY have children that that need to be updated
+      if (node->isBlock()) {
+        // Node is a voxel block -> Does NOT have children that need to be updated
+        VoxelBlockType* block =
+            dynamic_cast<VoxelBlockType*>(node);
+        // Node has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
+        // free space integration scale or coarser (depending on later scale selection).
+        updateBlock(block, (low_variance == -1));
+#pragma omp critical (voxel_lock)
+        { // Add voxel block to voxel block list for later up propagation
+          block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
+        }
+      } else {
+        // Node has children
+        if (low_variance == -1) {
+          //Free node recursively
+          freeNodeRecurse(node, depth);
+        } // else node has low variance behind surface (ignore)
+      }
+    }
+  }
+}
 
 /**
  * \brief Update and allocate all nodes and voxel blocks in the camera frustum using a map-to-camera integration scheme.
@@ -932,8 +1167,8 @@ void MultiresOFusion::integrate(OctreeType&             map,
 
   std::vector<VoxelBlockType*> block_list;
   std::vector<std::set<NodeType*>> node_list(map.blockDepth());
-  MultiresOFusionUpdate funct(map, block_list, node_list, depth_image, pooling_depth_image.get(), sensor, T_CM,
-                                   voxel_dim, map.voxelDepth(), max_depth_value, frame);
+  MultiresOFusionUpdate<SensorImpl> funct(map, block_list, node_list, depth_image, pooling_depth_image.get(), sensor, T_CM,
+                                          voxel_dim, map.voxelDepth(), max_depth_value, frame);
 
   // Launch on the 8 voxels of the first depth
 #pragma omp parallel for
