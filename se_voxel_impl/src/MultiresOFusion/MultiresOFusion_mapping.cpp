@@ -252,10 +252,11 @@ struct MultiresOFusionUpdate {
    */
   void updateBlock(VoxelBlockType* block,
                    bool            low_variance = false) {
-    
+
     // Compute the point of the block centre in the sensor frame
     const unsigned int block_size = VoxelBlockType::size_li;
     const Eigen::Vector3i block_coord = block->coordinates();
+
     const Eigen::Vector3f block_centre_coord_f =
         se::get_sample_coord(block_coord, block_size, Eigen::Vector3f::Constant(0.5f));
     const Eigen::Vector3f block_centre_point_C = (T_CM_ * (voxel_dim_ * block_centre_coord_f).homogeneous()).head(3);
@@ -963,17 +964,40 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
       std::vector<srl::projection::ProjectionStatus> proj_node_corner_stati;
       sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
 
-      // Compute the minimum and maximum pixel values to generate the bounding box
-      const Eigen::Vector2i image_bb_min = proj_node_corner_pixels_f.rowwise().minCoeff().cast<int>();
-      const Eigen::Vector2i image_bb_max = proj_node_corner_pixels_f.rowwise().maxCoeff().cast<int>();
+      Eigen::Vector2f proj_node_centre_pixel_f;
+      sensor_.model.project(node_centre_point_C, &proj_node_centre_pixel_f);
 
-      const int image_bb_width  = image_bb_max.x() - image_bb_min.x();
-      const int image_bb_height = image_bb_max.y() - image_bb_min.y();
+      float proj_node_centre_pixel_u_f      = proj_node_centre_pixel_f.x();
+      float proj_node_centre_pixel_u_comp_f = proj_node_centre_pixel_u_f + depth_image_.width() / 2;
 
-      bool isLooping = false;
-      if (image_bb_width > 4 * image_bb_height) {
-        isLooping = true;
+      if(proj_node_centre_pixel_u_comp_f > depth_image_.width() - 0.5) {
+        proj_node_centre_pixel_u_comp_f = proj_node_centre_pixel_u_comp_f - depth_image_.width();
       }
+
+      Eigen::VectorXf proj_node_corner_pixels_u_f(8);
+      for (int i = 0; i < 8; i++) {
+        if (   proj_node_centre_pixel_u_f < proj_node_centre_pixel_u_comp_f
+            && proj_node_corner_pixels_f(0,i) > proj_node_centre_pixel_u_f
+            && proj_node_corner_pixels_f(0,i) > proj_node_centre_pixel_u_comp_f) {
+          proj_node_corner_pixels_u_f(i) = proj_node_corner_pixels_f(0,i) - depth_image_.width();
+        } else if (   proj_node_centre_pixel_u_f > proj_node_centre_pixel_u_comp_f
+                   && proj_node_corner_pixels_f(0,i) < proj_node_centre_pixel_u_f
+                   && proj_node_corner_pixels_f(0,i) < proj_node_centre_pixel_u_comp_f) {
+          proj_node_corner_pixels_u_f(i) = proj_node_corner_pixels_f(0, i) + depth_image_.width();
+        } else {
+          proj_node_corner_pixels_u_f(i) = proj_node_corner_pixels_f(0,i);
+        }
+      }
+      Eigen::VectorXf proj_node_corner_pixels_v_f = proj_node_corner_pixels_f.row(1);
+
+      int u_min = proj_node_corner_pixels_u_f.minCoeff();
+      int u_max = proj_node_corner_pixels_u_f.maxCoeff();
+      int v_min = proj_node_corner_pixels_v_f.minCoeff();
+      int v_max = proj_node_corner_pixels_v_f.maxCoeff();
+
+      // Compute the minimum and maximum pixel values to generate the bounding box
+      const Eigen::Vector2i image_bb_min(u_min, v_min);
+      const Eigen::Vector2i image_bb_max(u_max, v_max);
 
       pooling_pixel = pooling_depth_image_->conservativeQuery(image_bb_min, image_bb_max);
 
