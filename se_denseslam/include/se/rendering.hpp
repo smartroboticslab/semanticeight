@@ -54,7 +54,7 @@
 
 namespace se {
   namespace internal {
-    static se::Image<int> scale_image(640, 480);
+    static se::Image<int> scale_image(2048, 960); // TODO: Adjust scale image based on image dimensions.
     static std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>
       color_map =
       {
