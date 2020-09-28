@@ -63,7 +63,7 @@ struct MultiresOFusionUpdate {
                         std::vector<VoxelBlockType*>&      block_list,
                         std::vector<std::set<NodeType*>>&  node_list,
                         const se::Image<float>&            depth_image,
-                        const se::DensePoolingImage* const pooling_depth_image,
+                        const se::DensePoolingImage<SensorImpl>* const pooling_depth_image,
                         const SensorImplType               sensor,
                         const Eigen::Matrix4f&             T_CM,
                         const float                        voxel_dim,
@@ -96,7 +96,7 @@ struct MultiresOFusionUpdate {
   std::vector<VoxelBlockType*>& block_list_;
   std::vector<std::set<NodeType*>>& node_list_;
   const se::Image<float>& depth_image_;
-  const se::DensePoolingImage* const pooling_depth_image_;
+  const se::DensePoolingImage<SensorImpl>* const pooling_depth_image_;
   const SensorImplType sensor_;
   const Eigen::Matrix4f& T_CM_;
   const float voxel_dim_;
@@ -742,7 +742,7 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
   sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
 
   int low_variance = 0; ///<< -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface.
-  se::DensePoolingImage::Pixel pooling_pixel; ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
+  se::Pixel pooling_pixel = se::Pixel::crossingUnknownPixel(); ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
 
   if (depth < map_.blockDepth() + 1) {
     if (num_node_corners_infront < 8) {
@@ -777,7 +777,7 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
 
       /// CASE 0.3 (OUT OF BOUNDS): The node is outside frustum (i.e left, right, below, above) or
       ///                           all pixel values are unknown -> return intermediately
-      if(pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::unknown) {
+      if(pooling_pixel.status_known == se::Pixel::statusKnown::unknown) {
 
         return;
       }
@@ -798,8 +798,8 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
       /// CASE 1 (REDUNDANT DATA): Depth values in the bounding box are far away from the node or unknown (1).
       ///                          The node to be evaluated is free (2) and fully observed (3),
       if (   low_variance != 0
-             && parent->childData(child_idx).observed
-             && parent->childData(child_idx).x * parent->childData(child_idx).y <= 0.95 * MultiresOFusion::min_occupancy) {
+          && parent->childData(child_idx).observed
+          && parent->childData(child_idx).x * parent->childData(child_idx).y <= 0.95 * MultiresOFusion::min_occupancy) {
 
         return;
       }
@@ -814,14 +814,14 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
 //        }
 
       /// CASE 2 (FRUSTUM BOUNDARY): The node is crossing the frustum boundary
-      if(pooling_pixel.status_crossing == se::DensePoolingImage::Pixel::statusCrossing::crossing) {
+      if(pooling_pixel.status_crossing == se::Pixel::statusCrossing::crossing) {
 
         should_split = true;
 
       }
 
         /// CASE 3: The node is inside the frustum, but projects into partially known pixel
-      else if (pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::part_known) {
+      else if (pooling_pixel.status_known == se::Pixel::statusKnown::part_known) {
 
         // TODO: SWITCH 1 - Alternative approach (conservative)
         // If the entire node is already free don't bother splitting it to free only parts of it even more because
@@ -930,97 +930,68 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
   const Eigen::Vector3f node_centre_point_C = (T_CM_ * node_centre_point_M.homogeneous()).head(3);
 
   // Extend and reduce the depth by the sphere radius covering the entire cube
-  const float approx_depth_value_max = node_centre_point_C.z() + node_size * size_to_radius_ * voxel_dim_;
-  const float approx_depth_value_min = node_centre_point_C.z() - node_size * size_to_radius_ * voxel_dim_;
+  const float approx_depth_value_min = node_centre_point_C.norm() - node_size * size_to_radius_ * voxel_dim_;
+  const float approx_depth_value_max = node_centre_point_C.norm() + node_size * size_to_radius_ * voxel_dim_;
 
   /// CASE 0.1 (OUT OF BOUNDS): Block is behind the camera or behind the maximum depth value
-  if (approx_depth_value_min > max_depth_value_ ||
-      approx_depth_value_max < zero_depth_band_) { // TODO: Alternative sensor_.near_plane.
+  if (approx_depth_value_min > max_depth_value_) {
 
     return;
   }
 
   /// Approximate a 2D bounding box covering the projected node in the image plane.
   bool should_split = false;
-
-  // Compute the 8 corners of the node to be evaluated
-  Eigen::Matrix<float, 3, 8> node_corner_coords_f =
-      (node_size * corner_rel_steps_).colwise() + node_coord.cast<float>();
-  Eigen::Matrix<float, 3, 8> node_corner_points_C =
-      (T_CM_  * Eigen::Vector4f(voxel_dim_, voxel_dim_, voxel_dim_, 1.f).asDiagonal() *
-       node_corner_coords_f.colwise().homogeneous()).topRows(3);
-
-  Eigen::VectorXi node_corners_infront(8);
-  node_corners_infront << 1, 1, 1, 1, 1, 1, 1, 1;
-  for (int corner_idx = 0; corner_idx < 8; corner_idx++) {
-    if (node_corner_points_C(2, corner_idx) < zero_depth_band_) {
-      node_corners_infront(corner_idx) = 0;
-    }
-  }
-
-  int num_node_corners_infront = node_corners_infront.sum();
-
-  /// CASE 0.2 (OUT OF BOUNDS): Node is behind the camera.
-  if (num_node_corners_infront == 0) {
-
-    return;
-  }
-
-  // Project the 8 corners into the image plane
-  Eigen::Matrix2Xf proj_node_corner_pixels_f(2, 8);
-  const Eigen::VectorXf node_corners_diff = node_corner_points_C.row(2);
-  std::vector<srl::projection::ProjectionStatus> proj_node_corner_stati;
-  sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
-
   int low_variance = 0; ///<< -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface.
-  se::DensePoolingImage::Pixel pooling_pixel; ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
+  se::Pixel pooling_pixel = se::Pixel::crossingUnknownPixel(); ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
 
   if (depth < map_.blockDepth() + 1) {
-    if (num_node_corners_infront < 8) {
-      /// CASE 1 (CAMERA IN NODE):
-      if (cameraInNode(node_coord, node_size, se::math::to_inverse_transformation(T_CM_))) {
+    if (cameraInNode(node_coord, node_size, se::math::to_inverse_transformation(T_CM_))) {
 
         should_split = true;
-
-        /// CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary
-      } else if (crossesFrustum(proj_node_corner_stati)) {
-
-        should_split = true;
-
-        /// CASE 2 (FRUSTUM BOUNDARY): Node partly behind the camera and crosses the the frustum boundary without a corner reprojecting
-      } else if (sensor_.sphereInFrustumInf(node_centre_point_C, node_size * size_to_radius_ * voxel_dim_)) {
-
-        should_split = true;
-
-      } else {
-
-        return;
-      }
 
     } else {
+
+      // Compute the 8 corners of the node to be evaluated
+      Eigen::Matrix<float, 3, 8> node_corner_coords_f =
+          (node_size * corner_rel_steps_).colwise() + node_coord.cast<float>();
+      Eigen::Matrix<float, 3, 8> node_corner_points_C =
+          (T_CM_  * Eigen::Vector4f(voxel_dim_, voxel_dim_, voxel_dim_, 1.f).asDiagonal() *
+           node_corner_coords_f.colwise().homogeneous()).topRows(3);
+
+      // Project the 8 corners into the image plane
+      Eigen::Matrix2Xf proj_node_corner_pixels_f(2, 8);
+      std::vector<srl::projection::ProjectionStatus> proj_node_corner_stati;
+      sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
+
       // Compute the minimum and maximum pixel values to generate the bounding box
       const Eigen::Vector2i image_bb_min = proj_node_corner_pixels_f.rowwise().minCoeff().cast<int>();
       const Eigen::Vector2i image_bb_max = proj_node_corner_pixels_f.rowwise().maxCoeff().cast<int>();
-      const float node_dist_min_m = node_corners_diff.minCoeff();
-      const float node_dist_max_m = node_corners_diff.maxCoeff();
+
+      const int image_bb_width  = image_bb_max.x() - image_bb_min.x();
+      const int image_bb_height = image_bb_max.y() - image_bb_min.y();
+
+      bool isLooping = false;
+      if (image_bb_width > 4 * image_bb_height) {
+        isLooping = true;
+      }
 
       pooling_pixel = pooling_depth_image_->conservativeQuery(image_bb_min, image_bb_max);
 
       /// CASE 0.3 (OUT OF BOUNDS): The node is outside frustum (i.e left, right, below, above) or
       ///                           all pixel values are unknown -> return intermediately
-      if(pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::unknown) {
+      if(pooling_pixel.status_known == se::Pixel::statusKnown::unknown) {
 
         return;
       }
 
       /// CASE 0.4 (OUT OF BOUNDS): The node is behind surface
-      if (node_dist_min_m > pooling_pixel.max + MultiresOFusion::tau_max) { // TODO: Can be changed to node_dist_max_m?
+      if (approx_depth_value_min > pooling_pixel.max + MultiresOFusion::tau_max) { // TODO: Can be changed to node_dist_max_m?
 
         return;
       }
 
       low_variance = updating_model::lowVariance(
-          pooling_pixel.min, pooling_pixel.max, node_dist_min_m, node_dist_max_m);
+          pooling_pixel.min, pooling_pixel.max, approx_depth_value_min, approx_depth_value_max);
 
       const se::key_t node_key = se::keyops::encode(
           node_coord.x(), node_coord.y(), node_coord.z(), depth, voxel_depth_);
@@ -1029,8 +1000,8 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
       /// CASE 1 (REDUNDANT DATA): Depth values in the bounding box are far away from the node or unknown (1).
       ///                          The node to be evaluated is free (2) and fully observed (3),
       if (   low_variance != 0
-             && parent->childData(child_idx).observed
-             && parent->childData(child_idx).x * parent->childData(child_idx).y <= 0.95 * MultiresOFusion::min_occupancy) {
+          && parent->childData(child_idx).observed
+          && parent->childData(child_idx).x * parent->childData(child_idx).y <= 0.95 * MultiresOFusion::min_occupancy) {
 
         return;
       }
@@ -1045,14 +1016,14 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
 //        }
 
       /// CASE 2 (FRUSTUM BOUNDARY): The node is crossing the frustum boundary
-      if(pooling_pixel.status_crossing == se::DensePoolingImage::Pixel::statusCrossing::crossing) {
+      if(pooling_pixel.status_crossing == se::Pixel::statusCrossing::crossing) {
 
         should_split = true;
 
       }
 
         /// CASE 3: The node is inside the frustum, but projects into partially known pixel
-      else if (pooling_pixel.status_known == se::DensePoolingImage::Pixel::statusKnown::part_known) {
+      else if (pooling_pixel.status_known == se::Pixel::statusKnown::part_known) {
 
         // TODO: SWITCH 1 - Alternative approach (conservative)
         // If the entire node is already free don't bother splitting it to free only parts of it even more because
@@ -1153,13 +1124,13 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
  * updating scale is choosen depending on the variation of occupancy log-odds within each node/voxel block
  */
 void MultiresOFusion::integrate(OctreeType&             map,
-                                     const se::Image<float>& depth_image,
-                                     const Eigen::Matrix4f&  T_CM,
-                                     const SensorImpl&       sensor,
-                                     const unsigned          frame) {
+                                const se::Image<float>& depth_image,
+                                const Eigen::Matrix4f&  T_CM,
+                                const SensorImpl&       sensor,
+                                const unsigned          frame) {
 
   // Create min/map depth pooling image for different bounding box sizes
-  const std::unique_ptr<se::DensePoolingImage> pooling_depth_image(new se::DensePoolingImage(depth_image));
+  const std::unique_ptr<se::DensePoolingImage<SensorImpl>> pooling_depth_image(new se::DensePoolingImage<SensorImpl>(depth_image));
 
   TICKD("mapToCameraUpdate")
   const float max_depth_value = std::min(sensor.far_plane, pooling_depth_image->maxValue() + MultiresOFusion::tau_max);
