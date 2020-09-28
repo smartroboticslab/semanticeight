@@ -5,8 +5,6 @@
 
 #include "se/object_rendering.hpp"
 #include "se/semanticeight_definitions.hpp"
-#define NO_DEBUG_IMAGES
-#include "se/debug_images.hpp"
 
 
 
@@ -32,7 +30,6 @@ void raycastObjectListKernel(const Objects&              objects,
 #else
 #endif
 
-  dbg::images.init(objects.size(), surface_point_cloud_M.width(), surface_point_cloud_M.height());
 #pragma omp parallel for
   for (int y = 0; y < surface_point_cloud_M.height(); ++y) {
 #pragma omp simd
@@ -63,7 +60,6 @@ void raycastObjectListKernel(const Objects&              objects,
         if ((instance_id != se::instance_bg) && !raycasting_masks[i].at<se::mask_elem_t>(y, x)) {
           miss_count++;
           //std::cout << "Skipping masked" << "\n";
-          dbg::images.set(instance_id, x, y, dbg::raycast_outside_bounding);
           continue;
         }
 #endif
@@ -89,7 +85,6 @@ void raycastObjectListKernel(const Objects&              objects,
           if (hit_distance > nearest_hit_dist) {
             miss_count++;
             //std::cout << "Skipping far hit" << "\n";
-            dbg::images.set(instance_id, x, y, dbg::raycast_far);
             continue;
           }
           // Compute the foreground probability
@@ -106,14 +101,12 @@ void raycastObjectListKernel(const Objects&              objects,
           if (fg_prob <= 0.5f) {
             miss_count++;
             //std::cout << "Skipping FG prob " << fg_prob << " <= 0.5 hit" << "\n";
-            dbg::images.set(instance_id, x, y, dbg::raycast_low_fg);
             continue;
           }
           // Skip hits with the same distance and lower foreground probability
           if ((hit_distance == nearest_hit_dist) && (fg_prob <= nearest_hit_prob)) {
             miss_count++;
             //std::cout << "Skipping lower prob hit" << "\n";
-            dbg::images.set(instance_id, x, y, dbg::raycast_same_dist_lower_fg);
             continue;
           }
           // Good hit found.
@@ -140,7 +133,6 @@ void raycastObjectListKernel(const Objects&              objects,
           instance_id_image.at<se::instance_mask_elem_t>(y, x) = instance_id;
           scale_image[pixel_idx] = static_cast<int8_t>(surface_intersection_O.w());
           //std::cout << "Hit!" << "\n";
-          dbg::images.set(instance_id, x, y, dbg::raycast_ok);
         } else {
           // No hit was made
           miss_count++;
@@ -154,11 +146,9 @@ void raycastObjectListKernel(const Objects&              objects,
         surface_normals_M[pixel_idx] = Eigen::Vector3f(INVALID, 0.f, 0.f);
         instance_id_image.at<se::instance_mask_elem_t>(y, x) = se::instance_bg;
         scale_image[pixel_idx] = -1;
-        dbg::images.set(INSTANCE_BG, x, y, dbg::raycast_missed);
       }
     }
   }
-  dbg::images.save("/home/srl/raycast/", "object");
   TOCK("raycastObjectListKernel");
 }
 
