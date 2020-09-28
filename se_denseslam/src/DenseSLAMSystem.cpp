@@ -754,13 +754,6 @@ void DenseSLAMSystem::matchObjectInstances(
       //const int same_class = (detection.classId() == object.classId());
       //const float score = iou * same_class;
 
-      // Compute the ICP error at the mask location.
-      cv::Mat mask_intersection;
-      cv::bitwise_and(detection.instance_mask_, object_mask, mask_intersection);
-      se::Image<float> depth(image_res_.x(), image_res_.y());
-      pointCloudToDepthKernel(depth, surface_point_cloud_M_, se::math::to_inverse_transformation(T_MC_));
-      const float score = depth_image_error(depth_image_, depth, mask_intersection);
-
       // Test if a better match was found.
       if ((score > matching_threshold) and (score > best_score)) {
         best_score = score;
