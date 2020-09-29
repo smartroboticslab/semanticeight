@@ -319,6 +319,14 @@ class DenseSLAMSystem {
       return map_;
     }
 
+    void saveMap(const std::string& map_filename) {
+      map_->save(map_filename);
+    }
+
+    void loadMap(const std::string& map_filename) {
+      map_->load(map_filename);
+    }
+
     /**
      * Get the translation of the world frame to the map frame.
      *
