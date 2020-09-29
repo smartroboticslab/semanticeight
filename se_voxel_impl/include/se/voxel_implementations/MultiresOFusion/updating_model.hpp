@@ -89,9 +89,9 @@ public:
     float tau_max   = computeTau(depth_value_max);
     float three_sigma_min = computeThreeSigma(depth_value_max);
 
-    if (z_diff_min > tau_max) { // behind of surface
+    if (z_diff_min > 1.25 * tau_max) { // behind of surface
       return  1;
-    } else if (z_diff_max < -three_sigma_min) { // guranteed free space
+    } else if (z_diff_max < - 1.25 * three_sigma_min) { // guranteed free space
       return -1;
     } else {
       return  0;
