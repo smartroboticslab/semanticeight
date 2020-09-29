@@ -253,6 +253,7 @@ int se::OusterLidar::computeIntegrationScale(
     const int   last_scale,
     const int   min_scale,
     const int   max_block_scale) const {
+
   constexpr float deg_to_rad = M_PI / 180.0f;
   const float dist = block_centre.norm();
   // Compute the side length in metres of a pixel projected dist metres from
@@ -262,11 +263,11 @@ int se::OusterLidar::computeIntegrationScale(
   // Compute the ratio using the worst case voxel_dim (space diagonal)
   const float pv_ratio = pixel_dim / (std::sqrt(3) * voxel_dim);
   int scale = 0;
-  if (pv_ratio < 1.0f) {
+  if (pv_ratio < 1.5f) {
     scale = 0;
-  } else if (pv_ratio < 2.0f) {
+  } else if (pv_ratio < 3.0f) {
     scale = 1;
-  } else if (pv_ratio < 4.0f) {
+  } else if (pv_ratio < 6.0f) {
     scale = 2;
   } else {
     scale = 3;
