@@ -664,7 +664,6 @@ void VoxelBlockSingle<T>::initialiseData(VoxelData* voxel_data, const int num_vo
 
 
 
-
 // Voxel block single scale allocation implementation
 
 template <typename T>
@@ -1232,6 +1231,7 @@ void VoxelBlockSingleMax<T>::initFromBlock(const VoxelBlockSingleMax<T>& block) 
   this->coordinates_   = block.coordinates();
   this->min_scale_     = block.min_scale();
   this->current_scale_ = block.current_scale();
+  init_data_           = block.initData();
   std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
   if (block.min_scale() != -1) { // Verify that at least some mip-mapped level has been initialised.
     for (int scale = this->max_scale; scale >= block.min_scale(); scale--) {
@@ -1243,6 +1243,16 @@ void VoxelBlockSingleMax<T>::initFromBlock(const VoxelBlockSingleMax<T>& block) 
           block.blockData()[VoxelBlock<T>::max_scale - scale] + num_voxels_at_scale,
           blockData()[VoxelBlock<T>::max_scale - scale]);
     }
+    for (int scale = this->max_scale; scale >= block.min_scale() + 1; scale--) {
+      int size_at_scale = this->size_li >> scale;
+      int num_voxels_at_scale = se::math::cu(size_at_scale);
+      blockMaxData().push_back(new typename T::VoxelData[num_voxels_at_scale]);
+      std::copy(
+          block.blockMaxData()[VoxelBlock<T>::max_scale - scale],
+          block.blockMaxData()[VoxelBlock<T>::max_scale - scale] + num_voxels_at_scale,
+          blockMaxData()[VoxelBlock<T>::max_scale - scale]);
+    }
+    blockMaxData()[VoxelBlock<T>::max_scale - this->min_scale_] = blockData()[VoxelBlock<T>::max_scale - this->min_scale_];
   }
 }
 

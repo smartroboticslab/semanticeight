@@ -448,6 +448,8 @@ public:
 
   std::vector<VoxelData*>& blockData() { return block_data_; }
   const std::vector<VoxelData*>& blockData() const { return block_data_; }
+  std::vector<VoxelData*>& blockMaxData() { return block_max_data_; }
+  const std::vector<VoxelData*>& blockMaxData() const { return block_max_data_; }
   static constexpr int data_size() { return sizeof(VoxelBlock<T>); }
 
   const size_t& currIntegrCount() const { return curr_integr_count_; } ///< \brief Get the number of integrations at the current scale.
