@@ -74,14 +74,18 @@ namespace se {
       return new VoxelBlockType<T>(init_data);
     };
 
-    se::Node<T>* acquireNode(se::Node<T>* node) {
+    se::Node<T>* acquireNode(se::Node<T>* init_node) {
       nodes_updated_ = false;
-      return new se::Node<T>(node);
+      se::Node<T>* node = new se::Node<T>();
+      *node = *init_node;
+      return node;
     };
 
-    VoxelBlockType<T>* acquireBlock(VoxelBlockType<T>* block) {
+    VoxelBlockType<T>* acquireBlock(VoxelBlockType<T>* init_block) {
       blocks_updated_ = false;
-      return new VoxelBlockType<T>(block);
+      VoxelBlockType<T>* block = new VoxelBlockType<T>();
+      *block = *init_block;
+      return block;
     };
 
     void deleteNode(se::Node<T>* node, size_t max_depth) {
