@@ -1086,8 +1086,9 @@ void VoxelBlockSingleMax<T>::initCurrCout() {
 
 
 template <typename T>
-void VoxelBlockSingleMax<T>::incrBufferIntegrCount() {
-  if (buffer_observed_count_ * se::math::cu(1 << buffer_scale_) >= 0.95 * curr_observed_count_ * se::math::cu(1 << this->current_scale_)) {
+void VoxelBlockSingleMax<T>::incrBufferIntegrCount(const bool do_increment) {
+  if (do_increment ||
+      buffer_observed_count_ * se::math::cu(1 << buffer_scale_) >= 0.90 * curr_observed_count_ * se::math::cu(1 << this->current_scale_)) {
     buffer_integr_count_++;
   }
 }
@@ -1095,7 +1096,7 @@ void VoxelBlockSingleMax<T>::incrBufferIntegrCount() {
 
 
 template <typename T>
-void VoxelBlockSingleMax<T>::incrBufferObservedCount(bool do_increment) {
+void VoxelBlockSingleMax<T>::incrBufferObservedCount(const bool do_increment) {
   if (do_increment) {
     buffer_observed_count_++;
   }
@@ -1143,32 +1144,32 @@ void VoxelBlockSingleMax<T>::initBuffer(const int buffer_scale) {
 
 template <typename T>
 bool VoxelBlockSingleMax<T>::switchData() {
-  if (buffer_observed_count_ * se::math::cu(1 << buffer_scale_) >= 0.95 * curr_observed_count_  * se::math::cu(1 << this->current_scale_)) {
-    if (buffer_integr_count_ >= 10) { // TODO: Find threshold
-      /// !!! We'll switch !!!
-      if (buffer_scale_ < this->current_scale_) { ///<< Switch to finer scale.
-        block_data_.push_back(buffer_data_);
-        block_max_data_.push_back(buffer_data_);
+  if (buffer_integr_count_ >= 10 &&
+      buffer_observed_count_ * se::math::cu(1 << buffer_scale_) >= 0.50 * curr_observed_count_ * se::math::cu(1 << this->current_scale_)) { // TODO: Find threshold
 
-        int size_at_scale = this->size_li >> (buffer_scale_ + 1);
-        int num_voxels_at_scale = se::math::cu(size_at_scale);
-        block_max_data_[this->max_scale - (buffer_scale_ + 1)] = new VoxelData[num_voxels_at_scale]; ///<< Data must still be initialised.
+    /// !!! We'll switch !!!
+    if (buffer_scale_ < this->current_scale_) { ///<< Switch to finer scale.
+      block_data_.push_back(buffer_data_);
+      block_max_data_.push_back(buffer_data_);
 
-      } else { ///<< Switch to coarser scale.
-        deleteUpTo(buffer_scale_);
-      }
+      int size_at_scale = this->size_li >> (buffer_scale_ + 1);
+      int num_voxels_at_scale = se::math::cu(size_at_scale);
+      block_max_data_[this->max_scale - (buffer_scale_ + 1)] = new VoxelData[num_voxels_at_scale]; ///<< Data must still be initialised.
 
-      this->current_scale_ = buffer_scale_;
-      this->min_scale_     = buffer_scale_;
-
-      curr_data_           = buffer_data_;
-      curr_integr_count_   = buffer_integr_count_;
-      curr_observed_count_ = buffer_observed_count_;
-      buffer_data_ = nullptr;
-      buffer_scale_ = -1;
-      resetBufferCount();
-      return true;
+    } else { ///<< Switch to coarser scale.
+      deleteUpTo(buffer_scale_);
     }
+
+    this->current_scale_ = buffer_scale_;
+    this->min_scale_     = buffer_scale_;
+
+    curr_data_           = buffer_data_;
+    curr_integr_count_   = buffer_integr_count_;
+    curr_observed_count_ = buffer_observed_count_;
+    buffer_data_ = nullptr;
+    buffer_scale_ = -1;
+    resetBufferCount();
+    return true;
   }
   return false;
 }

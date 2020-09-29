@@ -251,7 +251,8 @@ struct MultiresOFusionUpdate {
    * \param[out] min_integration_scale The minimum integration scale.
    */
   void updateBlock(VoxelBlockType* block,
-                   bool            low_variance = false) {
+                   bool            low_variance,
+                   bool            project_inside) {
 
     // Compute the point of the block centre in the sensor frame
     const unsigned int block_size = VoxelBlockType::size_li;
@@ -386,7 +387,7 @@ struct MultiresOFusionUpdate {
         } // y
       } // z
 
-      block->incrBufferIntegrCount();
+      block->incrBufferIntegrCount(project_inside);
 
       if(block->switchData()) {
         return;
@@ -710,9 +711,6 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
     return;
   }
 
-  /// Approximate a 2D bounding box covering the projected node in the image plane.
-  bool should_split = false;
-
   // Compute the 8 corners of the node to be evaluated
   Eigen::Matrix<float, 3, 8> node_corner_coords_f =
       (node_size * corner_rel_steps_).colwise() + node_coord.cast<float>();
@@ -742,6 +740,9 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
   std::vector<srl::projection::ProjectionStatus> proj_node_corner_stati;
   sensor_.model.projectBatch(node_corner_points_C, &proj_node_corner_pixels_f, &proj_node_corner_stati);
 
+  /// Approximate a 2D bounding box covering the projected node in the image plane.
+  bool should_split = false;
+  bool projects_inside = false;
   int low_variance = 0; ///<< -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface.
   se::Pixel pooling_pixel = se::Pixel::crossingUnknownPixel(); ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
 
@@ -843,6 +844,8 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
 
         should_split = true;
       }
+
+      projects_inside = pooling_pixel.status_known == se::Pixel::known;
     }
   }
 
@@ -857,10 +860,10 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
       if (low_variance != 0) {
         // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
         // free space integration scale or coarser (depending on later scale selection).
-        updateBlock(block, (low_variance == -1));
+        updateBlock(block, (low_variance == -1), projects_inside);
       } else {
         // Otherwise update values at the finest integration scale or coarser (depending on later scale selection).
-        updateBlock(block);
+        updateBlock(block, false, projects_inside);
       }
 #pragma omp critical (voxel_lock)
       { // Add voxel block to voxel block list for later up propagation
@@ -901,7 +904,7 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
             dynamic_cast<VoxelBlockType*>(node);
         // Node has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
         // free space integration scale or coarser (depending on later scale selection).
-        updateBlock(block, (low_variance == -1));
+        updateBlock(block, (low_variance == -1), projects_inside);
 #pragma omp critical (voxel_lock)
         { // Add voxel block to voxel block list for later up propagation
           block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
@@ -942,6 +945,7 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
 
   /// Approximate a 2D bounding box covering the projected node in the image plane.
   bool should_split = false;
+  bool projects_inside = false;
   int low_variance = 0; ///<< -1 := low variance infront of the surface, 0 := high variance, 1 = low_variance behind the surface.
   se::Pixel pooling_pixel = se::Pixel::crossingUnknownPixel(); ///<< min, max pixel batch depth + crossing frustum state + contains unknown values state.
 
@@ -1068,6 +1072,8 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
 
         should_split = true;
       }
+
+      projects_inside = pooling_pixel.status_known == se::Pixel::known;
     }
   }
 
@@ -1082,10 +1088,10 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
       if (low_variance != 0) {
         // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
         // free space integration scale or coarser (depending on later scale selection).
-        updateBlock(block, (low_variance == -1));
+        updateBlock(block, (low_variance == -1), projects_inside);
       } else {
         // Otherwise update values at the finest integration scale or coarser (depending on later scale selection).
-        updateBlock(block);
+        updateBlock(block, false, projects_inside);
       }
 #pragma omp critical (voxel_lock)
       { // Add voxel block to voxel block list for later up propagation
@@ -1126,7 +1132,7 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
             dynamic_cast<VoxelBlockType*>(node);
         // Node has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
         // free space integration scale or coarser (depending on later scale selection).
-        updateBlock(block, (low_variance == -1));
+        updateBlock(block, (low_variance == -1), projects_inside);
 #pragma omp critical (voxel_lock)
         { // Add voxel block to voxel block list for later up propagation
           block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));

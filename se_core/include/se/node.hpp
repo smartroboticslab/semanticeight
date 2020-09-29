@@ -485,14 +485,14 @@ public:
    * \brief Increment the buffer count if incrementation criterion is met.
    *        I.e. the scale normalised number of observations at the buffer scale >= 95% observations at the current scale.
    */
-  void incrBufferIntegrCount();
+  void incrBufferIntegrCount(const bool do_increment = true);
 
   /**
    * \brief Increment the number of observed voxels at the buffers scale by 1.
    *
    * \param[in] do_increment The optional flag indicating if the counter should be incremented.
    */
-  void incrBufferObservedCount(bool do_increment = true);
+  void incrBufferObservedCount(const bool do_increment = true);
 
   /**
    * \brief Reset the buffer integration and observation count to 0.
