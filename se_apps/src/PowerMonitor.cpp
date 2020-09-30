@@ -68,7 +68,7 @@ PowerMonitor::~PowerMonitor() {
 
 float PowerMonitor::getPower(Sensor sensor) {
 	FILE* tmp = nullptr;
-	float power;
+	float power = 0.0f;
 	if (sensingMethod == ODROID) {
 		switch (sensor) {
 		case SENSOR_A7:
@@ -86,7 +86,11 @@ float PowerMonitor::getPower(Sensor sensor) {
 		}
 		if (tmp != nullptr) {
 			rewind(tmp);
-			return (power);
+            if (fscanf(tmp, "%f\n", &power) > 0) {
+              return (power);
+            } else {
+              return (0.0f);
+            }
 		}
 	}
 	return -1.f;
