@@ -41,6 +41,10 @@ bool find_valid_point(const OctreeT<FieldType>& map,
                       Eigen::Vector3f&          point_M) {
   bool is_valid = false;
   Eigen::Vector3f ray_pos_M = ray_origin_M + t * ray_dir_M;
+  if (!map.containsPoint(ray_pos_M)) {
+    return false;
+  }
+
   typename FieldType::VoxelData peek_data;
   map.getAtPoint(ray_pos_M, peek_data, 0);
   if (peek_data.y > 0) {
@@ -51,7 +55,12 @@ bool find_valid_point(const OctreeT<FieldType>& map,
     if (t > t_max) {
       return false;
     }
+
     ray_pos_M = ray_origin_M + t * ray_dir_M;
+    if (!map.containsPoint(ray_pos_M)) {
+      return false;
+    }
+
     map.getAtPoint(ray_pos_M, peek_data, 0);
     if (peek_data.y > 0) {
       value = map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid).first;
