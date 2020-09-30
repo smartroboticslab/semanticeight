@@ -62,7 +62,7 @@ float            MultiresOFusion::sigma_min;
 float            MultiresOFusion::sigma_max;
 float            MultiresOFusion::k_sigma;
 
-void MultiresOFusion::configure(const float voxel_dim) {
+void MultiresOFusion::configure(const float /* voxel_dim */) {
   surface_boundary  = 0;
   min_occupancy     = -50;
   max_occupancy     = 50;
