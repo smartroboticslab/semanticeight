@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.5...3.16)
 
-find_package(SRLProjection REQUIRED)
-# Looks like yaml-cpp doesn't properly generate its CMake files and
-# find_package does not work in the same build tree
-#find_package(yaml-cpp REQUIRED)
-
 # Create library ##############################################################
 set(LIB_NAME "se-shared")
 add_library(${LIB_NAME} STATIC

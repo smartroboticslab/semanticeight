@@ -82,8 +82,6 @@ if(SE_BUILD_TESTS)
   enable_testing()
 endif()
 
-# Couldn't get Sophus to work as a submodule any other way
-include_directories(third_party/sophus)
 # Build each supereight module
 add_subdirectory(third_party)
 add_subdirectory(se_core)
