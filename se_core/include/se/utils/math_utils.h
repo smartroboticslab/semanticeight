@@ -28,10 +28,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#ifndef SE_MATH_HELPER_H
-#define SE_MATH_HELPER_H
-#include <iostream>
+
+#ifndef __MATH_UTILS_H
+#define __MATH_UTILS_H
+
+#include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <vector>
+
 #include <Eigen/Dense>
 
 /*
@@ -169,6 +175,44 @@ namespace se {
       const Eigen::Vector3f t2 = p3.head<3>() - p2.head<3>();
       // Unit normal vector
       return t1.cross(t2).normalized().homogeneous();
+    }
+
+    /*! \brief Compute the median of the data in the vector.
+     *
+     * \param[in,out] data The data to compute the median of. The vector will
+     *                     be sorted in-place.
+     * \return The median of the data. If input vector is empty, the value
+     * returned by the constructor T() is returned. This is typically 0.
+     *
+     * \warning The vector will be sorted inside this function.
+     *
+     * \note Weird things will happen if the vector contains NaNs.
+     */
+    template <typename T>
+    static T median(std::vector<T>& data) {
+      if (!data.empty()) {
+        std::sort(data.begin(), data.end());
+        // Compute both the quotient and remainder in one go
+        const std::ldiv_t result = std::ldiv(data.size(), 2);
+        const size_t mid_idx = result.quot;
+        if (result.rem == 0) {
+          return (data[mid_idx - 1] + data[mid_idx]) / 2;
+        } else {
+          return data[mid_idx];
+        }
+      } else {
+        return T();
+      }
+    }
+
+    /*! Same as se::math::median() but the order of the original vector is
+     * retain. This has a performance impact proportional to the size of the
+     * input vector.
+     */
+    template <typename T>
+    static T median(const std::vector<T>& data) {
+      std::vector<T> v (data);
+      return median(v);
     }
   }
 }
