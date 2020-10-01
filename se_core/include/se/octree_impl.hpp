@@ -138,7 +138,7 @@ template <typename T>
 inline int Octree<T>::getAtPoint(const Eigen::Vector3f& point_M,
                                  VoxelData&             data,
                                  const int              scale) const {
-  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point_M).cast<int>();
+  const Eigen::Vector3i voxel_coord = (inverse_voxel_dim_ * point_M).cast<int>();
   return get(voxel_coord, data, scale);
 }
 
@@ -182,7 +182,7 @@ inline void Octree<T>::set(const Eigen::Vector3i& voxel_coord,
 template <typename T>
 inline void Octree<T>::setAtPoint(const Eigen::Vector3f& point_M,
                                   const VoxelData&       data) {
-  const Eigen::Vector3i& voxel_coord = (inverse_voxel_dim_ * point_M).cast<int>();
+  const Eigen::Vector3i voxel_coord = (inverse_voxel_dim_ * point_M).cast<int>();
   return set(voxel_coord, data);
 }
 
@@ -627,7 +627,7 @@ inline std::pair<float, int> Octree<T>::interpAtPoint(
     const Eigen::Vector3f& point_M,
     ValueSelector          select_value,
     const int              min_scale) const {
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
   return interp(voxel_coord_f, select_value, min_scale);
 }
 
@@ -640,7 +640,7 @@ inline std::pair<float, int> Octree<T>::interpAtPoint(
     ValueSelector          select_value,
     const int              min_scale,
     bool&                  is_valid) const {
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
   return interp(voxel_coord_f, select_value, min_scale, is_valid);
 }
 
@@ -653,7 +653,7 @@ inline std::pair<float, int> Octree<T>::interpAtPoint(
     NodeValueSelector      select_node_value,
     VoxelValueSelector     select_voxel_value,
     const int              min_scale) const {
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
   return interp(voxel_coord_f, select_node_value, select_voxel_value, min_scale);
 }
 
@@ -667,7 +667,7 @@ inline std::pair<float, int> Octree<T>::interpAtPoint(
     VoxelValueSelector     select_voxel_value,
     const int              min_scale,
     bool&                  is_valid) const {
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
   return interp(voxel_coord_f, select_node_value, select_voxel_value, min_scale, is_valid);
 }
 
@@ -765,7 +765,7 @@ inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
                                               ValueSelector          select_value,
                                               const int              min_scale) const {
 
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
   return grad(voxel_coord_f, select_value, min_scale);
 }
 
@@ -779,7 +779,7 @@ inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
                                               bool&                  is_valid,
                                               const int              min_scale) const {
 
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
   return grad(voxel_coord_f, select_value, min_scale);
 }
 
@@ -792,7 +792,7 @@ inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
                                               VoxelValueSelector     select_voxel_value,
                                               const int              min_scale) const {
 
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
   return grad(voxel_coord_f, select_node_value, select_voxel_value, min_scale);
 }
 
@@ -807,7 +807,7 @@ inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
                                               bool&                  is_valid,
                                               const int              min_scale) const {
 
-  const Eigen::Vector3f& voxel_coord_f = inverse_voxel_dim_ * point_M;
+  const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
   return grad(voxel_coord_f, select_node_value, select_voxel_value, check_is_valid, is_valid, min_scale);
 }
 
