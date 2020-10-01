@@ -191,49 +191,51 @@ void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>&       normals,
 
 
 
-void mm2metersKernel(se::Image<float>&      output_depth_image,
-                     const float*           input_depth_image_data,
-                     const Eigen::Vector2i& input_depth_image_res) {
+void downsampleDepthKernel(const float*           input_depth_data,
+                           const Eigen::Vector2i& input_depth_res,
+                           se::Image<float>&      output_depth) {
   TICK();
   // Check for unsupported conditions
-  if ((input_depth_image_res.x() < output_depth_image.width()) ||
-       input_depth_image_res.y() < output_depth_image.height()) {
+  if ((input_depth_res.x() < output_depth.width()) ||
+       input_depth_res.y() < output_depth.height()) {
     std::cerr << "Invalid ratio." << std::endl;
     exit(1);
   }
-  if ((input_depth_image_res.x() % output_depth_image.width() != 0) ||
-      (input_depth_image_res.y() % output_depth_image.height() != 0)) {
+  if ((input_depth_res.x() % output_depth.width() != 0) ||
+      (input_depth_res.y() % output_depth.height() != 0)) {
     std::cerr << "Invalid ratio." << std::endl;
     exit(1);
   }
-  if ((input_depth_image_res.x() / output_depth_image.width() !=
-       input_depth_image_res.y() / output_depth_image.height())) {
+  if ((input_depth_res.x() / output_depth.width() !=
+       input_depth_res.y() / output_depth.height())) {
     std::cerr << "Invalid ratio." << std::endl;
     exit(1);
   }
 
-  const int ratio = input_depth_image_res.x() / output_depth_image.width();
+  const int ratio = input_depth_res.x() / output_depth.width();
 #pragma omp parallel for
-  for (int y_out = 0; y_out < output_depth_image.height(); y_out++) {
-    for (int x_out = 0; x_out < output_depth_image.width(); x_out++) {
-      size_t valid_count = 0;
-      float pixel_value_sum = 0;
+  for (int y_out = 0; y_out < output_depth.height(); y_out++) {
+    for (int x_out = 0; x_out < output_depth.width(); x_out++) {
+      std::vector<float> box_values;
+      box_values.reserve(ratio * ratio);
       for (int b = 0; b < ratio; b++) {
         for (int a = 0; a < ratio; a++) {
           const int y_in = y_out * ratio + b;
           const int x_in = x_out * ratio + a;
-          const float depth_value = input_depth_image_data[x_in + input_depth_image_res.x() * y_in];
-          if ((depth_value == 0) || std::isnan(depth_value))
+          const float depth_value = input_depth_data[x_in + input_depth_res.x() * y_in];
+          // Only consider positive, non-NaN values for the median
+          if ((depth_value < 1e-5) || std::isnan(depth_value)) {
             continue;
-          pixel_value_sum += depth_value;
-          valid_count++;
+          } else {
+            box_values.push_back(depth_value);
+          }
         }
       }
-      output_depth_image(x_out, y_out)
-          = (valid_count > 0) ? pixel_value_sum / valid_count : 0;
+      output_depth(x_out, y_out) = box_values.empty() ? 0.0f : se::math::median(box_values);
+      box_values.clear();
     }
   }
-  TOCK("mm2metersKernel", output_depth_image.width() * output_depth_image.height());
+  TOCK("downsampleDepthKernel", output_depth.size());
 }
 
 

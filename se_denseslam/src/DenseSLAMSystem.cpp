@@ -113,7 +113,7 @@ bool DenseSLAMSystem::preprocessDepth(const float*           input_depth_image_d
                                       const Eigen::Vector2i& input_depth_image_res,
                                       const bool             filter_depth){
 
-  mm2metersKernel(depth_image_, input_depth_image_data, input_depth_image_res);
+  downsampleDepthKernel(input_depth_image_data, input_depth_image_res, depth_image_);
 
   if (filter_depth) {
     bilateralFilterKernel(scaled_depth_image_[0], depth_image_, gaussian_,
