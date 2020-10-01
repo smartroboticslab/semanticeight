@@ -40,16 +40,17 @@ bool find_valid_point(const OctreeT<FieldType>& map,
                       float&                    value,
                       Eigen::Vector3f&          point_M) {
   bool is_valid = false;
+  value = 0;
+  typename FieldType::VoxelData peek_data;
+
   Eigen::Vector3f ray_pos_M = ray_origin_M + t * ray_dir_M;
-  if (!map.containsPoint(ray_pos_M)) {
-    return false;
+  if (map.containsPoint(ray_pos_M)) {
+    map.getAtPoint(ray_pos_M, peek_data, 0);
+    if (peek_data.y > 0) {
+      value = map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid).first;
+    }
   }
 
-  typename FieldType::VoxelData peek_data;
-  map.getAtPoint(ray_pos_M, peek_data, 0);
-  if (peek_data.y > 0) {
-    value = map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid).first;
-  }
   while (!is_valid) {
     t += step_size;
     if (t > t_max) {
@@ -57,13 +58,11 @@ bool find_valid_point(const OctreeT<FieldType>& map,
     }
 
     ray_pos_M = ray_origin_M + t * ray_dir_M;
-    if (!map.containsPoint(ray_pos_M)) {
-      return false;
-    }
-
-    map.getAtPoint(ray_pos_M, peek_data, 0);
-    if (peek_data.y > 0) {
-      value = map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid).first;
+    if (map.containsPoint(ray_pos_M)) {
+      map.getAtPoint(ray_pos_M, peek_data, 0);
+      if (peek_data.y > 0) {
+        value = map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid).first;
+      }
     }
   }
   point_M = ray_pos_M;
