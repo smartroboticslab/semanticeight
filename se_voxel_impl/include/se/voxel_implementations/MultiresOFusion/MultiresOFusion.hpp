@@ -124,6 +124,10 @@ struct MultiresOFusion {
       return data.observed;
     };
 
+    static float threshold(const VoxelData& data) {
+      return data.x * data.y;
+    }
+
     using VoxelBlockType = se::VoxelBlockSingleMax<MultiresOFusion::VoxelType>;
 
     using MemoryPoolType = se::MemoryPool<MultiresOFusion::VoxelType>;

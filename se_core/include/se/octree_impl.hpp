@@ -205,6 +205,188 @@ inline int Octree<T>::getMaxAtPoint(const Eigen::Vector3f& point_M,
   return getMax(voxel_coord, data, scale);
 }
 
+
+
+template <typename T>
+inline int Octree<T>::getThreshold(const int        x,
+                                   const int        y,
+                                   const int        z,
+                                   const float      threshold,
+                                   VoxelData&       t_data,
+                                   int&             t_size,
+                                   Eigen::Vector3i& t_corner,
+                                   bool&            is_node,
+                                   VoxelBlockType*& block) const {
+  is_node = false;
+  block = nullptr;
+  Node<T> * node = root_;
+  if(!node) {
+    t_data = T::initData();
+    t_size  = size_;
+    t_corner = Eigen::Vector3i(0, 0, 0);
+    is_node = true;
+    return se::math::log2_const(size_);
+  }
+
+  t_size = size_ >> 1;
+  int child_idx = -1;
+  for (; t_size >= block_size; t_size = t_size >> 1){
+
+    child_idx  = ((x & t_size) > 0) + 2 * ((y & t_size) > 0) + 4 * ((z & t_size) > 0);
+    Node<T>* node_tmp = node->child(child_idx);
+    t_data            = node->childData(child_idx);
+    if (!node_tmp || (T::getThreshold(t_data) <= threshold && T::isValid(t_data))) {
+      t_corner = node_tmp->coordinates();
+      is_node = true;
+      return se::math::log2_const(t_size);
+    }
+    node = node_tmp;
+
+  }
+
+  block = dynamic_cast<VoxelBlockType*>(node);
+  Eigen::Vector3i voxel_coord(x, y, z);
+
+  for (int s = 2; s >= block->current_scale(); s--, t_size = t_size >> 1)  {
+    t_corner = t_size * (voxel_coord / t_size);
+    t_data  = block->maxData(t_corner, s);
+    if((T::getThreshold(t_data) <= threshold && T::isValid(t_data))){
+      return s;
+    }
+  }
+  return block->current_scale();
+}
+
+
+
+template <typename T>
+inline int Octree<T>::getThreshold(const Eigen::Vector3i& t_coord,
+                                   const float            threshold,
+                                   VoxelData&             t_data,
+                                   int&                   t_size,
+                                   Eigen::Vector3i&       t_corner,
+                                   bool&                  is_node,
+                                   VoxelBlockType*&       block) const {
+
+  return getThreshold(t_coord.x(), t_coord.y(), t_coord.z(), threshold, t_data, t_size, t_corner, is_node, block);
+}
+
+
+
+template <typename T>
+inline int Octree<T>::getThresholdAtPoint(const Eigen::Vector3f& t_point_M,
+                                          const float            threshold,
+                                          VoxelData&             t_data,
+                                          int&                   t_size,
+                                          Eigen::Vector3i&       t_corner,
+                                          bool&                  is_node,
+                                          VoxelBlockType*&       block) const {
+
+  const Eigen::Vector3i& t_coord = (inverse_voxel_dim_ * t_point_M).cast<int>();
+  return getThreshold(t_coord.x(), t_coord.y(), t_coord.z(), threshold, t_data, t_size, t_corner, is_node, block);
+}
+
+
+
+template <typename T>
+inline int Octree<T>::getThreshold(const int          x,
+                                   const int          y,
+                                   const int          z,
+                                   const float        t_value,
+                                   const unsigned int t_size,
+                                   VoxelData&         v_data,
+                                   int&               v_size,
+                                   Eigen::Vector3i&   v_corner,
+                                   bool&              is_finest) const {
+
+  Node<T> * node = root_;
+  if(!node) {
+    v_data    = T::initData();
+    v_size    = size_;
+    v_corner  = Eigen::Vector3i(0, 0, 0);
+    is_finest = true;
+    return se::math::log2_const(size_);
+  }
+
+  v_size            = size_ >> 1;
+  int child_idx     = -1;
+  int min_node_size = std::max(t_size, (unsigned int) 8);
+
+  for (; v_size >= min_node_size; v_size = v_size >> 1){
+
+    child_idx  = ((x & v_size) > 0) + 2 * ((y & v_size) > 0) + 4 * ((z & v_size) > 0);
+    Node<T>* node_tmp = node->child(child_idx);
+    v_data            = node->childData(child_idx);
+
+    if (!node_tmp || (T::computeThreshold(v_data) <= t_value && T::isValid(v_data))) {
+      v_corner = node->coordinates() +
+                 Eigen::Vector3i::Constant(v_size).cwiseProduct(Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0));
+      is_finest = (node_tmp == nullptr);
+      return se::math::log2_const(v_size);
+    }
+
+    node = node_tmp;
+
+  }
+
+  if (node->isBlock()) {
+
+    VoxelBlockType* block = dynamic_cast<VoxelBlockType*>(node);
+    const int current_scale   = block->current_scale();
+    const int max_block_scale = block->max_scale;
+
+    int min_block_scale = std::max(se::math::log2_const(t_size), current_scale);
+
+    if (current_scale < max_block_scale) {
+      Eigen::Vector3i voxel_coord(x, y, z);
+      int v_scale = max_block_scale - 1;
+      for (v_scale; v_scale >= min_block_scale; v_scale--, v_size = v_size >> 1)  {
+        v_corner = v_size * (voxel_coord / v_size);
+        v_data  = block->maxData(v_corner, v_scale);
+        if((v_scale == current_scale) || (T::computeThreshold(v_data) <= t_value && T::isValid(v_data))){
+          is_finest = (v_scale == current_scale);
+          return v_scale;
+        }
+      }
+    }
+  } else {
+    is_finest = false;
+    v_size = v_size << 1;
+    return se::math::log2_const(v_size);
+  }
+}
+
+
+
+template <typename T>
+inline int Octree<T>::getThreshold(const Eigen::Vector3i& t_coord,
+                                   const float            t_value,
+                                   const unsigned int     t_size,
+                                   VoxelData&             v_data,
+                                   int&                   v_size,
+                                   Eigen::Vector3i&       v_corner,
+                                   bool&                  is_finest) const {
+
+  return getThreshold(t_coord.x(), t_coord.y(), t_coord.z(), t_value, t_size, v_data, v_size, v_corner, is_finest);
+}
+
+
+
+template <typename T>
+inline int Octree<T>::getThresholdAtPoint(const Eigen::Vector3f& t_point_M,
+                                          const float            t_value,
+                                          const unsigned int     t_size,
+                                          VoxelData&             v_data,
+                                          int&                   v_size,
+                                          Eigen::Vector3i&       v_corner,
+                                          bool&                  is_finest) const {
+
+  const Eigen::Vector3i& t_coord = (inverse_voxel_dim_ * t_point_M).cast<int>();
+  return getThreshold(t_coord.x(), t_coord.y(), t_coord.z(), t_value, t_size, v_data, v_size, v_corner, is_finest);
+}
+
+
+
 template <typename T>
 inline void Octree<T>::set(const int        x,
                            const int        y,

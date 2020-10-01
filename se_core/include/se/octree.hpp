@@ -250,6 +250,58 @@ public:
                     VoxelData&             data,
                     const int              min_scale = 0) const;
 
+  int getThreshold(const int        x,
+                   const int        y,
+                   const int        z,
+                   const float      threshold,
+                   VoxelData&       t_value,
+                   int&             t_size,
+                   Eigen::Vector3i& t_corner,
+                   bool&            is_node,
+                   VoxelBlockType*& block) const;
+
+  int getThreshold(const Eigen::Vector3i& t_coord,
+                   const float            threshold,
+                   VoxelData&             t_value,
+                   int&                   t_size,
+                   Eigen::Vector3i&       t_corner,
+                   bool&                  is_node,
+                   VoxelBlockType*&       block) const;
+
+  int getThresholdAtPoint(const Eigen::Vector3f& t_point_M,
+                          const float            threshold,
+                          VoxelData&             t_value,
+                          int&                   t_size,
+                          Eigen::Vector3i&       t_corner,
+                          bool&                  is_node,
+                          VoxelBlockType*&       block) const;
+
+  int getThreshold(const int          x,
+                   const int          y,
+                   const int          z,
+                   const float        t_value,
+                   const unsigned int t_size,
+                   VoxelData&         v_data,
+                   int&               v_size,
+                   Eigen::Vector3i&   v_corner,
+                   bool&              is_finest) const;
+
+  int getThreshold(const Eigen::Vector3i& t_coord,
+                   const float            t_value,
+                   const unsigned int     t_size,
+                   VoxelData&             v_data,
+                   int&                   v_size,
+                   Eigen::Vector3i&       v_corner,
+                   bool&                  is_finest) const;
+
+  int getThresholdAtPoint(const Eigen::Vector3f& t_point_M,
+                          const float            t_value,
+                          const unsigned int     t_size,
+                          VoxelData&             v_data,
+                          int&                   v_size,
+                          Eigen::Vector3i&       v_corner,
+                          bool&                  is_finest) const;
+
   /*! \brief Set the data at the supplied voxel coordinates.
    * If the voxel hasn't been allocated, no action is performed.
    *

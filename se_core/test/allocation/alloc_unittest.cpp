@@ -176,3 +176,201 @@ TEST(AllocationTest, ParentAllocation) {
     parent = parent->parent();
   }
 }
+
+
+
+struct ThresholdVoxelT {
+  typedef float VoxelData;
+  static inline VoxelData invalid(){ return 0.f; }
+  static inline VoxelData initData(){ return 1.f; }
+
+  using VoxelBlockType = se::VoxelBlockSingleMax<ThresholdVoxelT>;
+
+  static float selectVoxelValue(const VoxelData& data) {
+    return data;
+  };
+
+  static float isValid(const VoxelData& data) {
+    return true;
+  };
+
+  static float computeThreshold(const VoxelData& data) {
+    return data;
+  };
+
+  using MemoryPoolType = se::MemoryPool<ThresholdVoxelT>;
+  template <typename ElemT>
+  using MemoryBufferType = std::vector<ElemT>;
+};
+
+TEST(Octree, Threshold) {
+  const int voxel_depth = 6;
+
+  se::Octree<ThresholdVoxelT> octree;
+  octree.init(1 << voxel_depth, 5);
+  Eigen::Vector3i voxel_coord(0, 0, 0);
+  octree.insert(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+
+  se::Node<ThresholdVoxelT>* node = octree.root();
+
+  int value = 10;
+  while (!node->isBlock()) {
+    for (int child_idx = 0; child_idx < 8; child_idx++) {
+      node->childData(child_idx) = value;
+    }
+
+    node = node->child(0);
+    value--;
+  }
+
+  ThresholdVoxelT::VoxelBlockType* block = static_cast<ThresholdVoxelT::VoxelBlockType*>(node);
+  int min_scale = 1;
+  value++;
+  block->allocateDownTo(min_scale);
+  block->current_scale(min_scale);
+  for (int s = ThresholdVoxelT::VoxelBlockType::max_scale; s >= min_scale; s--) {
+    block->setMaxData(voxel_coord, s, value);
+    value--;
+  }
+
+  /// Start testing
+
+  // depth = 0 | scale = 6 | size = 64 | <= root
+  // depth = 1 | scale = 5 | size = 32 | max_value = 10
+  // depth = 2 | scale = 4 | size = 16 | max_value =  9
+  // depth = 3 | scale = 3 | size =  8 | max_value =  8
+  // depth = 4 | scale = 2 | size =  4 | max_value =  7
+  // depth = 5 | scale = 1 | size =  2 | max_value =  6 <= current scale
+  // depth = 6 | scale = 0 | size =  1 | max_value =  5 <= voxel depth
+
+  /// Test 8
+
+  ThresholdVoxelT::VoxelData v_data = ThresholdVoxelT::initData();
+  int             v_scale   = -1;
+  int             v_size    = -1;
+  Eigen::Vector3i v_corner  = Eigen::Vector3i::Constant(-1);
+  bool            is_finest = false;
+
+  float t_value = 5.1;
+  float t_size  = 1;
+  v_scale = octree.getThreshold(
+      voxel_coord + Eigen::Vector3i::Constant(ThresholdVoxelT::VoxelBlockType::size_li),
+      t_value, t_size, v_data, v_size, v_corner, is_finest);
+  ASSERT_EQ(v_data, 8);
+  ASSERT_EQ(v_size, 8);
+  ASSERT_EQ(is_finest, true);
+
+  /// Test 7
+
+  v_data    = ThresholdVoxelT::initData();
+  v_scale   = -1;
+  v_size    = -1;
+  v_corner  = Eigen::Vector3i::Constant(-1);
+  is_finest = true;
+
+  t_value   = 5.1;
+  t_size    = 16;
+
+  v_scale = octree.getThreshold(
+      voxel_coord + Eigen::Vector3i::Constant(ThresholdVoxelT::VoxelBlockType::size_li),
+      t_value, t_size, v_data, v_size, v_corner, is_finest);
+  ASSERT_EQ(v_data, 9);
+  ASSERT_EQ(v_size, 16);
+  ASSERT_EQ(is_finest, false);
+
+  /// Test 6
+
+  v_data    = ThresholdVoxelT::initData();
+  v_scale   = -1;
+  v_size    = -1;
+  v_corner  = Eigen::Vector3i::Constant(-1);
+  is_finest = false;
+
+  t_value   = 5.1;
+  t_size    = 8;
+
+  v_scale = octree.getThreshold(
+      voxel_coord + Eigen::Vector3i::Constant(ThresholdVoxelT::VoxelBlockType::size_li),
+      t_value, t_size, v_data, v_size, v_corner, is_finest);
+  ASSERT_EQ(v_data, 8);
+  ASSERT_EQ(v_size, 8);
+  ASSERT_EQ(is_finest, true);
+
+  /// Test 5
+
+  v_data    = ThresholdVoxelT::initData();
+  v_scale   = -1;
+  v_size    = -1;
+  v_corner  = Eigen::Vector3i::Constant(-1);
+  is_finest = false;
+
+  t_value   = 6.1;
+  t_size    = 2;
+
+  v_scale = octree.getThreshold(voxel_coord, t_value, t_size, v_data, v_size, v_corner, is_finest);
+  ASSERT_EQ(v_data, 6);
+  ASSERT_EQ(v_size, 2);
+  ASSERT_EQ(is_finest, true);
+
+  /// Test 4
+
+  v_data    = ThresholdVoxelT::initData();
+  v_scale   = -1;
+  v_size    = -1;
+  v_corner  = Eigen::Vector3i::Constant(-1);
+  is_finest = false;
+
+  t_value   = 6.1;
+  t_size    = 2;
+
+  v_scale = octree.getThreshold(voxel_coord, t_value, t_size, v_data, v_size, v_corner, is_finest);
+  ASSERT_EQ(v_data, 6);
+  ASSERT_EQ(v_size, 2);
+  ASSERT_EQ(is_finest, true);
+
+  /// Test 3
+
+  v_data    = ThresholdVoxelT::initData();
+  v_scale   = -1;
+  v_size    = -1;
+  v_corner  = Eigen::Vector3i::Constant(-1);
+  is_finest = true;
+
+  t_value   = 6.1;
+  t_size    = 1;
+
+  v_scale = octree.getThreshold(voxel_coord, t_value, t_size, v_data, v_size, v_corner, is_finest);
+  ASSERT_EQ(v_data, 6);
+  ASSERT_EQ(v_size, 2);
+  ASSERT_EQ(is_finest, true);
+
+  /// Test 2
+
+  v_data    = ThresholdVoxelT::initData();
+  v_scale   = -1;
+  v_size    = -1;
+  v_corner  = Eigen::Vector3i::Constant(-1);
+  is_finest = true;
+
+  t_value = 8.1;
+  t_size  = 16;
+  v_scale = octree.getThreshold(voxel_coord, t_value, t_size, v_data, v_size, v_corner, is_finest);
+  ASSERT_EQ(v_data, 9);
+  ASSERT_EQ(v_size, 16);
+  ASSERT_EQ(is_finest, false);
+
+  /// Test 1
+
+  v_data    = ThresholdVoxelT::initData();
+  v_scale   = -1;
+  v_size    = -1;
+  v_corner  = Eigen::Vector3i::Constant(-1);
+  is_finest = true;
+
+  t_value = 9.1;
+  t_size  = 8;
+  v_scale = octree.getThreshold(voxel_coord, t_value, t_size, v_data, v_size, v_corner, is_finest);
+  ASSERT_EQ(v_data, 9);
+  ASSERT_EQ(v_size, 16);
+  ASSERT_EQ(is_finest, false);
+}
