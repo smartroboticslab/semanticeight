@@ -44,6 +44,8 @@ static uint32_t* rgba_render = nullptr;
 static uint32_t* depth_render = nullptr;
 static uint32_t* track_render = nullptr;
 static uint32_t* volume_render = nullptr;
+static uint32_t* class_render = nullptr;
+static uint32_t* instance_render = nullptr;
 static se::Reader* reader = nullptr;
 static DenseSLAMSystem* pipeline = nullptr;
 
@@ -149,6 +151,8 @@ int main(int argc, char** argv) {
   depth_render =  new uint32_t[image_res.x() * image_res.y()];
   track_render =  new uint32_t[image_res.x() * image_res.y()];
   volume_render = new uint32_t[image_res.x() * image_res.y()];
+  class_render =    new uint32_t[image_res.x() * image_res.y()];
+  instance_render = new uint32_t[image_res.x() * image_res.y()];
 
   t_MW = config.t_MW_factor.cwiseProduct(config.map_dim);
   pipeline = new DenseSLAMSystem(
@@ -218,8 +222,8 @@ int main(int argc, char** argv) {
 #ifdef SE_GLUT
       drawthem(rgba_render,   image_res,
                depth_render,  image_res,
-               track_render,  image_res,
-               track_render,  image_res,
+               class_render,  image_res,
+               instance_render, image_res,
                track_render,  image_res,
                volume_render, image_res);
 #endif
@@ -247,6 +251,8 @@ int main(int argc, char** argv) {
   delete[] depth_render;
   delete[] track_render;
   delete[] volume_render;
+  delete[] class_render;
+  delete[] instance_render;
 }
 
 
@@ -284,6 +290,7 @@ int processAll(se::Reader*        reader,
   static se::Image<uint32_t> input_rgba_image (input_image_res.x(), input_image_res.y());
 
   Eigen::Matrix4f T_WB;
+  se::SegmentationResult segmentation (input_image_res.x(), input_image_res.y());
 
   if (reset) {
     se::ReaderStatus read_ok = se::ReaderStatus::ok;
@@ -310,7 +317,7 @@ int processAll(se::Reader*        reader,
     se::ReaderStatus read_ok;
     TICK("ACQUISITION")
     if (config->enable_ground_truth) {
-      read_ok = reader->nextData(input_depth_image, input_rgba_image, T_WB);
+      read_ok = reader->nextData(input_depth_image, input_rgba_image, T_WB, segmentation);
     } else {
       read_ok = reader->nextData(input_depth_image, input_rgba_image);
     }
@@ -347,6 +354,9 @@ int processAll(se::Reader*        reader,
     pipeline->preprocessDepth(input_depth_image.data(), input_image_res,
         config->bilateral_filter);
     pipeline->preprocessColor(input_rgba_image.data(), input_image_res);
+    if (config->enable_ground_truth) {
+      pipeline->preprocessSegmentation(segmentation);
+    }
     TOCK("PREPROCESSING")
 
     if (track) {
@@ -393,6 +403,8 @@ int processAll(se::Reader*        reader,
     if (render_volume) {
       pipeline->renderVolume(volume_render, pipeline->getImageResolution(), sensor);
     }
+    pipeline->renderObjectClasses(class_render, pipeline->getImageResolution());
+    pipeline->renderObjectInstances(instance_render, pipeline->getImageResolution());
     TOCK("RENDERING")
   }
 
