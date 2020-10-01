@@ -430,10 +430,21 @@ public:
   void setData(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
   void setDataSafe(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
 
-  VoxelData  maxData(const Eigen::Vector3i& voxel_coord) const;
-  VoxelData  maxData(const Eigen::Vector3i& voxel_coord, const int scale) const;
-  VoxelData  maxData(const int voxel_idx) const;
-  VoxelData  maxData(const int voxel_idx_at_scale, const int scale) const;
+  VoxelData maxData(const Eigen::Vector3i& voxel_coord) const;
+  void setMaxData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+  void setMaxDataSafe(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data);
+
+  VoxelData maxData(const Eigen::Vector3i& voxel_coord, const int scale) const;
+  void setMaxData(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+  void setMaxDataSafe(const Eigen::Vector3i& voxel_coord, const int scale, const VoxelData& voxel_data);
+
+  VoxelData maxData(const int voxel_idx) const;
+  void setMaxData(const int voxel_idx, const VoxelData& voxel_data);
+  void setMaxDataSafe(const int voxel_idx, const VoxelData& voxel_data);
+
+  VoxelData maxData(const int voxel_idx_at_scale, const int scale) const;
+  void setMaxData(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
+  void setMaxDataSafe(const int voxel_idx_at_scale, const int scale, const VoxelData& voxel_data);
 
   void allocateDownTo();
   void allocateDownTo(const int scale);

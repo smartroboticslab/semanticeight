@@ -906,6 +906,28 @@ VoxelBlockSingleMax<T>::maxData(const Eigen::Vector3i& voxel_coord) const {
 
 
 template <typename T>
+inline void VoxelBlockSingleMax<T>::setMaxData(const Eigen::Vector3i& voxel_coord,
+                                               const VoxelData&       voxel_data) {
+
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  block_max_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
+                                            voxel_offset.y() * this->size_li +
+                                            voxel_offset.z() * this->size_sq] = voxel_data;
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setMaxDataSafe(const Eigen::Vector3i& voxel_coord,
+                                                   const VoxelData&       voxel_data) {
+
+  allocateDownTo(0);
+  setMaxData(voxel_coord, voxel_data);
+}
+
+
+
+template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingleMax<T>::maxData(const Eigen::Vector3i& voxel_coord,
                                 const int              scale) const {
@@ -921,6 +943,29 @@ VoxelBlockSingleMax<T>::maxData(const Eigen::Vector3i& voxel_coord,
   }
 }
 
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setMaxData(const Eigen::Vector3i& voxel_coord,
+                                               const int              scale,
+                                               const VoxelData&       voxel_data) {
+
+  int size_at_scale = this->size_li >> scale;
+  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  voxel_offset = voxel_offset / (1 << scale);
+  block_max_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
+                                                    voxel_offset.y() * size_at_scale +
+                                                    voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
+}
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setMaxDataSafe(const Eigen::Vector3i& voxel_coord,
+                                                   const int              scale,
+                                                   const VoxelData&       voxel_data) {
+
+  allocateDownTo(scale);
+  setMaxData(voxel_coord, scale, voxel_data);
+}
 
 
 template <typename T>
@@ -944,6 +989,31 @@ VoxelBlockSingleMax<T>::maxData(const int voxel_idx) const {
 
 
 template <typename T>
+inline void VoxelBlockSingleMax<T>::setMaxData(const int        voxel_idx,
+                                               const VoxelData& voxel_data) {
+  int remaining_voxel_idx = voxel_idx;
+  int scale = 0;
+  int size_at_scale_cu = this->size_cu;
+  while (remaining_voxel_idx / size_at_scale_cu >= 1) {
+    scale += 1;
+    remaining_voxel_idx -= size_at_scale_cu;
+    size_at_scale_cu = se::math::cu(this->size_li >> scale);
+  }
+  block_max_data_[VoxelBlock<T>::max_scale - scale][remaining_voxel_idx] = voxel_data;
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setMaxDataSafe(const int        voxel_idx,
+                                                   const VoxelData& voxel_data) {
+  allocateDownTo(0);
+  setMaxData(voxel_idx, voxel_data);
+}
+
+
+
+template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingleMax<T>::maxData(const int voxel_idx_at_scale,
                                 const int scale) const {
@@ -953,6 +1023,26 @@ VoxelBlockSingleMax<T>::maxData(const int voxel_idx_at_scale,
   } else {
     return init_data_;
   }
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setMaxData(const int voxel_idx_at_scale,
+                                               const int scale,
+                                               const VoxelData& voxel_data) {
+  const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
+  block_max_data_[scale_idx][voxel_idx_at_scale] = voxel_data;
+}
+
+
+
+template <typename T>
+inline void VoxelBlockSingleMax<T>::setMaxDataSafe(const int voxel_idx_at_scale,
+                                                   const int scale,
+                                                   const VoxelData& voxel_data) {
+  allocateDownTo(scale);
+  setMaxData(voxel_idx_at_scale, scale, voxel_data);
 }
 
 
