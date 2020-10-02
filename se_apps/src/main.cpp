@@ -104,13 +104,13 @@ void storeStats(
     const Eigen::Vector3f&                                           t_WC,
     const bool                                                       tracked,
     const bool                                                       integrated) {
-  stats.sample("frame", frame, PerfStats::FRAME);
-  stats.sample("t_WC.x", t_WC.x(), PerfStats::POSITION);
-  stats.sample("t_WC.y", t_WC.y(), PerfStats::POSITION);
-  stats.sample("t_WC.z", t_WC.z(), PerfStats::POSITION);
-  stats.sample("RAM",  se::ram_usage_self() / 1024.0 / 1024.0, PerfStats::MEMORY);
-  stats.sample("tracked", tracked, PerfStats::BOOL);
-  stats.sample("integrated", integrated, PerfStats::BOOL);
+  se::perfstats.sample("frame", frame, PerfStats::FRAME);
+  se::perfstats.sample("t_WC.x", t_WC.x(), PerfStats::POSITION);
+  se::perfstats.sample("t_WC.y", t_WC.y(), PerfStats::POSITION);
+  se::perfstats.sample("t_WC.z", t_WC.z(), PerfStats::POSITION);
+  se::perfstats.sample("RAM",  se::ram_usage_self() / 1024.0 / 1024.0, PerfStats::MEMORY);
+  se::perfstats.sample("tracked", tracked, PerfStats::BOOL);
+  se::perfstats.sample("integrated", integrated, PerfStats::BOOL);
 }
 
 /***
@@ -184,8 +184,8 @@ int main(int argc, char** argv) {
   *log_stream << reader;
   *log_stream << VoxelImpl::printConfig() << std::endl;
 
-  stats.includeDetailed(true);
-  stats.setFilestream(&log_file_stream);
+  se::perfstats.includeDetailed(true);
+  se::perfstats.setFilestream(&log_file_stream);
   //temporary fix to test rendering fullsize
   config.render_volume_fullsize = false;
 
@@ -234,7 +234,7 @@ int main(int argc, char** argv) {
     progress_bar->end();
   } else {
     std::cout << "{";
-    stats.writeSummaryToOStream(std::cout, false);
+    se::perfstats.writeSummaryToOStream(std::cout, false);
     std::cout << "}\n";
   }
 
@@ -313,7 +313,7 @@ int processAll(se::Reader*        reader,
       read_ok = reader->nextData(input_depth_image, input_rgba_image);
     }
     size_t reader_frame = reader->frame();
-    stats.setIter(reader_frame);
+    se::perfstats.setIter(reader_frame);
     frame = reader_frame - frame_offset;
     TOCK("ACQUISITION")
 
@@ -449,12 +449,12 @@ int processAll(se::Reader*        reader,
     size_t num_blocks;
     std::vector<size_t> num_blocks_per_scale(VoxelImpl::VoxelBlockType::max_scale + 1, 0);
     pipeline->structureStats(num_nodes, num_blocks, num_blocks_per_scale);
-    stats.sample("num_nodes", num_nodes, PerfStats::COUNT);
-    stats.sample("num_blocks", num_blocks, PerfStats::COUNT);
-    stats.sample("num_blocks_s0", num_blocks_per_scale[0], PerfStats::COUNT);
-    stats.sample("num_blocks_s1", num_blocks_per_scale[1], PerfStats::COUNT);
-    stats.sample("num_blocks_s2", num_blocks_per_scale[2], PerfStats::COUNT);
-    stats.sample("num_blocks_s3", num_blocks_per_scale[3], PerfStats::COUNT);
+    se::perfstats.sample("num_nodes", num_nodes, PerfStats::COUNT);
+    se::perfstats.sample("num_blocks", num_blocks, PerfStats::COUNT);
+    se::perfstats.sample("num_blocks_s0", num_blocks_per_scale[0], PerfStats::COUNT);
+    se::perfstats.sample("num_blocks_s1", num_blocks_per_scale[1], PerfStats::COUNT);
+    se::perfstats.sample("num_blocks_s2", num_blocks_per_scale[2], PerfStats::COUNT);
+    se::perfstats.sample("num_blocks_s3", num_blocks_per_scale[3], PerfStats::COUNT);
   }
 
   const Eigen::Vector3f t_WC = pipeline->t_WC();
@@ -470,9 +470,9 @@ int processAll(se::Reader*        reader,
     }
 
     if (config->log_file != "") {
-      stats.writeToFilestream();
+      se::perfstats.writeToFilestream();
     } else {
-      stats.writeToOStream(*log_stream);
+      se::perfstats.writeToOStream(*log_stream);
     }
   }
 

@@ -433,6 +433,8 @@ struct PerfStats {
 
 #include "perfstats_impl.hpp"
 
-extern PerfStats stats;
+namespace se {
+  extern PerfStats perfstats;
+}
 
 #endif // PERFSTATS_H

@@ -174,7 +174,7 @@ CameraState setEnableCamera(CameraState state, string inputFile) {
 						if(oldReader!=NULL)
 						delete(oldReader);
 						oldReader=NULL;
-						stats.reset();
+                        se::perfstats.reset();
 						if((power_monitor!=NULL) && power_monitor->isActive())
 						power_monitor->powerStats.reset();
 					}
@@ -260,7 +260,7 @@ void dumpLog() {
 			"*.log (*.log);; All files (*.*)");
 	if (filename != "") {
 		std::ofstream logStream(filename.c_str());
-		stats.writeSummaryToOStream(logStream);
+        se::perfstats.writeSummaryToOStream(logStream);
 		logStream.close();
 	}
 }
@@ -374,7 +374,7 @@ void qtLinkKinectQt(int argc, char *argv[], DenseSLAMSystem **_pipe,
 	//The following enables the stats Viewer, the statsEnabled variable is to enable the removal of the capture phase
 	//although this is currently not implemented (N.B clearly the variable wouldn't be local!!)
 	bool statsEnabled = true;
-	appWindow->viewers->addViewer(&stats, (const char *) "Performance",
+	appWindow->viewers->addViewer(&se::perfstats, (const char *) "Performance",
 			(const char*) "Performance Statistics", &statsEnabled);
 	appWindow->viewers->setStatEntry("Performance", { "X", "Y", "Z", "tracked",
 			"integrated", "frame" }, false);

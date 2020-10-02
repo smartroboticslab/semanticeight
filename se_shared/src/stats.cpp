@@ -1,3 +1,4 @@
 #include "se/perfstats.h"
 
-PerfStats stats;
+PerfStats se::perfstats;
+
