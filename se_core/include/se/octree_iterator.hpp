@@ -85,10 +85,6 @@ namespace se {
 
       // Reset the iterator state to invalid. Used when finished iterating.
       void clear();
-
-      // Test whether the data is valid.
-      // TODO Use the VoxelImpl specific function once it's available.
-      static bool valid(const VoxelData& data);
   };
 
 } // namespace se

@@ -117,7 +117,7 @@ void se::OctreeIterator<T>::nextData() {
       }
       // Set the Volume data if valid
       const VoxelData& data = block->data(voxel_idx_, voxel_scale_);
-      if (valid(data)) {
+      if (T::isValid(data)) {
         const int size = block->scaleVoxelSize(voxel_scale_);
         const float dim = voxel_dim_ * size;
         const Eigen::Vector3i volume_coord = block->voxelCoordinates(voxel_idx_, voxel_scale_);
@@ -135,7 +135,7 @@ void se::OctreeIterator<T>::nextData() {
         voxel_scale_ = -1;
       }
       // Return if a valid Volume was found, otherwise continue searching
-      if (valid(data)) {
+      if (T::isValid(data)) {
         return;
       }
     } else {
@@ -154,7 +154,7 @@ void se::OctreeIterator<T>::nextData() {
       } else {
         // Leaf Node
         const VoxelData& data = parent->childData(child_idx);
-        if (valid(data)) {
+        if (T::isValid(data)) {
           // Leaf Node with valid data
           const int size = parent->size() / 2;
           const float dim = voxel_dim_ * size;
@@ -180,15 +180,6 @@ void se::OctreeIterator<T>::clear() {
   voxel_scale_ = -1;
   voxel_dim_ = 0.0f;
   volume_ = se::Volume<T>();
-}
-
-
-
-template <typename T>
-bool se::OctreeIterator<T>::valid(const VoxelData& data) {
-  // TODO this should be just T::isValid(data) once that functionality is
-  // available.
-  return (data.y > 0);
 }
 
 #endif // __OCTREE_ITERATOR_IMPL_HPP
