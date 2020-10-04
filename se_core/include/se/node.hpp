@@ -67,7 +67,10 @@ public:
 
   VoxelData* childrenData() { return children_data_;}
   const VoxelData* childrenData() const { return children_data_;}
-  VoxelData& childData(const int child_idx) { return children_data_[child_idx];}
+
+  VoxelData& childData(const int child_idx) { return children_data_[child_idx]; }
+  const VoxelData& childData(const int child_idx) const { return children_data_[child_idx]; }
+
   void childData(const int child_idx, const VoxelData& child_data) {
     children_data_[child_idx] = child_data;
   };
