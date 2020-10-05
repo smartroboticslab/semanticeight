@@ -108,10 +108,9 @@ struct MultiresOFusionUpdate {
   const float zero_depth_band_;
   const float size_to_radius_;
 
-  static constexpr int max_block_scale_ = se::math::log2_const(MultiresOFusion::VoxelBlockType::size_li);
+  inline static constexpr int max_block_scale_ = se::math::log2_const(MultiresOFusion::VoxelBlockType::size_li);
 
   void freeBlock(VoxelBlockType* block) {
-
     // Compute the point of the block centre in the sensor frame
     const unsigned int block_size = VoxelBlockType::size_li;
     const Eigen::Vector3i block_coord = block->coordinates();
@@ -129,8 +128,8 @@ struct MultiresOFusionUpdate {
 
     // The minimum integration scale (change to last if data has already been integrated)
     const int min_integration_scale = ((block->min_scale() == -1 || block->maxValue() < 0.95 * MultiresOFusion::log_odd_min))
-                                      ? MultiresOFusion::fs_integr_scale : last_scale - 1;
-    const int max_integration_scale = last_scale + 1;
+                                      ? MultiresOFusion::fs_integr_scale : std::max(0, last_scale - 1);
+    const int max_integration_scale = (block->min_scale() == -1) ? max_block_scale_ : std::min(max_block_scale_, last_scale + 1);
 
     // The final integration scale
     const int recommended_scale = std::min(std::max(min_integration_scale, computed_integration_scale), max_integration_scale);
@@ -280,8 +279,8 @@ struct MultiresOFusionUpdate {
     // The minimum integration scale (change to last if data has already been integrated)
     const int min_integration_scale =
         (low_variance && (block->min_scale() == -1 || block->maxValue() < 0.95 * MultiresOFusion::log_odd_min))
-        ? MultiresOFusion::fs_integr_scale : last_scale - 1;
-    const int max_integration_scale = (block->min_scale() == -1) ? max_block_scale_ : last_scale + 1;
+        ? MultiresOFusion::fs_integr_scale : std::max(0, last_scale - 1);
+    const int max_integration_scale = (block->min_scale() == -1) ? max_block_scale_ : std::min(max_block_scale_, last_scale + 1);
 
     // The final integration scale
     const int recommended_scale = std::min(std::max(min_integration_scale, computed_integration_scale), max_integration_scale);
