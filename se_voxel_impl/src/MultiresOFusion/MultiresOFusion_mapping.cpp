@@ -34,6 +34,7 @@
 #include "se/utils/math_utils.h"
 #include "se/image_utils.hpp"
 #include "se/str_utils.hpp"
+#include "se/frontiers.hpp"
 
 #include <set>
 #include <Eigen/Core>
@@ -77,7 +78,10 @@ struct MultiresOFusionUpdate {
                         const float                        voxel_dim,
                         const size_t                       voxel_depth,
                         const float                        max_depth_value,
-                        const unsigned                     frame) :
+                        const unsigned                     frame,
+                        std::set<se::key_t>*               free_nodes,
+                        std::set<se::key_t>*               added_frontier_blocks,
+                        std::set<se::key_t>*               removed_frontier_blocks) :
       map_(map),
       pool_(map.pool()),
       block_list_(block_list),
@@ -96,12 +100,24 @@ struct MultiresOFusionUpdate {
       voxel_depth_(voxel_depth),
       max_depth_value_(max_depth_value),
       frame_(frame),
+      free_nodes_(free_nodes),
+      added_frontier_blocks_(added_frontier_blocks),
+      removed_frontier_blocks_(removed_frontier_blocks),
       zero_depth_band_(1.0e-6f),
       size_to_radius_(std::sqrt(3.0f) / 2.0f) {
 
     corner_rel_steps_ << 0, 1, 0, 1, 0, 1, 0, 1,
         0, 0, 1, 1, 0, 0, 1, 1,
         0, 0, 0, 0, 1, 1, 1, 1;
+    if (free_nodes_) {
+      free_nodes_->clear();
+    }
+    if (added_frontier_blocks_) {
+      added_frontier_blocks_->clear();
+    }
+    if (removed_frontier_blocks_) {
+      removed_frontier_blocks_->clear();
+    }
   };
 
   OctreeType& map_;
@@ -122,6 +138,9 @@ struct MultiresOFusionUpdate {
   const size_t voxel_depth_;
   const float max_depth_value_;
   const unsigned frame_;
+  std::set<se::key_t>* free_nodes_;
+  std::set<se::key_t>* added_frontier_blocks_;
+  std::set<se::key_t>* removed_frontier_blocks_;
   Eigen::Matrix<float, 3, 8> corner_rel_steps_;
   const float zero_depth_band_;
   const float size_to_radius_;
@@ -234,6 +253,52 @@ struct MultiresOFusionUpdate {
       block->incrBufferIntegrCount();
 
       if(block->switchData()) {
+
+//        const unsigned int recommended_stride = 1 << recommended_scale;
+//        const Eigen::Vector3i voxel_coord_base = block->coordinates();
+//
+//        /**
+//         * How would you remove the frontiers of the previous scale???
+//         */
+//
+//        if (added_frontier_blocks_ && removed_frontier_blocks_) {
+//          for (unsigned int z = 0; z < size_at_recommended_scale_li; z++) {
+//            for (unsigned int y = 0; y < size_at_recommended_scale_li; y++) {
+//              for (unsigned int x = 0; x < size_at_recommended_scale_li; x++) {
+//
+//                const int buffer_idx = x + y * size_at_recommended_scale_li + z * size_at_recommended_scale_sq;
+//                auto& buffer_data = block->bufferData(buffer_idx); /// \note pass by reference now.
+//                const VoxelState prev_state =  VoxelState::Unknown; ///< Would this be correct???
+//                // Set the voxel state
+//
+//                if (MultiresOFusion::VoxelType::isFree(buffer_data)) {
+//                  const Eigen::Vector3i coord = voxel_coord_base + recommended_stride * Eigen::Vector3i(x, y, z);
+//                  bool is_frontier;
+//#pragma omp critical (IntegrationCheckFrontier)
+//                  is_frontier = se::isFrontier(coord, size_at_recommended_scale_li, recommended_scale, *block, map_);
+//                  if (is_frontier) {
+//                    buffer_data.state = VoxelState::Frontier;
+//                  } else {
+//                    buffer_data.state = VoxelState::Free;
+//                  }
+//                } else if (MultiresOFusion::VoxelType::isInside(buffer_data)) {
+//                  buffer_data.state = VoxelState::Occupied;
+//                } else {
+//                  buffer_data.state = VoxelState::Unknown;
+//                }
+//                // Update the frontier block sets
+//                if (buffer_data.state == VoxelState::Frontier) {
+//#pragma omp critical (IntegrationAddFrontier)
+//                  added_frontier_blocks_->insert(block->code());
+//                } else if (prev_state == VoxelState::Frontier) {
+//#pragma omp critical (IntegrationRemoveFrontier)
+//                  removed_frontier_blocks_->insert(block->code());
+//                }
+//              }
+//            }
+//          }
+//        }
+
         return;
       }
 
@@ -245,16 +310,47 @@ struct MultiresOFusionUpdate {
     const unsigned int size_at_integration_scale_li = block->size_li >> integration_scale;
     const unsigned int size_at_integration_scale_sq = se::math::sq(size_at_integration_scale_li);
 
+    const unsigned int integration_stride = 1 << integration_scale;
+    const Eigen::Vector3i voxel_coord_base = block->coordinates();
+
     for (unsigned int z = 0; z < size_at_integration_scale_li; z++) {
       for (unsigned int y = 0; y < size_at_integration_scale_li; y++) {
 
-#pragma omp simd
+//#pragma omp simd // Can't have omp critical in omp simd
         for (unsigned int x = 0; x < size_at_integration_scale_li; x++) {
 
           // Update the voxel data based using the depth measurement
           const int voxel_idx = x + y * size_at_integration_scale_li + z * size_at_integration_scale_sq;
           auto& voxel_data = block->currData(voxel_idx); /// \note pass by reference now.
+          const VoxelState prev_state = voxel_data.state;
           block->incrCurrObservedCount(updating_model::freeVoxel(voxel_data));
+
+          // Set the voxel state
+          if (added_frontier_blocks_ && removed_frontier_blocks_) {
+            if (MultiresOFusion::VoxelType::isFree(voxel_data)) {
+              const Eigen::Vector3i coord = voxel_coord_base + integration_stride * Eigen::Vector3i(x, y, z);
+              bool is_frontier;
+#pragma omp critical (IntegrationCheckFrontier)
+              is_frontier = se::isFrontier(coord, size_at_integration_scale_li, integration_scale, *block, map_);
+              if (is_frontier) {
+                voxel_data.state = VoxelState::Frontier;
+              } else {
+                voxel_data.state = VoxelState::Free;
+              }
+            } else if (MultiresOFusion::VoxelType::isInside(voxel_data)) {
+              voxel_data.state = VoxelState::Occupied;
+            } else {
+              voxel_data.state = VoxelState::Unknown;
+            }
+            // Update the frontier block sets
+            if (voxel_data.state == VoxelState::Frontier) {
+#pragma omp critical (IntegrationAddFrontier)
+              added_frontier_blocks_->insert(block->code());
+            } else if (prev_state == VoxelState::Frontier) {
+#pragma omp critical (IntegrationRemoveFrontier)
+              removed_frontier_blocks_->insert(block->code());
+            }
+          }
 
         } // x
       } // y
@@ -385,6 +481,7 @@ struct MultiresOFusionUpdate {
 
       auto valid_predicate = [&](float depth_value, uint32_t /* rgba_value */, se::integration_mask_elem_t fg_value){ return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; };
 
+// TODO SEM maybe omp parallel for will speed this up
       for (unsigned int z = 0; z < size_at_recommended_scale_li; z++) {
         for (unsigned int y = 0; y < size_at_recommended_scale_li; y++) {
 #pragma omp simd
@@ -418,6 +515,49 @@ struct MultiresOFusionUpdate {
       block->incrBufferIntegrCount(project_inside);
 
       if(block->switchData()) {
+
+//        /**
+//         * How would you remove the frontiers of the previous scale???
+//         */
+//
+//        if (added_frontier_blocks_ && removed_frontier_blocks_) {
+//          for (unsigned int z = 0; z < size_at_recommended_scale_li; z++) {
+//            for (unsigned int y = 0; y < size_at_recommended_scale_li; y++) {
+//              for (unsigned int x = 0; x < size_at_recommended_scale_li; x++) {
+//
+//                const int buffer_idx = x + y * size_at_recommended_scale_li + z * size_at_recommended_scale_sq;
+//                auto& buffer_data = block->bufferData(buffer_idx); /// \note pass by reference now.
+//                const VoxelState prev_state = VoxelState::Unknown; ///< Would this be correct???
+//                // Set the voxel state
+//
+//                if (MultiresOFusion::VoxelType::isFree(buffer_data)) {
+//                  const Eigen::Vector3i coord = voxel_coord_base + recommended_stride * Eigen::Vector3i(x, y, z);
+//                  bool is_frontier;
+//  #pragma omp critical (IntegrationCheckFrontier)
+//                  is_frontier = se::isFrontier(coord, size_at_recommended_scale_li, recommended_scale, *block, map_);
+//                  if (is_frontier) {
+//                    buffer_data.state = VoxelState::Frontier;
+//                  } else {
+//                    buffer_data.state = VoxelState::Free;
+//                  }
+//                } else if (MultiresOFusion::VoxelType::isInside(buffer_data)) {
+//                  buffer_data.state = VoxelState::Occupied;
+//                } else {
+//                  buffer_data.state = VoxelState::Unknown;
+//                }
+//                // Update the frontier block sets
+//                if (buffer_data.state == VoxelState::Frontier) {
+//  #pragma omp critical (IntegrationAddFrontier)
+//                  added_frontier_blocks_->insert(block->code());
+//                } else if (prev_state == VoxelState::Frontier) {
+//  #pragma omp critical (IntegrationRemoveFrontier)
+//                  removed_frontier_blocks_->insert(block->code());
+//                }
+//              }
+//            }
+//          }
+//        }
+
         return;
       }
 
@@ -441,10 +581,11 @@ struct MultiresOFusionUpdate {
 
     auto valid_predicate = [&](float depth_value, uint32_t /* rgba_value */, se::integration_mask_elem_t fg_value){ return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; };
 
+// TODO SEM maybe omp parallel for will speed this up
     for (unsigned int z = 0; z < size_at_integration_scale_li; z++) {
       for (unsigned int y = 0; y < size_at_integration_scale_li; y++) {
 
-#pragma omp simd
+//#pragma omp simd // Can't have omp critical in omp simd
         for (unsigned int x = 0; x < size_at_integration_scale_li; x++) {
 
           const Eigen::Vector3f sample_point_C = sample_point_base_C + sample_point_delta_matrix_C * Eigen::Vector3f(x, y, z);
@@ -460,6 +601,7 @@ struct MultiresOFusionUpdate {
           // Update the voxel data based using the depth measurement
           const int voxel_idx = x + y * size_at_integration_scale_li + z * size_at_integration_scale_sq;
           auto& voxel_data = block->currData(voxel_idx); /// \note pass by reference now.
+          const VoxelState prev_state = voxel_data.state;
           if (low_variance) {
             block->incrCurrObservedCount(updating_model::freeVoxel(voxel_data));
           } else {
@@ -468,7 +610,32 @@ struct MultiresOFusionUpdate {
             const float range_diff = (sample_point_C_m - depth_value) * (range / sample_point_C_m);
             block->incrCurrObservedCount(updating_model::updateVoxel(range_diff, tau, three_sigma, rgba_value, fg_value, voxel_data));
           }
-
+          // Set the voxel state
+          if (added_frontier_blocks_ && removed_frontier_blocks_) {
+            if (MultiresOFusion::VoxelType::isFree(voxel_data)) {
+              const Eigen::Vector3i coord = voxel_coord_base + integration_stride * Eigen::Vector3i(x, y, z);
+              bool is_frontier;
+#pragma omp critical (IntegrationCheckFrontier)
+              is_frontier = se::isFrontier(coord, size_at_integration_scale_li, integration_scale, *block, map_);
+              if (is_frontier) {
+                voxel_data.state = VoxelState::Frontier;
+              } else {
+                voxel_data.state = VoxelState::Free;
+              }
+            } else if (MultiresOFusion::VoxelType::isInside(voxel_data)) {
+              voxel_data.state = VoxelState::Occupied;
+            } else {
+              voxel_data.state = VoxelState::Unknown;
+            }
+            // Update the frontier block sets
+            if (voxel_data.state == VoxelState::Frontier) {
+#pragma omp critical (IntegrationAddFrontier)
+              added_frontier_blocks_->insert(block->code());
+            } else if (prev_state == VoxelState::Frontier) {
+#pragma omp critical (IntegrationRemoveFrontier)
+              removed_frontier_blocks_->insert(block->code());
+            }
+          }
         } // x
       } // y
     } // z
@@ -1177,7 +1344,10 @@ void MultiresOFusion::integrate(OctreeType&             map,
                                 const cv::Mat&             fg_image,
                                 const Eigen::Matrix4f&  T_CM,
                                 const SensorImpl&       sensor,
-                                const unsigned          frame) {
+                                const unsigned          frame,
+                                std::set<se::key_t>*    free_nodes,
+                                std::set<se::key_t>*    added_frontier_blocks,
+                                std::set<se::key_t>*    removed_frontier_blocks) {
   TICKD("updateMap")
   // Create min/map depth pooling image for different bounding box sizes
   const std::unique_ptr<se::DensePoolingImage<SensorImpl>> pooling_depth_image(new se::DensePoolingImage<SensorImpl>(depth_image));
@@ -1193,7 +1363,8 @@ void MultiresOFusion::integrate(OctreeType&             map,
   std::vector<std::set<NodeType*>> node_list(map.blockDepth());
   MultiresOFusionUpdate<SensorImpl> funct(map, block_list, node_list, free_list, low_variance_list, projects_inside_list,
                                           depth_image, rgba_image, fg_image, pooling_depth_image.get(), sensor, T_CM,
-                                          voxel_dim, map.voxelDepth(), max_depth_value, frame);
+                                          voxel_dim, map.voxelDepth(), max_depth_value, frame,
+                                          free_nodes, added_frontier_blocks, removed_frontier_blocks);
 
   // Launch on the 8 voxels of the first depth
 #pragma omp parallel for

@@ -36,6 +36,8 @@
 #include "se/algorithms/meshing.hpp"
 #include "se/voxel_implementations/MultiresOFusion/DensePoolingImage.hpp"
 #include "se/sensor_implementation.hpp"
+#include "se/octree_defines.h"
+#include "se/common.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
@@ -77,13 +79,14 @@ struct MultiresOFusion {
       uint8_t  g;   // Green channel
       uint8_t  b;   // Blue channel
       bool   observed;      // All children have been observed at least once
+      VoxelState   state;
 
       bool operator==(const VoxelData& other) const;
       bool operator!=(const VoxelData& other) const;
     };
 
-    static inline VoxelData invalid()  { return {0.f, 0.f, 0, 0u, 0u, 0u, false}; }
-    static inline VoxelData initData() { return {0.f, 0.f, 0, 0u, 0u, 0u, false}; }
+    static inline VoxelData invalid()  { return {0.f, 0.f, 0, 0u, 0u, 0u, false, VoxelState::Unknown}; }
+    static inline VoxelData initData() { return {0.f, 0.f, 0, 0u, 0u, 0u, false, VoxelState::Unknown}; }
 
     static float selectNodeValue(const VoxelData& data) {
       return data.x;
@@ -128,6 +131,10 @@ struct MultiresOFusion {
     static float threshold(const VoxelData& data) {
       return data.x * data.y;
     }
+
+    static bool isFree(const VoxelData& data) {
+      return data.x < surface_boundary;
+    };
 
     using VoxelBlockType = se::VoxelBlockSingleMax<MultiresOFusion::VoxelType>;
 
@@ -229,7 +236,10 @@ struct MultiresOFusion {
                         const cv::Mat&             fg_image,
                         const Eigen::Matrix4f&  T_CM,
                         const SensorImpl&       sensor,
-                        const unsigned          frame);
+                        const unsigned          frame,
+                        std::set<se::key_t>*    free_nodes = nullptr,
+                        std::set<se::key_t>*    added_frontier_blocks = nullptr,
+                        std::set<se::key_t>*    removed_frontier_blocks = nullptr);
 
   static Eigen::Vector4f raycast(const OctreeType&      map,
                                  const Eigen::Vector3f& ray_origin_M,

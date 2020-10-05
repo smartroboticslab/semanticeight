@@ -25,7 +25,7 @@ foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
         SE::Shared
     )
     set_target_properties(${LIB_NAME} PROPERTIES
-      CXX_STANDARD 14
+      CXX_STANDARD 17
       CXX_STANDARD_REQUIRED ON
       CXX_EXTENSIONS OFF
     )

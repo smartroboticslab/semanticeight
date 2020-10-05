@@ -164,6 +164,12 @@ class DenseSLAMSystem {
      */
     static constexpr float class_confidence_threshold_ = 0.75;
 
+    // Exploration only ///////////////////////////////////////////////////////
+    std::set<se::key_t> free_nodes_;
+    std::set<se::key_t> added_frontier_blocks_;
+    std::set<se::key_t> removed_frontier_blocks_;
+    std::set<se::key_t> frontiers_;
+
 
 
     /**
@@ -829,6 +835,10 @@ class DenseSLAMSystem {
     Objects getObjectMaps() {
       return objects_;
     }
+
+    // Exploration only ///////////////////////////////////////////////////////
+    std::vector<se::Volume<VoxelImpl::VoxelType>> frontierBlockVolumes() const;
+    std::vector<se::Volume<VoxelImpl::VoxelType>> frontierVoxelVolumes() const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

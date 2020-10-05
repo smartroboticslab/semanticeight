@@ -9,6 +9,13 @@
 #include "se/octree.hpp"
 #include "se/node.hpp"
 
+enum struct VoxelState : uint8_t {
+  Free,
+  Unknown,
+  Occupied,
+  Frontier,
+};
+
 /**
  * \brief Finds the first valid point along a ray starting from (ray_origin_M + t * ray_dir_M). Returns false if no
  * valid point can be found before the maximum travelled distance is reached.

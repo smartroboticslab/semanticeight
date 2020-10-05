@@ -48,6 +48,7 @@
 #include "se/timings.h"
 #include "se/perfstats.h"
 #include "se/rendering.hpp"
+#include "se/set_operations.hpp"
 #include "se/semanticeight_definitions.hpp"
 #include "se/depth_utils.hpp"
 #include "se/object_utils.hpp"
@@ -250,7 +251,15 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
       cv::Mat(image_res_.x(), image_res_.y(), se::integration_mask_t, cv::Scalar(0.0f)),
       T_CM,
       sensor,
-      frame);
+      frame,
+      &free_nodes_,
+      &added_frontier_blocks_,
+      &removed_frontier_blocks_);
+  // Update the frontier blocks. First remove and then add since
+  // removed_frontier_blocks_ counts blocks with at least one voxel that
+  // changed from VoxelState::Frontier to something else.
+  se::setminus(frontiers_, removed_frontier_blocks_);
+  se::setunion(frontiers_, added_frontier_blocks_);
   TOCK("INTEGRATION")
   return true;
 }
@@ -661,6 +670,65 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
     save_mesh_vtk(mesh, f.c_str(), T_WO, object->voxelDim());
   }
 }
+
+
+
+
+
+// Exploration only ///////////////////////////////////////////////////////
+std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierBlockVolumes() const {
+  std::vector<se::Volume<VoxelImpl::VoxelType>> volumes;
+  const float voxel_dim = map_->voxelDim();
+  const int map_size = map_->size();
+  for (const auto& code : frontiers_) {
+    const int depth = se::keyops::depth(code);
+    const int size = map_size >> depth;
+    const float dim = voxel_dim * size;
+    const Eigen::Vector3i center_coord = se::keyops::decode(code) + Eigen::Vector3i::Constant(size / 2);
+    const Eigen::Vector3f center_M = voxel_dim * center_coord.cast<float>();
+    volumes.emplace_back(center_M, dim, size, VoxelImpl::VoxelType::initData());
+  }
+  return volumes;
+}
+
+
+
+std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierVoxelVolumes() const {
+  std::vector<se::Volume<VoxelImpl::VoxelType>> volumes;
+  const float voxel_dim = map_->voxelDim();
+  const int map_size = map_->size();
+  for (const auto& code : frontiers_) {
+    const int depth = se::keyops::depth(code);
+    const Eigen::Vector3i coord = se::keyops::decode(code);
+    if (depth == map_->blockDepth()) {
+      // Frontier VoxelBlock, find the individual frontier voxels
+      const VoxelBlockType* block = map_->fetch(coord);
+      if (block != nullptr) {
+        const int scale = block->current_scale();
+        const int size = VoxelBlockType::scaleVoxelSize(scale);
+        const float dim = voxel_dim * size;
+        for (int voxel_idx = 0; voxel_idx < VoxelBlockType::scaleNumVoxels(scale); ++voxel_idx) {
+          const auto& data = block->data(voxel_idx, scale);
+          if (data.state == VoxelState::Frontier) {
+            const Eigen::Vector3i voxel_coord = block->voxelCoordinates(voxel_idx, scale);
+            const Eigen::Vector3f center_M = voxel_dim * voxel_coord.cast<float>() + Eigen::Vector3f::Constant(voxel_dim / 2.0f);
+            volumes.emplace_back(center_M, dim, size, data);
+          }
+        }
+      }
+    } else {
+      // Frontier Node
+      const int size = map_size >> depth;
+      const float dim = voxel_dim * size;
+      const Eigen::Vector3i center_coord = coord + Eigen::Vector3i::Constant(size / 2);
+      const Eigen::Vector3f center_M = voxel_dim * center_coord.cast<float>();
+      volumes.emplace_back(center_M, dim, size, VoxelImpl::VoxelType::initData());
+    }
+  }
+  return volumes;
+}
+
+
 
 
 
