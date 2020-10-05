@@ -1221,8 +1221,8 @@ void VoxelBlockSingleMax<T>::initBuffer(const int buffer_scale) {
 
   if (buffer_scale < this->current_scale_) {
     // Initialise all data to init data.
-    int size_at_scale = this->size_li >> buffer_scale;
-    int num_voxels_at_scale = se::math::cu(size_at_scale);
+    const int size_at_scale = this->size_li >> buffer_scale;
+    const int num_voxels_at_scale = se::math::cu(size_at_scale);
     buffer_data_ = new VoxelData[num_voxels_at_scale]; ///<< Data must still be initialised.
   } else {
     buffer_data_ = block_data_[VoxelBlock<T>::max_scale - buffer_scale_];
@@ -1239,10 +1239,11 @@ bool VoxelBlockSingleMax<T>::switchData() {
     /// !!! We'll switch !!!
     if (buffer_scale_ < this->current_scale_) { ///<< Switch to finer scale.
       block_data_.push_back(buffer_data_);
-      block_max_data_.push_back(buffer_data_);
+      block_max_data_.push_back(buffer_data_); ///< Share data at finest scale.
 
-      int size_at_scale = this->size_li >> (buffer_scale_ + 1);
-      int num_voxels_at_scale = se::math::cu(size_at_scale);
+      /// Add allocate data for the scale that mean and max data shared before.
+      const int size_at_scale = this->size_li >> (buffer_scale_ + 1);
+      const int num_voxels_at_scale = se::math::cu(size_at_scale);
       block_max_data_[this->max_scale - (buffer_scale_ + 1)] = new VoxelData[num_voxels_at_scale]; ///<< Data must still be initialised.
 
     } else { ///<< Switch to coarser scale.
