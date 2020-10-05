@@ -369,7 +369,7 @@ if __name__ == '__main__':
         if enable_render and output_render_file_base:
             with doc.create(Subsection('Render')):
                 if rendering_rate < 50:
-                    saving_rate = floor(50 / rendering_rate) * rendering_rate
+                    saving_rate = int(50 / rendering_rate) * rendering_rate
                 else:
                     saving_rate = rendering_rate
 
