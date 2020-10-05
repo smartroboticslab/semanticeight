@@ -1250,6 +1250,20 @@ bool VoxelBlockSingleMax<T>::switchData() {
       deleteUpTo(buffer_scale_);
     }
 
+    /// Update observed state
+    const int size_at_buffer_scale = this->size_li >> buffer_scale_;
+    const int num_voxels_at_buffer_scale = se::math::cu(size_at_buffer_scale);
+
+    int missed_observed_count = 0;
+    for (int voxel_idx = 0; voxel_idx < num_voxels_at_buffer_scale; voxel_idx++) {
+      VoxelData& data = buffer_data_[voxel_idx];
+      if (data.y > 0 && !data.observed) {
+        data.observed = true;
+        buffer_observed_count_++;
+        missed_observed_count++;
+      }
+    }
+
     this->current_scale_ = buffer_scale_;
     this->min_scale_     = buffer_scale_;
 
