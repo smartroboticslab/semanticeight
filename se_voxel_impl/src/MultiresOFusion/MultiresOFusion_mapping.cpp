@@ -47,21 +47,27 @@ template<typename SensorImplType>
 struct MultiresOFusionUpdate {
 
   /**
-   * \param[in]  map                 The reference to the map to be updated.
-   * \param[out] block_list          The list of blocks that have been updated (used for up-propagation in later stage).
-   * \param[out] node_list           The list of nodes that have been updated (used for up-propagation in later stage.
-   * \param[in]  depth_image         The depth image to be integrated.
-   * \param[in]  pooling_depth_image The pointer to the pooling image created from the depth image.
-   * \param[in]  sensor              The sensor model.
-   * \param[in]  T_CM                The transformation from map to camera frame.
-   * \param[in]  voxel_dim           The dimension in meters of the finest voxel / map resolution.
-   * \param[in]  voxel_depth         The tree depth of the finest voxel.
-   * \param[in]  max_depth_value     The maximum depth value in the image.
-   * \param[in]  frame               The frame number to be integrated.
+   * \param[in]  map                  The reference to the map to be updated.
+   * \param[out] block_list           The list of blocks to be updated (used for up-propagation in later stage).
+   * \param[out] node_list            The list of nodes that have been updated (used for up-propagation in later stage.
+   * \param[out] free_list            The list verifying if the updated block should be freed. <bool>
+   * \param[out] low_variance_list    The list verifying if the updated block has low variance. <bool>
+   * \param[out] projects_inside_list The list verifying if the updated block projects completely into the image. <bool>
+   * \param[in]  depth_image          The depth image to be integrated.
+   * \param[in]  pooling_depth_image  The pointer to the pooling image created from the depth image.
+   * \param[in]  sensor               The sensor model.
+   * \param[in]  T_CM                 The transformation from map to camera frame.
+   * \param[in]  voxel_dim            The dimension in meters of the finest voxel / map resolution.
+   * \param[in]  voxel_depth          The tree depth of the finest voxel.
+   * \param[in]  max_depth_value      The maximum depth value in the image.
+   * \param[in]  frame                The frame number to be integrated.
    */
   MultiresOFusionUpdate(OctreeType&                        map,
                         std::vector<VoxelBlockType*>&      block_list,
                         std::vector<std::set<NodeType*>>&  node_list,
+                        std::vector<bool>&                 free_list,
+                        std::vector<bool>&                 low_variance_list,
+                        std::vector<bool>&                 projects_inside_list,
                         const se::Image<float>&            depth_image,
                         const se::DensePoolingImage<SensorImpl>* const pooling_depth_image,
                         const SensorImplType               sensor,
@@ -74,6 +80,9 @@ struct MultiresOFusionUpdate {
       pool_(map.pool()),
       block_list_(block_list),
       node_list_(node_list),
+      free_list_(free_list),
+      low_variance_list_(low_variance_list),
+      projects_inside_list_(projects_inside_list),
       depth_image_(depth_image),
       pooling_depth_image_(pooling_depth_image),
       sensor_(sensor),
@@ -95,6 +104,9 @@ struct MultiresOFusionUpdate {
   MultiresOFusion::VoxelType::MemoryPoolType& pool_;
   std::vector<VoxelBlockType*>& block_list_;
   std::vector<std::set<NodeType*>>& node_list_;
+  std::vector<bool>& free_list_;
+  std::vector<bool>& low_variance_list_;
+  std::vector<bool>& projects_inside_list_;
   const se::Image<float>& depth_image_;
   const se::DensePoolingImage<SensorImpl>* const pooling_depth_image_;
   const SensorImplType sensor_;
@@ -111,6 +123,7 @@ struct MultiresOFusionUpdate {
   inline static constexpr int max_block_scale_ = se::math::log2_const(MultiresOFusion::VoxelBlockType::size_li);
 
   void freeBlock(VoxelBlockType* block) {
+
     // Compute the point of the block centre in the sensor frame
     const unsigned int block_size = VoxelBlockType::size_li;
     const Eigen::Vector3i block_coord = block->coordinates();
@@ -459,10 +472,12 @@ struct MultiresOFusionUpdate {
           VoxelBlockType* block = dynamic_cast<VoxelBlockType*>(child);
           // Voxel block has a low variance. Update data at a minimum
           // free space integration scale or finer/coarser (depending on later scale selection).
-          freeBlock(block);
 #pragma omp critical (voxel_lock)
-          { // Add voxel block to voxel block list for later up-propagation
+          { // Add voxel block to voxel block list for later update and up-propagation
             block_list_.push_back(dynamic_cast<VoxelBlockType*>(block));
+            free_list_.push_back(true);
+            low_variance_list_.push_back(true);
+            projects_inside_list_.push_back(true);
           }
         } else {
           freeNodeRecurse(child, depth + 1);
@@ -627,7 +642,6 @@ struct MultiresOFusionUpdate {
   void propagateToRoot() {
     for(const auto& block : block_list_) {
       if(block->parent()) {
-        updating_model::propagateBlockToCoarsestScale(block);
         node_list_[map_.blockDepth() - 1].insert(block->parent());
         const unsigned int child_idx = se::child_idx(
             block->code(), se::keyops::depth(block->code()), map_.voxelDepth());
@@ -854,19 +868,12 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
     if(node->isBlock()) { // Evaluate the node directly if it is a voxel block
       node->active(true);
       // Cast from node to voxel block
-      VoxelBlockType* block =
-          dynamic_cast<VoxelBlockType*>(node);
-      if (low_variance != 0) {
-        // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
-        // free space integration scale or coarser (depending on later scale selection).
-        updateBlock(block, (low_variance == -1), projects_inside);
-      } else {
-        // Otherwise update values at the finest integration scale or coarser (depending on later scale selection).
-        updateBlock(block, false, projects_inside);
-      }
 #pragma omp critical (voxel_lock)
-      { // Add voxel block to voxel block list for later up propagation
+      { // Add voxel block to voxel block list for later update and up-propagation
         block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
+        free_list_.push_back(false);
+        low_variance_list_.push_back((low_variance == -1));
+        projects_inside_list_.push_back(projects_inside);
       }
     }
     else {
@@ -899,14 +906,12 @@ void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i&
       // Node does exist -> Does POTENTIALLY have children that that need to be updated
       if (node->isBlock()) {
         // Node is a voxel block -> Does NOT have children that need to be updated
-        VoxelBlockType* block =
-            dynamic_cast<VoxelBlockType*>(node);
-        // Node has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
-        // free space integration scale or coarser (depending on later scale selection).
-        updateBlock(block, (low_variance == -1), projects_inside);
 #pragma omp critical (voxel_lock)
-        { // Add voxel block to voxel block list for later up propagation
+        {  // Add voxel block to voxel block list for later update and up-propagation
           block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
+          free_list_.push_back(false);
+          low_variance_list_.push_back((low_variance == -1));
+          projects_inside_list_.push_back(projects_inside);
         }
       } else {
         // Node has children
@@ -1082,19 +1087,12 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
     if(node->isBlock()) { // Evaluate the node directly if it is a voxel block
       node->active(true);
       // Cast from node to voxel block
-      VoxelBlockType* block =
-          dynamic_cast<VoxelBlockType*>(node);
-      if (low_variance != 0) {
-        // Voxel block has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
-        // free space integration scale or coarser (depending on later scale selection).
-        updateBlock(block, (low_variance == -1), projects_inside);
-      } else {
-        // Otherwise update values at the finest integration scale or coarser (depending on later scale selection).
-        updateBlock(block, false, projects_inside);
-      }
 #pragma omp critical (voxel_lock)
-      { // Add voxel block to voxel block list for later up propagation
+      { // Add voxel block to voxel block list for later update and up-propagation
         block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
+        free_list_.push_back(false);
+        low_variance_list_.push_back((low_variance == -1));
+        projects_inside_list_.push_back(projects_inside);
       }
     }
     else {
@@ -1127,14 +1125,12 @@ void MultiresOFusionUpdate<se::OusterLidar>::operator()(const Eigen::Vector3i& n
       // Node does exist -> Does POTENTIALLY have children that that need to be updated
       if (node->isBlock()) {
         // Node is a voxel block -> Does NOT have children that need to be updated
-        VoxelBlockType* block =
-            dynamic_cast<VoxelBlockType*>(node);
-        // Node has a low variance (unknown data and frustum crossing allowed). Update data at a minimum
-        // free space integration scale or coarser (depending on later scale selection).
-        updateBlock(block, (low_variance == -1), projects_inside);
 #pragma omp critical (voxel_lock)
-        { // Add voxel block to voxel block list for later up propagation
+        {  // Add voxel block to voxel block list for later update and up-propagation
           block_list_.push_back(dynamic_cast<VoxelBlockType*>(node));
+          free_list_.push_back(false);
+          low_variance_list_.push_back((low_variance == -1));
+          projects_inside_list_.push_back(projects_inside);
         }
       } else {
         // Node has children
@@ -1157,17 +1153,21 @@ void MultiresOFusion::integrate(OctreeType&             map,
                                 const Eigen::Matrix4f&  T_CM,
                                 const SensorImpl&       sensor,
                                 const unsigned          frame) {
-
+  TICKD("updateMap")
   // Create min/map depth pooling image for different bounding box sizes
   const std::unique_ptr<se::DensePoolingImage<SensorImpl>> pooling_depth_image(new se::DensePoolingImage<SensorImpl>(depth_image));
 
-  TICKD("mapToCameraUpdate")
+  TICKD("mapToCameraAllocation")
   const float max_depth_value = std::min(sensor.far_plane, pooling_depth_image->maxValue() + MultiresOFusion::tau_max);
   const float voxel_dim = map.dim() / map.size();
 
-  std::vector<VoxelBlockType*> block_list;
+  std::vector<VoxelBlockType*> block_list; ///< List of blocks to be updated.
+  std::vector<bool> free_list;             ///< Should updated block be freed? <bool>
+  std::vector<bool> low_variance_list;     ///< Has updated block low variance? <bool>
+  std::vector<bool> projects_inside_list;  ///< Does the updated block reproject completely into the image? <bool>
   std::vector<std::set<NodeType*>> node_list(map.blockDepth());
-  MultiresOFusionUpdate<SensorImpl> funct(map, block_list, node_list, depth_image, pooling_depth_image.get(), sensor, T_CM,
+  MultiresOFusionUpdate<SensorImpl> funct(map, block_list, node_list, free_list, low_variance_list, projects_inside_list,
+                                          depth_image, pooling_depth_image.get(), sensor, T_CM,
                                           voxel_dim, map.voxelDepth(), max_depth_value, frame);
 
   // Launch on the 8 voxels of the first depth
@@ -1178,9 +1178,34 @@ void MultiresOFusion::integrate(OctreeType&             map,
     Eigen::Vector3i child_coord = child_rel_step * child_size; // Because, + corner is (0, 0, 0) at root depth
     funct(child_coord, child_size, 1, child_rel_step, map.root());
   }
-  TOCK("mapToCameraUpdate")
 
+  TOCK("mapToCameraAllocation")
+
+  TICKD("updateBlock")
+#pragma omp parallel for
+  for (unsigned int i = 0; i < block_list.size(); ++i) {
+    if (free_list[i]) {
+      funct.freeBlock(block_list[i]);
+    } else {
+      funct.updateBlock(block_list[i], low_variance_list[i], projects_inside_list[i]);
+    }
+  }
+  TOCK("updateBlock")
+  TOCK("updateMap")
+
+  /// Propagation
   TICKD("propagation")
+
+  TICKD("propagationInBlock")
+#pragma omp parallel for
+  for (unsigned int i = 0; i < block_list.size(); ++i) {
+    updating_model::propagateBlockToCoarsestScale(block_list[i]);
+  }
+  TOCK("propagationInBlock")
+
+  TICKD("propagationInNode")
   funct.propagateToRoot();
+  TOCK("propagationInNode")
+
   TOCK("propagation")
 }
