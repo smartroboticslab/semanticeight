@@ -180,10 +180,12 @@ public:
 
     /* Update the leaf Octree nodes (VoxelBlock). */
     build_active_list();
+    TICKD("updateBlock")
 #pragma omp parallel for
     for (unsigned int i = 0; i < active_list_.size(); ++i) {
       update_block(active_list_[i], voxel_dim);
     }
+    TOCK("updateBlock")
     active_list_.clear();
 
     /* Update the intermediate Octree nodes (Node). */
