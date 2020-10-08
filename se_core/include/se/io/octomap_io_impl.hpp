@@ -29,17 +29,18 @@ octomap::OcTree* se::to_octomap(const se::Octree<VoxelT>& octree,
 
   // supereight map parameters.
   const float voxel_dim = octree.dim() / octree.size();
-  // The sample point of supereight voxels relative to the voxel
-  // corner closest to the origin. Typically the sample point is
-  // the voxel centre.
-  const Eigen::Vector3f se_sample_offset = se::Octree<VoxelT>::sample_offset_frac_;
   // The sample point of octomap voxels relative to the voxel
   // corner closest to the origin. The sample point is the voxel
   // centre.
   const Eigen::Vector3f om_sample_offset = Eigen::Vector3f::Constant(0.5f);
+
+  // The sample point of supereight voxels relative to the voxel
+  // corner closest to the origin. Typically the sample point is
+  // the voxel centre.
+  const Eigen::Vector3f se_sample_offset = se::Octree<VoxelT>::sample_offset_frac_; // TODO: Currently unused
   // Add this to supereight voxel coordinates to transform them to
   // OctoMap voxel coordinates.
-  const Eigen::Vector3f se_to_om_offset = - se_sample_offset + om_sample_offset;
+  const Eigen::Vector3f se_to_om_offset = - se_sample_offset + om_sample_offset; // TODO: Currently unused
 
   // Initialize the octomap.
   octomap::OcTree* octomap = new octomap::OcTree(voxel_dim);
@@ -59,6 +60,7 @@ octomap::OcTree* se::to_octomap(const se::Octree<VoxelT>& octree,
       if (node->isBlock()) {
         const VoxelBlockType<VoxelT>* block
             = static_cast<VoxelBlockType <VoxelT>*>(node);
+        const int current_scale = block->current_scale();
         const Eigen::Vector3i block_coord = block->coordinates();
         const int block_size = static_cast<int>(VoxelBlockType<VoxelT>::size_li);
         const int x_last = block_coord.x() + block_size;
@@ -68,7 +70,7 @@ octomap::OcTree* se::to_octomap(const se::Octree<VoxelT>& octree,
           for (int y = block_coord.y(); y < y_last; ++y) {
             for (int x = block_coord.x(); x < x_last; ++x) {
               const Eigen::Vector3f voxel_coord_eigen
-                  = voxel_dim * (Eigen::Vector3f(x, y, z) + se_to_om_offset);
+                  = voxel_dim * (Eigen::Vector3f(x, y, z) + om_sample_offset);
               const octomap::point3d voxel_coord (
                   voxel_coord_eigen.x(),
                   voxel_coord_eigen.y(),
