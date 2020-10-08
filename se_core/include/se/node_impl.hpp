@@ -1233,8 +1233,8 @@ void VoxelBlockSingleMax<T>::initBuffer(const int buffer_scale) {
 
 template <typename T>
 bool VoxelBlockSingleMax<T>::switchData() {
-  if (buffer_integr_count_ >= 10 &&
-      buffer_observed_count_ * se::math::cu(1 << buffer_scale_) >= 0.50 * curr_observed_count_ * se::math::cu(1 << this->current_scale_)) { // TODO: Find threshold
+  if (buffer_integr_count_ >= 20 &&
+      buffer_observed_count_ * se::math::cu(1 << buffer_scale_) >= 0.9 * curr_observed_count_ * se::math::cu(1 << this->current_scale_)) { // TODO: Find threshold
 
     /// !!! We'll switch !!!
     if (buffer_scale_ < this->current_scale_) { ///<< Switch to finer scale.
