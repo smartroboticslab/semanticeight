@@ -76,7 +76,7 @@ octomap::OcTree* se::to_octomap(const se::Octree<VoxelT>& octree,
                   voxel_coord_eigen.y(),
                   voxel_coord_eigen.z());
               const typename VoxelT::VoxelData voxel_data
-                  = block->data(Eigen::Vector3i(x, y, z));
+                  = block->maxData(Eigen::Vector3i(x, y, z), current_scale);
               set_node_value(*octomap, voxel_coord, voxel_data);
             }
           }
