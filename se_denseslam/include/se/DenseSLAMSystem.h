@@ -42,6 +42,7 @@
 
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Dense>
+#include <octomap/octomap.h>
 
 #include "se/commons.h"
 #include "se/perfstats.h"
@@ -53,6 +54,7 @@
 #include "se/voxel_implementations.hpp"
 #include "preprocessing.hpp"
 #include "tracking.hpp"
+#include "se/io/octomap_io.hpp"
 
 
 
@@ -325,6 +327,68 @@ class DenseSLAMSystem {
 
     void loadMap(const std::string& map_filename) {
       map_->load(map_filename);
+    }
+
+    template <typename ValueSelector>
+    void saveOctoMapBinary(const std::string& octomap_binary_filename,
+                           const float        threshold,
+                           ValueSelector      value_selector,
+                           const int          x_lb = 0,
+                           const int          y_lb = 0,
+                           const int          z_lb = 0,
+                           int                x_ub = 0,
+                           int                y_ub = 0,
+                           int                z_ub = 0) {
+
+      // Initialise default boundaries. Can't be set above as map_size_ is non-static.
+      x_ub = (x_ub == 0) ? map_size_.x() : x_ub;
+      y_ub = (y_ub == 0) ? map_size_.y() : y_ub;
+      z_ub = (z_ub == 0) ? map_size_.z() : z_ub;
+
+      // Check if boundaries are valid
+      if (   x_ub <= x_lb
+          || y_ub <= y_lb
+          || z_ub <= z_lb) {
+        return;
+      }
+
+      // Convert boundaries to meter units
+      const float x_lb_m = x_lb * map_->voxelDim();
+      const float y_lb_m = y_lb * map_->voxelDim();
+      const float z_lb_m = z_lb * map_->voxelDim();
+      const float x_ub_m = x_ub * map_->voxelDim();
+      const float y_ub_m = y_ub * map_->voxelDim();
+      const float z_ub_m = z_ub * map_->voxelDim();
+
+      // Create a lambda function to set the state of a single voxel.
+      const auto set_node_value = [&](octomap::OcTree&                                octomap,
+                                      const octomap::point3d&                         voxel_coord,
+                                      const typename VoxelImpl::VoxelType::VoxelData& voxel_data) {
+
+        // Check if the voxel is in the boundaries
+        if (   voxel_coord.x() >= x_lb_m
+            && voxel_coord.y() >= y_lb_m
+            && voxel_coord.z() >= z_lb_m
+            && voxel_coord.x() < x_ub_m
+            && voxel_coord.y() < y_ub_m
+            && voxel_coord.z() < z_ub_m) {
+
+          // Do not update unknown voxels.
+          if (VoxelImpl::VoxelType::isValid(voxel_data)) {
+            if (value_selector(voxel_data) < threshold) {
+              // Free
+              octomap.updateNode(voxel_coord, false, false);
+            } else {
+              octomap.updateNode(voxel_coord, true, false);
+            }
+          }
+        }
+
+      };
+
+      octomap::OcTree* octomap =  se::to_octomap(*map_, set_node_value);
+      octomap->writeBinary(octomap_binary_filename);
+      delete octomap;
     }
 
     /**
