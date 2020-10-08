@@ -49,44 +49,73 @@ se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
   computeFrustumNormals();
 }
 
-int se::PinholeCamera::computeIntegrationScale(
-    const Eigen::Vector3f& block_centre,
-    const float            voxel_dim,
-    const int              last_scale,
-    const int              min_scale,
-    const int              max_block_scale) const {
+int se::PinholeCamera::computeIntegrationScale(const Eigen::Vector3f& block_centre,
+                                               const float            voxel_dim,
+                                               const int              last_scale,
+                                               const int              min_scale,
+                                               const int              max_block_scale) const {
   const float dist = block_centre.z();
-  // Compute the side length in metres of a pixel projected dist metres from the camera
-  const float pixel_dim = dist * scaled_pixel;
-  const float pv_ratio = pixel_dim / voxel_dim;
-  int scale = 0;
-  if (pv_ratio < 1.5) {
-    scale = 0;
-  } else if (pv_ratio < 3) {
-    scale = 1;
-  } else if (pv_ratio < 6) {
-    scale = 2;
-  } else {
-    scale = 3;
-  }
-  scale = std::min(scale, max_block_scale);
 
-  Eigen::Vector3f block_centre_hyst = block_centre;
-  bool recompute = false;
-  if (scale > last_scale && min_scale != -1) {
-    block_centre_hyst.z() -= 0.25;
-    recompute = true;
-  } else if (scale < last_scale && min_scale != -1) {
-    block_centre_hyst.z() += 0.25;
-    recompute = true;
-  }
+  const float pv_ratio = dist * scaled_pixel / voxel_dim;
 
-  if (recompute) {
-    return computeIntegrationScale(block_centre_hyst, voxel_dim, last_scale, -1, max_block_scale);
-  } else {
+  // Negative scales may arise if the voxel_radius is greater than the
+  // tangent_radius.
+
+  if (min_scale == -1) {
+    int scale = 0;
+    if (pv_ratio < 1.5) {
+      scale = 0;
+    } else if (pv_ratio < 3) {
+      scale = 1;
+    } else if (pv_ratio < 6) {
+      scale = 2;
+    } else {
+      scale = 3;
+    }
     return scale;
+
+    /// EQUIVALENT
+//    return std::min(std::max(0, static_cast<int>(ceil(std::log2(pv_ratio)))), max_block_scale);
+  }
+
+  float lower_thresh = 0;
+  float upper_thresh = 0;
+  if (last_scale == 0) {
+    lower_thresh = 0;
+    upper_thresh = 1.75f;
+  } else if (last_scale == 1) {
+    lower_thresh = 1.25f;
+    upper_thresh = 3.25f;
+  } else if (last_scale == 2) {
+    lower_thresh = 2.75f;
+    upper_thresh = 6.25f;
+  } else {
+    lower_thresh = 5.75f;
+    upper_thresh = std::numeric_limits<int>::max();
+  }
+
+  /// EQUIVALENT
+//  float lower_thresh = 0;                       ///<< 0 -> 0;   1 -> 0.5f, 2 -> 1.5f, 3-> 3.f, ...
+//  if (last_scale == 1) {
+//    lower_thresh = 0.5f;
+//  } else if  (last_scale > 1) {
+//    lower_thresh = (1 << (last_scale -  2)) * 1.5;
+//  }
+//
+//  float upper_thresh = (1 << last_scale) * 1.5; ///<< 0 -> 1.5; 1 -> 3f,   2 -> 6.f,  3-> 12.f, ..., std::numeric_limits<float>max()
+//  if (last_scale == max_block_scale) {
+//    upper_thresh    = std::numeric_limits<float>::max();
+//  }
+
+  if (pv_ratio < lower_thresh) {
+    return std::max(last_scale - 1, 0);
+  } else if (pv_ratio > upper_thresh) {
+    return std::min(last_scale + 1, max_block_scale);
+  } else {
+    return last_scale;
   }
 }
+
 
 float se::PinholeCamera::nearDist(const Eigen::Vector3f& ray_C) const {
   return near_plane / ray_C.normalized().z();
