@@ -346,9 +346,9 @@ void DenseSLAMSystem::dumpMesh(const std::string filename_voxel,
     }
 
     if (str_utils::ends_with(filename_meter, ".ply")) {
-      save_mesh_ply(mesh, filename_meter.c_str(), se::math::to_inverse_transformation(this->T_MW_), map_->voxelDepth());
+      save_mesh_ply(mesh, filename_meter.c_str(), se::math::to_inverse_transformation(this->T_MW_), map_->voxelDim());
     } else {
-      save_mesh_vtk(mesh, filename_meter.c_str(), se::math::to_inverse_transformation(this->T_MW_), map_->voxelDepth());
+      save_mesh_vtk(mesh, filename_meter.c_str(), se::math::to_inverse_transformation(this->T_MW_), map_->voxelDim());
     }
 
   }
