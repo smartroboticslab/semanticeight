@@ -55,12 +55,12 @@ inline bool Octree<T>::contains(const int x, const int y, const int z) const {
 }
 
 template <typename T>
-inline bool Octree<T>::contains(Eigen::Vector3i& voxel_coord) const {
+inline bool Octree<T>::contains(const Eigen::Vector3i& voxel_coord) const {
   return contains(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
 }
 
 template <typename T>
-inline bool Octree<T>::contains(Eigen::Vector3f& voxel_coord_f) const {
+inline bool Octree<T>::contains(const Eigen::Vector3f& voxel_coord_f) const {
   if (voxel_coord_f.x() >= 0 && voxel_coord_f.x() < size_ &&
       voxel_coord_f.y() >= 0 && voxel_coord_f.y() < size_ &&
       voxel_coord_f.z() >= 0 && voxel_coord_f.z() < size_) {
@@ -70,7 +70,7 @@ inline bool Octree<T>::contains(Eigen::Vector3f& voxel_coord_f) const {
 }
 
 template <typename T>
-bool Octree<T>::containsPoint(Eigen::Vector3f& point_M) const {
+bool Octree<T>::containsPoint(const Eigen::Vector3f& point_M) const {
   if (point_M.x() >= 0 && point_M.x() < dim_ &&
       point_M.y() >= 0 && point_M.y() < dim_ &&
       point_M.z() >= 0 && point_M.z() < dim_) {

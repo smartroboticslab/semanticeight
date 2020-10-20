@@ -133,21 +133,21 @@ public:
    * \param[in] voxel_coord The coordinates of the voxel.
    * \return    True if each voxel coordinate is in the interval [0, size - 1]; False otherwise.
    */
-  inline bool contains(Eigen::Vector3i& voxel_coord) const;
+  inline bool contains(const Eigen::Vector3i& voxel_coord) const;
 
   /*! \brief Verify if each voxel coordinate is in the interval [0, size)
    *
    * \param[in] voxel_coord_f The coordinates of the voxel.
    * \return    True if each voxel coordinate is in the interval [0, size); False otherwise.
    */
-  inline bool contains(Eigen::Vector3f& voxel_coord_f) const;
+  inline bool contains(const Eigen::Vector3f& voxel_coord_f) const;
 
   /*! \brief Verify if each point coordinate is in the interval [0, dim)
    *
    * \param[in] point_M The coordinates of the point.
    * \return    True if each point coordinate is in the interval [0, dim); False otherwise.
    */
-  inline bool containsPoint(Eigen::Vector3f& point_M) const;
+  inline bool containsPoint(const Eigen::Vector3f& point_M) const;
 
   /*! \brief Return the data at the supplied voxel coordinates and scale.
    *
