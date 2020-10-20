@@ -64,6 +64,31 @@ void Node<T>::operator=(const Node<T>& node) {
 }
 
 template <typename T>
+const typename T::VoxelData& Node<T>::data() const {
+  // Used so we can return a reference to invalid data
+  static const typename T::VoxelData invalid = T::invalid();
+  // Return invalid data if this is the root node
+  if (parent_ptr_ == nullptr) {
+    return invalid;
+  }
+  // Find the child index of this node in its parent
+  // TODO this is not the most efficient way but computing the child index directly requires the
+  // octree dimensions
+  int child_idx = 0;
+  for (; child_idx < 8; child_idx++) {
+    if (parent_ptr_->child(child_idx) == this) {
+      break;
+    }
+  }
+  if (child_idx < 8) {
+    return parent_ptr_->childData(child_idx);
+  } else {
+    // The parent does not contain a pointer to this node, broken octree
+    return invalid;
+  }
+}
+
+template <typename T>
 void Node<T>::initFromNode(const se::Node<T>& node) {
   code_           = node.code();
   size_           = node.size_;

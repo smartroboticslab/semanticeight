@@ -63,6 +63,8 @@ public:
 
   virtual ~Node(){};
 
+  const VoxelData& data() const;
+
   VoxelData* childrenData() { return children_data_;}
   const VoxelData* childrenData() const { return children_data_;}
   VoxelData& childData(const int child_idx) { return children_data_[child_idx];}
