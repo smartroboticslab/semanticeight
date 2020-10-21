@@ -200,6 +200,10 @@ namespace se {
     float near_plane;
     float far_plane;
     float scaled_pixel;
+    /** \brief The horizontal field of view in radians. */
+    float horizontal_fov;
+    /** \brief The vertical field of view in radians. */
+    float vertical_fov;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -352,7 +356,6 @@ namespace se {
     bool sphereInFrustumInf(const Eigen::Vector3f& center_C,
                             const float            radius) const;
 
-
     static std::string type() { return "ousterlidar"; }
 
     srl::projection::OusterLidar model;
@@ -360,6 +363,10 @@ namespace se {
     float near_plane;
     float far_plane;
     float min_ray_angle;
+    /** \brief The horizontal field of view in radians. */
+    float horizontal_fov;
+    /** \brief The vertical field of view in radians. */
+    float vertical_fov;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
