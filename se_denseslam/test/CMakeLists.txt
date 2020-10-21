@@ -17,5 +17,6 @@ link_libraries(
 )
 
 add_subdirectory(depth_utils)
+add_subdirectory(entropy)
 add_subdirectory(preprocessing)
 

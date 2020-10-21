@@ -43,6 +43,10 @@ foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
       "./src/ptp/OccupancyWorld.cpp"
       "./src/ptp/ProbCollisionChecker.cpp"
       "./src/ptp/SafeFlightCorridorGenerator.cpp"
+      "./src/entropy.cpp"
+      "./src/candidate_view.cpp"
+      "./src/exploration_utils.cpp"
+      "./src/single_path_exploration_planner.cpp"
       "./src/DenseSLAMSystem.cpp"
     )
     target_include_directories(${LIB_NAME} BEFORE
