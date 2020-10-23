@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5...3.16)
 
 find_package(octomap)
+find_package(OMPL REQUIRED)
 
 # Generate the appropriate include line for each voxel implementation.
 foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
@@ -39,6 +40,9 @@ foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
       "./src/object.cpp"
       "./src/object_rendering.cpp"
       "./src/object_utils.cpp"
+      "./src/ptp/OccupancyWorld.cpp"
+      "./src/ptp/ProbCollisionChecker.cpp"
+      "./src/ptp/SafeFlightCorridorGenerator.cpp"
       "./src/DenseSLAMSystem.cpp"
     )
     target_include_directories(${LIB_NAME} BEFORE
@@ -46,10 +50,12 @@ foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:include>
+        ${OMPL_INCLUDE_DIRS}
     )
     target_link_libraries(${LIB_NAME}
       PUBLIC
         SE::VoxelImpl${VOXEL_IMPL}${SENSOR_IMPL}
+        ${OMPL_LIBRARIES}
     )
     set_target_properties(${LIB_NAME} PROPERTIES
       CXX_STANDARD 17
