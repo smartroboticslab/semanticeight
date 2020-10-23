@@ -194,7 +194,7 @@ struct ThresholdVoxelT {
     return true;
   };
 
-  static float computeThreshold(const VoxelData& data) {
+  static float threshold(const VoxelData& data) {
     return data;
   };
 

@@ -235,7 +235,7 @@ inline int Octree<T>::getThreshold(const int        x,
     child_idx  = ((x & t_size) > 0) + 2 * ((y & t_size) > 0) + 4 * ((z & t_size) > 0);
     Node<T>* node_tmp = node->child(child_idx);
     t_data            = node->childData(child_idx);
-    if (!node_tmp || (T::getThreshold(t_data) <= threshold && T::isValid(t_data))) {
+    if (!node_tmp || (T::threshold(t_data) <= threshold && T::isValid(t_data))) {
       t_corner = node_tmp->coordinates();
       is_node = true;
       return se::math::log2_const(t_size);
@@ -250,7 +250,7 @@ inline int Octree<T>::getThreshold(const int        x,
   for (int s = 2; s >= block->current_scale(); s--, t_size = t_size >> 1)  {
     t_corner = t_size * (voxel_coord / t_size);
     t_data  = block->maxData(t_corner, s);
-    if((T::getThreshold(t_data) <= threshold && T::isValid(t_data))){
+    if((T::threshold(t_data) <= threshold && T::isValid(t_data))){
       return s;
     }
   }
@@ -318,7 +318,7 @@ inline int Octree<T>::getThreshold(const int          x,
     Node<T>* node_tmp = node->child(child_idx);
     v_data            = node->childData(child_idx);
 
-    if (!node_tmp || (T::computeThreshold(v_data) <= t_value && T::isValid(v_data))) {
+    if (!node_tmp || (T::threshold(v_data) <= t_value && T::isValid(v_data))) {
       v_corner = node->coordinates() +
                  Eigen::Vector3i::Constant(v_size).cwiseProduct(Eigen::Vector3i((child_idx & 1) > 0, (child_idx & 2) > 0, (child_idx & 4) > 0));
       is_finest = (node_tmp == nullptr);
@@ -343,7 +343,7 @@ inline int Octree<T>::getThreshold(const int          x,
       for (v_scale; v_scale >= min_block_scale; v_scale--, v_size = v_size >> 1)  {
         v_corner = v_size * (voxel_coord / v_size);
         v_data  = block->maxData(v_corner, v_scale);
-        if((v_scale == current_scale) || (T::computeThreshold(v_data) <= t_value && T::isValid(v_data))){
+        if((v_scale == current_scale) || (T::threshold(v_data) <= t_value && T::isValid(v_data))){
           is_finest = (v_scale == current_scale);
           return v_scale;
         }
