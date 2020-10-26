@@ -74,3 +74,93 @@ TEST(MathUtils, median) {
   EXPECT_FLOAT_EQ(se::math::median(v6), 1.7f);
 }
 
+TEST(MathUtils, wrap_angle_2pi) {
+  constexpr float pi = M_PI;
+  constexpr float tau = 2 * M_PI;
+  constexpr float error = 0.00001;
+  constexpr int n = 1 + 4 * 8;
+  const float angles[n] = {
+    // Positive, first circle
+    0,          pi/4,          pi/2,        3*pi/4,        pi,
+              5*pi/4,        3*pi/2,        7*pi/4,       tau,
+    // Positive, second circle
+        tau +   pi/4,  tau +   pi/2,  tau + 3*pi/4,  tau + pi,
+        tau + 5*pi/4,  tau + 3*pi/2,  tau + 7*pi/4,     2*tau,
+    // Negative, first circle
+               -pi/4,         -pi/2,       -3*pi/4,       -pi,
+             -5*pi/4,       -3*pi/2,       -7*pi/4,      -tau,
+    // Negative, second circle
+       -tau -   pi/4, -tau -   pi/2, -tau - 3*pi/4, -tau - pi,
+       -tau - 5*pi/4, -tau - 3*pi/2, -tau - 7*pi/4,    -2*tau,
+  };
+  const float wrapped_angles[n] = {
+    // Positive, first circle
+    0,          pi/4,          pi/2,        3*pi/4,        pi,
+              5*pi/4,        3*pi/2,        7*pi/4,         0,
+    // Positive, second circle
+                pi/4,          pi/2,        3*pi/4,        pi,
+              5*pi/4,        3*pi/2,        7*pi/4,         0,
+    // Negative, first circle
+              7*pi/4,        3*pi/2,        5*pi/4,        pi,
+              3*pi/4,          pi/2,          pi/4,         0,
+    // Negative, second circle
+              7*pi/4,        3*pi/2,        5*pi/4,        pi,
+              3*pi/4,          pi/2,          pi/4,         0,
+  };
+
+  for (int i = 0; i < n; i++) {
+    EXPECT_NEAR(se::math::wrap_angle_2pi(angles[i]), wrapped_angles[i], error);
+  }
+}
+
+TEST(MathUtils, wrap_angle_pi) {
+  constexpr float pi = M_PI;
+  constexpr float tau = 2 * M_PI;
+  constexpr float error = 0.00001;
+  constexpr int n = 1 + 4 * 8;
+  const float angles[n] = {
+    // Positive, first circle
+    0,          pi/4,          pi/2,        3*pi/4,        pi,
+              5*pi/4,        3*pi/2,        7*pi/4,       tau,
+    // Positive, second circle
+        tau +   pi/4,  tau +   pi/2,  tau + 3*pi/4,  tau + pi,
+        tau + 5*pi/4,  tau + 3*pi/2,  tau + 7*pi/4,     2*tau,
+    // Negative, first circle
+               -pi/4,         -pi/2,       -3*pi/4,       -pi,
+             -5*pi/4,       -3*pi/2,       -7*pi/4,      -tau,
+    // Negative, second circle
+       -tau -   pi/4, -tau -   pi/2, -tau - 3*pi/4, -tau - pi,
+       -tau - 5*pi/4, -tau - 3*pi/2, -tau - 7*pi/4,    -2*tau,
+  };
+  const float wrapped_angles[n] = {
+    // Positive, first circle
+    0,          pi/4,          pi/2,        3*pi/4,       -pi,
+             -3*pi/4,         -pi/2,         -pi/4,         0,
+    // Positive, second circle
+                pi/4,          pi/2,        3*pi/4,       -pi,
+             -3*pi/4,         -pi/2,         -pi/4,         0,
+    // Negative, first circle
+               -pi/4,         -pi/2,       -3*pi/4,       -pi,
+              3*pi/4,          pi/2,          pi/4,         0,
+    // Negative, second circle
+               -pi/4,         -pi/2,       -3*pi/4,       -pi,
+              3*pi/4,          pi/2,          pi/4,         0,
+  };
+
+  for (int i = 0; i < n; i++) {
+    EXPECT_NEAR(se::math::wrap_angle_pi(angles[i]), wrapped_angles[i], error);
+  }
+}
+
+TEST(MathUtils, angle_diff) {
+  constexpr float pi = M_PI;
+  constexpr float error = 0.00001;
+  constexpr int n = 8;
+  const float start_angles[n] = {0,    0,  pi/2,     0, -pi/2,      0, 3*pi/2,   pi/4};
+  const float end_angles[n]   = {0, pi/2,     0, -pi/2,     0, 3*pi/2,      0, 7*pi/4};
+  const float angle_diff[n]   = {0, pi/2, -pi/2, -pi/2,  pi/2,  -pi/2,   pi/2,  -pi/2};
+  for (int i = 0; i < n; i++) {
+    EXPECT_NEAR(se::math::angle_diff(start_angles[i], end_angles[i]), angle_diff[i], error);
+  }
+}
+

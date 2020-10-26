@@ -342,6 +342,59 @@ namespace se {
       se3.block<3,1>(0,3) = V * a.head<3>();
       return se3;
     }
+
+
+
+    constexpr float rad_to_deg = 180.0f / M_PI;
+    constexpr float deg_to_rad = M_PI / 180.0f;
+
+    /*! \brief Wrap an angle in radians to the interval [0, 2pi).
+     * https://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
+     */
+    template <typename T>
+    static constexpr T wrap_angle_2pi(T angle_rad) {
+      constexpr T tau = static_cast<T>(2 * M_PI);
+      T angle = fmod(angle_rad, tau);
+      if (angle < 0) {
+        angle += tau;
+      }
+      return angle;
+    }
+
+    /*! \brief Wrap an angle in radians to the interval [-pi, pi).
+     * https://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
+     */
+    template <typename T>
+    static constexpr T wrap_angle_pi(T angle_rad) {
+      constexpr T pi = static_cast<T>(M_PI);
+      constexpr T tau = static_cast<T>(2 * M_PI);
+      T angle = fmod(angle_rad + pi, tau);
+      if (angle < 0) {
+        angle += tau;
+      }
+      return angle - pi;
+    }
+
+    /*! \brief Compute the smallest angle in the interval [-pi,pi] that if added to start_angle_rad
+     * will result in end_angle_rad or an equivalent angle.
+     */
+    template <typename T>
+    static constexpr T angle_diff(T start_angle_rad, T end_angle_rad) {
+      // Compute the angle difference in the interval (-2pi,2pi).
+      start_angle_rad = wrap_angle_2pi(start_angle_rad);
+      end_angle_rad = wrap_angle_2pi(end_angle_rad);
+      float angle_diff = end_angle_rad - start_angle_rad;
+      // Select a smaller angle if needed.
+      constexpr T pi = static_cast<T>(M_PI);
+      constexpr T tau = static_cast<T>(2 * M_PI);
+      if (angle_diff > pi) {
+        angle_diff -= tau;
+      } else if (angle_diff < -pi) {
+        angle_diff += tau;
+      }
+      return angle_diff;
+    }
+
   }
 }
 #endif
