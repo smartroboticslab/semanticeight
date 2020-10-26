@@ -250,6 +250,7 @@ struct MultiresOFusion {
   static void dumpMesh(OctreeType&                map,
                        std::vector<se::Triangle>& mesh);
 
+  static void propagateToRoot(OctreeType& map);
 };
 
 #endif // MultiresOFusion_HPP

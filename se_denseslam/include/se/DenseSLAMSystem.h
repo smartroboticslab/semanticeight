@@ -60,6 +60,7 @@
 #include "se/io/octomap_io.hpp"
 #include "object.hpp"
 #include "object_rendering.hpp"
+#include "se/single_path_exploration_planner.hpp"
 
 
 
@@ -102,6 +103,7 @@ class DenseSLAMSystem {
 
     // Map
     Eigen::Matrix4f T_MW_; // Constant world to map frame transformation
+    Eigen::Matrix4f T_WM_;
     std::vector<se::key_t> allocation_list_;
     std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > map_;
 
@@ -169,6 +171,17 @@ class DenseSLAMSystem {
     std::set<se::key_t> added_frontier_blocks_;
     std::set<se::key_t> removed_frontier_blocks_;
     std::set<se::key_t> frontiers_;
+    std::vector<se::key_t> pruned_frontiers_;
+    Eigen::Matrix4f goal_T_MC_;
+    se::Path path_M_;
+    se::Path path_W_;
+    std::vector<se::CandidateView> candidate_views_;
+    std::vector<se::CandidateView> rejected_candidate_views_;
+    se::CandidateView goal_view_;
+    static constexpr size_t min_frontiers_ = 12;
+    static constexpr float goal_position_threshold_ = 0.2f;
+    static constexpr float goal_yaw_threshold_ = se::math::deg_to_rad * 5.0f;
+    static constexpr float goal_roll_pitch_threshold_ = se::math::deg_to_rad * 10.0f;
 
 
 
@@ -220,6 +233,13 @@ class DenseSLAMSystem {
     void updateValidDepthMask(const se::Image<float>& depth);
 
     void generateUndetectedInstances(se::SegmentationResult& detections);
+
+    // Exploration only ///////////////////////////////////////////////////////
+    void freeInitSphere();
+
+    void pruneFrontiers();
+
+    static size_t numFrontierVoxels(const se::Node<VoxelImpl::VoxelType>* node);
 
 
 
@@ -839,6 +859,29 @@ class DenseSLAMSystem {
     // Exploration only ///////////////////////////////////////////////////////
     std::vector<se::Volume<VoxelImpl::VoxelType>> frontierBlockVolumes() const;
     std::vector<se::Volume<VoxelImpl::VoxelType>> frontierVoxelVolumes() const;
+
+    bool goalReached() const;
+
+    /** \brief Call the exploration planner and return the resulting camera path in the world frame.
+     * The returned path is a series of T_WC.
+     */
+    se::Path computeNextPath_WC(const SensorImpl& sensor);
+
+    std::vector<se::CandidateView> candidateViews() const;
+
+    std::vector<se::CandidateView> rejectedCandidateViews() const;
+
+    se::CandidateView goalView() const;
+
+    se::Image<uint32_t> renderEntropy(const SensorImpl& sensor,
+                                      const bool        visualize_yaw = true);
+
+    se::Image<uint32_t> renderEntropyDepth(const SensorImpl& sensor,
+                                           const bool        visualize_yaw = true);
+
+    float free_volume     = 0.0f;
+    float occupied_volume = 0.0f;
+    float explored_volume = 0.0f;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

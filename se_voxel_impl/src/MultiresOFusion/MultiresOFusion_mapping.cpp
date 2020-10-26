@@ -1405,3 +1405,58 @@ void MultiresOFusion::integrate(OctreeType&             map,
 
   TOCK("propagation")
 }
+
+
+
+void MultiresOFusion::propagateToRoot(OctreeType& map) {
+  const int voxel_depth = map.voxelDepth();
+  const int block_depth = map.blockDepth();
+  std::vector<VoxelBlockType*> block_list;
+  map.getBlockList(block_list, false);
+  // Propagate the VoxelBlock data to their coarsest scale
+#pragma omp parallel for
+  for (size_t i = 0; i < block_list.size(); ++i) {
+    updating_model::propagateBlockToCoarsestScale(block_list[i]);
+  }
+
+  // Propagate the VoxelBlock data up to their parent nodes and keep track of the parent nodes
+  std::vector<std::set<NodeType*>> node_list (block_depth);
+  for (const auto block : block_list) {
+    if (block->parent()) {
+      // Keep track of the VoxelBlock's parent Node for later use
+      node_list[block_depth - 1].insert(block->parent());
+      // Get the VoxelBlock's max-aggregated data
+      const auto& block_max_data = block->maxData();
+      // Propagate the VoxelBlock's data to its parent Node
+      const unsigned child_idx = se::child_idx(block->code(), block_depth, voxel_depth);
+      block->parent()->childData(child_idx) = block_max_data;
+      // Prune the VoxelBlock if it's all free
+      if (block_max_data.observed && block_max_data.x * block_max_data.y <= 0.95 * MultiresOFusion::min_occupancy) {
+        map.pool().deleteBlock(block, voxel_depth);
+      }
+    } else {
+      // Delete orphan VoxelBlocks
+      map.pool().deleteBlock(block, voxel_depth);
+    }
+  }
+
+  // Propagate the data to all the nodes up to the root
+  for (int d = block_depth - 1; d > 0; d--) {
+    for (NodeType* node : node_list[d]) {
+      if (node->timestamp() == 1) {
+        continue;
+      }
+      if (node->parent()) {
+        // Insert the Node's parent to the list of Nodes for processing in the next iteration
+        node_list[d-1].insert(node->parent());
+        // Propagate a summary of the Node's eight children to its parent
+        const auto& node_data = updating_model::propagateToNoteAtCoarserScale(node, voxel_depth, 1);
+        // Prune the Node if needed
+        if (node_data.observed && node_data.x * node_data.y <= 0.95 * MultiresOFusion::min_occupancy) {
+          map.pool().deleteNode(node, voxel_depth);
+        }
+      }
+    }
+  }
+}
+

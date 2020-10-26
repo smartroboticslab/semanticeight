@@ -50,6 +50,7 @@ static uint32_t* instance_render = nullptr;
 static uint32_t* raycast_render = nullptr;
 static se::Reader* reader = nullptr;
 static DenseSLAMSystem* pipeline = nullptr;
+static int num_planning_iterations = 0;
 
 static Eigen::Vector3f t_MW;
 static std::ostream* log_stream = &std::cout;
@@ -392,6 +393,19 @@ int processAll(se::Reader*        reader,
     } else {
       integrated = false;
     }
+
+    // Planning TMP
+    if (pipeline->goalReached() || num_planning_iterations == 0) {
+      std::cout << "Planning " << num_planning_iterations << "\n";
+      const se::Path path_WC = pipeline->computeNextPath_WC(sensor);
+      num_planning_iterations++;
+    }
+
+#if SE_VERBOSE >= SE_VERBOSE_MINIMAL
+    printf("Free volume:     %10.3f m³\n", pipeline->free_volume);
+    printf("Occupied volume: %10.3f m³\n", pipeline->occupied_volume);
+    printf("Explored volume: %10.3f m³\n", pipeline->explored_volume);
+#endif
   }
 
   bool render_volume = false;

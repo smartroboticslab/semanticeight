@@ -350,6 +350,36 @@ namespace se {
      */
     bool bilateral_filter;
 
+    // Exploration only ///////////////////////////////////////////////////////
+    int num_candidates;
+
+    int raycast_width;
+
+    int raycast_height;
+
+    float linear_velocity;
+
+    float angular_velocity;
+
+    /** The radius of the robot's bounding sphere in metres.
+     * <br>\em Default: 0.3
+     */
+    float robot_radius;
+
+    /** An extra safety radius in metres added to that of the robot's bounding sphere.
+     * <br>\em Default: 0.0
+     */
+    float safety_radius;
+
+    float min_control_point_radius;
+
+    float skeleton_sample_precision;
+
+    /** The maximum time in seconds that a path will be searched for by OMPL.
+     * <br>\em Default: 0.1
+     */
+    float solving_time;
+
     Configuration()
       : sensor_type(""),
         voxel_impl_type(""),
@@ -387,7 +417,17 @@ namespace se {
         enable_render(true),
         output_render_file(""),
         render_volume_fullsize(false),
-        bilateral_filter(false) {}
+        bilateral_filter(false),
+        num_candidates(10),
+        raycast_width(36),
+        raycast_height(10),
+        linear_velocity(1.0f),
+        angular_velocity(0.1f),
+        robot_radius(0.3f),
+        safety_radius(0.0f),
+        min_control_point_radius(0.1f),
+        skeleton_sample_precision(0.05f),
+        solving_time(0.1f) {}
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
@@ -472,6 +512,18 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
   const Eigen::Vector3f init_t_MB_factor = init_t_MB / config.map_dim.x();
   out << str_utils::vector_to_pretty_str(init_t_MB_factor,            "init t_MB_factor") << "\n";
   out << "\n";
+
+  // Exploration only ///////////////////////////////////////////////////////
+  out << str_utils::value_to_pretty_str(config.num_candidates,            "Num candidates") << "\n";
+  out << str_utils::value_to_pretty_str(config.raycast_width,             "Raycast width") << "\n";
+  out << str_utils::value_to_pretty_str(config.raycast_height,            "Raycast height") << "\n";
+  out << str_utils::value_to_pretty_str(config.linear_velocity,           "Linear velocity") << "\n";
+  out << str_utils::value_to_pretty_str(config.angular_velocity,          "Angular velocity") << "\n";
+  out << str_utils::value_to_pretty_str(config.robot_radius,              "Robot radius") <<  "\n";
+  out << str_utils::value_to_pretty_str(config.safety_radius,             "Safety radius") << "\n";
+  out << str_utils::value_to_pretty_str(config.min_control_point_radius,  "Min control point radius") << "\n";
+  out << str_utils::value_to_pretty_str(config.skeleton_sample_precision, "Skeleton sample precision") << "\n";
+  out << str_utils::value_to_pretty_str(config.solving_time,              "Solving time") << "\n";
 
   return out;
 }

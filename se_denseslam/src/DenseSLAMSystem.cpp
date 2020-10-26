@@ -38,6 +38,8 @@
 
 #include <cstring>
 
+#include<Eigen/StdVector>
+
 #include "se/voxel_block_ray_iterator.hpp"
 #include "se/algorithms/meshing.hpp"
 #include "se/io/meshing_io.hpp"
@@ -49,9 +51,11 @@
 #include "se/perfstats.h"
 #include "se/rendering.hpp"
 #include "se/set_operations.hpp"
+#include "se/voxel_implementations/MultiresOFusion/updating_model.hpp"
 #include "se/semanticeight_definitions.hpp"
 #include "se/depth_utils.hpp"
 #include "se/object_utils.hpp"
+#include "se/exploration_utils.hpp"
 
 extern PerfStats stats;
 
@@ -89,6 +93,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     surface_normals_M_(image_res_.x(), image_res_.y(), Eigen::Vector3f::Zero()),
     render_T_MC_(&T_MC_),
     T_MW_(T_MW),
+    T_WM_(se::math::to_inverse_transformation(T_MW_)),
     input_segmentation_(image_res_.x(), image_res_.y()),
     processed_segmentation_(image_res_.x(), image_res_.y()),
     object_surface_point_cloud_M_(image_res_.x(), image_res_.y()),
@@ -138,6 +143,8 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     valid_depth_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()), se::mask_t, cv::Scalar(255));
     raycasted_instance_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()),
         se::instance_mask_t, cv::Scalar(se::instance_bg));
+    // Exploration only ///////////////////////////////////////////////////////
+    freeInitSphere();
 }
 
 
@@ -260,7 +267,13 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
   // changed from VoxelState::Frontier to something else.
   se::setminus(frontiers_, removed_frontier_blocks_);
   se::setunion(frontiers_, added_frontier_blocks_);
+  pruneFrontiers();
   TOCK("INTEGRATION")
+  // Update the free/occupied volume.
+  se::ExploredVolume ev (*map_);
+  free_volume = ev.free_volume;
+  occupied_volume = ev.occupied_volume;
+  explored_volume = ev.explored_volume;
   return true;
 }
 
@@ -730,6 +743,87 @@ std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierVoxelVolu
 
 
 
+bool DenseSLAMSystem::goalReached() const {
+  if (se::math::position_error(goal_T_MC_, T_MC_).norm() > goal_position_threshold_) {
+    return false;
+  }
+  if (fabsf(se::math::yaw_error(goal_T_MC_, T_MC_)) > goal_yaw_threshold_) {
+    return false;
+  }
+  if (fabsf(se::math::pitch_error(goal_T_MC_, T_MC_)) > goal_roll_pitch_threshold_) {
+    return false;
+  }
+  if (fabsf(se::math::roll_error(goal_T_MC_, T_MC_)) > goal_roll_pitch_threshold_) {
+    return false;
+  }
+  return true;
+}
+
+
+
+se::Path DenseSLAMSystem::computeNextPath_WC(const SensorImpl& sensor) {
+  se::ExplorationConfig config {
+      config_.num_candidates,
+      {
+        config_.raycast_width,
+        config_.raycast_height,
+        config_.linear_velocity,
+        config_.angular_velocity,
+        {
+          "", Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(),
+          config_.robot_radius,
+          config_.safety_radius,
+          config_.min_control_point_radius,
+          config_.skeleton_sample_precision,
+          config_.solving_time}}};
+  se::SinglePathExplorationPlanner planner (map_, pruned_frontiers_, objects_, sensor, T_MC_, config);
+  candidate_views_ = planner.views();
+  rejected_candidate_views_ = planner.rejectedViews();
+  goal_view_ = planner.bestView();
+  path_M_ = planner.bestPath();
+  goal_T_MC_ = path_M_.back();
+  // Convert the path to the world frame
+  path_W_ = se::Path(path_M_.size());
+  for (size_t i = 0; i < path_M_.size(); ++i) {
+    path_W_[i] = T_WM_ * path_M_[i];
+  }
+  return path_W_;
+}
+
+
+
+std::vector<se::CandidateView> DenseSLAMSystem::candidateViews() const {
+  return candidate_views_;
+}
+
+
+
+std::vector<se::CandidateView> DenseSLAMSystem::rejectedCandidateViews() const {
+  return rejected_candidate_views_;
+}
+
+
+
+se::CandidateView DenseSLAMSystem::goalView() const {
+  return goal_view_;
+}
+
+
+
+se::Image<uint32_t> DenseSLAMSystem::renderEntropy(const SensorImpl& sensor,
+                                                   const bool        visualize_yaw) {
+  return goal_view_.renderEntropy(*map_, sensor, visualize_yaw);
+}
+
+
+
+se::Image<uint32_t> DenseSLAMSystem::renderEntropyDepth(const SensorImpl& sensor,
+                                                        const bool        visualize_yaw) {
+  return goal_view_.renderDepth(*map_, sensor, visualize_yaw);
+}
+
+
+
 
 
 // Private functions //////////////////////////////////////////////////////////
@@ -927,6 +1021,128 @@ void DenseSLAMSystem::generateUndetectedInstances(se::SegmentationResult& detect
     const cv::Mat undetected_mask = se::extract_instance(raycasted_instance_mask_, undetected_id);
     const se::InstanceSegmentation undetected_instance (undetected_id, undetected_mask);
     detections.object_instances.push_back(undetected_instance);
+  }
+}
+
+
+
+// Exploration only ///////////////////////////////////////////////////////
+void DenseSLAMSystem::freeInitSphere() {
+  // Compute the AABB of the sphere to reduce the voxels iterated over
+  const float radius = 1.5f * (config_.robot_radius + config_.safety_radius);
+  const Eigen::Vector3f center_M = T_MC_.topRightCorner<3,1>();
+  const Eigen::Vector3f corner_min_M = center_M - Eigen::Vector3f::Constant(radius);
+  const Eigen::Vector3f corner_max_M = center_M + Eigen::Vector3f::Constant(radius);
+  // Compute the coordinates of all the points corresponding to voxels in the AABB
+  std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> aabb_points_M;
+  for (float z = corner_min_M.z(); z <= corner_max_M.z(); z += map_->voxelDim()) {
+    for (float y = corner_min_M.y(); y <= corner_max_M.y(); y += map_->voxelDim()) {
+      for (float x = corner_min_M.x(); x <= corner_max_M.x(); x += map_->voxelDim()) {
+        aabb_points_M.push_back(Eigen::Vector3f(x, y, z));
+      }
+    }
+  }
+  // Allocate the required VoxelBlocks
+  std::set<se::key_t> code_set;
+  for (const auto& point_M : aabb_points_M) {
+    const Eigen::Vector3i voxel = map_->pointToVoxel(point_M);
+    if (map_->contains(voxel)) {
+      code_set.insert(map_->hash(voxel.x(), voxel.y(), voxel.z(), map_->blockDepth()));
+    }
+  }
+  std::vector<se::key_t> codes (code_set.begin(), code_set.end());
+  map_->allocate(codes.data(), codes.size());
+  // Update any other required VoxelBlock data
+  std::vector<VoxelImpl::VoxelBlockType*> blocks;
+  map_->getBlockList(blocks, false);
+  for (auto& block : blocks) {
+    block->active(true);
+    // Allocate the VoxelBlocks to the single-voxel scale
+    if (std::is_same<VoxelImpl::VoxelBlockType, se::VoxelBlockSingleMax<VoxelImpl::VoxelType>>::value
+        || std::is_same<VoxelImpl::VoxelBlockType, se::VoxelBlockSingle<VoxelImpl::VoxelType>>::value) {
+      block->allocateDownTo();
+    }
+  }
+  // The data to store in the free voxels
+  auto data = VoxelImpl::VoxelType::initData();
+  if (std::is_same<VoxelImpl, MultiresOFusion>::value) {
+    data.x = -5;
+    data.y = 5;
+    data.state = VoxelState::Free;
+    data.observed = true;
+  } else {
+    std::cerr << "Error: Only MultiresOFusion is supported\n";
+    std::abort();
+  }
+  // Set the sphere voxels to free
+  for (const auto& point_M : aabb_points_M) {
+    if ((point_M - center_M).norm() <= radius) {
+      map_->setAtPoint(point_M, data);
+    }
+  }
+  // Up-propagate the data.
+  if (std::is_same<VoxelImpl, MultiresOFusion>::value) {
+    // Up-propagate free space to the root
+    VoxelImpl::propagateToRoot(*map_);
+  }
+}
+
+
+
+void DenseSLAMSystem::pruneFrontiers() {
+  pruned_frontiers_.clear();
+  pruned_frontiers_.reserve(frontiers_.size());
+  // Iterate over all frontiers and compute the number of voxels they contain
+  for (auto it = frontiers_.begin(); it != frontiers_.end();) {
+    // Get the Node corresponding to the Morton code
+    const se::key_t code = *it;
+    const Eigen::Vector3i node_coord = se::keyops::decode(code);
+    const int node_depth = se::keyops::depth(code);
+    const se::Node<VoxelImpl::VoxelType>* node = map_->fetchNode(node_coord, node_depth);
+    // Compute the number of frontier voxels in the Node
+    const size_t num_frontier_voxels = numFrontierVoxels(node);
+    if (num_frontier_voxels > 0) {
+      if (num_frontier_voxels >= min_frontiers_) {
+        // Only add to the pruned frontiers if above the threshold
+        pruned_frontiers_.push_back(code);
+      }
+      ++it;
+    } else {
+      // No frontiers in this Node after all, erase it
+      it = frontiers_.erase(it);
+    }
+  }
+  // Sort the vector of Morton codes
+  std::sort(pruned_frontiers_.begin(), pruned_frontiers_.end());
+}
+
+
+
+size_t DenseSLAMSystem::numFrontierVoxels(const se::Node<VoxelImpl::VoxelType>* node) {
+  if (node == nullptr) {
+    return 0;
+  }
+  if (node->isBlock()) {
+    // VoxelBlock, count the number of frontier volumes it contains
+    const VoxelBlockType* block = reinterpret_cast<const VoxelBlockType*>(node);
+    const int scale = block->current_scale();
+    size_t num_frontiers = 0;
+    for (int i = 0; i < VoxelBlockType::scaleNumVoxels(scale); ++i) {
+      if (block->data(i, scale).state  == VoxelState::Frontier) {
+        num_frontiers++;
+      }
+    }
+    // Return the number of voxels contained in the frontier volumes
+    const int voxels_per_frontier = se::math::cu(VoxelBlockType::scaleVoxelSize(scale));
+    return voxels_per_frontier * num_frontiers;
+  } else {
+    // Node
+    if (node->data().state == VoxelState::Frontier) {
+      // Return the number of voxels the Node contains
+      return se::math::cu(node->size());
+    } else {
+      return 0;
+    }
   }
 }
 

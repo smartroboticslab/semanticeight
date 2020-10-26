@@ -401,6 +401,8 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       bool has_yaml_map_config = false;
       YAML::Node yaml_sensor_config = YAML::Load("");
       bool has_yaml_sensor_config = false;
+      YAML::Node yaml_exploration_config = YAML::Load("");
+      bool has_yaml_exploration_config = false;
 
       if (YAML::LoadFile(optarg)["general"]) {
         yaml_general_config = YAML::LoadFile(optarg)["general"];
@@ -413,6 +415,10 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       if (YAML::LoadFile(optarg)["sensor"]) {
         yaml_sensor_config = YAML::LoadFile(optarg)["sensor"];
         has_yaml_sensor_config = true;
+      }
+      if (YAML::LoadFile(optarg)["exploration"]) {
+        yaml_exploration_config = YAML::LoadFile(optarg)["exploration"];
+        has_yaml_exploration_config = true;
       }
 
       // CONFIGURE GENERAL
@@ -563,6 +569,49 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       // Far plane
       if (has_yaml_sensor_config && yaml_sensor_config["far_plane"]) {
         config.far_plane = yaml_sensor_config["far_plane"].as<float>();
+      }
+
+
+      // CONFIGURE EXPLORATION
+      // Num candidates
+      if (has_yaml_exploration_config && yaml_exploration_config["num_candidates"]) {
+        config.num_candidates = yaml_exploration_config["num_candidates"].as<size_t>();
+      }
+      // Raycast width
+      if (has_yaml_exploration_config && yaml_exploration_config["raycast_width"]) {
+        config.raycast_width = yaml_exploration_config["raycast_width"].as<float>();
+      }
+      // Raycast height
+      if (has_yaml_exploration_config && yaml_exploration_config["raycast_height"]) {
+        config.raycast_height = yaml_exploration_config["raycast_height"].as<float>();
+      }
+      // Linear velocity
+      if (has_yaml_exploration_config && yaml_exploration_config["linear_velocity"]) {
+        config.linear_velocity = yaml_exploration_config["linear_velocity"].as<float>();
+      }
+      // Angular velocity
+      if (has_yaml_exploration_config && yaml_exploration_config["angular_velocity"]) {
+        config.angular_velocity = yaml_exploration_config["angular_velocity"].as<float>();
+      }
+      // Robot radius
+      if (has_yaml_exploration_config && yaml_exploration_config["robot_radius"]) {
+        config.robot_radius = yaml_exploration_config["robot_radius"].as<float>();
+      }
+      // Safety radius
+      if (has_yaml_exploration_config && yaml_exploration_config["safety_radius"]) {
+        config.safety_radius = yaml_exploration_config["safety_radius"].as<float>();
+      }
+      // Min control point radius
+      if (has_yaml_exploration_config && yaml_exploration_config["min_control_point_radius"]) {
+        config.min_control_point_radius = yaml_exploration_config["min_control_point_radius"].as<float>();
+      }
+      // Skeleton sample precision
+      if (has_yaml_exploration_config && yaml_exploration_config["skeleton_sample_precision"]) {
+        config.skeleton_sample_precision = yaml_exploration_config["skeleton_sample_precision"].as<float>();
+      }
+      // Solving time
+      if (has_yaml_exploration_config && yaml_exploration_config["solving_time"]) {
+        config.solving_time = yaml_exploration_config["solving_time"].as<float>();
       }
     }
   }
