@@ -339,8 +339,7 @@ inline int Octree<T>::getThreshold(const int          x,
 
     if (current_scale < max_block_scale) {
       Eigen::Vector3i voxel_coord(x, y, z);
-      int v_scale = max_block_scale - 1;
-      for (v_scale; v_scale >= min_block_scale; v_scale--, v_size = v_size >> 1)  {
+      for (int v_scale = max_block_scale - 1; v_scale >= min_block_scale; v_scale--, v_size = v_size >> 1)  {
         v_corner = v_size * (voxel_coord / v_size);
         v_data  = block->maxData(v_corner, v_scale);
         if((v_scale == current_scale) || (T::threshold(v_data) <= t_value && T::isValid(v_data))){
