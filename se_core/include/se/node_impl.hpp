@@ -1070,7 +1070,9 @@ void VoxelBlockSingleMax<T>::allocateDownTo() {
       }
     }
 
+    this->current_scale_ = 0;
     this->min_scale_ = 0;
+    curr_data_ = block_data_[this->max_scale];
   }
 }
 
