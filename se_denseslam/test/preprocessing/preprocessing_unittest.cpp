@@ -202,7 +202,7 @@ TEST(DownsampleDepthKernel, VariedImageHalf) {
   };
 
   const float desired_depth[2 * 2] = {
-    1.5f, 4.3f,
+    1.5f, 6.2f,
     3.0f, 0.0f,
   };
 

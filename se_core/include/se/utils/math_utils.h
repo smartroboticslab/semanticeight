@@ -207,6 +207,31 @@ namespace se {
       }
     }
 
+    /*! \brief Compute the median of the data in the vector.
+     * If the vector has an even number of elements, the second of the two
+     * middle elements will be returned instead of their average. This is done
+     * to avoid creating values that don't exist in the original data.
+     *
+     * \param[in,out] data The data to compute the median of. The vector will
+     *                     be sorted in-place.
+     * \return The median of the data. If input vector is empty, the value
+     * returned by the constructor T() is returned. This is typically 0.
+     *
+     * \warning The vector will be sorted inside this function.
+     *
+     * \note Weird things will happen if the vector contains NaNs.
+     */
+    template <typename T>
+    static T almost_median(std::vector<T>& data) {
+      if (!data.empty()) {
+        std::sort(data.begin(), data.end());
+        const size_t mid_idx = data.size() / 2;
+        return data[mid_idx];
+      } else {
+        return T();
+      }
+    }
+
     /*! Same as se::math::median() but the order of the original vector is
      * retain. This has a performance impact proportional to the size of the
      * input vector.

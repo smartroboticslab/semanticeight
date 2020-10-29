@@ -231,7 +231,7 @@ void downsampleDepthKernel(const float*           input_depth_data,
           }
         }
       }
-      output_depth(x_out, y_out) = box_values.empty() ? 0.0f : se::math::median(box_values);
+      output_depth(x_out, y_out) = box_values.empty() ? 0.0f : se::math::almost_median(box_values);
       box_values.clear();
     }
   }
