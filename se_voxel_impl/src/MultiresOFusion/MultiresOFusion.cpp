@@ -115,7 +115,7 @@ void MultiresOFusion::configure(YAML::Node yaml_config, const float voxel_dim) {
     tau_max = tau_min_max[1];
   }
   if (yaml_config["uncertainty_model"]) {
-    stringToModel.find(yaml_config["uncertainty_model"].as<std::string>())->second;
+    uncertainty_model = stringToModel.find(yaml_config["uncertainty_model"].as<std::string>())->second;
   }
   if (yaml_config["k_tau"]) {
     k_tau = yaml_config["k_tau"].as<float>();
