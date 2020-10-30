@@ -28,6 +28,11 @@ add_compile_options(
   -Wno-unknown-pragmas
   -Wno-unused-function
 )
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  # Link against the GNU C++ library even when using clang
+  # Clang also requires explicitly linking with the math library
+  link_libraries(stdc++ m)
+endif()
 
 
 
