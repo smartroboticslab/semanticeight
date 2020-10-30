@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 # SPDX-FileCopyrightText: 2020 Smart Robotics Lab, Imperial College London
 # SPDX-FileCopyrightText: 2020 Nils Funk
