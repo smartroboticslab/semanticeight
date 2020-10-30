@@ -69,7 +69,7 @@ float sphere_dist(const Eigen::Vector3f& p, const Eigen::Vector3f& C,
   const float b = 2 * dir.dot(centre_offset);
   const float c = centre_offset.dot(centre_offset) - radius * radius;
   const float delta = b * b - 4 * a * c;
-  float dist = std::numeric_limits<int>::max();
+  float dist = std::numeric_limits<float>::max();
   if(delta > 0) {
     dist = std::min(-b + sqrtf(delta), -b - sqrtf(delta));
     dist /= 2 * a;
