@@ -32,8 +32,8 @@ class runCommand:
 
     def generateSummary(self):
         executable_cmd = [os.path.dirname(os.path.realpath(__file__)) + '/result_summary.py']
-        result_file_arg = ['--result-file ' + self.result_file]
-        summary_file_arg = ['--summary-file ' + os.path.join(self.result_dir, self.base_filename + '_summary')]
+        result_file_arg = [self.result_file]
+        summary_file_arg = [os.path.join(self.result_dir, self.base_filename + '_summary')]
         return ' '.join(executable_cmd + result_file_arg + summary_file_arg)
 
 
@@ -54,8 +54,8 @@ class runCommand:
 
     def generateManualSummary(self):
         executable_cmd = [os.path.dirname(os.path.realpath(__file__)) + '/result_summary.py']
-        result_file_arg = ['--result-file ' + self.result_manual_file]
-        summary_file_arg = ['--summary-file ' + os.path.join(self.result_dir, self.base_filename + '_summary_manual_run')]
+        result_file_arg = [self.result_manual_file]
+        summary_file_arg = [os.path.join(self.result_dir, self.base_filename + '_summary_manual_run')]
         return ' '.join(executable_cmd + result_file_arg + summary_file_arg)
 
     def withoutBenchmark(self): # Force rendering to be enabled

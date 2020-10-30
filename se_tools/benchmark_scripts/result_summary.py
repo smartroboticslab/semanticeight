@@ -198,8 +198,8 @@ if __name__ == '__main__':
 
     # Parse command line
     parser = argparse.ArgumentParser(description='''This script a test summary .''')
-    parser.add_argument('--result-file', help='supereight result file [result.txt]')
-    parser.add_argument('--summary-file', help='The file the summary is written to [summary]')
+    parser.add_argument('result_file', metavar='RESULT_IN', help='supereight result file [result.txt]')
+    parser.add_argument('summary_file', metavar='PDF_OUT', help='The file the summary is written to [summary]')
     args = parser.parse_args()
 
     # Set document margins
