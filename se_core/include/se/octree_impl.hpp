@@ -1220,12 +1220,7 @@ void Octree<T>::reserveBuffers(const int num_blocks){
 template <typename T>
 bool Octree<T>::allocate(key_t* keys, int num_elem){
 
-#if defined(_OPENMP) && !defined(__clang__)
-  __gnu_parallel::sort(keys, keys+num_elem);
-#else
-std::sort(keys, keys + num_elem);
-#endif
-
+  std::sort(keys, keys + num_elem);
   num_elem = algorithms::filter_ancestors(keys, num_elem, voxel_depth_);
   reserveBuffers(num_elem); // Reserve memory for blocks
 

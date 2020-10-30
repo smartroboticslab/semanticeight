@@ -41,10 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "octant_ops.hpp"
 #include "octree_iterator.hpp"
 
-#if defined(_OPENMP) && !defined(__clang__)
-#include <parallel/algorithm>
-#endif
-
 #include <array>
 #include <tuple>
 #include <queue>
