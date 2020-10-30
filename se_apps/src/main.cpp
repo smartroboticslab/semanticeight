@@ -381,7 +381,7 @@ int processAll(se::Reader*        reader,
     TICK("RENDERING")
     if (frame == config->max_frame) {
       render_volume = true;
-    } else if (!config->rendering_rate == 0) {
+    } else if (!(config->rendering_rate == 0)) {
       render_volume = (config->rendering_rate < 0) ?
           frame == std::abs(config->rendering_rate) : frame % config->rendering_rate == 0;
     }
@@ -418,7 +418,7 @@ int processAll(se::Reader*        reader,
   if (config->enable_meshing) {
     if (frame == config->max_frame) {
       mesh_volume = true;
-    } else if (!config->meshing_rate == 0) {
+    } else if (!(config->meshing_rate == 0)) {
       mesh_volume = (config->meshing_rate < 0) ?
           frame == std::abs(config->meshing_rate) :frame % config->meshing_rate == 0;
     }
