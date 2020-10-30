@@ -779,7 +779,7 @@ inline Eigen::Vector3f Octree<T>::gradAtPoint(const Eigen::Vector3f& point_M,
                                               const int              min_scale) const {
 
   const Eigen::Vector3f voxel_coord_f = inverse_voxel_dim_ * point_M;
-  return grad(voxel_coord_f, select_value, min_scale);
+  return grad(voxel_coord_f, select_value, check_is_valid, is_valid, min_scale);
 }
 
 
