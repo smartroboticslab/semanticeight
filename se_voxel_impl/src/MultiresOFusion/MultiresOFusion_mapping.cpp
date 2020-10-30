@@ -120,7 +120,7 @@ struct MultiresOFusionUpdate {
   const float zero_depth_band_;
   const float size_to_radius_;
 
-  inline static constexpr int max_block_scale_ = se::math::log2_const(MultiresOFusion::VoxelBlockType::size_li);
+  static constexpr int max_block_scale_ = se::math::log2_const(MultiresOFusion::VoxelBlockType::size_li);
 
   void freeBlock(VoxelBlockType* block) {
 
@@ -699,6 +699,13 @@ struct MultiresOFusionUpdate {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
+
+
+
+template<typename SensorImplType>
+constexpr int MultiresOFusionUpdate<SensorImplType>::max_block_scale_;
+
+
 
 template<>
 void MultiresOFusionUpdate<se::PinholeCamera>::operator()(const Eigen::Vector3i& node_coord,
