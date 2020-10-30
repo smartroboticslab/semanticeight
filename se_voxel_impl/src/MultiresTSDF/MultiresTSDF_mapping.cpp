@@ -386,7 +386,6 @@ void MultiresTSDF::integrate(OctreeType&             map,
                          in_frustum_predicate);
 
   std::deque<se::Node<VoxelType> *> node_queue;
-  std::mutex deque_mutex;
   struct MultiresTSDFUpdate block_update_funct(
       map, depth_image, T_CM, sensor, voxel_dim);
   se::functor::internal::parallel_for_each(active_list, block_update_funct);
