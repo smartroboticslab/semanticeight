@@ -148,12 +148,14 @@ void renderVolumeKernel(uint32_t*                         volume_RGBA_image_data
                         const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
                         const se::Image<Eigen::Vector3f>& surface_normals_M) {
   TICKD("renderVolumeKernel");
+  const int h = volume_RGBA_image_res.y(); // clang complains if this is inside the for loop
+  const int w = volume_RGBA_image_res.x(); // clang complains if this is inside the for loop
 #pragma omp parallel for
-  for (int y = 0; y < volume_RGBA_image_res.y(); y++) {
+  for (int y = 0; y < h; y++) {
 #pragma omp simd
-    for (int x = 0; x < volume_RGBA_image_res.x(); x++) {
+    for (int x = 0; x < w; x++) {
 
-      const size_t pixel_idx = x + volume_RGBA_image_res.x() * y;
+      const size_t pixel_idx = x + w * y;
 
       const Eigen::Vector3f surface_point_M = surface_point_cloud_M[pixel_idx];
       const Eigen::Vector3f surface_normal_M = surface_normals_M[pixel_idx];
