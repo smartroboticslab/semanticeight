@@ -34,14 +34,6 @@ octomap::OcTree* se::to_octomap(const se::Octree<VoxelT>& octree,
   // centre.
   const Eigen::Vector3f om_sample_offset = Eigen::Vector3f::Constant(0.5f);
 
-  // The sample point of supereight voxels relative to the voxel
-  // corner closest to the origin. Typically the sample point is
-  // the voxel centre.
-  const Eigen::Vector3f se_sample_offset = se::Octree<VoxelT>::sample_offset_frac_; // TODO: Currently unused
-  // Add this to supereight voxel coordinates to transform them to
-  // OctoMap voxel coordinates.
-  const Eigen::Vector3f se_to_om_offset = - se_sample_offset + om_sample_offset; // TODO: Currently unused
-
   // Initialize the octomap.
   octomap::OcTree* octomap = new octomap::OcTree(voxel_dim);
 
