@@ -57,16 +57,18 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
                                  const Eigen::Vector3f&   map_dim,
                                  const Eigen::Vector3f&   t_MW,
                                  std::vector<int>&        pyramid,
-                                 const se::Configuration& config)
+                                 const se::Configuration& config,
+                                 const std::string        voxel_impl_yaml_path)
   : DenseSLAMSystem(image_res, map_size, map_dim,
-      se::math::to_transformation(t_MW), pyramid, config) {}
+      se::math::to_transformation(t_MW), pyramid, config, voxel_impl_yaml_path) {}
 
 DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
                                  const Eigen::Vector3i&   map_size,
                                  const Eigen::Vector3f&   map_dim,
                                  const Eigen::Matrix4f&   T_MW,
                                  std::vector<int>&        pyramid,
-                                 const se::Configuration& config)
+                                 const se::Configuration& config,
+                                 const std::string        voxel_impl_yaml_path)
   : image_res_(image_res),
     depth_image_(image_res_.x(), image_res_.y()),
     rgba_image_(image_res_.x(), image_res_.y()),
@@ -85,6 +87,24 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     render_T_MC_(&T_MC_),
     T_MW_(T_MW)
   {
+
+    bool has_yaml_voxel_impl_config = false;
+    YAML::Node yaml_voxel_impl_config = YAML::Load("");
+
+    if (voxel_impl_yaml_path != "") {
+      if (YAML::LoadFile(voxel_impl_yaml_path)["voxel_impl"]) {
+        yaml_voxel_impl_config = YAML::LoadFile(voxel_impl_yaml_path)["voxel_impl"];
+        has_yaml_voxel_impl_config = true;
+      }
+    }
+
+    const float voxel_dim = map_dim_.x() / map_size_.x();
+    if (has_yaml_voxel_impl_config) {
+      VoxelImpl::configure(yaml_voxel_impl_config, voxel_dim);
+    } else {
+      VoxelImpl::configure(voxel_dim);
+    }
+
     // Initialize the Gaussian for the bilateral filter
     constexpr int gaussian_size = gaussian_radius * 2 + 1;
     gaussian_.reserve(gaussian_size);

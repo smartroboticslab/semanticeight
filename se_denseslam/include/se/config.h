@@ -52,6 +52,7 @@ namespace se {
 
     std::string sensor_type;
     std::string voxel_impl_type;
+    std::string voxel_impl_yaml;
     std::string sequence_name;
 
     /**
@@ -352,6 +353,7 @@ namespace se {
     Configuration()
       : sensor_type(""),
         voxel_impl_type(""),
+        voxel_impl_yaml(""),
         sequence_name(""),
         sequence_type("raw"),
         sensor_downsampling_factor(1),

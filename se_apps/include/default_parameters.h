@@ -746,22 +746,15 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
   // Read the voxel implementation settings
   while ((c = getopt_long(argc, argv, short_options.c_str(), long_options,
                           &option_index)) != -1) {
-    if (c == 'Y')  {
+    if (c == 'Y') {
       YAML::Node yaml_voxel_impl_config = YAML::Load("");
-      bool has_yaml_voxel_impl_config = false;
 
       if (YAML::LoadFile(optarg)["voxel_impl"]) {
         yaml_voxel_impl_config = YAML::LoadFile(optarg)["voxel_impl"];
-        has_yaml_voxel_impl_config = true;
-      }
 
-      // CONFIGURE VOXEL IMPL
-      config.voxel_impl_type = VoxelImpl::type();
-      const float voxel_dim = config.map_dim.x() / config.map_size.x();
-      if (has_yaml_voxel_impl_config) {
-        VoxelImpl::configure(yaml_voxel_impl_config, voxel_dim);
-      } else {
-        VoxelImpl::configure(voxel_dim);
+        // CONFIGURE VOXEL IMPL
+        config.voxel_impl_type = VoxelImpl::type();
+        config.voxel_impl_yaml = optarg;
       }
     }
   }

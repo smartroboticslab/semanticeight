@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
       Eigen::Vector3i::Constant(config.map_size.x()),
       Eigen::Vector3f::Constant(config.map_dim.x()),
       t_MW,
-      config.pyramid, config);
+      config.pyramid, config, config.voxel_impl_yaml);
 
   // ========= UPDATE INIT POSE =========
   se::ReaderStatus read_ok = se::ReaderStatus::ok;
