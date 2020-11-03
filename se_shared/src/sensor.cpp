@@ -38,8 +38,10 @@ se::PinholeCamera::PinholeCamera(const SensorConfig& c)
 se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
     : model(pc.model.imageWidth() * sf, pc.model.imageHeight() * sf,
             pc.model.focalLengthU() * sf, pc.model.focalLengthV() * sf,
-            pc.model.imageCenterU() * sf, pc.model.imageCenterV() * sf, _distortion),
-            left_hand_frame(pc.left_hand_frame), near_plane(pc.near_plane), far_plane(pc.far_plane) {
+            ((pc.model.imageCenterU() + 0.5f) * sf - 0.5f),
+            ((pc.model.imageCenterV() + 0.5f) * sf - 0.5f),
+            _distortion), left_hand_frame(pc.left_hand_frame), near_plane(pc.near_plane), far_plane(pc.far_plane) {
+
   computeFrustumVertices();
   computeFrustumNormals();
 }
