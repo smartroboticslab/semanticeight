@@ -582,7 +582,7 @@ void ApplicationWindow::setCameraFunction(bool *isOpen,
 	enableMenuItem(OPEN_SCENE);
 }
 
-void ApplicationWindow::setRotPointer(Sophus::SE3<float> *rotVar) {
+void ApplicationWindow::setRotPointer(Eigen::Matrix4f *rotVar) {
 	rot = rotVar;
 
 	QPushButton *rightButton, *leftButton, *upButton, *downButton;
@@ -960,20 +960,20 @@ void ApplicationWindow::lButtonPress() {
 if (rot) {
   Eigen::Matrix<float, 6, 1> twist;
   twist << 0.0, 0, 0, 0, 0.1, 0;
-	*rot = Sophus::SE3<float>::exp(twist) * (*rot);
-requireUpdate = true;
-*forceRender = true;
-if (povButton) {
-	povButton->setChecked(false);
-	povButtonPress();
-}
+  *rot = se::math::exp(twist) * (*rot);
+  requireUpdate = true;
+  *forceRender = true;
+  if (povButton) {
+    povButton->setChecked(false);
+    povButtonPress();
+  }
 }
 }
 void ApplicationWindow::rButtonPress() {
 if (rot) {
   Eigen::Matrix<float, 6, 1> twist;
   twist << 0.0, 0, 0, 0, -0.1, 0;
-	*rot = Sophus::SE3<float>::exp(twist) * (*rot);
+	*rot = se::math::exp(twist) * (*rot);
 	requireUpdate = true;
 	*forceRender = true;
 	if (povButton) {
@@ -986,7 +986,7 @@ void ApplicationWindow::uButtonPress() {
 if (rot) {
   Eigen::Matrix<float, 6, 1> twist;
   twist << 0.0, 0, 0, -0.1, 0, 0;
-	*rot = Sophus::SE3<float>::exp(twist) * (*rot);
+	*rot = se::math::exp(twist) * (*rot);
 	requireUpdate = true;
 	*forceRender = true;
 	if (povButton) {
@@ -999,7 +999,7 @@ void ApplicationWindow::dButtonPress() {
 if (rot) {
   Eigen::Matrix<float, 6, 1> twist;
   twist << 0.0, 0, 0, 0.1, 0, 0;
-	*rot = Sophus::SE3<float>::exp(twist) * (*rot);
+	*rot = se::math::exp(twist) * (*rot);
 	requireUpdate = true;
 	*forceRender = true;
 	if (povButton) {

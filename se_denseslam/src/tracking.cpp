@@ -36,8 +36,6 @@
 
 #include "se/tracking.hpp"
 
-#include <sophus/se3.hpp>
-
 
 
 static inline Eigen::Matrix<float, 6, 6> makeJTJ(
@@ -328,7 +326,7 @@ bool updatePoseKernel(Eigen::Matrix4f& T_MC,
   TICKD("updatePoseKernel");
   Eigen::Map<const Eigen::Matrix<float, 8, 32, Eigen::RowMajor> > values(reduction_output_data);
   Eigen::Matrix<float, 6, 1> x = solve(values.row(0).segment(1, 27));
-  Eigen::Matrix4f delta = Sophus::SE3<float>::exp(x).matrix();
+  Eigen::Matrix4f delta = se::math::exp(x);
   T_MC = delta * T_MC;
 
   if (x.norm() < icp_threshold)

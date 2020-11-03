@@ -45,7 +45,6 @@ foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
     )
     target_link_libraries(${LIB_NAME}
       PUBLIC
-        sophus
         SE::VoxelImpl${VOXEL_IMPL}${SENSOR_IMPL}
     )
     set_target_properties(${LIB_NAME} PROPERTIES
