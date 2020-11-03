@@ -9,9 +9,7 @@
 #include <Eigen/Dense>
 #include "se/image_utils.hpp"
 #include "se/image/image.hpp"
-#include <srl/projection/NoDistortion.hpp>
-#include <srl/projection/OusterLidar.hpp>
-#include <srl/projection/PinholeCamera.hpp>
+#include "se/projection.hpp"
 
 
 

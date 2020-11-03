@@ -26,11 +26,6 @@ set_target_properties(${LIB_NAME} PROPERTIES
   CXX_STANDARD_REQUIRED ON
   CXX_EXTENSIONS OFF
 )
-# Use floats in srl_projection
-target_compile_definitions(${LIB_NAME}
-  PUBLIC
-	SRL_FLOAT_T=float
-)
 
 # Add an alias so that the library can be used inside the build tree, e.g. when
 # testing
