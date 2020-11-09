@@ -110,10 +110,10 @@ public:
   inline int voxelDepth() const { return voxel_depth_; }
   inline int maxBlockScale() const { return max_block_scale_; }
   inline int blockDepth() const { return block_depth_; }
-  inline int sizeToDepth(int size) { return voxel_depth_ - se::math::log2_const(size); }
-  inline int depthToSize(int depth) { return 1 << (voxel_depth_ - depth); }
-  inline int scaleToDepth(int scale) { return voxel_depth_ - scale; }
-  inline int depthToScale(int depth) { return voxel_depth_ - depth; }
+  inline int sizeToDepth(int size) const { return voxel_depth_ - se::math::log2_const(size); }
+  inline int depthToSize(int depth) const { return 1 << (voxel_depth_ - depth); }
+  inline int scaleToDepth(int scale) const { return voxel_depth_ - scale; }
+  inline int depthToScale(int depth) const { return voxel_depth_ - depth; }
   inline Node<T>* root() const { return root_; }
 
   OctreeIterator<T> begin();
