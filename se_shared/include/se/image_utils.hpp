@@ -225,6 +225,27 @@ namespace se {
 
 
   /**
+   * Convert a depth image to an RGBA image to allow visualizing it.
+   * The depth image is scaled using the minimum and maximum depth values to
+   * increase contrast.
+   *
+   * \param[in] depth_RGBA_image_data Pointer to the ouput RGBA image data.
+   * \param[in] depth_image_data      Pointer to the input depth image data.
+   * \param[in] depth_image_res       Resolution of the depth image in pixels
+   *                                  (width and height).
+   * \param[in] min_depth             The minimum possible depth value.
+   * \param[in] max_depth             The maximum possible depth value.
+   */
+  void depth_to_rgba(uint32_t*              depth_RGBA_image_data,
+                     const float*           depth_image_data,
+                     const Eigen::Vector2i& depth_image_res,
+                     const float            min_depth,
+                     const float            max_depth);
+
+
+
+
+  /**
    * Save a depth image with depth values in metres to a PNG.
    * The data is saved in a 16-bit image with the depth values scaled by scale.
    *
