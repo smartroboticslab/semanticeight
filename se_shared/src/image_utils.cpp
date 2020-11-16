@@ -12,6 +12,23 @@
 
 
 
+int se::save_depth_png(const float*           depth_image_data,
+                       const Eigen::Vector2i& depth_image_res,
+                       const std::string&     filename,
+                       const float            scale) {
+  // Scale the depth data and convert to uint16_t
+  const size_t num_pixels = depth_image_res.prod();
+  std::unique_ptr<uint16_t> depth_image_data_scaled (new uint16_t[num_pixels]);
+#pragma omp parallel for
+  for (size_t i = 0; i < num_pixels; ++i) {
+    depth_image_data_scaled.get()[i] = std::roundf(scale * depth_image_data[i]);
+  }
+  // Save the uint16_t depth image
+  return se::save_depth_png(depth_image_data_scaled.get(), depth_image_res, filename);
+}
+
+
+
 int se::save_depth_png(const uint16_t*        depth_image_data,
                        const Eigen::Vector2i& depth_image_res,
                        const std::string&     filename) {
@@ -43,6 +60,27 @@ int se::save_depth_png(const uint16_t*        depth_image_data,
 
 
 
+int se::load_depth_png(float**            depth_image_data,
+                       Eigen::Vector2i&   depth_image_res,
+                       const std::string& filename,
+                       const float        inverse_scale) {
+  // Load the 16-bit depth data
+  uint16_t* depth_image_data_scaled;
+  const int ret = se::load_depth_png(&depth_image_data_scaled, depth_image_res,
+      filename);
+  // Remove the scaling from the 16-bit depth data and convert to float
+  const size_t num_pixels = depth_image_res.prod();
+  *depth_image_data = static_cast<float*>(malloc(num_pixels * sizeof(float)));
+#pragma omp parallel for
+  for (size_t i = 0; i < num_pixels; ++i) {
+    (*depth_image_data)[i] = inverse_scale * depth_image_data_scaled[i];
+  }
+  free(depth_image_data_scaled);
+  return ret;
+}
+
+
+
 int se::load_depth_png(uint16_t**         depth_image_data,
                        Eigen::Vector2i&   depth_image_res,
                        const std::string& filename) {
@@ -69,6 +107,23 @@ int se::load_depth_png(uint16_t**         depth_image_data,
   }
 
   return ret;
+}
+
+
+
+int se::save_depth_pgm(const float*           depth_image_data,
+                       const Eigen::Vector2i& depth_image_res,
+                       const std::string&     filename,
+                       const float            scale) {
+  // Scale the depth data and convert to uint16_t
+  const size_t num_pixels = depth_image_res.prod();
+  std::unique_ptr<uint16_t> depth_image_data_scaled (new uint16_t[num_pixels]);
+#pragma omp parallel for
+  for (size_t i = 0; i < num_pixels; ++i) {
+    depth_image_data_scaled.get()[i] = std::roundf(scale * depth_image_data[i]);
+  }
+  // Save the uint16_t depth image
+  return se::save_depth_pgm(depth_image_data_scaled.get(), depth_image_res, filename);
 }
 
 
@@ -106,6 +161,27 @@ int se::save_depth_pgm(const uint16_t*        depth_image_data,
   file.close();
 
   return 0;
+}
+
+
+
+int se::load_depth_pgm(float**            depth_image_data,
+                       Eigen::Vector2i&   depth_image_res,
+                       const std::string& filename,
+                       const float        inverse_scale) {
+  // Load the 16-bit depth data
+  uint16_t* depth_image_data_scaled;
+  const int ret = se::load_depth_pgm(&depth_image_data_scaled, depth_image_res,
+      filename);
+  // Remove the scaling from the 16-bit depth data and convert to float
+  const size_t num_pixels = depth_image_res.prod();
+  *depth_image_data = static_cast<float*>(malloc(num_pixels * sizeof(float)));
+#pragma omp parallel for
+  for (size_t i = 0; i < num_pixels; ++i) {
+    (*depth_image_data)[i] = inverse_scale * depth_image_data_scaled[i];
+  }
+  free(depth_image_data_scaled);
+  return ret;
 }
 
 
