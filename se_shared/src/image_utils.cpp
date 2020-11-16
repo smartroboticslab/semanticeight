@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <memory>
 
 #include "lodepng.h"
 
@@ -17,27 +18,26 @@ int se::save_depth_png(const uint16_t*        depth_image_data,
 
   // Allocate a new image buffer to use for changing the image data from little
   // endian (used in x86 and ARM CPUs) to big endian order (used in PNG).
-  const size_t num_pixels = depth_image_res.x() * depth_image_res.y();
-  uint16_t* depth_big_endian = new uint16_t[num_pixels];
+  const size_t num_pixels = depth_image_res.prod();
+  std::unique_ptr<uint16_t> depth_big_endian (new uint16_t[num_pixels]);
 #pragma omp parallel for
   for (size_t i = 0; i < num_pixels; ++i) {
     // Swap the byte order.
     const uint16_t depth_value = depth_image_data[i];
     const uint16_t low_byte = depth_value & 0x00FF;
     const uint16_t high_byte = (depth_value & 0xFF00) >> 8;
-    depth_big_endian[i] = low_byte << 8 | high_byte;
+    depth_big_endian.get()[i] = low_byte << 8 | high_byte;
   }
 
   // Save the image to file.
   const unsigned ret = lodepng_encode_file(
       filename.c_str(),
-      reinterpret_cast<const unsigned char*>(depth_big_endian),
+      reinterpret_cast<const unsigned char*>(depth_big_endian.get()),
       depth_image_res.x(),
       depth_image_res.y(),
       LCT_GREY,
       16);
 
-  delete[] depth_big_endian;
   return ret;
 }
 
@@ -58,7 +58,7 @@ int se::load_depth_png(uint16_t**         depth_image_data,
 
   // Change the image data from little endian (used in x86 and ARM CPUs) to big
   // endian order (used in PNG).
-  const size_t num_pixels = depth_image_res.x() * depth_image_res.y();
+  const size_t num_pixels = depth_image_res.prod();
 #pragma omp parallel for
   for (size_t i = 0; i < num_pixels; ++i) {
     // Swap the byte order.
