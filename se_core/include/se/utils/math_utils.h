@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 /*
  * When compiling in debug mode Eigen compilation fails
@@ -398,6 +399,27 @@ namespace se {
       return angle_diff;
     }
 
+    inline Eigen::Vector3f position_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose) {
+      return end_pose.topRightCorner<3,1>() - start_pose.topRightCorner<3,1>();
+    }
+
+    inline float yaw_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose) {
+      const float start_yaw = start_pose.topLeftCorner<3,3>().eulerAngles(2, 1, 0).x();
+      const float end_yaw = end_pose.topLeftCorner<3,3>().eulerAngles(2, 1, 0).x();
+      return angle_diff(start_yaw, end_yaw);
+    }
+
+    inline float pitch_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose) {
+      const float start_pitch = wrap_angle_pi(start_pose.topLeftCorner<3,3>().eulerAngles(2, 1, 0).y());
+      const float end_pitch = wrap_angle_pi(end_pose.topLeftCorner<3,3>().eulerAngles(2, 1, 0).y());
+      return angle_diff(start_pitch, end_pitch);
+    }
+
+    inline float roll_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose) {
+      const float start_roll = wrap_angle_pi(start_pose.topLeftCorner<3,3>().eulerAngles(2, 1, 0).z());
+      const float end_roll = wrap_angle_pi(end_pose.topLeftCorner<3,3>().eulerAngles(2, 1, 0).z());
+      return angle_diff(start_roll, end_roll);
+    }
   }
 }
 #endif
