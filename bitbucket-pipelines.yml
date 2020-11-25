@@ -2,7 +2,7 @@ image: sotirisp/supereight-ci:18.04
 
 pipelines:
   branches:
-    '{master, devel}':
+    '{master,devel}':
     - step:
         script:
           - git submodule update --init --recursive
