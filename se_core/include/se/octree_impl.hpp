@@ -353,6 +353,7 @@ inline int Octree<T>::getThreshold(const int          x,
     v_size = v_size << 1;
     return se::math::log2_const(v_size);
   }
+  return 0;
 }
 
 
