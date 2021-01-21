@@ -36,10 +36,11 @@ namespace ptp {
       return false;
     }
 
-    if(!pcc_.checkSphere(goal_point_M, min_flight_corridor_radius_)) { ///< Verify goal is free.
-      start_end_occupied_ = true;
-      return false;
-    }
+    // Don't test the goal point occupancy to allow planning partial paths.
+    //if(!pcc_.checkSphere(goal_point_M, min_flight_corridor_radius_)) { ///< Verify goal is free.
+    //  start_end_occupied_ = true;
+    //  return false;
+    //}
 
     Eigen::Vector3f min_boundary, max_boundary;
     ow_.getMapBoundsMeter(min_boundary, max_boundary); ///< Update min/max map boundary based on observed supereight octree.
@@ -73,10 +74,10 @@ namespace ptp {
     return true;
   }
 
-  bool SafeFlightCorridorGenerator::planPath(const Eigen::Vector3f& start_point_M, const Eigen::Vector3f& goal_point_M) {
+  PlanningResult SafeFlightCorridorGenerator::planPath(const Eigen::Vector3f& start_point_M, const Eigen::Vector3f& goal_point_M) {
     // Setup the ompl planner
     if (!setupPlanner(start_point_M, goal_point_M)) {
-      return false;
+      return PlanningResult::Failed;
     }
 
     path_->states.clear();
@@ -85,32 +86,27 @@ namespace ptp {
     ob::PlannerStatus solved = optimizingPlanner_->solve(solving_time_); ///< Limit time to solve by solving_time_ in the config file.
 
     if (solved) {
+      // Get non-simplified path and convert to Eigen
+      ompl::geometric::SimpleSetup ss(si_);
+      ss.getProblemDefinition()->addSolutionPath(pdef_->getSolutionPath());
+      og::PathGeometric path = ss.getSolutionPath();
+      // Simplify path
+      prunePath(path);
+      // Convert final path to Eigen
+      OmplToEigen::convertPath(path, path_, min_flight_corridor_radius_);
+      reduceToControlPointCorridorRadius(path_);
 
       if (!pdef_->hasApproximateSolution()) {
-
-        // Get non-simplified path and convert to Eigen
-        ompl::geometric::SimpleSetup ss(si_);
-        ss.getProblemDefinition()->addSolutionPath(pdef_->getSolutionPath());
-        og::PathGeometric path = ss.getSolutionPath();
-
-        // Simplify path
-        prunePath(path);
-
-        // Convert final path to Eigen
-        OmplToEigen::convertPath(path, path_, min_flight_corridor_radius_);
-
-        reduceToControlPointCorridorRadius(path_);
-
+        return PlanningResult::OK;
       } else {
-        ompl_failed_ = true;
-        return false;
+        // TODO SEM check that the approximate solution is within some threshold of the goal,
+        // otherwise return Failed
+        return PlanningResult::Partial;
       }
     } else {
       ompl_failed_ = true;
-      return false;
+      return PlanningResult::Failed;
     }
-
-    return true;
   }
 
   void SafeFlightCorridorGenerator::reduceToControlPointCorridorRadius(Path<kDim>::Ptr path_m) {

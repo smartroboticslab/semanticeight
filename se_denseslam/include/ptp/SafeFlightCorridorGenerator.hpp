@@ -5,7 +5,7 @@
  * Copyright (C) 2018 ETH Zürich.
  *
  * @todo LICENSE
- * 
+ *
  *
  * @file file PlanningParameter.hpp
  * @author Nils Funk
@@ -41,6 +41,12 @@ namespace og = ompl::geometric;
 namespace oc = ompl::control;
 
 namespace ptp {
+  enum class PlanningResult {
+    OK,
+    Partial,
+    Failed,
+  };
+
   class SafeFlightCorridorGenerator {
   public:
     typedef std::shared_ptr<SafeFlightCorridorGenerator> Ptr;
@@ -73,8 +79,8 @@ namespace ptp {
      * @return True if straight line planning was successful.
      *TODO: Instead of Eigen::Vector3f use a trajectory point type/message
      */
-    bool planPath(const Eigen::Vector3f& start_m,
-                  const Eigen::Vector3f& goal_m);
+    PlanningResult planPath(const Eigen::Vector3f& start_m,
+                            const Eigen::Vector3f& goal_m);
 
     bool start_end_occupied() {return start_end_occupied_;};
     bool ompl_failed() {return ompl_failed_;};
