@@ -427,6 +427,28 @@ public:
   Node<T>* fetchNode(const Eigen::Vector3i& voxel_coord,
                      const int              depth) const;
 
+  /*! \brief Fetch the node up to min_depth that contains voxel (x,y,z)
+   *
+   * \param x         The x coordinate in interval [0, size - 1]
+   * \param y         The y coordinate in interval [0, size - 1]
+   * \param z         The z coordinate in interval [0, size - 1]
+   * \param min_depth The minimum depth of the returned Node.
+   *
+   * \return The fetched node. If no Nodes are allocated a nullptr is returned.
+   */
+  Node<T>* fetchLowestNode(const int x, const int y, const int z, const int min_depth) const;
+
+  /*! \brief Fetch the node up to min_depth that contains voxel (x,y,z)
+   *
+   * \param[in] voxel_coord The coordinates of the voxel. Each component must
+   *                        be in the interval [0, size).
+   * \param min_depth       The minimum depth of the returned Node.
+   *
+   * \return The fetched node. If no Nodes are allocated a nullptr is returned.
+   */
+  Node<T>* fetchLowestNode(const Eigen::Vector3i& voxel_coord,
+                           const int              min_depth) const;
+
   /*! \brief Insert the octant at (x,y,z). Not thread safe.
    * \param x x coordinate in interval [0, size - 1]
    * \param y y coordinate in interval [0, size - 1]

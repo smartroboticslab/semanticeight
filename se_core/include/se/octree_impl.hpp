@@ -644,6 +644,38 @@ inline Node<T>* Octree<T>::fetchNode(const Eigen::Vector3i& voxel_coord,
 
 
 template <typename T>
+inline Node<T>* Octree<T>::fetchLowestNode(const int x,
+                                           const int y,
+                                           const int z,
+                                           const int min_depth) const {
+  Node<T>* node = root_;
+  if (!node) {
+    return nullptr;
+  }
+  // Get the Node.
+  unsigned node_size = size_ / 2;
+  for (int d = 1; node_size >= block_size && d <= min_depth; node_size /= 2, ++d) {
+    Node<T>* child_node = node->child((x & node_size) > 0u, (y & node_size) > 0u, (z & node_size) > 0u);
+    if (child_node) {
+      return node;
+    } else {
+      node = child_node;
+    }
+  }
+  return node;
+}
+
+
+
+template <typename T>
+inline Node<T>* Octree<T>::fetchLowestNode(const Eigen::Vector3i& voxel_coord,
+                                           const int              min_depth) const {
+  return fetchLowestNode(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), min_depth);
+}
+
+
+
+template <typename T>
 Node<T>* Octree<T>::insert(const int x,
                            const int y,
                            const int z,
