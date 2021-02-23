@@ -167,18 +167,15 @@ class DenseSLAMSystem {
     static constexpr float class_confidence_threshold_ = 0.75;
 
     // Exploration only ///////////////////////////////////////////////////////
-    std::set<se::key_t> free_nodes_;
-    std::set<se::key_t> added_frontier_blocks_;
-    std::set<se::key_t> removed_frontier_blocks_;
+    std::set<se::key_t> updated_nodes_;
     std::set<se::key_t> frontiers_;
-    std::vector<se::key_t> pruned_frontiers_;
     Eigen::Matrix4f goal_T_MC_;
     se::Path path_M_;
     se::Path path_W_;
     std::vector<se::CandidateView> candidate_views_;
     std::vector<se::CandidateView> rejected_candidate_views_;
     se::CandidateView goal_view_;
-    static constexpr size_t min_frontiers_ = 12;
+    static constexpr int min_frontier_volume_ = 1;
     static constexpr float goal_position_threshold_ = 0.2f;
     static constexpr float goal_yaw_threshold_ = se::math::deg_to_rad * 5.0f;
     static constexpr float goal_roll_pitch_threshold_ = se::math::deg_to_rad * 10.0f;
@@ -237,9 +234,10 @@ class DenseSLAMSystem {
     // Exploration only ///////////////////////////////////////////////////////
     void freeInitSphere();
 
-    void pruneFrontiers();
-
-    static size_t numFrontierVoxels(const se::Node<VoxelImpl::VoxelType>* node);
+    /** Update the frontier status of all voxel in frontiers.
+     * Also prune frontier nodes with too small frontier volumes.
+     */
+    void updateFrontiers(std::set<se::key_t>& frontiers);
 
 
 

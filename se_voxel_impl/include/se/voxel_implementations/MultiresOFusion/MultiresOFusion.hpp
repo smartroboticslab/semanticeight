@@ -79,14 +79,14 @@ struct MultiresOFusion {
       uint8_t  g;   // Green channel
       uint8_t  b;   // Blue channel
       bool   observed;      // All children have been observed at least once
-      VoxelState   state;
+      bool   frontier;
 
       bool operator==(const VoxelData& other) const;
       bool operator!=(const VoxelData& other) const;
     };
 
-    static inline VoxelData invalid()  { return {0.f, 0.f, 0, 0u, 0u, 0u, false, VoxelState::Unknown}; }
-    static inline VoxelData initData() { return {0.f, 0.f, 0, 0u, 0u, 0u, false, VoxelState::Unknown}; }
+    static inline VoxelData invalid()  { return {0.f, 0.f, 0, 0u, 0u, 0u, false, false}; }
+    static inline VoxelData initData() { return {0.f, 0.f, 0, 0u, 0u, 0u, false, false}; }
 
     static float selectNodeValue(const VoxelData& data) {
       return data.x;
@@ -237,9 +237,7 @@ struct MultiresOFusion {
                         const Eigen::Matrix4f&  T_CM,
                         const SensorImpl&       sensor,
                         const unsigned          frame,
-                        std::set<se::key_t>*    free_nodes = nullptr,
-                        std::set<se::key_t>*    added_frontier_blocks = nullptr,
-                        std::set<se::key_t>*    removed_frontier_blocks = nullptr);
+                        std::set<se::key_t>*    updated_nodes = nullptr);
 
   static Eigen::Vector4f raycast(const OctreeType&      map,
                                  const Eigen::Vector3f& ray_origin_M,

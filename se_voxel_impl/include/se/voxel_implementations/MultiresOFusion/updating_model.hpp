@@ -226,6 +226,7 @@ public:
     float o_max = -std::numeric_limits<float>::max();
     unsigned int observed_count = 0;
     unsigned int data_count = 0;
+    bool frontier = false;
     for(unsigned int child_idx = 0; child_idx < 8; ++child_idx) {
       const auto& child_data = node->childData(child_idx);
       if (child_data.y > 0 && child_data.x * child_data.y > o_max) { // At least 1 integration
@@ -237,6 +238,8 @@ public:
         g_max = child_data.g;
         b_max = child_data.b;
         o_max = x_max * y_max;
+        // Set the frontier flag of the node if at least 1 of its children is a frontier
+        frontier = (frontier || child_data.frontier);
       }
       if (child_data.observed == true) {
         observed_count++;
@@ -256,6 +259,7 @@ public:
       if (observed_count == 8) {
         node_data.observed = true;
       }
+      node_data.frontier = frontier;
     }
     return node_data;
   }
@@ -301,6 +305,7 @@ public:
 
             int observed_count = 0;
             int data_count = 0;
+            bool frontier = false;
 
             for (unsigned int k = 0; k < 2; k++) {
               for (unsigned int j = 0; j < 2; j++) {
@@ -319,6 +324,8 @@ public:
                       g_max = child_data.g;
                       b_max = child_data.b;
                       o_max = x_max * y_max;
+                      // Set the frontier flag of the scale if at least 1 of its children is a frontier
+                      frontier = (frontier || child_data.frontier);
                   }
 
                   if (child_data.observed) {
@@ -339,6 +346,7 @@ public:
               if (observed_count == 8) {
                 target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
               }
+              target_max_data.frontier = frontier;
             }
 
           } // x
@@ -377,6 +385,7 @@ public:
 
             int observed_count = 0;
             int data_count = 0;
+            bool frontier = false;
 
             for (unsigned int k = 0; k < 2; k++) {
               for (unsigned int j = 0; j < 2; j++) {
@@ -394,6 +403,8 @@ public:
                     r_mean += child_data.r;
                     g_mean += child_data.g;
                     b_mean += child_data.b;
+                    // Set the frontier flag of the scale if at least 1 of its children is a frontier
+                    frontier = (frontier || child_data.frontier);
 
                     if ((child_data.x * child_data.y) > o_max) {
                       // Update max
@@ -424,6 +435,7 @@ public:
               target_data.g = g_mean / data_count;
               target_data.b = b_mean / data_count;
               target_data.observed = false;
+              target_data.frontier = frontier;
 
 //              target_data.x = x_mean / data_count;
 //              target_data.y = y_max;
@@ -446,6 +458,7 @@ public:
               if (observed_count == 8) {
                 target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
               }
+              target_max_data.frontier = frontier;
 
 //              if (abs(target_data.x - target_max_data.x) > 1) {
 //                std::cout << "-----" << std::endl;
@@ -512,6 +525,7 @@ public:
 
             int observed_count = 0;
             int data_count = 0;
+            bool frontier = false;
 
             for (unsigned int k = 0; k < 2; k++) {
               for (unsigned int j = 0; j < 2; j++) {
@@ -530,6 +544,8 @@ public:
                     r_mean += child_data.r;
                     g_mean += child_data.g;
                     b_mean += child_data.b;
+                    // Set the frontier flag of the scale if at least 1 of its children is a frontier
+                    frontier = (frontier || child_data.frontier);
 
                     if ((child_max_data.x * child_max_data.y) > o_max) {
                       // Update max
@@ -560,6 +576,7 @@ public:
               target_data.g = g_mean / data_count;
               target_data.b = b_mean / data_count;
               target_data.observed = false;
+              target_data.frontier = frontier;
 
 //              target_data.x = x_mean / data_count;
 //              target_data.y = ceil((float) y_mean) / data_count;
@@ -582,6 +599,7 @@ public:
               if (observed_count == 8) {
                 target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
               }
+              target_max_data.frontier = frontier;
             }
 
           } // x

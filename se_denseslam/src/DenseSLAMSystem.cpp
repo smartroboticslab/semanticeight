@@ -52,6 +52,7 @@
 #include "se/rendering.hpp"
 #include "se/set_operations.hpp"
 #include "se/voxel_implementations/MultiresOFusion/updating_model.hpp"
+#include "se/frontiers.hpp"
 #include "se/semanticeight_definitions.hpp"
 #include "se/depth_utils.hpp"
 #include "se/object_utils.hpp"
@@ -259,16 +260,12 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
       T_CM,
       sensor,
       frame,
-      &free_nodes_,
-      &added_frontier_blocks_,
-      &removed_frontier_blocks_);
-  // Update the frontier blocks. First remove and then add since
-  // removed_frontier_blocks_ counts blocks with at least one voxel that
-  // changed from VoxelState::Frontier to something else.
-  se::setminus(frontiers_, removed_frontier_blocks_);
-  se::setunion(frontiers_, added_frontier_blocks_);
-  pruneFrontiers();
+      &updated_nodes_);
   TOCK("INTEGRATION")
+  TICKD("FRONTIERS")
+  se::setunion(frontiers_, updated_nodes_);
+  updateFrontiers(frontiers_);
+  TOCK("FRONTIERS")
   // Update the free/occupied volume.
   se::ExploredVolume ev (*map_);
   free_volume = ev.free_volume;
@@ -722,7 +719,7 @@ std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierVoxelVolu
         const float dim = voxel_dim * size;
         for (int voxel_idx = 0; voxel_idx < VoxelBlockType::scaleNumVoxels(scale); ++voxel_idx) {
           const auto& data = block->data(voxel_idx, scale);
-          if (data.state == VoxelState::Frontier) {
+          if (data.frontier) {
             const Eigen::Vector3i voxel_coord = block->voxelCoordinates(voxel_idx, scale);
             const Eigen::Vector3f center_M = voxel_dim * voxel_coord.cast<float>() + Eigen::Vector3f::Constant(voxel_dim / 2.0f);
             volumes.emplace_back(center_M, dim, size, data);
@@ -776,7 +773,8 @@ se::Path DenseSLAMSystem::computeNextPath_WC(const SensorImpl& sensor) {
           config_.min_control_point_radius,
           config_.skeleton_sample_precision,
           config_.solving_time}}};
-  se::SinglePathExplorationPlanner planner (map_, pruned_frontiers_, objects_, sensor, T_MC_, config);
+  const std::vector<se::key_t> frontier_vec(frontiers_.begin(), frontiers_.end());
+  se::SinglePathExplorationPlanner planner (map_, frontier_vec, objects_, sensor, T_MC_, config);
   candidate_views_ = planner.views();
   rejected_candidate_views_ = planner.rejectedViews();
   goal_view_ = planner.bestView();
@@ -1068,7 +1066,7 @@ void DenseSLAMSystem::freeInitSphere() {
   if (std::is_same<VoxelImpl, MultiresOFusion>::value) {
     data.x = -5;
     data.y = 5;
-    data.state = VoxelState::Free;
+    data.frontier = false;
     data.observed = true;
   } else {
     std::cerr << "Error: Only MultiresOFusion is supported\n";
@@ -1089,60 +1087,25 @@ void DenseSLAMSystem::freeInitSphere() {
 
 
 
-void DenseSLAMSystem::pruneFrontiers() {
-  pruned_frontiers_.clear();
-  pruned_frontiers_.reserve(frontiers_.size());
-  // Iterate over all frontiers and compute the number of voxels they contain
-  for (auto it = frontiers_.begin(); it != frontiers_.end();) {
-    // Get the Node corresponding to the Morton code
-    const se::key_t code = *it;
+void DenseSLAMSystem::updateFrontiers(std::set<se::key_t>& frontiers) {
+  std::set<se::key_t> not_frontiers;
+  // Remove VoxelBlocks that no longer correspond to frontiers
+  for (auto code : frontiers) {
     const Eigen::Vector3i node_coord = se::keyops::decode(code);
     const int node_depth = se::keyops::depth(code);
-    const se::Node<VoxelImpl::VoxelType>* node = map_->fetchNode(node_coord, node_depth);
-    // Compute the number of frontier voxels in the Node
-    const size_t num_frontier_voxels = numFrontierVoxels(node);
-    if (num_frontier_voxels > 0) {
-      if (num_frontier_voxels >= min_frontiers_) {
-        // Only add to the pruned frontiers if above the threshold
-        pruned_frontiers_.push_back(code);
-      }
-      ++it;
-    } else {
-      // No frontiers in this Node after all, erase it
-      it = frontiers_.erase(it);
+    se::Node<VoxelImpl::VoxelType>* node = map_->fetchNode(node_coord, node_depth);
+    // Remove unallocated nodes from the frontiers
+    if (node == nullptr) {
+      not_frontiers.insert(code);
+      continue;
+    }
+    // Update the frontier status of the Node's voxel
+    const int frontier_volume = updateFrontierData(node, *map_);
+    // Remove the Node if its frontiers are too small
+    if (frontier_volume < min_frontier_volume_) {
+      not_frontiers.insert(code);
     }
   }
-  // Sort the vector of Morton codes
-  std::sort(pruned_frontiers_.begin(), pruned_frontiers_.end());
-}
-
-
-
-size_t DenseSLAMSystem::numFrontierVoxels(const se::Node<VoxelImpl::VoxelType>* node) {
-  if (node == nullptr) {
-    return 0;
-  }
-  if (node->isBlock()) {
-    // VoxelBlock, count the number of frontier volumes it contains
-    const VoxelBlockType* block = reinterpret_cast<const VoxelBlockType*>(node);
-    const int scale = block->current_scale();
-    size_t num_frontiers = 0;
-    for (int i = 0; i < VoxelBlockType::scaleNumVoxels(scale); ++i) {
-      if (block->data(i, scale).state  == VoxelState::Frontier) {
-        num_frontiers++;
-      }
-    }
-    // Return the number of voxels contained in the frontier volumes
-    const int voxels_per_frontier = se::math::cu(VoxelBlockType::scaleVoxelSize(scale));
-    return voxels_per_frontier * num_frontiers;
-  } else {
-    // Node
-    if (node->data().state == VoxelState::Frontier) {
-      // Return the number of voxels the Node contains
-      return se::math::cu(node->size());
-    } else {
-      return 0;
-    }
-  }
+  se::setminus(frontiers, not_frontiers);
 }
 
