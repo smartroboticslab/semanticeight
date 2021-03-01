@@ -16,6 +16,7 @@ link_libraries(
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
+add_subdirectory(frontiers)
 #add_subdirectory(multires_esdf_moving_sphere)
 #add_subdirectory(multires_tsdf_moving_camera)
 
