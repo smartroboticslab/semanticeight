@@ -90,6 +90,8 @@ public:
   void code(key_t code) { code_ = code; }
   key_t code() const { return code_; }
 
+  key_t childCode(const int child_idx, const int voxel_depth) const;
+
   void size(int size) { size_ = size; }
   int size() const { return size_; }
 

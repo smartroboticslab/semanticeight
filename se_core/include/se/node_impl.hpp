@@ -99,6 +99,13 @@ void Node<T>::initFromNode(const se::Node<T>& node) {
 }
 
 template <typename T>
+key_t Node<T>::childCode(const int child_idx, const int voxel_depth) const {
+  const Eigen::Vector3i child_coord = childCoord(child_idx);
+  const int child_depth = voxel_depth - log2(size_) + 1;
+  return keyops::encode(child_coord.x(), child_coord.y(), child_coord.z(), child_depth, voxel_depth);
+}
+
+template <typename T>
 Eigen::Vector3i Node<T>::coordinates() const {
   return se::keyops::decode(code_);
 }
