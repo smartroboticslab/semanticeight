@@ -309,7 +309,7 @@ void VoxelBlockFinest<T>::initFromBlock(const VoxelBlockFinest<T>& block) {
 // Voxel block full scale allocation implementation
 
 template <typename T>
-VoxelBlockFull<T>::VoxelBlockFull(const typename T::VoxelData init_data) : VoxelBlock<T>(0, -1) {
+VoxelBlockFull<T>::VoxelBlockFull(const typename T::VoxelData init_data) : VoxelBlock<T>(0, 0) {
   for (unsigned int voxel_idx = 0; voxel_idx < num_voxels_in_block; voxel_idx++) {
     block_data_[voxel_idx] = init_data;
   }
