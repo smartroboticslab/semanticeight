@@ -136,6 +136,19 @@ struct MultiresOFusion {
       return data.x < surface_boundary;
     };
 
+    static std::string to_graphviz_label(const VoxelData& data) {
+      std::string s;
+      s += "x        " + std::to_string(data.x)  + "\\l";
+      s += "fg       " + std::to_string(data.fg) + "\\l";
+      s += "y        " + std::to_string(data.y)  + "\\l";
+      s += "r        " + std::to_string(data.r)  + "\\l";
+      s += "g        " + std::to_string(data.g)  + "\\l";
+      s += "b        " + std::to_string(data.b)  + "\\l";
+      s += "observed " + std::string(data.observed ? "true" : "false" ) + "\\l";
+      s += "frontier " + std::string(data.frontier ? "true" : "false" ) + "\\l";
+      return s;
+    }
+
     using VoxelBlockType = se::VoxelBlockSingleMax<MultiresOFusion::VoxelType>;
 
     using MemoryPoolType = se::MemoryPool<MultiresOFusion::VoxelType>;
