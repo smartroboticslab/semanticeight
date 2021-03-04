@@ -121,7 +121,7 @@ struct MultiresOFusion {
     };
 
     static bool isValid(const VoxelData& data) {
-      return data.observed;
+      return data.y > 0;
     };
 
     static float threshold(const VoxelData& data) {
