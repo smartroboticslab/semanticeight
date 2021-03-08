@@ -855,8 +855,7 @@ class DenseSLAMSystem {
     }
 
     // Exploration only ///////////////////////////////////////////////////////
-    std::vector<se::Volume<VoxelImpl::VoxelType>> frontierBlockVolumes() const;
-    std::vector<se::Volume<VoxelImpl::VoxelType>> frontierVoxelVolumes() const;
+    std::vector<se::Volume<VoxelImpl::VoxelType>> frontierVolumes() const;
 
     bool goalReached() const;
 

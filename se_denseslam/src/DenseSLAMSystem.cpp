@@ -686,53 +686,54 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
 
 
 // Exploration only ///////////////////////////////////////////////////////
-std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierBlockVolumes() const {
+std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierVolumes() const {
   std::vector<se::Volume<VoxelImpl::VoxelType>> volumes;
   const float voxel_dim = map_->voxelDim();
-  const int map_size = map_->size();
-  for (const auto& code : frontiers_) {
-    const int depth = se::keyops::depth(code);
-    const int size = map_size >> depth;
-    const float dim = voxel_dim * size;
-    const Eigen::Vector3i center_coord = se::keyops::decode(code) + Eigen::Vector3i::Constant(size / 2);
-    const Eigen::Vector3f center_M = voxel_dim * center_coord.cast<float>();
-    volumes.emplace_back(center_M, dim, size, VoxelImpl::VoxelType::initData());
-  }
-  return volumes;
-}
-
-
-
-std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierVoxelVolumes() const {
-  std::vector<se::Volume<VoxelImpl::VoxelType>> volumes;
-  const float voxel_dim = map_->voxelDim();
-  const int map_size = map_->size();
   for (const auto& code : frontiers_) {
     const int depth = se::keyops::depth(code);
     const Eigen::Vector3i coord = se::keyops::decode(code);
     if (depth == map_->blockDepth()) {
       // Frontier VoxelBlock, find the individual frontier voxels
       const VoxelBlockType* block = map_->fetch(coord);
-      if (block != nullptr) {
+      if (block) {
         const int scale = block->current_scale();
         const int size = VoxelBlockType::scaleVoxelSize(scale);
         const float dim = voxel_dim * size;
-        for (int voxel_idx = 0; voxel_idx < VoxelBlockType::scaleNumVoxels(scale); ++voxel_idx) {
-          const auto& data = block->data(voxel_idx, scale);
+        const Eigen::Vector3f voxel_centre_offset_M = Eigen::Vector3f::Constant(dim / 2.0f);
+        for (int i = 0; i < VoxelBlockType::scaleNumVoxels(scale); ++i) {
+          const auto& data = block->data(i, scale);
           if (data.frontier) {
-            const Eigen::Vector3i voxel_coord = block->voxelCoordinates(voxel_idx, scale);
-            const Eigen::Vector3f center_M = voxel_dim * voxel_coord.cast<float>() + Eigen::Vector3f::Constant(voxel_dim / 2.0f);
-            volumes.emplace_back(center_M, dim, size, data);
+            const Eigen::Vector3f voxel_coord_M = voxel_dim * block->voxelCoordinates(i, scale).cast<float>();
+            const Eigen::Vector3f centre_M = voxel_coord_M + voxel_centre_offset_M;
+            volumes.emplace_back(centre_M, dim, size, data);
           }
         }
+      } else {
+        // This part should never be reached since we store the Morton of the Node's parent. The
+        // data of the VoxelBlock will be stored in its parent Node whose Morton should be in
+        // frontiers_.
       }
     } else {
-      // Frontier Node
-      const int size = map_size >> depth;
-      const float dim = voxel_dim * size;
-      const Eigen::Vector3i center_coord = coord + Eigen::Vector3i::Constant(size / 2);
-      const Eigen::Vector3f center_M = voxel_dim * center_coord.cast<float>();
-      volumes.emplace_back(center_M, dim, size, VoxelImpl::VoxelType::initData());
+      // Node with frontier children, fetch it
+      const se::Node<VoxelImpl::VoxelType>* const node = map_->fetchNode(coord, depth);
+      if (node) {
+        const int child_size = node->size() / 2;
+        const float child_dim = voxel_dim * child_size;
+        const Eigen::Vector3f child_centre_offset_M = Eigen::Vector3f::Constant(child_dim / 2.0f);
+        // Iterate over the unallocated children
+        for (int i = 0; i < 8; i++) {
+          if (!node->child(i)) {
+            const auto& child_data = node->childData(i);
+            if (child_data.frontier) {
+              const Eigen::Vector3f child_coord_M = voxel_dim * node->childCoord(i).cast<float>();
+              const Eigen::Vector3f child_centre_M = child_coord_M + child_centre_offset_M;
+              volumes.emplace_back(child_centre_M, child_dim, child_size, child_data);
+            }
+          }
+        }
+      } else {
+        // This part should never be reached.
+      }
     }
   }
   return volumes;
