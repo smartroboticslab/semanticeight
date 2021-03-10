@@ -264,7 +264,7 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
   TOCK("INTEGRATION")
   TICKD("FRONTIERS")
   se::setunion(frontiers_, updated_nodes_);
-  updateFrontiers(frontiers_);
+  update_frontiers(*map_, frontiers_, min_frontier_volume_);
   TOCK("FRONTIERS")
   // Update the free/occupied volume.
   se::ExploredVolume ev (*map_);
@@ -687,56 +687,7 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
 
 // Exploration only ///////////////////////////////////////////////////////
 std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierVolumes() const {
-  std::vector<se::Volume<VoxelImpl::VoxelType>> volumes;
-  const float voxel_dim = map_->voxelDim();
-  for (const auto& code : frontiers_) {
-    const int depth = se::keyops::depth(code);
-    const Eigen::Vector3i coord = se::keyops::decode(code);
-    if (depth == map_->blockDepth()) {
-      // Frontier VoxelBlock, find the individual frontier voxels
-      const VoxelBlockType* block = map_->fetch(coord);
-      if (block) {
-        const int scale = block->current_scale();
-        const int size = VoxelBlockType::scaleVoxelSize(scale);
-        const float dim = voxel_dim * size;
-        const Eigen::Vector3f voxel_centre_offset_M = Eigen::Vector3f::Constant(dim / 2.0f);
-        for (int i = 0; i < VoxelBlockType::scaleNumVoxels(scale); ++i) {
-          const auto& data = block->data(i, scale);
-          if (data.frontier) {
-            const Eigen::Vector3f voxel_coord_M = voxel_dim * block->voxelCoordinates(i, scale).cast<float>();
-            const Eigen::Vector3f centre_M = voxel_coord_M + voxel_centre_offset_M;
-            volumes.emplace_back(centre_M, dim, size, data);
-          }
-        }
-      } else {
-        // This part should never be reached since we store the Morton of the Node's parent. The
-        // data of the VoxelBlock will be stored in its parent Node whose Morton should be in
-        // frontiers_.
-      }
-    } else {
-      // Node with frontier children, fetch it
-      const se::Node<VoxelImpl::VoxelType>* const node = map_->fetchNode(coord, depth);
-      if (node) {
-        const int child_size = node->size() / 2;
-        const float child_dim = voxel_dim * child_size;
-        const Eigen::Vector3f child_centre_offset_M = Eigen::Vector3f::Constant(child_dim / 2.0f);
-        // Iterate over the unallocated children
-        for (int i = 0; i < 8; i++) {
-          if (!node->child(i)) {
-            const auto& child_data = node->childData(i);
-            if (child_data.frontier) {
-              const Eigen::Vector3f child_coord_M = voxel_dim * node->childCoord(i).cast<float>();
-              const Eigen::Vector3f child_centre_M = child_coord_M + child_centre_offset_M;
-              volumes.emplace_back(child_centre_M, child_dim, child_size, child_data);
-            }
-          }
-        }
-      } else {
-        // This part should never be reached.
-      }
-    }
-  }
-  return volumes;
+  return se::frontier_volumes(*map_, frontiers_);
 }
 
 
@@ -1084,29 +1035,5 @@ void DenseSLAMSystem::freeInitSphere() {
     // Up-propagate free space to the root
     VoxelImpl::propagateToRoot(*map_);
   }
-}
-
-
-
-void DenseSLAMSystem::updateFrontiers(std::set<se::key_t>& frontiers) {
-  std::set<se::key_t> not_frontiers;
-  // Remove VoxelBlocks that no longer correspond to frontiers
-  for (auto code : frontiers) {
-    const Eigen::Vector3i node_coord = se::keyops::decode(code);
-    const int node_depth = se::keyops::depth(code);
-    se::Node<VoxelImpl::VoxelType>* node = map_->fetchNode(node_coord, node_depth);
-    // Remove unallocated nodes from the frontiers
-    if (node == nullptr) {
-      not_frontiers.insert(code);
-      continue;
-    }
-    // Update the frontier status of the Node's voxel
-    const int frontier_volume = updateFrontierData(node, *map_);
-    // Remove the Node if its frontiers are too small
-    if (frontier_volume < min_frontier_volume_) {
-      not_frontiers.insert(code);
-    }
-  }
-  se::setminus(frontiers, not_frontiers);
 }
 

@@ -234,11 +234,6 @@ class DenseSLAMSystem {
     // Exploration only ///////////////////////////////////////////////////////
     void freeInitSphere();
 
-    /** Update the frontier status of all voxel in frontiers.
-     * Also prune frontier nodes with too small frontier volumes.
-     */
-    void updateFrontiers(std::set<se::key_t>& frontiers);
-
 
 
   public:

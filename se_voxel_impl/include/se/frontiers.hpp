@@ -5,6 +5,8 @@
 #ifndef __FRONTIERS_HPP
 #define __FRONTIERS_HPP
 
+#include "se/set_operations.hpp"
+
 namespace se {
   /** Test if the volume at the supplied coordinates and scale is a frontier.
    * Neighbors inside the same VoxelBlock are checked at the same scale. Neighbors at other
@@ -13,11 +15,11 @@ namespace se {
    * \warning Must check that the supplied volume is free before calling.
    */
   template<typename T>
-  bool isFrontier(const Eigen::Vector3i&            coord,
-                  const int                         size_at_scale_li,
-                  const int                         scale,
-                  const typename T::VoxelBlockType& block,
-                  const se::Octree<T>&              octree) {
+  bool is_frontier(const Eigen::Vector3i&            coord,
+                   const int                         size_at_scale_li,
+                   const int                         scale,
+                   const typename T::VoxelBlockType& block,
+                   const se::Octree<T>&              octree) {
     static const Eigen::Matrix<int, 3, 6> offsets = (Eigen::Matrix<int, 3, 6>()
         <<  0,  0, -1, 1, 0, 0,
             0, -1,  0, 0, 1, 0,
@@ -52,9 +54,9 @@ namespace se {
    * \warning Must check that the child is free before calling.
    */
   template<typename T>
-  bool isFrontier(const int            child_idx,
-                  const se::Node<T>&   node,
-                  const se::Octree<T>& octree) {
+  bool is_frontier(const int            child_idx,
+                   const se::Node<T>&   node,
+                   const se::Octree<T>& octree) {
     static const Eigen::Matrix<int, 3, 6> offsets = (Eigen::Matrix<int, 3, 6>()
         <<  0,  0, -1, 1, 0, 0,
             0, -1,  0, 0, 1, 0,
@@ -94,8 +96,8 @@ namespace se {
    * total volume in primitive voxels.
   */
   template<typename T>
-  int updateFrontierData(se::Node<T>*         node,
-                         const se::Octree<T>& octree) {
+  int update_frontier_data(se::Node<T>*         node,
+                           const se::Octree<T>& octree) {
     int frontier_volume = 0;
     if (node == nullptr) {
       return frontier_volume;
@@ -115,7 +117,7 @@ namespace se {
         if (T::isFree(data)) {
           const Eigen::Vector3i coords = block->voxelCoordinates(i, scale);
           // Update the frontier state and frontier volume
-          if (se::isFrontier(coords, size_at_scale_li, scale, *block, octree)) {
+          if (se::is_frontier(coords, size_at_scale_li, scale, *block, octree)) {
             data.frontier = true;
             frontier_volume += voxel_volume_at_scale;
           } else {
@@ -135,7 +137,7 @@ namespace se {
           // Ensure it is free before checking whether it's a frontier
           if (T::isFree(data)) {
             // Update the frontier state and frontier volume
-            if (se::isFrontier(i, *node, octree)) {
+            if (se::is_frontier(i, *node, octree)) {
               data.frontier = true;
               frontier_volume += child_node_volume;
             } else {
@@ -147,6 +149,96 @@ namespace se {
       }
     }
     return frontier_volume;
+  }
+
+
+
+  /** Update the frontier status of all voxels of VoxelBlocks in frontiers.
+   * VoxelBlocks with frontier volume less than min_frontier_volume will be
+   * removed from frontiers.
+   */
+  template<typename T>
+  void update_frontiers(se::Octree<T>&       octree,
+                        std::set<se::key_t>& frontiers,
+                        const int            min_frontier_volume) {
+    std::set<se::key_t> not_frontiers;
+    // Remove VoxelBlocks that no longer correspond to frontiers
+    for (auto code : frontiers) {
+      const Eigen::Vector3i node_coord = se::keyops::decode(code);
+      const int node_depth = se::keyops::depth(code);
+      se::Node<T>* node = octree.fetchNode(node_coord, node_depth);
+      // Remove unallocated nodes from the frontiers
+      if (node == nullptr) {
+        not_frontiers.insert(code);
+        continue;
+      }
+      // Update the frontier status of the Node's voxel
+      const int frontier_volume = update_frontier_data(node, octree);
+      // Remove the Node if its frontiers are too small
+      if (frontier_volume < min_frontier_volume) {
+        not_frontiers.insert(code);
+      }
+    }
+    se::setminus(frontiers, not_frontiers);
+  }
+
+
+
+  /** Return all the frontier volumes in the octree. Search only the VoxelBlocks in frontiers
+   */
+  template<typename T>
+  std::vector<se::Volume<T>> frontier_volumes(const se::Octree<T>&       octree,
+                                              const std::set<se::key_t>& frontiers) {
+    std::vector<se::Volume<T>> volumes;
+    const float voxel_dim = octree.voxelDim();
+    for (const auto& code : frontiers) {
+      const int depth = se::keyops::depth(code);
+      const Eigen::Vector3i coord = se::keyops::decode(code);
+      if (depth == octree.blockDepth()) {
+        // Frontier VoxelBlock, find the individual frontier voxels
+        const typename T::VoxelBlockType* const block = octree.fetch(coord);
+        if (block) {
+          const int scale = block->current_scale();
+          const int size = T::VoxelBlockType::scaleVoxelSize(scale);
+          const float dim = voxel_dim * size;
+          const Eigen::Vector3f voxel_centre_offset_M = Eigen::Vector3f::Constant(dim / 2.0f);
+          for (int i = 0; i < T::VoxelBlockType::scaleNumVoxels(scale); ++i) {
+            const auto& data = block->data(i, scale);
+            if (data.frontier) {
+              const Eigen::Vector3f voxel_coord_M = voxel_dim * block->voxelCoordinates(i, scale).template cast<float>();
+              const Eigen::Vector3f centre_M = voxel_coord_M + voxel_centre_offset_M;
+              volumes.emplace_back(centre_M, dim, size, data);
+            }
+          }
+        } else {
+          // This part should never be reached since we store the Morton of the Node's parent. The
+          // data of the VoxelBlock will be stored in its parent Node whose Morton should be in
+          // frontiers.
+        }
+      } else {
+        // Node with frontier children, fetch it
+        const se::Node<T>* const node = octree.fetchNode(coord, depth);
+        if (node) {
+          const int child_size = node->size() / 2;
+          const float child_dim = voxel_dim * child_size;
+          const Eigen::Vector3f child_centre_offset_M = Eigen::Vector3f::Constant(child_dim / 2.0f);
+          // Iterate over the unallocated children
+          for (int i = 0; i < 8; i++) {
+            if (!node->child(i)) {
+              const auto& child_data = node->childData(i);
+              if (child_data.frontier) {
+                const Eigen::Vector3f child_coord_M = voxel_dim * node->childCoord(i).template cast<float>();
+                const Eigen::Vector3f child_centre_M = child_coord_M + child_centre_offset_M;
+                volumes.emplace_back(child_centre_M, child_dim, child_size, child_data);
+              }
+            }
+          }
+        } else {
+          // This part should never be reached.
+        }
+      }
+    }
+    return volumes;
   }
 } // namespace se
 
