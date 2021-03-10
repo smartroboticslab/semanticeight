@@ -128,6 +128,13 @@ target_compile_definitions(${EXE_NAME} PUBLIC SE_SENSOR_IMPLEMENTATION=PinholeCa
 
 
 
+# Morton conversion tool
+set(EXE_NAME "se-morton-tool")
+add_executable(${EXE_NAME} "src/morton_tool.cpp")
+target_link_libraries(${EXE_NAME} PRIVATE SE::Core)
+
+
+
 # Test ########################################################################
 if(SE_BUILD_TESTS)
   add_subdirectory(test)
