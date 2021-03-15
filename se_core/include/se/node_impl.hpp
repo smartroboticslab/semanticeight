@@ -100,6 +100,8 @@ void Node<T>::initFromNode(const se::Node<T>& node) {
 
 template <typename T>
 key_t Node<T>::childCode(const int child_idx, const int voxel_depth) const {
+  assert(0 <= child_idx && child_idx < 8);
+
   const Eigen::Vector3i child_coord = childCoord(child_idx);
   const int child_depth = voxel_depth - log2(size_) + 1;
   return keyops::encode(child_coord.x(), child_coord.y(), child_coord.z(), child_depth, voxel_depth);
@@ -117,6 +119,8 @@ Eigen::Vector3i Node<T>::centreCoordinates() const {
 
 template <typename T>
 Eigen::Vector3i Node<T>::childCoord(const int child_idx) const {
+  assert(0 <= child_idx && child_idx < 8);
+
   const std::div_t d1 = std::div(child_idx, 4);
   const std::div_t d2 = std::div(d1.rem, 2);
   const int rel_z = d1.quot;
@@ -128,6 +132,8 @@ Eigen::Vector3i Node<T>::childCoord(const int child_idx) const {
 
 template <typename T>
 Eigen::Vector3i Node<T>::childCentreCoord(const int child_idx) const {
+  assert(0 <= child_idx && child_idx < 8);
+
   const int child_size = size_ / 2;
   return childCoord(child_idx) + Eigen::Vector3i::Constant(child_size / 2);
 }
@@ -155,6 +161,8 @@ void VoxelBlock<T>::operator=(const VoxelBlock<T>& block) {
 
 template <typename T>
 Eigen::Vector3i VoxelBlock<T>::voxelCoordinates(const int voxel_idx) const {
+  assert(voxel_idx >= 0);
+
   int remaining_voxel_idx = voxel_idx;
   int scale = 0;
   int size_at_scale_cu = this->size_cu;
@@ -168,6 +176,9 @@ Eigen::Vector3i VoxelBlock<T>::voxelCoordinates(const int voxel_idx) const {
 
 template <typename T>
 Eigen::Vector3i VoxelBlock<T>::voxelCoordinates(const int voxel_idx, const int scale) const {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+  assert(voxel_idx >= 0);
+
   const std::div_t d1 = std::div(voxel_idx, se::math::sq(scaleSize(scale)));
   const std::div_t d2 = std::div(d1.rem, scaleSize(scale));
   const int z = d1.quot;
@@ -178,21 +189,29 @@ Eigen::Vector3i VoxelBlock<T>::voxelCoordinates(const int voxel_idx, const int s
 
 template <typename T>
 constexpr int VoxelBlock<T>::scaleSize(const int scale) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+
   return size_li >> scale;
 }
 
 template <typename T>
 constexpr int VoxelBlock<T>::scaleVoxelSize(const int scale) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+
   return 1 << scale;
 }
 
 template <typename T>
 constexpr int VoxelBlock<T>::scaleNumVoxels(const int scale) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+
   return se::math::cu(scaleSize(scale));
 }
 
 template <typename T>
 constexpr int VoxelBlock<T>::scaleOffset(const int scale) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+
   int scale_offset = 0;
   for (int s = 0; s < scale; ++s) {
     scale_offset += scaleNumVoxels(s);
@@ -728,7 +747,10 @@ VoxelBlockSingleMax<T>::data(const Eigen::Vector3i& voxel_coord) const {
   if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
     return init_data_;
   } else {
-    Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+    const Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+    assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(0));
+    assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(0));
+    assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(0));
     return block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                                  voxel_offset.y() * this->size_li +
                                                  voxel_offset.z() * this->size_sq];
@@ -740,8 +762,10 @@ VoxelBlockSingleMax<T>::data(const Eigen::Vector3i& voxel_coord) const {
 template <typename T>
 inline void VoxelBlockSingleMax<T>::setData(const Eigen::Vector3i& voxel_coord,
                                             const VoxelData&       voxel_data) {
-
-  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  const Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(0));
+  assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(0));
+  assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(0));
   block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                         voxel_offset.y() * this->size_li +
                                         voxel_offset.z() * this->size_sq] = voxel_data;
@@ -752,9 +776,11 @@ inline void VoxelBlockSingleMax<T>::setData(const Eigen::Vector3i& voxel_coord,
 template <typename T>
 inline void VoxelBlockSingleMax<T>::setDataSafe(const Eigen::Vector3i& voxel_coord,
                                                 const VoxelData&       voxel_data) {
-
+  const Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(0));
+  assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(0));
+  assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(0));
   allocateDownTo(0);
-  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   block_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                         voxel_offset.y() * this->size_li +
                                         voxel_offset.z() * this->size_sq] = voxel_data;
@@ -766,12 +792,16 @@ template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingleMax<T>::data(const Eigen::Vector3i& voxel_coord,
                              const int              scale) const {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
 
   if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
     return init_data_;
   } else {
     Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
     voxel_offset = voxel_offset / (1 << scale);
+    assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(scale));
+    assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(scale));
+    assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(scale));
     const int size_at_scale = this->size_li >> scale;
     return block_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
                                                          voxel_offset.y() * size_at_scale +
@@ -785,10 +815,14 @@ template <typename T>
 inline void VoxelBlockSingleMax<T>::setData(const Eigen::Vector3i& voxel_coord,
                                             const int              scale,
                                             const VoxelData&       voxel_data) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
 
   int size_at_scale = this->size_li >> scale;
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   voxel_offset = voxel_offset / (1 << scale);
+  assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(scale));
+  assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(scale));
+  assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(scale));
   block_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
                                                 voxel_offset.y() * size_at_scale +
                                                 voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
@@ -798,11 +832,15 @@ template <typename T>
 inline void VoxelBlockSingleMax<T>::setDataSafe(const Eigen::Vector3i& voxel_coord,
                                                 const int              scale,
                                                 const VoxelData&       voxel_data) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
 
   allocateDownTo(scale);
   int size_at_scale = this->size_li >> scale;
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   voxel_offset = voxel_offset / (1 << scale);
+  assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(scale));
+  assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(scale));
+  assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(scale));
   block_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
                                                 voxel_offset.y() * size_at_scale +
                                                 voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
@@ -813,6 +851,8 @@ inline void VoxelBlockSingleMax<T>::setDataSafe(const Eigen::Vector3i& voxel_coo
 template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingleMax<T>::data(const int voxel_idx) const {
+  assert(voxel_idx >= 0);
+
   int remaining_voxel_idx = voxel_idx;
   int scale = 0;
   int size_at_scale_cu = this->size_cu;
@@ -833,6 +873,8 @@ VoxelBlockSingleMax<T>::data(const int voxel_idx) const {
 template <typename T>
 inline void VoxelBlockSingleMax<T>::setData(const int        voxel_idx,
                                             const VoxelData& voxel_data) {
+  assert(voxel_idx >= 0);
+
   int remaining_voxel_idx = voxel_idx;
   int scale = 0;
   int size_at_scale_cu = this->size_cu;
@@ -849,6 +891,8 @@ inline void VoxelBlockSingleMax<T>::setData(const int        voxel_idx,
 template <typename T>
 inline void VoxelBlockSingleMax<T>::setDataSafe(const int        voxel_idx,
                                                 const VoxelData& voxel_data) {
+  assert(voxel_idx >= 0);
+
   int remaining_voxel_idx = voxel_idx;
   int scale = 0;
   int size_at_scale_cu = this->size_cu;
@@ -867,6 +911,9 @@ template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingleMax<T>::data(const int voxel_idx_at_scale,
                              const int scale) const {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+  assert(0 <= voxel_idx_at_scale && VoxelBlock<T>::scaleNumVoxels(scale));
+
   const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
   if (scale_idx < block_data_.size()) {
     return block_data_[scale_idx][voxel_idx_at_scale];
@@ -881,6 +928,9 @@ template <typename T>
 inline void VoxelBlockSingleMax<T>::setData(const int voxel_idx_at_scale,
                                             const int scale,
                                             const VoxelData& voxel_data) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+  assert(0 <= voxel_idx_at_scale && VoxelBlock<T>::scaleNumVoxels(scale));
+
   const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
   block_data_[scale_idx][voxel_idx_at_scale] = voxel_data;
 }
@@ -903,7 +953,10 @@ VoxelBlockSingleMax<T>::maxData(const Eigen::Vector3i& voxel_coord) const {
   if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) != 0) {
     return init_data_;
   } else {
-    Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+    const Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+    assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(0));
+    assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(0));
+    assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(0));
     return block_max_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                                      voxel_offset.y() * this->size_li +
                                                      voxel_offset.z() * this->size_sq];
@@ -915,8 +968,10 @@ VoxelBlockSingleMax<T>::maxData(const Eigen::Vector3i& voxel_coord) const {
 template <typename T>
 inline void VoxelBlockSingleMax<T>::setMaxData(const Eigen::Vector3i& voxel_coord,
                                                const VoxelData&       voxel_data) {
-
-  Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  const Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
+  assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(0));
+  assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(0));
+  assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(0));
   block_max_data_[VoxelBlock<T>::max_scale][voxel_offset.x() +
                                             voxel_offset.y() * this->size_li +
                                             voxel_offset.z() * this->size_sq] = voxel_data;
@@ -938,11 +993,16 @@ template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingleMax<T>::maxData(const Eigen::Vector3i& voxel_coord,
                                 const int              scale) const {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+
   if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(scale)) {
     return init_data_;
   } else {
     Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
     voxel_offset = voxel_offset / (1 << scale);
+    assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(scale));
+    assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(scale));
+    assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(scale));
     const int size_at_scale = this->size_li >> scale;
     return block_max_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
                                                              voxel_offset.y() * size_at_scale +
@@ -956,10 +1016,14 @@ template <typename T>
 inline void VoxelBlockSingleMax<T>::setMaxData(const Eigen::Vector3i& voxel_coord,
                                                const int              scale,
                                                const VoxelData&       voxel_data) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
 
   int size_at_scale = this->size_li >> scale;
   Eigen::Vector3i voxel_offset = voxel_coord - this->coordinates_;
   voxel_offset = voxel_offset / (1 << scale);
+  assert(0 <= voxel_offset.x() && voxel_offset.x() <= VoxelBlock<T>::scaleSize(scale));
+  assert(0 <= voxel_offset.y() && voxel_offset.y() <= VoxelBlock<T>::scaleSize(scale));
+  assert(0 <= voxel_offset.z() && voxel_offset.z() <= VoxelBlock<T>::scaleSize(scale));
   block_max_data_[VoxelBlock<T>::max_scale - scale][voxel_offset.x() +
                                                     voxel_offset.y() * size_at_scale +
                                                     voxel_offset.z() * se::math::sq(size_at_scale)] = voxel_data;
@@ -978,6 +1042,8 @@ inline void VoxelBlockSingleMax<T>::setMaxDataSafe(const Eigen::Vector3i& voxel_
 template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingleMax<T>::maxData(const int voxel_idx) const {
+  assert(voxel_idx >= 0);
+
   int remaining_voxel_idx = voxel_idx;
   int scale = 0;
   int size_at_scale_cu = this->size_cu;
@@ -998,6 +1064,8 @@ VoxelBlockSingleMax<T>::maxData(const int voxel_idx) const {
 template <typename T>
 inline void VoxelBlockSingleMax<T>::setMaxData(const int        voxel_idx,
                                                const VoxelData& voxel_data) {
+  assert(voxel_idx >= 0);
+
   int remaining_voxel_idx = voxel_idx;
   int scale = 0;
   int size_at_scale_cu = this->size_cu;
@@ -1024,6 +1092,9 @@ template <typename T>
 inline typename VoxelBlock<T>::VoxelData
 VoxelBlockSingleMax<T>::maxData(const int voxel_idx_at_scale,
                                 const int scale) const {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+  assert(0 <= voxel_idx_at_scale && voxel_idx_at_scale <= VoxelBlock<T>::scaleNumVoxels(scale));
+
   const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
   if (scale_idx < block_max_data_.size()) {
     return block_max_data_[scale_idx][voxel_idx_at_scale];
@@ -1038,6 +1109,9 @@ template <typename T>
 inline void VoxelBlockSingleMax<T>::setMaxData(const int voxel_idx_at_scale,
                                                const int scale,
                                                const VoxelData& voxel_data) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+  assert(0 <= voxel_idx_at_scale && voxel_idx_at_scale <= VoxelBlock<T>::scaleNumVoxels(scale));
+
   const size_t scale_idx = VoxelBlock<T>::max_scale - scale;
   block_max_data_[scale_idx][voxel_idx_at_scale] = voxel_data;
 }
@@ -1087,6 +1161,7 @@ void VoxelBlockSingleMax<T>::allocateDownTo() {
 
 template <typename T>
 void VoxelBlockSingleMax<T>::allocateDownTo(const int min_scale) {
+  assert(0 <= min_scale && min_scale <= VoxelBlock<T>::max_scale);
 
   if (VoxelBlock<T>::max_scale - (block_data_.size() - 1) > static_cast<size_t>(min_scale)) {
     for (int scale = VoxelBlock<T>::max_scale - block_data_.size(); scale >= min_scale; scale --) {
@@ -1119,6 +1194,7 @@ void VoxelBlockSingleMax<T>::allocateDownTo(const int min_scale) {
 
 template <typename T>
 void VoxelBlockSingleMax<T>::deleteUpTo(const int min_scale) {
+  assert(0 <= min_scale && min_scale <= VoxelBlock<T>::max_scale);
 
   if (this->min_scale_ == -1 || this->min_scale_ >= min_scale) return;
 
@@ -1224,6 +1300,8 @@ void VoxelBlockSingleMax<T>::resetBuffer() {
 
 template <typename T>
 void VoxelBlockSingleMax<T>::initBuffer(const int buffer_scale) {
+  assert(0 <= buffer_scale && buffer_scale <= VoxelBlock<T>::max_scale);
+
   resetBuffer();
 
   buffer_scale_ = buffer_scale;
@@ -1314,6 +1392,8 @@ VoxelBlockSingleMax<T>::bufferData(const Eigen::Vector3i& voxel_coord) {
 template <typename T>
 typename VoxelBlock<T>::VoxelData*
 VoxelBlockSingleMax<T>::blockDataAtScale(const int scale) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+
   if (scale < this->min_scale_) {
     return nullptr;
   } else {
@@ -1326,6 +1406,8 @@ VoxelBlockSingleMax<T>::blockDataAtScale(const int scale) {
 template <typename T>
 typename VoxelBlock<T>::VoxelData*
 VoxelBlockSingleMax<T>::blockMaxDataAtScale(const int scale) {
+  assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
+
   if (scale < this->min_scale_) {
     return nullptr;
   } else {
