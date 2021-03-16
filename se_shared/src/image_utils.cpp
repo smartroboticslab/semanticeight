@@ -99,7 +99,7 @@ int se::save_depth_png(const float*           depth_image_data,
                        const float            scale) {
   // Scale the depth data and convert to uint16_t
   const size_t num_pixels = depth_image_res.prod();
-  std::unique_ptr<uint16_t> depth_image_data_scaled (new uint16_t[num_pixels]);
+  std::unique_ptr<uint16_t[]> depth_image_data_scaled (new uint16_t[num_pixels]);
 #pragma omp parallel for
   for (size_t i = 0; i < num_pixels; ++i) {
     depth_image_data_scaled.get()[i] = std::roundf(scale * depth_image_data[i]);
@@ -117,7 +117,7 @@ int se::save_depth_png(const uint16_t*        depth_image_data,
   // Allocate a new image buffer to use for changing the image data from little
   // endian (used in x86 and ARM CPUs) to big endian order (used in PNG).
   const size_t num_pixels = depth_image_res.prod();
-  std::unique_ptr<uint16_t> depth_big_endian (new uint16_t[num_pixels]);
+  std::unique_ptr<uint16_t[]> depth_big_endian (new uint16_t[num_pixels]);
 #pragma omp parallel for
   for (size_t i = 0; i < num_pixels; ++i) {
     // Swap the byte order.
@@ -198,7 +198,7 @@ int se::save_depth_pgm(const float*           depth_image_data,
                        const float            scale) {
   // Scale the depth data and convert to uint16_t
   const size_t num_pixels = depth_image_res.prod();
-  std::unique_ptr<uint16_t> depth_image_data_scaled (new uint16_t[num_pixels]);
+  std::unique_ptr<uint16_t[]> depth_image_data_scaled (new uint16_t[num_pixels]);
 #pragma omp parallel for
   for (size_t i = 0; i < num_pixels; ++i) {
     depth_image_data_scaled.get()[i] = std::roundf(scale * depth_image_data[i]);
