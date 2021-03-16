@@ -16,31 +16,42 @@ namespace se {
    */
   template<typename T>
   bool is_frontier(const Eigen::Vector3i&            coord,
-                   const int                         size_at_scale_li,
                    const int                         scale,
                    const typename T::VoxelBlockType& block,
                    const se::Octree<T>&              octree) {
+    assert(octree.contains(coord));
+    assert(block.contains(coord));
+    assert(0 <= scale && scale <= T::VoxelBlockType::max_scale);
+
     static const Eigen::Matrix<int, 3, 6> offsets = (Eigen::Matrix<int, 3, 6>()
         <<  0,  0, -1, 1, 0, 0,
             0, -1,  0, 0, 1, 0,
            -1,  0,  0, 0, 0, 1).finished();
+
+    // The edge length of a volume at scale in primitive voxels
+    const int scale_volume_size = VoxelBlock<T>::scaleVoxelSize(scale);
     // Iterate over the 6 face neighbors
     for (int i = 0; i < 6; ++i) {
-      const Eigen::Vector3i neighbour_coord = coord + size_at_scale_li * offsets.col(i);
-      if (coord / T::VoxelBlockType::size_li == neighbour_coord / T::VoxelBlockType::size_li) {
-        // The face neighbour is in the same VoxelBlock
-        const auto& neighbour_data = block.data(neighbour_coord, scale);
-        if (!T::isValid(neighbour_data)) {
-          // The voxel has never been integrated into, found a frontier
-          return true;
-        }
-      } else {
-        // The face neighbour is in another VoxelBlock/Node
-        typename T::VoxelData neighbour_data;
-        (void) octree.get(neighbour_coord, neighbour_data, scale);
-        if (!T::isValid(neighbour_data)) {
-          // The voxel/node has never been integrated into, found a frontier
-          return true;
+      const Eigen::Vector3i neighbour_coord = coord + scale_volume_size * offsets.col(i);
+      if (octree.contains(neighbour_coord)) {
+        if (block.contains(neighbour_coord)) {
+          // The face neighbour is in the same VoxelBlock
+          const auto& neighbour_data = block.data(neighbour_coord, scale);
+          if (!T::isValid(neighbour_data)) {
+            // The voxel has never been integrated into, found a frontier
+            return true;
+          }
+        } else {
+          // The face neighbour is in another VoxelBlock/Node
+          typename T::VoxelData neighbour_data;
+          // get() will return the data at the lowest allocated scale up to `scale`. Thus no
+          // erroneous frontiers will be detected if the neighbour is allocated at a higher scale
+          // than the query volume.
+          (void) octree.get(neighbour_coord, neighbour_data, scale);
+          if (!T::isValid(neighbour_data)) {
+            // The voxel/node has never been integrated into, found a frontier
+            return true;
+          }
         }
       }
     }
@@ -57,6 +68,8 @@ namespace se {
   bool is_frontier(const int            child_idx,
                    const se::Node<T>&   node,
                    const se::Octree<T>& octree) {
+    assert(0 <= child_idx && child_idx <= 8);
+
     static const Eigen::Matrix<int, 3, 6> offsets = (Eigen::Matrix<int, 3, 6>()
         <<  0,  0, -1, 1, 0, 0,
             0, -1,  0, 0, 1, 0,
@@ -66,24 +79,26 @@ namespace se {
     const Eigen::Vector3i child_coord = node.childCoord(child_idx);
     for (int i = 0; i < 6; ++i) {
       const Eigen::Vector3i neighbour_coord = child_coord + child_size * offsets.col(i);
-      if (child_coord / child_size == neighbour_coord / child_size) {
-        // The face neighbour is in the same Node
-        const Eigen::Vector3i rel_coord = neighbour_coord - node.coordinates();
-        const int sibling_idx = rel_coord.x() + rel_coord.y() * 2 + rel_coord.z() * 4;
-        const auto& neighbour_data = node.childData(sibling_idx);
-        if (!T::isValid(neighbour_data)) {
-          // The Node has never been integrated into, found a frontier
-          return true;
-        }
-      } else {
-        // The face neighbour is in another Node
-        const se::Node<T>& neighbour_parent = *(octree.fetchLowestNode(neighbour_coord, node_depth));
-        const Eigen::Vector3i rel_coord = neighbour_coord - neighbour_parent.coordinates();
-        const int neighbor_idx = rel_coord.x() + rel_coord.y() * 2 + rel_coord.z() * 4;
-        const auto& neighbour_data = neighbour_parent.childData(neighbor_idx);
-        if (!T::isValid(neighbour_data)) {
-          // The Node has never been integrated into, found a frontier
-          return true;
+      if (octree.contains(neighbour_coord)) {
+        if (child_coord / child_size == neighbour_coord / child_size) {
+          // The face neighbour is in the same Node
+          const Eigen::Vector3i rel_coord = neighbour_coord - node.coordinates();
+          const int sibling_idx = rel_coord.x() + rel_coord.y() * 2 + rel_coord.z() * 4;
+          const auto& neighbour_data = node.childData(sibling_idx);
+          if (!T::isValid(neighbour_data)) {
+            // The Node has never been integrated into, found a frontier
+            return true;
+          }
+        } else {
+          // The face neighbour is in another Node
+          const se::Node<T>& neighbour_parent = *(octree.fetchLowestNode(neighbour_coord, node_depth));
+          const Eigen::Vector3i rel_coord = neighbour_coord - neighbour_parent.coordinates();
+          const int neighbor_idx = rel_coord.x() + rel_coord.y() * 2 + rel_coord.z() * 4;
+          const auto& neighbour_data = neighbour_parent.childData(neighbor_idx);
+          if (!T::isValid(neighbour_data)) {
+            // The Node has never been integrated into, found a frontier
+            return true;
+          }
         }
       }
     }
@@ -96,54 +111,49 @@ namespace se {
    * total volume in primitive voxels.
   */
   template<typename T>
-  int update_frontier_data(se::Node<T>*         node,
+  int update_frontier_data(se::Node<T>&         node,
                            const se::Octree<T>& octree) {
     int frontier_volume = 0;
-    if (node == nullptr) {
-      return frontier_volume;
-    }
-    if (node->isBlock()) {
+    if (node.isBlock()) {
       // VoxelBlock
-      typename T::VoxelBlockType* block = reinterpret_cast<typename T::VoxelBlockType*>(node);
-      const int scale = block->current_scale();
-      // The number of voxels per edge at this scale
-      const int size_at_scale_li = block->scaleSize(scale);
+      typename T::VoxelBlockType& block = reinterpret_cast<typename T::VoxelBlockType&>(node);
+      const int scale = block.current_scale();
       // The volume in primitive voxels of a voxel at scale
-      const int voxel_volume_at_scale = se::math::cu(block->scaleVoxelSize(scale));
+      const int voxel_volume_at_scale = se::math::cu(block.scaleVoxelSize(scale));
       // Iterate over each voxel at scale
-      for (int i = 0; i < block->scaleNumVoxels(scale); i++) {
-        auto data = block->data(i, scale);
+      for (int i = 0; i < block.scaleNumVoxels(scale); i++) {
+        auto data = block.data(i, scale);
         // Ensure it is free before checking whether it's a frontier
         if (T::isFree(data)) {
-          const Eigen::Vector3i coords = block->voxelCoordinates(i, scale);
+          const Eigen::Vector3i coords = block.voxelCoordinates(i, scale);
           // Update the frontier state and frontier volume
-          if (se::is_frontier(coords, size_at_scale_li, scale, *block, octree)) {
+          if (se::is_frontier(coords, scale, block, octree)) {
             data.frontier = true;
             frontier_volume += voxel_volume_at_scale;
           } else {
             data.frontier = false;
           }
-          block->setData(i, scale, data);
+          block.setData(i, scale, data);
         }
       }
     } else {
       // Node
       // The volume in primitive voxels of a child Node
-      const int child_node_volume = se::math::cu(node->size() / 2);
+      const int child_node_volume = se::math::cu(node.size() / 2);
       // Iterate over all leaf children
       for (int i = 0; i < 8; i++) {
-        if (node->child(i) == nullptr) {
-          auto& data = node->childData(i);
+        if (node.child(i) == nullptr) {
+          auto& data = node.childData(i);
           // Ensure it is free before checking whether it's a frontier
           if (T::isFree(data)) {
             // Update the frontier state and frontier volume
-            if (se::is_frontier(i, *node, octree)) {
+            if (se::is_frontier(i, node, octree)) {
               data.frontier = true;
               frontier_volume += child_node_volume;
             } else {
               data.frontier = false;
             }
-            node->childData(i, data);
+            node.childData(i, data);
           }
         }
       }
@@ -155,7 +165,8 @@ namespace se {
 
   /** Update the frontier status of all voxels of VoxelBlocks in frontiers.
    * VoxelBlocks with frontier volume less than min_frontier_volume will be
-   * removed from frontiers.
+   * removed from frontiers. If min_frontier_volume is set to 0, all
+   * frontiers will be kept in frontiers.
    */
   template<typename T>
   void update_frontiers(se::Octree<T>&       octree,
@@ -173,9 +184,9 @@ namespace se {
         continue;
       }
       // Update the frontier status of the Node's voxel
-      const int frontier_volume = update_frontier_data(node, octree);
+      const int frontier_volume = update_frontier_data(*node, octree);
       // Remove the Node if its frontiers are too small
-      if (frontier_volume < min_frontier_volume) {
+      if (frontier_volume == 0 || frontier_volume < min_frontier_volume) {
         not_frontiers.insert(code);
       }
     }
@@ -211,9 +222,9 @@ namespace se {
             }
           }
         } else {
-          // This part should never be reached since we store the Morton of the Node's parent. The
-          // data of the VoxelBlock will be stored in its parent Node whose Morton should be in
-          // frontiers.
+          assert(false && "This branch shouldn't have been reached since we store "
+              "the Morton of the Node's parent. The data of the VoxelBlock will be stored "
+              "in its parent Node whose Morton should be in frontiers.");
         }
       } else {
         // Node with frontier children, fetch it
@@ -234,7 +245,7 @@ namespace se {
             }
           }
         } else {
-          // This part should never be reached.
+          assert(false && "This branch shouldn't have been reached.");
         }
       }
     }
