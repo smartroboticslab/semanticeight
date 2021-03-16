@@ -275,219 +275,8 @@ public:
   */
   static inline void propagateBlockToCoarsestScale(VoxelBlockType* block) {
 
-    int          target_scale = block->current_scale() + 1;
-    unsigned int size_at_target_scale_li = block->size_li >> target_scale;
-    unsigned int size_at_target_scale_sq = se::math::sq(size_at_target_scale_li);
-
-    int          child_scale  = target_scale - 1;
-    unsigned int size_at_child_scale_li = block->size_li >> child_scale;
-    unsigned int size_at_child_scale_sq = se::math::sq(size_at_child_scale_li);
-
-    if (block->buffer_scale() > block->current_scale()) {
-
-      VoxelData* max_data_at_target_scale = block->blockMaxDataAtScale(target_scale);
-      VoxelData* max_data_at_child_scale =  block->blockDataAtScale(child_scale);
-
-      for(unsigned int z = 0; z < size_at_target_scale_li; z++) {
-        for (unsigned int y = 0; y < size_at_target_scale_li; y++) {
-          for (unsigned int x = 0; x < size_at_target_scale_li; x++) {
-
-            const int target_max_data_idx   = x + y * size_at_target_scale_li + z * size_at_target_scale_sq;
-            auto& target_max_data = max_data_at_target_scale[target_max_data_idx];
-
-            float x_max = 0;
-            short y_max = 0;
-            float fg_max = 0.0f;
-            uint8_t r_max = 0u;
-            uint8_t g_max = 0u;
-            uint8_t b_max = 0u;
-            float o_max = -std::numeric_limits<float>::max();
-
-            int observed_count = 0;
-            int data_count = 0;
-            bool frontier = false;
-
-            for (unsigned int k = 0; k < 2; k++) {
-              for (unsigned int j = 0; j < 2; j++) {
-                for (unsigned int i = 0; i < 2; i++) {
-
-                  const int child_max_data_idx = (2 * x + i) + (2 * y + j) * size_at_child_scale_li + (2 * z + k) * size_at_child_scale_sq;
-                  const auto child_data = max_data_at_child_scale[child_max_data_idx];
-
-                  if (child_data.y > 0 && (child_data.x * child_data.y) > o_max) {
-                      data_count++;
-                      // Update max
-                      x_max = child_data.x;
-                      y_max = child_data.y;
-                      fg_max = child_data.fg;
-                      r_max = child_data.r;
-                      g_max = child_data.g;
-                      b_max = child_data.b;
-                      o_max = x_max * y_max;
-                      // Set the frontier flag of the scale if at least 1 of its children is a frontier
-                      frontier = (frontier || child_data.frontier);
-                  }
-
-                  if (child_data.observed) {
-                    observed_count++;
-                  }
-
-                } // i
-              } // j
-            } // k
-
-            if (data_count > 0) {
-              target_max_data.x = x_max;
-              target_max_data.y = y_max;
-              target_max_data.fg = fg_max;
-              target_max_data.r = r_max;
-              target_max_data.g = g_max;
-              target_max_data.b = b_max;
-              if (observed_count == 8) {
-                target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
-              }
-              target_max_data.frontier = frontier;
-            }
-
-          } // x
-        } // y
-      } // z
-
-    } else {
-
-      VoxelData* max_data_at_target_scale = block->blockMaxDataAtScale(target_scale);
-      VoxelData* data_at_target_scale     = block->blockDataAtScale(target_scale);
-      VoxelData* data_at_child_scale      =  block->blockDataAtScale(child_scale);
-
-      for(unsigned int z = 0; z < size_at_target_scale_li; z++) {
-        for (unsigned int y = 0; y < size_at_target_scale_li; y++) {
-          for (unsigned int x = 0; x < size_at_target_scale_li; x++) {
-
-            const int target_data_idx   = x + y * size_at_target_scale_li + z * size_at_target_scale_sq;
-            auto& target_data     = data_at_target_scale[target_data_idx];
-            auto& target_max_data = max_data_at_target_scale[target_data_idx];
-
-
-            float x_mean = 0;
-            short y_mean = 0;
-            float fg_mean = 0.0f;
-            uint16_t r_mean = 0u;
-            uint16_t g_mean = 0u;
-            uint16_t b_mean = 0u;
-
-            float x_max = 0;
-            short y_max = 0;
-            float fg_max = 0.0f;
-            uint8_t r_max = 0u;
-            uint8_t g_max = 0u;
-            uint8_t b_max = 0u;
-            float o_max = -std::numeric_limits<float>::max();
-
-            int observed_count = 0;
-            int data_count = 0;
-            bool frontier = false;
-
-            for (unsigned int k = 0; k < 2; k++) {
-              for (unsigned int j = 0; j < 2; j++) {
-                for (unsigned int i = 0; i < 2; i++) {
-
-                  const int child_data_idx = (2 * x + i) + (2 * y + j) * size_at_child_scale_li + (2 * z + k) * size_at_child_scale_sq;
-                  const auto child_data = data_at_child_scale[child_data_idx];
-
-                  if (child_data.y > 0) {
-                    // Update mean
-                    data_count++;
-                    x_mean += child_data.x;
-                    y_mean += child_data.y;
-                    fg_mean += child_data.fg;
-                    r_mean += child_data.r;
-                    g_mean += child_data.g;
-                    b_mean += child_data.b;
-                    // Set the frontier flag of the scale if at least 1 of its children is a frontier
-                    frontier = (frontier || child_data.frontier);
-
-                    if ((child_data.x * child_data.y) > o_max) {
-                      // Update max
-                      x_max = child_data.x;
-                      y_max = child_data.y;
-                      fg_max = child_data.fg;
-                      r_max = child_data.r;
-                      g_max = child_data.g;
-                      b_max = child_data.b;
-                      o_max = x_max * y_max;
-                    }
-                  }
-
-                  if (child_data.observed) {
-                    observed_count++;
-                  }
-
-                } // i
-              } // j
-            } // k
-
-            if (data_count > 0) {
-
-              target_data.x = x_mean / data_count;
-              target_data.y = ceil((float) y_mean) / data_count;
-              target_data.fg = fg_mean / data_count;
-              target_data.r = r_mean / data_count;
-              target_data.g = g_mean / data_count;
-              target_data.b = b_mean / data_count;
-              target_data.observed = false;
-              target_data.frontier = frontier;
-
-//              target_data.x = x_mean / data_count;
-//              target_data.y = y_max;
-//              if (observed_count == 8) {
-//                target_data.observed = true; // TODO: We don't set the observed count to true for mean values
-//              }
-
-//              target_data.x = x_max;
-//              target_data.y = y_max;
-//              if (observed_count == 8) {
-//                target_data.observed = true; // TODO: We don't set the observed count to true for mean values
-//              }
-
-              target_max_data.x = x_max;
-              target_max_data.y = y_max;
-              target_max_data.fg = fg_max;
-              target_max_data.r = r_max;
-              target_max_data.g = g_max;
-              target_max_data.b = b_max;
-              if (observed_count == 8) {
-                target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
-              }
-              target_max_data.frontier = frontier;
-
-//              if (abs(target_data.x - target_max_data.x) > 1) {
-//                std::cout << "-----" << std::endl;
-//                std::cout << target_data.x << "/" << target_max_data.x << "/" << data_count << std::endl;
-//                for (int k = 0; k < 2; k++) {
-//                  for (int j = 0; j < 2; j++) {
-//                    for (int i = 0; i < 2; i++) {
-//
-//                      const int child_data_idx = (2 * x + i) + (2 * y + j) * size_at_child_scale_li + (2 * z + k) * size_at_child_scale_sq;
-//                      const auto child_data = data_at_child_scale[child_data_idx];
-//
-//                      std::cout << str_utils::value_to_pretty_str(child_data.x, "child.x") << std::endl;
-//                      std::cout << str_utils::value_to_pretty_str(child_data.y, "child.y") << std::endl;
-//
-//                    } // i
-//                  } // j
-//                } // k
-//              }
-            }
-
-          } // x
-        } // y
-      } // z
-    }
-
-
-
-    for(target_scale += 1; target_scale <= VoxelBlockType::max_scale; ++target_scale) {
-
+    if (block->current_scale() < VoxelBlockType::max_scale) {
+      int          target_scale = block->current_scale() + 1;
       unsigned int size_at_target_scale_li = block->size_li >> target_scale;
       unsigned int size_at_target_scale_sq = se::math::sq(size_at_target_scale_li);
 
@@ -495,119 +284,331 @@ public:
       unsigned int size_at_child_scale_li = block->size_li >> child_scale;
       unsigned int size_at_child_scale_sq = se::math::sq(size_at_child_scale_li);
 
-      VoxelData* max_data_at_target_scale = block->blockMaxDataAtScale(target_scale);
-      VoxelData* data_at_target_scale     = block->blockDataAtScale(target_scale);
-      VoxelData* max_data_at_child_scale  =  block->blockMaxDataAtScale(child_scale);
-      VoxelData* data_at_child_scale      =  block->blockDataAtScale(child_scale);
+      if (block->buffer_scale() > block->current_scale()) {
 
-      for(unsigned int z = 0; z < size_at_target_scale_li; z++) {
-        for (unsigned int y = 0; y < size_at_target_scale_li; y++) {
-          for (unsigned int x = 0; x < size_at_target_scale_li; x++) {
+        VoxelData* max_data_at_target_scale = block->blockMaxDataAtScale(target_scale);
+        VoxelData* max_data_at_child_scale =  block->blockDataAtScale(child_scale);
 
-            const int target_data_idx   = x + y * size_at_target_scale_li + z * size_at_target_scale_sq;
-            auto& target_data     = data_at_target_scale[target_data_idx];
-            auto& target_max_data = max_data_at_target_scale[target_data_idx];
+        for(unsigned int z = 0; z < size_at_target_scale_li; z++) {
+          for (unsigned int y = 0; y < size_at_target_scale_li; y++) {
+            for (unsigned int x = 0; x < size_at_target_scale_li; x++) {
 
-            float x_mean = 0;
-            short y_mean = 0;
-            float fg_mean = 0.0f;
-            uint16_t r_mean = 0u;
-            uint16_t g_mean = 0u;
-            uint16_t b_mean = 0u;
+              const int target_max_data_idx   = x + y * size_at_target_scale_li + z * size_at_target_scale_sq;
+              auto& target_max_data = max_data_at_target_scale[target_max_data_idx];
 
-            float x_max = 0;
-            short y_max = 0;
-            float fg_max = 0.0f;
-            uint8_t r_max = 0u;
-            uint8_t g_max = 0u;
-            uint8_t b_max = 0u;
-            float o_max = -std::numeric_limits<float>::max();
+              float x_max = 0;
+              short y_max = 0;
+              float fg_max = 0.0f;
+              uint8_t r_max = 0u;
+              uint8_t g_max = 0u;
+              uint8_t b_max = 0u;
+              float o_max = -std::numeric_limits<float>::max();
 
-            int observed_count = 0;
-            int data_count = 0;
-            bool frontier = false;
+              int observed_count = 0;
+              int data_count = 0;
+              bool frontier = false;
 
-            for (unsigned int k = 0; k < 2; k++) {
-              for (unsigned int j = 0; j < 2; j++) {
-                for (unsigned int i = 0; i < 2; i++) {
+              for (unsigned int k = 0; k < 2; k++) {
+                for (unsigned int j = 0; j < 2; j++) {
+                  for (unsigned int i = 0; i < 2; i++) {
 
-                  const int child_data_idx = (2 * x + i) + (2 * y + j) * size_at_child_scale_li + (2 * z + k) * size_at_child_scale_sq;
-                  const auto child_data     = data_at_child_scale[child_data_idx];
-                  const auto child_max_data = max_data_at_child_scale[child_data_idx];
+                    const int child_max_data_idx = (2 * x + i) + (2 * y + j) * size_at_child_scale_li + (2 * z + k) * size_at_child_scale_sq;
+                    const auto child_data = max_data_at_child_scale[child_max_data_idx];
 
-                  if (child_max_data.y > 0) {
-                    // Update mean
-                    data_count++;
-                    x_mean += child_data.x;
-                    y_mean += child_data.y;
-                    fg_mean += child_data.fg;
-                    r_mean += child_data.r;
-                    g_mean += child_data.g;
-                    b_mean += child_data.b;
-                    // Set the frontier flag of the scale if at least 1 of its children is a frontier
-                    frontier = (frontier || child_data.frontier);
-
-                    if ((child_max_data.x * child_max_data.y) > o_max) {
-                      // Update max
-                      x_max = child_max_data.x;
-                      y_max = child_max_data.y;
-                      fg_max = child_max_data.fg;
-                      r_max = child_max_data.r;
-                      g_max = child_max_data.g;
-                      b_max = child_max_data.b;
-                      o_max = x_max * y_max;
+                    if (child_data.y > 0 && (child_data.x * child_data.y) > o_max) {
+                        data_count++;
+                        // Update max
+                        x_max = child_data.x;
+                        y_max = child_data.y;
+                        fg_max = child_data.fg;
+                        r_max = child_data.r;
+                        g_max = child_data.g;
+                        b_max = child_data.b;
+                        o_max = x_max * y_max;
+                        // Set the frontier flag of the scale if at least 1 of its children is a frontier
+                        frontier = (frontier || child_data.frontier);
                     }
 
-                  }
+                    if (child_data.observed) {
+                      observed_count++;
+                    }
 
-                  if (child_max_data.observed) {
-                    observed_count++;
-                  }
+                  } // i
+                } // j
+              } // k
 
-                } // i
-              } // j
-            } // k
-
-            if (data_count > 0) {
-              target_data.x = x_mean / data_count;
-              target_data.y = ceil((float) y_mean) / data_count;
-              target_data.fg = fg_mean / data_count;
-              target_data.r = r_mean / data_count;
-              target_data.g = g_mean / data_count;
-              target_data.b = b_mean / data_count;
-              target_data.observed = false;
-              target_data.frontier = frontier;
-
-//              target_data.x = x_mean / data_count;
-//              target_data.y = ceil((float) y_mean) / data_count;
-//              if (observed_count == 8) {
-//                target_data.observed = true; // TODO: We don't set the observed count to true for mean values
-//              }
-
-//              target_data.x = x_max;
-//              target_data.y = y_max;
-//              if (observed_count == 8) {
-//                target_data.observed = true; // TODO: We don't set the observed count to true for mean values
-//              }
-
-              target_max_data.x = x_max;
-              target_max_data.y = y_max;
-              target_max_data.fg = fg_max;
-              target_max_data.r = r_max;
-              target_max_data.g = g_max;
-              target_max_data.b = b_max;
-              if (observed_count == 8) {
-                target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
+              if (data_count > 0) {
+                target_max_data.x = x_max;
+                target_max_data.y = y_max;
+                target_max_data.fg = fg_max;
+                target_max_data.r = r_max;
+                target_max_data.g = g_max;
+                target_max_data.b = b_max;
+                if (observed_count == 8) {
+                  target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
+                }
+                target_max_data.frontier = frontier;
               }
-              target_max_data.frontier = frontier;
-            }
 
-          } // x
-        } // y
-      } // z
+            } // x
+          } // y
+        } // z
 
+      } else {
+
+        VoxelData* max_data_at_target_scale = block->blockMaxDataAtScale(target_scale);
+        VoxelData* data_at_target_scale     = block->blockDataAtScale(target_scale);
+        VoxelData* data_at_child_scale      =  block->blockDataAtScale(child_scale);
+
+        for(unsigned int z = 0; z < size_at_target_scale_li; z++) {
+          for (unsigned int y = 0; y < size_at_target_scale_li; y++) {
+            for (unsigned int x = 0; x < size_at_target_scale_li; x++) {
+
+              const int target_data_idx   = x + y * size_at_target_scale_li + z * size_at_target_scale_sq;
+              auto& target_data     = data_at_target_scale[target_data_idx];
+              auto& target_max_data = max_data_at_target_scale[target_data_idx];
+
+
+              float x_mean = 0;
+              short y_mean = 0;
+              float fg_mean = 0.0f;
+              uint16_t r_mean = 0u;
+              uint16_t g_mean = 0u;
+              uint16_t b_mean = 0u;
+
+              float x_max = 0;
+              short y_max = 0;
+              float fg_max = 0.0f;
+              uint8_t r_max = 0u;
+              uint8_t g_max = 0u;
+              uint8_t b_max = 0u;
+              float o_max = -std::numeric_limits<float>::max();
+
+              int observed_count = 0;
+              int data_count = 0;
+              bool frontier = false;
+
+              for (unsigned int k = 0; k < 2; k++) {
+                for (unsigned int j = 0; j < 2; j++) {
+                  for (unsigned int i = 0; i < 2; i++) {
+
+                    const int child_data_idx = (2 * x + i) + (2 * y + j) * size_at_child_scale_li + (2 * z + k) * size_at_child_scale_sq;
+                    const auto child_data = data_at_child_scale[child_data_idx];
+
+                    if (child_data.y > 0) {
+                      // Update mean
+                      data_count++;
+                      x_mean += child_data.x;
+                      y_mean += child_data.y;
+                      fg_mean += child_data.fg;
+                      r_mean += child_data.r;
+                      g_mean += child_data.g;
+                      b_mean += child_data.b;
+                      // Set the frontier flag of the scale if at least 1 of its children is a frontier
+                      frontier = (frontier || child_data.frontier);
+
+                      if ((child_data.x * child_data.y) > o_max) {
+                        // Update max
+                        x_max = child_data.x;
+                        y_max = child_data.y;
+                        fg_max = child_data.fg;
+                        r_max = child_data.r;
+                        g_max = child_data.g;
+                        b_max = child_data.b;
+                        o_max = x_max * y_max;
+                      }
+                    }
+
+                    if (child_data.observed) {
+                      observed_count++;
+                    }
+
+                  } // i
+                } // j
+              } // k
+
+              if (data_count > 0) {
+
+                target_data.x = x_mean / data_count;
+                target_data.y = ceil((float) y_mean) / data_count;
+                target_data.fg = fg_mean / data_count;
+                target_data.r = r_mean / data_count;
+                target_data.g = g_mean / data_count;
+                target_data.b = b_mean / data_count;
+                target_data.observed = false;
+                target_data.frontier = frontier;
+
+  //              target_data.x = x_mean / data_count;
+  //              target_data.y = y_max;
+  //              if (observed_count == 8) {
+  //                target_data.observed = true; // TODO: We don't set the observed count to true for mean values
+  //              }
+
+  //              target_data.x = x_max;
+  //              target_data.y = y_max;
+  //              if (observed_count == 8) {
+  //                target_data.observed = true; // TODO: We don't set the observed count to true for mean values
+  //              }
+
+                target_max_data.x = x_max;
+                target_max_data.y = y_max;
+                target_max_data.fg = fg_max;
+                target_max_data.r = r_max;
+                target_max_data.g = g_max;
+                target_max_data.b = b_max;
+                if (observed_count == 8) {
+                  target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
+                }
+                target_max_data.frontier = frontier;
+
+  //              if (abs(target_data.x - target_max_data.x) > 1) {
+  //                std::cout << "-----" << std::endl;
+  //                std::cout << target_data.x << "/" << target_max_data.x << "/" << data_count << std::endl;
+  //                for (int k = 0; k < 2; k++) {
+  //                  for (int j = 0; j < 2; j++) {
+  //                    for (int i = 0; i < 2; i++) {
+  //
+  //                      const int child_data_idx = (2 * x + i) + (2 * y + j) * size_at_child_scale_li + (2 * z + k) * size_at_child_scale_sq;
+  //                      const auto child_data = data_at_child_scale[child_data_idx];
+  //
+  //                      std::cout << str_utils::value_to_pretty_str(child_data.x, "child.x") << std::endl;
+  //                      std::cout << str_utils::value_to_pretty_str(child_data.y, "child.y") << std::endl;
+  //
+  //                    } // i
+  //                  } // j
+  //                } // k
+  //              }
+              }
+
+            } // x
+          } // y
+        } // z
+      }
+
+
+
+      for(target_scale += 1; target_scale <= VoxelBlockType::max_scale; ++target_scale) {
+
+        unsigned int size_at_target_scale_li = block->size_li >> target_scale;
+        unsigned int size_at_target_scale_sq = se::math::sq(size_at_target_scale_li);
+
+        int          child_scale  = target_scale - 1;
+        unsigned int size_at_child_scale_li = block->size_li >> child_scale;
+        unsigned int size_at_child_scale_sq = se::math::sq(size_at_child_scale_li);
+
+        VoxelData* max_data_at_target_scale = block->blockMaxDataAtScale(target_scale);
+        VoxelData* data_at_target_scale     = block->blockDataAtScale(target_scale);
+        VoxelData* max_data_at_child_scale  =  block->blockMaxDataAtScale(child_scale);
+        VoxelData* data_at_child_scale      =  block->blockDataAtScale(child_scale);
+
+        for(unsigned int z = 0; z < size_at_target_scale_li; z++) {
+          for (unsigned int y = 0; y < size_at_target_scale_li; y++) {
+            for (unsigned int x = 0; x < size_at_target_scale_li; x++) {
+
+              const int target_data_idx   = x + y * size_at_target_scale_li + z * size_at_target_scale_sq;
+              auto& target_data     = data_at_target_scale[target_data_idx];
+              auto& target_max_data = max_data_at_target_scale[target_data_idx];
+
+              float x_mean = 0;
+              short y_mean = 0;
+              float fg_mean = 0.0f;
+              uint16_t r_mean = 0u;
+              uint16_t g_mean = 0u;
+              uint16_t b_mean = 0u;
+
+              float x_max = 0;
+              short y_max = 0;
+              float fg_max = 0.0f;
+              uint8_t r_max = 0u;
+              uint8_t g_max = 0u;
+              uint8_t b_max = 0u;
+              float o_max = -std::numeric_limits<float>::max();
+
+              int observed_count = 0;
+              int data_count = 0;
+              bool frontier = false;
+
+              for (unsigned int k = 0; k < 2; k++) {
+                for (unsigned int j = 0; j < 2; j++) {
+                  for (unsigned int i = 0; i < 2; i++) {
+
+                    const int child_data_idx = (2 * x + i) + (2 * y + j) * size_at_child_scale_li + (2 * z + k) * size_at_child_scale_sq;
+                    const auto child_data     = data_at_child_scale[child_data_idx];
+                    const auto child_max_data = max_data_at_child_scale[child_data_idx];
+
+                    if (child_max_data.y > 0) {
+                      // Update mean
+                      data_count++;
+                      x_mean += child_data.x;
+                      y_mean += child_data.y;
+                      fg_mean += child_data.fg;
+                      r_mean += child_data.r;
+                      g_mean += child_data.g;
+                      b_mean += child_data.b;
+                      // Set the frontier flag of the scale if at least 1 of its children is a frontier
+                      frontier = (frontier || child_data.frontier);
+
+                      if ((child_max_data.x * child_max_data.y) > o_max) {
+                        // Update max
+                        x_max = child_max_data.x;
+                        y_max = child_max_data.y;
+                        fg_max = child_max_data.fg;
+                        r_max = child_max_data.r;
+                        g_max = child_max_data.g;
+                        b_max = child_max_data.b;
+                        o_max = x_max * y_max;
+                      }
+
+                    }
+
+                    if (child_max_data.observed) {
+                      observed_count++;
+                    }
+
+                  } // i
+                } // j
+              } // k
+
+              if (data_count > 0) {
+                target_data.x = x_mean / data_count;
+                target_data.y = ceil((float) y_mean) / data_count;
+                target_data.fg = fg_mean / data_count;
+                target_data.r = r_mean / data_count;
+                target_data.g = g_mean / data_count;
+                target_data.b = b_mean / data_count;
+                target_data.observed = false;
+                target_data.frontier = frontier;
+
+  //              target_data.x = x_mean / data_count;
+  //              target_data.y = ceil((float) y_mean) / data_count;
+  //              if (observed_count == 8) {
+  //                target_data.observed = true; // TODO: We don't set the observed count to true for mean values
+  //              }
+
+  //              target_data.x = x_max;
+  //              target_data.y = y_max;
+  //              if (observed_count == 8) {
+  //                target_data.observed = true; // TODO: We don't set the observed count to true for mean values
+  //              }
+
+                target_max_data.x = x_max;
+                target_max_data.y = y_max;
+                target_max_data.fg = fg_max;
+                target_max_data.r = r_max;
+                target_max_data.g = g_max;
+                target_max_data.b = b_max;
+                if (observed_count == 8) {
+                  target_max_data.observed = true; // TODO: We don't set the observed count to true for mean values
+                }
+                target_max_data.frontier = frontier;
+              }
+
+            } // x
+          } // y
+        } // z
+
+      }
     }
-
   }
 
 
