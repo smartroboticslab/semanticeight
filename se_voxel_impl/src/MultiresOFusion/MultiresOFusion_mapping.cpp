@@ -630,11 +630,11 @@ struct MultiresOFusionUpdate {
    * \param[in] rel_step    The relative direction of node within parent node (e.g. [1, 0, 1], [0, 1, 1]).
    * \param[in] parent      The pointer to the nodes parent.
    */
-  void operator()(const Eigen::Vector3i& node_coord,
-                  const int              node_size,
-                  const int              depth,
-                  const Eigen::Vector3i& rel_step,
-                  NodeType*              parent) { }
+  void operator()(const Eigen::Vector3i& /* node_coord */,
+                  const int              /* node_size */,
+                  const int              /* depth */,
+                  const Eigen::Vector3i& /* rel_step */,
+                  NodeType*              /* parent */) { }
 
   /**
    * \brief Propage all newly integrated values from the voxel block depth up to the root of the octree.
