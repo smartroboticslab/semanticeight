@@ -188,6 +188,14 @@ Eigen::Vector3i VoxelBlock<T>::voxelCoordinates(const int voxel_idx, const int s
 }
 
 template <typename T>
+bool VoxelBlock<T>::contains(const Eigen::Vector3i& voxel_coord) const {
+  const Eigen::Vector3i voxel_offset = voxel_coord - coordinates_;
+  return 0 <= voxel_offset.x() && voxel_offset.x() < static_cast<int>(size_li)
+      && 0 <= voxel_offset.y() && voxel_offset.y() < static_cast<int>(size_li)
+      && 0 <= voxel_offset.z() && voxel_offset.z() < static_cast<int>(size_li);
+}
+
+template <typename T>
 constexpr int VoxelBlock<T>::scaleSize(const int scale) {
   assert(0 <= scale && scale <= VoxelBlock<T>::max_scale);
 

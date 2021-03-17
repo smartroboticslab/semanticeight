@@ -127,3 +127,11 @@ TEST_F(VoxelBlockCommonTest, voxelCoordinates) {
   }
 }
 
+TEST_F(VoxelBlockCommonTest, contains) {
+  EXPECT_TRUE(block_full_.contains(coordinates_));
+  EXPECT_TRUE(block_full_.contains(coordinates_ + Eigen::Vector3i(1, 2, 3)));
+  EXPECT_TRUE(block_full_.contains(coordinates_ + Eigen::Vector3i(5, 7, 3)));
+  EXPECT_FALSE(block_full_.contains(coordinates_ + Eigen::Vector3i(5, 7, 8)));
+  EXPECT_FALSE(block_full_.contains(coordinates_ - Eigen::Vector3i(1, 2, 3)));
+}
+

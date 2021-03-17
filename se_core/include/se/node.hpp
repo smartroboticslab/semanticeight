@@ -166,6 +166,8 @@ public:
   int min_scale() const { return min_scale_; }
   void min_scale(const int s) { min_scale_ = s; }
 
+  bool contains(const Eigen::Vector3i& voxel_coord) const;
+
   virtual VoxelData data(const Eigen::Vector3i& voxel_coord) const = 0;
   virtual void setData(const Eigen::Vector3i& voxel_coord, const VoxelData& voxel_data) = 0;
 
