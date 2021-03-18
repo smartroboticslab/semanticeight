@@ -146,9 +146,14 @@ int se::load_depth_png(float**            depth_image_data,
                        const std::string& filename,
                        const float        inverse_scale) {
   // Load the 16-bit depth data
-  uint16_t* depth_image_data_scaled;
-  const int ret = se::load_depth_png(&depth_image_data_scaled, depth_image_res,
+  uint16_t* depth_image_data_scaled = nullptr;
+  const int err = se::load_depth_png(&depth_image_data_scaled, depth_image_res,
       filename);
+  // Return on error
+  if (err) {
+    free(depth_image_data_scaled);
+    return err;
+  }
   // Remove the scaling from the 16-bit depth data and convert to float
   const size_t num_pixels = depth_image_res.prod();
   *depth_image_data = static_cast<float*>(malloc(num_pixels * sizeof(float)));
@@ -157,7 +162,7 @@ int se::load_depth_png(float**            depth_image_data,
     (*depth_image_data)[i] = inverse_scale * depth_image_data_scaled[i];
   }
   free(depth_image_data_scaled);
-  return ret;
+  return 0;
 }
 
 
@@ -251,9 +256,14 @@ int se::load_depth_pgm(float**            depth_image_data,
                        const std::string& filename,
                        const float        inverse_scale) {
   // Load the 16-bit depth data
-  uint16_t* depth_image_data_scaled;
-  const int ret = se::load_depth_pgm(&depth_image_data_scaled, depth_image_res,
+  uint16_t* depth_image_data_scaled = nullptr;
+  const int err = se::load_depth_pgm(&depth_image_data_scaled, depth_image_res,
       filename);
+  // Return on error
+  if (err) {
+    free(depth_image_data_scaled);
+    return err;
+  }
   // Remove the scaling from the 16-bit depth data and convert to float
   const size_t num_pixels = depth_image_res.prod();
   *depth_image_data = static_cast<float*>(malloc(num_pixels * sizeof(float)));
@@ -262,7 +272,7 @@ int se::load_depth_pgm(float**            depth_image_data,
     (*depth_image_data)[i] = inverse_scale * depth_image_data_scaled[i];
   }
   free(depth_image_data_scaled);
-  return ret;
+  return 0;
 }
 
 
