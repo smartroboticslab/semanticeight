@@ -144,8 +144,6 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     valid_depth_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()), se::mask_t, cv::Scalar(255));
     raycasted_instance_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()),
         se::instance_mask_t, cv::Scalar(se::instance_bg));
-    // Exploration only ///////////////////////////////////////////////////////
-    freeInitSphere();
 }
 
 
@@ -686,6 +684,16 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
 
 
 // Exploration only ///////////////////////////////////////////////////////
+void DenseSLAMSystem::freeInitialPosition(const SensorImpl& sensor) {
+  freeInitCylinder(sensor);
+  // Update the frontier status
+  update_frontiers(*map_, frontiers_, min_frontier_volume_);
+  // Up-propagate free space to the root
+  VoxelImpl::propagateToRoot(*map_);
+}
+
+
+
 std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierVolumes() const {
   return se::frontier_volumes(*map_, frontiers_);
 }
@@ -977,17 +985,23 @@ void DenseSLAMSystem::generateUndetectedInstances(se::SegmentationResult& detect
 
 
 // Exploration only ///////////////////////////////////////////////////////
-void DenseSLAMSystem::freeInitSphere() {
-  // Compute the AABB of the sphere to reduce the voxels iterated over
-  const float radius = 1.5f * (config_.robot_radius + config_.safety_radius);
-  const Eigen::Vector3f center_M = T_MC_.topRightCorner<3,1>();
-  const Eigen::Vector3f corner_min_M = center_M - Eigen::Vector3f::Constant(radius);
-  const Eigen::Vector3f corner_max_M = center_M + Eigen::Vector3f::Constant(radius);
+void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor) {
+  if (!std::is_same<VoxelImpl, MultiresOFusion>::value) {
+    std::cerr << "Error: Only MultiresOFusion is supported\n";
+    std::abort();
+  }
+  // Compute the cylinder parameters and increase the height by some percentage
+  const float height = 3.0f * 2.0f * (config_.robot_radius + config_.safety_radius);
+  const float radius = std::max(height, (height / 2.0f) / tan(sensor.vertical_fov / 2.0f));
+  const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3,1>();
+  // Compute the cylinder's AABB corners in metres and voxels
+  const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f(radius, radius, height);
+  const Eigen::Vector3f aabb_max_M = centre_M + Eigen::Vector3f(radius, radius, height);
   // Compute the coordinates of all the points corresponding to voxels in the AABB
   std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> aabb_points_M;
-  for (float z = corner_min_M.z(); z <= corner_max_M.z(); z += map_->voxelDim()) {
-    for (float y = corner_min_M.y(); y <= corner_max_M.y(); y += map_->voxelDim()) {
-      for (float x = corner_min_M.x(); x <= corner_max_M.x(); x += map_->voxelDim()) {
+  for (float z = aabb_min_M.z(); z <= aabb_max_M.z(); z += map_->voxelDim()) {
+    for (float y = aabb_min_M.y(); y <= aabb_max_M.y(); y += map_->voxelDim()) {
+      for (float x = aabb_min_M.x(); x <= aabb_max_M.x(); x += map_->voxelDim()) {
         aabb_points_M.push_back(Eigen::Vector3f(x, y, z));
       }
     }
@@ -1002,38 +1016,27 @@ void DenseSLAMSystem::freeInitSphere() {
   }
   std::vector<se::key_t> codes (code_set.begin(), code_set.end());
   map_->allocate(codes.data(), codes.size());
-  // Update any other required VoxelBlock data
+  // Add the allocated VoxelBlocks to the frontier set
+  se::setunion(frontiers_, code_set);
+  // The data to store in the free voxels
+  auto data = VoxelImpl::VoxelType::initData();
+  data.x = -21; // The path planning threshold is -20.
+  data.y = 1;
+  data.observed = true;
+  // Allocate the VoxelBlocks up to some scale
+  constexpr int scale = 0;
   std::vector<VoxelImpl::VoxelBlockType*> blocks;
   map_->getBlockList(blocks, false);
   for (auto& block : blocks) {
     block->active(true);
-    // Allocate the VoxelBlocks to the single-voxel scale
-    if (std::is_same<VoxelImpl::VoxelBlockType, se::VoxelBlockSingleMax<VoxelImpl::VoxelType>>::value
-        || std::is_same<VoxelImpl::VoxelBlockType, se::VoxelBlockSingle<VoxelImpl::VoxelType>>::value) {
-      block->allocateDownTo();
-    }
+    block->allocateDownTo(scale);
   }
-  // The data to store in the free voxels
-  auto data = VoxelImpl::VoxelType::initData();
-  if (std::is_same<VoxelImpl, MultiresOFusion>::value) {
-    data.x = -5;
-    data.y = 5;
-    data.frontier = false;
-    data.observed = true;
-  } else {
-    std::cerr << "Error: Only MultiresOFusion is supported\n";
-    std::abort();
-  }
-  // Set the sphere voxels to free
+  // Set the cylinder voxels to free
   for (const auto& point_M : aabb_points_M) {
-    if ((point_M - center_M).norm() <= radius) {
-      map_->setAtPoint(point_M, data);
+    const Eigen::Vector3f voxel_dist_M = (centre_M - point_M).array().abs().matrix();
+    if (voxel_dist_M.head<2>().norm() <= radius && voxel_dist_M.z() <= height) {
+      map_->setAtPoint(point_M, data, scale);
     }
-  }
-  // Up-propagate the data.
-  if (std::is_same<VoxelImpl, MultiresOFusion>::value) {
-    // Up-propagate free space to the root
-    VoxelImpl::propagateToRoot(*map_);
   }
 }
 
