@@ -342,7 +342,7 @@ public:
    * \param voxel_coord_f The voxel coordinates.
    * \return The coordinates of the corresponding 3D point in metres.
    */
-  inline Eigen::Vector3f voxelToPoint(const Eigen::Vector3f& voxel_coord_f) const;
+  inline Eigen::Vector3f voxelFToPoint(const Eigen::Vector3f& voxel_coord_f) const;
 
   /*! \brief Convert 3D point coordinates in metres to the coordinates of the
    * corresponding voxel.

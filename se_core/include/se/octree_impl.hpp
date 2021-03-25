@@ -434,13 +434,13 @@ inline void Octree<T>::setAtPoint(const Eigen::Vector3f& point_M,
 
 template <typename T>
 inline Eigen::Vector3f Octree<T>::voxelToPoint(const Eigen::Vector3i& voxel_coord) const {
-  return voxelToPoint(voxel_coord.template cast<float>());
+  return voxelFToPoint(voxel_coord.template cast<float>());
 }
 
 
 
 template <typename T>
-inline Eigen::Vector3f Octree<T>::voxelToPoint(const Eigen::Vector3f& voxel_coord_f) const {
+inline Eigen::Vector3f Octree<T>::voxelFToPoint(const Eigen::Vector3f& voxel_coord_f) const {
   return voxel_coord_f * voxel_dim_;
 }
 
