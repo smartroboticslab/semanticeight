@@ -391,7 +391,8 @@ template <typename T>
 inline void Octree<T>::set(const int        x,
                            const int        y,
                            const int        z,
-                           const VoxelData& data) {
+                           const VoxelData& data,
+                           const int        min_scale) {
   Node<T>* node = root_;
   if (!node) {
     return;
@@ -409,7 +410,7 @@ inline void Octree<T>::set(const int        x,
     node = node_tmp;
   }
 
-  const int scale = static_cast<VoxelBlockType *>(node)->min_scale();
+  const int scale = std::max(static_cast<VoxelBlockType *>(node)->current_scale(), min_scale);
   static_cast<VoxelBlockType *>(node)->setData(Eigen::Vector3i(x, y, z), scale, data);
 }
 
@@ -417,17 +418,19 @@ inline void Octree<T>::set(const int        x,
 
 template <typename T>
 inline void Octree<T>::set(const Eigen::Vector3i& voxel_coord,
-                           const VoxelData&       data) {
-  return set(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), data);
+                           const VoxelData&       data,
+                           const int              min_scale) {
+  return set(voxel_coord.x(), voxel_coord.y(), voxel_coord.z(), data, min_scale);
 }
 
 
 
 template <typename T>
 inline void Octree<T>::setAtPoint(const Eigen::Vector3f& point_M,
-                                  const VoxelData&       data) {
+                                  const VoxelData&       data,
+                                  const int              min_scale) {
   const Eigen::Vector3i voxel_coord = (inverse_voxel_dim_ * point_M).template cast<int>();
-  return set(voxel_coord, data);
+  return set(voxel_coord, data, min_scale);
 }
 
 

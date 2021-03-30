@@ -303,30 +303,33 @@ public:
   /*! \brief Set the data at the supplied voxel coordinates.
    * If the voxel hasn't been allocated, no action is performed.
    *
-   * \param[in] x    The voxel x coordinate in the interval [0, size - 1].
-   * \param[in] y    The voxel y coordinate in the interval [0, size - 1].
-   * \param[in] z    The voxel z coordinate in the interval [0, size - 1].
-   * \param[in] data The data to store in the voxel.
+   * \param[in] x         The voxel x coordinate in the interval [0, size - 1].
+   * \param[in] y         The voxel y coordinate in the interval [0, size - 1].
+   * \param[in] z         The voxel z coordinate in the interval [0, size - 1].
+   * \param[in] data      The data to store in the voxel.
+   * \param[in] min_scale The data will be stored at the minimum allocated scale up to min_scale.
    */
-  void set(const int x, const int y, const int z, const VoxelData& data);
+  void set(const int x, const int y, const int z, const VoxelData& data, const int min_scale = 0);
 
   /*! \brief Set the data at the supplied voxel coordinates.
    * If the voxel hasn't been allocated, no action is performed.
    *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
    *                        be in the interval [0, size - 1].
-   * \param[in] data The data to store in the voxel.
+   * \param[in] data        The data to store in the voxel.
+   * \param[in] min_scale   The data will be stored at the minimum allocated scale up to min_scale.
    */
-  void set(const Eigen::Vector3i& voxel_coord, const VoxelData& data);
+  void set(const Eigen::Vector3i& voxel_coord, const VoxelData& data, const int min_scale = 0);
 
   /*! \brief Set the data at the supplied 3D point.
    * If the voxel hasn't been allocated, no action is performed.
    *
-   * \param[in] point_M The coordinates of the point. Each component must be in
-   *                    the interval [0, dim).
-   * \param[in] data The data to store in the voxel.
+   * \param[in] point_M   The coordinates of the point. Each component must be in
+   *                      the interval [0, dim).
+   * \param[in] data      The data to store in the voxel.
+   * \param[in] min_scale The data will be stored at the minimum allocated scale up to min_scale.
    */
-  void setAtPoint(const Eigen::Vector3f& point_M, const VoxelData& data);
+  void setAtPoint(const Eigen::Vector3f& point_M, const VoxelData& data, const int min_scale = 0);
 
   /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
    * 3D point in metres.
