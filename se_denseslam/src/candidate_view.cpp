@@ -217,8 +217,8 @@ namespace se {
       const float yaw_diff = math::yaw_error(path[i], path[i + 1]);
       t_rot += yaw_diff / velocity_angular;
     }
-    // Ensure the path time is never below 0.01 s so that we don't divide by 0
-    return std::max(std::max(t_tran, t_rot), 0.01f);
+    const float t = std::max(t_tran, t_rot);
+    return (std::fabs(t) > 10.0f * FLT_EPSILON) ? t : NAN;
   }
 } // namespace se
 

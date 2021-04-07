@@ -739,11 +739,16 @@ se::Path DenseSLAMSystem::computeNextPath_WC(const SensorImpl& sensor) {
   rejected_candidate_views_ = planner.rejectedViews();
   goal_view_ = planner.bestView();
   path_M_ = planner.bestPath();
-  goal_T_MC_ = path_M_.back();
-  // Convert the path to the world frame
-  path_W_ = se::Path(path_M_.size());
-  for (size_t i = 0; i < path_M_.size(); ++i) {
-    path_W_[i] = T_WM_ * path_M_[i];
+  if (path_M_.empty()) {
+    goal_T_MC_ = T_MC_;
+    path_W_.clear();
+  } else {
+    goal_T_MC_ = path_M_.back();
+    // Convert the path to the world frame
+    path_W_ = se::Path(path_M_.size());
+    for (size_t i = 0; i < path_M_.size(); ++i) {
+      path_W_[i] = T_WM_ * path_M_[i];
+    }
   }
   return path_W_;
 }
