@@ -6,7 +6,7 @@ project(supereight VERSION 0.1.0 LANGUAGES C CXX)
 # to folder names inside se_voxel_impl/include/se/voxel_implementations. When
 # adding a new voxel implementation, appending it to this list is enough to
 # compile supereight with it.
-set(SE_VOXEL_IMPLS MultiresOFusion CACHE STRING "The voxel implementations to compile")
+set(SE_VOXEL_IMPLS MultiresOFusion MultiresTSDF CACHE STRING "The voxel implementations to compile")
 
 # The camera implementations to compile. The valid values are the names of the
 # *Sensor classes defined in se_shared/include/se/sensor.hpp.

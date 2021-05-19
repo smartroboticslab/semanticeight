@@ -25,43 +25,85 @@ set(READER_SRC
 # Create executables ##########################################################
 # Iterate over each voxel and sensor implementaion and compile the executables
 # for it.
-foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
-  foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
-    # Convert the implementation names to lowercase
-    string(TOLOWER ${VOXEL_IMPL} VOXEL_IMPL_LC)
-    string(TOLOWER ${SENSOR_IMPL} SENSOR_IMPL_LC)
+foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
+  # Convert the implementation names to lowercase
+  string(TOLOWER ${SENSOR_IMPL} SENSOR_IMPL_LC)
 
-    # Main executable #########################################################
-    set(EXE_NAME "se-denseslam-${VOXEL_IMPL_LC}-${SENSOR_IMPL_LC}-main")
+  # Main executable #########################################################
+  set(EXE_NAME "se-denseslam-${SENSOR_IMPL_LC}-main")
+  add_executable(${EXE_NAME}
+    "src/main.cpp"
+    "src/PowerMonitor.cpp"
+    ${READER_SRC}
+  )
+  target_include_directories(${EXE_NAME} BEFORE PRIVATE include)
+  target_link_libraries(${EXE_NAME}
+    PRIVATE
+      SE::DenseSLAM${SENSOR_IMPL}
+      stdc++fs
+  )
+  # Allow handling large files in 32-bit systems
+  target_compile_definitions(${EXE_NAME} PRIVATE "-D_FILE_OFFSET_BITS=64")
+  set_target_properties(${EXE_NAME} PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+  )
+  # Compile with GUI support
+  if(SE_BUILD_GLUT_GUI AND GLUT_FOUND)
+    target_link_libraries(${EXE_NAME}
+      PRIVATE
+        ${GLUT_LIBRARIES}
+        ${OPENGL_LIBRARIES}
+    )
+    target_compile_definitions(${EXE_NAME} PRIVATE "-DSE_GLUT")
+    if(NOT APPLE)
+      target_link_libraries(${EXE_NAME} PRIVATE GL)
+    endif()
+  endif()
+  # Compile with OpenNI2 support
+  if(OPENNI2_FOUND)
+    target_include_directories(${EXE_NAME} PRIVATE ${OPENNI2_INCLUDE_PATHS})
+    target_link_libraries(${EXE_NAME} PRIVATE ${OPENNI2_LIBRARIES})
+    target_compile_definitions(${EXE_NAME} PRIVATE "-DSE_USE_OPENNI")
+  endif()
+
+
+
+  # Qt executable ###########################################################
+  if(SE_BUILD_QT_GUI AND Qt5_FOUND)
+    # Find the Qt source files
+    file(GLOB QT_SRC qt/*)
+    set(QT_SRC ${QT_SRC} "qt/images.qrc")
+
+    set(EXE_NAME "se-denseslam-${SENSOR_IMPL_LC}-qt")
     add_executable(${EXE_NAME}
       "src/main.cpp"
       "src/PowerMonitor.cpp"
       ${READER_SRC}
+      ${QT_SRC}
     )
-    target_include_directories(${EXE_NAME} BEFORE PRIVATE include)
+    target_include_directories(${EXE_NAME} BEFORE PRIVATE include qt)
     target_link_libraries(${EXE_NAME}
       PRIVATE
-        SE::DenseSLAM${VOXEL_IMPL}${SENSOR_IMPL}
+        SE::DenseSLAM${SENSOR_IMPL}
         stdc++fs
+        Qt5::OpenGL
+        Qt5::PrintSupport
+        Qt5::Widgets
     )
-    # Allow handling large files in 32-bit systems
-    target_compile_definitions(${EXE_NAME} PRIVATE "-D_FILE_OFFSET_BITS=64")
+    target_compile_definitions(${EXE_NAME}
+      PRIVATE
+        "-DSE_QT"
+        "-D_FILE_OFFSET_BITS=64"
+    )
     set_target_properties(${EXE_NAME} PROPERTIES
       CXX_STANDARD 17
       CXX_STANDARD_REQUIRED ON
       CXX_EXTENSIONS OFF
     )
-    # Compile with GUI support
-    if(SE_BUILD_GLUT_GUI AND GLUT_FOUND)
-      target_link_libraries(${EXE_NAME}
-        PRIVATE
-          ${GLUT_LIBRARIES}
-          ${OPENGL_LIBRARIES}
-      )
-      target_compile_definitions(${EXE_NAME} PRIVATE "-DSE_GLUT")
-      if(NOT APPLE)
-        target_link_libraries(${EXE_NAME} PRIVATE GL)
-      endif()
+    if(NOT APPLE)
+      target_link_libraries(${EXE_NAME} PRIVATE GL)
     endif()
     # Compile with OpenNI2 support
     if(OPENNI2_FOUND)
@@ -69,52 +111,7 @@ foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
       target_link_libraries(${EXE_NAME} PRIVATE ${OPENNI2_LIBRARIES})
       target_compile_definitions(${EXE_NAME} PRIVATE "-DSE_USE_OPENNI")
     endif()
-
-
-
-    # Qt executable ###########################################################
-    if(SE_BUILD_QT_GUI AND Qt5_FOUND)
-      # Find the Qt source files
-      file(GLOB QT_SRC qt/*)
-      set(QT_SRC ${QT_SRC} "qt/images.qrc")
-
-      set(EXE_NAME "se-denseslam-${VOXEL_IMPL_LC}-${SENSOR_IMPL_LC}-qt")
-      add_executable(${EXE_NAME}
-        "src/main.cpp"
-        "src/PowerMonitor.cpp"
-        ${READER_SRC}
-        ${QT_SRC}
-      )
-      target_include_directories(${EXE_NAME} BEFORE PRIVATE include qt)
-      target_link_libraries(${EXE_NAME}
-        PRIVATE
-          SE::DenseSLAM${VOXEL_IMPL}${SENSOR_IMPL}
-          stdc++fs
-          Qt5::OpenGL
-          Qt5::PrintSupport
-          Qt5::Widgets
-      )
-      target_compile_definitions(${EXE_NAME}
-        PRIVATE
-          "-DSE_QT"
-          "-D_FILE_OFFSET_BITS=64"
-      )
-      set_target_properties(${EXE_NAME} PROPERTIES
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS OFF
-      )
-      if(NOT APPLE)
-        target_link_libraries(${EXE_NAME} PRIVATE GL)
-      endif()
-      # Compile with OpenNI2 support
-      if(OPENNI2_FOUND)
-        target_include_directories(${EXE_NAME} PRIVATE ${OPENNI2_INCLUDE_PATHS})
-        target_link_libraries(${EXE_NAME} PRIVATE ${OPENNI2_LIBRARIES})
-        target_compile_definitions(${EXE_NAME} PRIVATE "-DSE_USE_OPENNI")
-      endif()
-    endif()
-  endforeach()
+  endif()
 endforeach()
 
 

@@ -11,7 +11,7 @@ target_include_directories(${unit_test_name} BEFORE
 )
 target_link_libraries(${unit_test_name}
   PRIVATE
-    SE::DenseSLAMMultiresOFusionPinholeCamera
+    SE::DenseSLAMPinholeCamera
 )
 gtest_add_tests(${unit_test_name} "" AUTO)
 

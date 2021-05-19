@@ -32,7 +32,6 @@ foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
 	# Define the voxel and sensor implementation macros
     target_compile_definitions(${LIB_NAME}
       PUBLIC
-        SE_VOXEL_IMPLEMENTATION=${VOXEL_IMPL}
         SE_SENSOR_IMPLEMENTATION=${SENSOR_IMPL}
     )
 
