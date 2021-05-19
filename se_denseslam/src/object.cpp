@@ -12,11 +12,11 @@
 
 
 
-  Object::Object(const std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map,
-                 const Eigen::Vector2i&                                  image_res,
-                 const Eigen::Matrix4f&                                  T_OM,
-                 const Eigen::Matrix4f&                                  T_MC,
-                 const int                                               instance_id)
+  Object::Object(const std::shared_ptr<se::Octree<ObjVoxelImpl::VoxelType>> map,
+                 const Eigen::Vector2i&                                     image_res,
+                 const Eigen::Matrix4f&                                     T_OM,
+                 const Eigen::Matrix4f&                                     T_MC,
+                 const int                                                  instance_id)
     : instance_id(instance_id),
       num_blocks_per_min_scale({}),
       detected_integrations(0),
@@ -52,7 +52,7 @@ Object::Object(const Eigen::Vector2i&         image_res,
       surface_normals_M_(image_res.x(), image_res.y()),
       T_OM_(T_OM),
       T_MO_(se::math::to_inverse_transformation(T_OM_)) {
-  map_ = std::shared_ptr<se::Octree<VoxelImpl::VoxelType>>(new se::Octree<VoxelImpl::VoxelType>());
+  map_ = std::shared_ptr<se::Octree<ObjVoxelImpl::VoxelType>>(new se::Octree<ObjVoxelImpl::VoxelType>());
   map_->init(map_size.x(), map_dim.x());
 }
 
@@ -107,7 +107,7 @@ void Object::integrate(const se::Image<float>&         depth_image,
   // Over-allocate memory for octant list
   const float voxel_size = map_->voxelDim();
   const int num_vox_per_pix = map_->dim()
-      / ((se::VoxelBlock<VoxelImpl::VoxelType>::size_li) * voxel_size);
+      / ((se::VoxelBlock<ObjVoxelImpl::VoxelType>::size_li) * voxel_size);
   const size_t total = num_vox_per_pix
       * depth_image.width() * depth_image.height();
   allocation_list_.reserve(total);
@@ -121,7 +121,7 @@ void Object::integrate(const se::Image<float>&         depth_image,
 #endif
 
   const Eigen::Matrix4f& T_OC = T_OM_ * T_MC;
-  const size_t allocated = VoxelImpl::buildAllocationList(
+  const size_t allocated = ObjVoxelImpl::buildAllocationList(
       *map_,
       depth_image,
       T_OC,
@@ -138,7 +138,7 @@ void Object::integrate(const se::Image<float>&         depth_image,
   map_->allocate(allocation_list_.data(), allocated);
 
   // Update the map
-  VoxelImpl::integrate(
+  ObjVoxelImpl::integrate(
       *map_,
       depth_image,
       rgba_image,
@@ -178,7 +178,7 @@ void Object::integrate(const se::Image<float>&         depth_image,
 void Object::raycast(const Eigen::Matrix4f& T_MC,
                      const SensorImpl&      sensor) {
   raycast_T_MC_ = T_MC;
-  raycastKernel<VoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_,
+  raycastKernel<ObjVoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_,
       raycast_T_MC_, sensor);
 }
 
@@ -200,10 +200,10 @@ void Object::renderObjectVolume(uint32_t*              output_image_data,
     }
   } else {
     // Raycast the map from the render viewpoint.
-    raycastKernel<VoxelImpl>(*map_, render_surface_point_cloud_M,
+    raycastKernel<ObjVoxelImpl>(*map_, render_surface_point_cloud_M,
         render_surface_normals_M, render_T_MC, sensor);
   }
-  renderVolumeKernel<VoxelImpl>(output_image_data, output_image_res,
+  renderVolumeKernel<ObjVoxelImpl>(output_image_data, output_image_res,
       se::math::to_translation(render_T_MC), ambient,
       render_surface_point_cloud_M, render_surface_normals_M);
 }

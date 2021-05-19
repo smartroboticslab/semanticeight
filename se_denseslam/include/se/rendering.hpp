@@ -166,7 +166,7 @@ void renderVolumeKernel(uint32_t*                         volume_RGBA_image_data
             = Eigen::Vector3f::Constant(fmaxf(surface_normal_M.normalized().dot(diff), 0.f));
         Eigen::Vector3f col = dir + ambient_M;
         se::math::clamp(col, Eigen::Vector3f::Zero(), Eigen::Vector3f::Ones());
-        col = col.cwiseProduct(se::internal::color_map[se::internal::scale_image(x, y)]);
+        col *= 255.0f;
         volume_RGBA_image_data[pixel_idx] = se::pack_rgba(col.x(), col.y(), col.z(), 0xFF);
       } else {
         volume_RGBA_image_data[pixel_idx] = 0xFF000000;

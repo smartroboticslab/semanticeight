@@ -81,7 +81,7 @@ class Object {
     // Map
     Eigen::Matrix4f T_OM_;
     Eigen::Matrix4f T_MO_;
-    std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map_;
+    std::shared_ptr<se::Octree<ObjVoxelImpl::VoxelType>> map_;
     std::vector<se::key_t> allocation_list_;
 
     /**
@@ -96,11 +96,11 @@ class Object {
 
 
 
-    Object(const std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map,
-           const Eigen::Vector2i&                                  image_res,
-           const Eigen::Matrix4f&                                  T_OM,
-           const Eigen::Matrix4f&                                  T_MC,
-           const int                                               instance_id);
+    Object(const std::shared_ptr<se::Octree<ObjVoxelImpl::VoxelType>> map,
+           const Eigen::Vector2i&                                     image_res,
+           const Eigen::Matrix4f&                                     T_OM,
+           const Eigen::Matrix4f&                                     T_MC,
+           const int                                                  instance_id);
 
     Object(const Eigen::Vector2i&         image_res,
            const Eigen::Vector3i&         map_size,

@@ -42,5 +42,7 @@
  */
 typedef SE_VOXEL_IMPLEMENTATION VoxelImpl;
 
+typedef SE_OBJECT_VOXEL_IMPLEMENTATION ObjVoxelImpl;
+
 #endif
 

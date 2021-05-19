@@ -69,7 +69,7 @@ void raycastObjectListKernel(const Objects&              objects,
         const Eigen::Vector3f ray_dir_O = se::math::to_rotation(T_OM) * ray_dir_M;
         const Eigen::Vector3f t_OC = (T_OM * t_MC).head(3);
         // Raycast the object
-        const Eigen::Vector4f surface_intersection_O = VoxelImpl::raycast(
+        const Eigen::Vector4f surface_intersection_O = ObjVoxelImpl::raycast(
             *object.map_, t_OC, ray_dir_O, sensor.nearDist(ray_dir_C), sensor.farDist(ray_dir_C));
 
         if (surface_intersection_O.w() >= 0.f) {
@@ -117,14 +117,14 @@ void raycastObjectListKernel(const Objects&              objects,
           surface_point_cloud_M[pixel_idx] = (T_MO * surface_intersection_O.head(3).homogeneous()).head(3);
           // Update the normals
           Eigen::Vector3f surface_normal_O = object.map_->gradAtPoint(surface_intersection_O.head<3>(),
-              VoxelImpl::VoxelType::selectNodeValue,
-              VoxelImpl::VoxelType::selectVoxelValue,
+              ObjVoxelImpl::VoxelType::selectNodeValue,
+              ObjVoxelImpl::VoxelType::selectVoxelValue,
               static_cast<int>(surface_intersection_O.w() + 0.5f));
           if (surface_normal_O.norm() == 0.f) {
             surface_normals_M[pixel_idx] = Eigen::Vector3f(INVALID, 0.f, 0.f);
           } else {
             // Invert normals for TSDF representations.
-            surface_normals_M[pixel_idx] = se::math::to_rotation(T_MO) * (VoxelImpl::invert_normals
+            surface_normals_M[pixel_idx] = se::math::to_rotation(T_MO) * (ObjVoxelImpl::invert_normals
                 ? (-1.f * surface_normal_O).normalized()
                 : surface_normal_O.normalized()
                 ).head(3);
@@ -169,16 +169,11 @@ void renderObjectListKernel(uint32_t*                         output_image_data,
   for (int y = 0; y < output_image_res.y(); ++y) {
 #pragma omp simd
     for (int x = 0; x < output_image_res.x(); ++x) {
-
       const size_t pixel_idx = x + output_image_res.x() * y;
 
-      const Eigen::Vector3f object_point_M = object_point_cloud_M[pixel_idx];
-      const Eigen::Vector3f object_normal_M = object_normals_M[pixel_idx];
+      const Eigen::Vector3f& object_point_M = object_point_cloud_M[pixel_idx];
+      const Eigen::Vector3f& object_normal_M = object_normals_M[pixel_idx];
       const int instance_id = instance_id_image.at<se::instance_mask_elem_t>(y, x);
-
-      // Initialize the pixel to black in case the raycasting failed for
-      // objects
-      output_image_data[pixel_idx] = 0xFF000000;
 
       // Iterate over all objects to find the one with the instance ID returned
       // by raycasting.
@@ -186,7 +181,6 @@ void renderObjectListKernel(uint32_t*                         output_image_data,
         Object& object = *object_ptr;
         if (instance_id == object.instance_id) {
           if (object_normal_M.x() != INVALID && object_normal_M.norm() > 0.f) {
-
             const Eigen::Vector3f diff = (object_point_M - light_M).normalized();
             const Eigen::Vector3f dir
                 = Eigen::Vector3f::Constant(fmaxf(object_normal_M.normalized().dot(diff), 0.f));

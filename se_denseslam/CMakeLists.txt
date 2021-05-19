@@ -75,6 +75,7 @@ foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
   target_compile_definitions(${LIB_NAME}
     PUBLIC
       SE_VOXEL_IMPLEMENTATION=${VOXEL_IMPL_MACRO}
+      SE_OBJECT_VOXEL_IMPLEMENTATION=MultiresTSDF
   )
 
   foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})

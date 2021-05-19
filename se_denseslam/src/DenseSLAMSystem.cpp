@@ -115,8 +115,10 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     const float voxel_dim = map_dim_.x() / map_size_.x();
     if (has_yaml_voxel_impl_config) {
       VoxelImpl::configure(yaml_voxel_impl_config, voxel_dim);
+      ObjVoxelImpl::configure(yaml_voxel_impl_config, voxel_dim);
     } else {
       VoxelImpl::configure(voxel_dim);
+      ObjVoxelImpl::configure(voxel_dim);
     }
 
     // Initialize the Gaussian for the bilateral filter
@@ -669,7 +671,7 @@ void DenseSLAMSystem::renderRaycast(uint32_t*              output_image_data,
 void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool print_path) {
   for (const auto& object : objects_) {
     std::vector<se::Triangle> mesh;
-    VoxelImpl::dumpMesh(*(object->map_), mesh);
+    ObjVoxelImpl::dumpMesh(*(object->map_), mesh);
     const std::string f = filename + "_" + std::to_string(object->instance_id) + ".vtk";
     const Eigen::Matrix4f T_WO = se::math::to_inverse_transformation(object->T_OM_ * T_MW_);
     if (print_path) {
