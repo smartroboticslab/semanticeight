@@ -14,6 +14,7 @@ void raycastObjectListKernel(const Objects&              objects,
                              se::Image<Eigen::Vector3f>& surface_normals_M,
                              cv::Mat&                    instance_id_image,
                              se::Image<int8_t>&          scale_image,
+                             se::Image<int8_t>&          min_scale_image,
                              const Eigen::Matrix4f&      raycast_T_MC,
                              const SensorImpl&           sensor) {
   TICKD("raycastObjectListKernel");
@@ -132,6 +133,14 @@ void raycastObjectListKernel(const Objects&              objects,
           // Update the instance mask
           instance_id_image.at<se::instance_mask_elem_t>(y, x) = instance_id;
           scale_image[pixel_idx] = static_cast<int8_t>(surface_intersection_O.w());
+          // Fetch the VoxelBlock containing the hit and get its minimum updated scale.
+          // TODO SEM not sure why block would ever be nullptr if we got a valid hit but it happens.
+          const auto* block = object.map_->fetch(object.map_->pointToVoxel(surface_intersection_O.head<3>()));
+          if (block) {
+            min_scale_image[pixel_idx] = block->min_scale();
+          } else {
+            min_scale_image[pixel_idx] = -1;
+          }
           //std::cout << "Hit!" << "\n";
         } else {
           // No hit was made
@@ -146,6 +155,7 @@ void raycastObjectListKernel(const Objects&              objects,
         surface_normals_M[pixel_idx] = Eigen::Vector3f(INVALID, 0.f, 0.f);
         instance_id_image.at<se::instance_mask_elem_t>(y, x) = se::instance_bg;
         scale_image[pixel_idx] = -1;
+        min_scale_image[pixel_idx] = -1;
       }
     }
   }
@@ -163,6 +173,7 @@ void renderObjectListKernel(uint32_t*                         output_image_data,
                             const se::Image<Eigen::Vector3f>& object_normals_M,
                             const cv::Mat&                    instance_id_image,
                             const se::Image<int8_t>&          scale_image,
+                            const se::Image<int8_t>&          min_scale_image,
                             const RenderMode                  render_mode) {
   TICKD("raycastObjectListKernel");
 #pragma omp parallel for
@@ -231,6 +242,16 @@ void renderObjectListKernel(uint32_t*                         output_image_data,
             case RenderMode::Scale:
               {
                 const int8_t scale = scale_image[pixel_idx];
+                if (scale >= 0) {
+                  col = (dir + ambient_M).cwiseProduct(se::internal::color_map[scale] / 255.0f);
+                } else {
+                  col = Eigen::Vector3f::Zero();
+                }
+              }
+              break;
+            case RenderMode::MinScale:
+              {
+                const int8_t scale = min_scale_image[pixel_idx];
                 if (scale >= 0) {
                   col = (dir + ambient_M).cwiseProduct(se::internal::color_map[scale] / 255.0f);
                 } else {

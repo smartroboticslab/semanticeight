@@ -150,6 +150,7 @@ class DenseSLAMSystem {
      * Contains the scale at which each pixel was hit in the last raycasting.
      */
     se::Image<int8_t> object_scale_image_;
+    se::Image<int8_t> object_min_scale_image_;
 
     /**
      * IOU threshold in [0, 1] to consider two masks matched.

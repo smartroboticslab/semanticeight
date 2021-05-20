@@ -24,6 +24,7 @@ enum RenderMode : uint8_t {
   InstanceID,
   ClassID,
   Scale,
+  MinScale,
   ForegroundProb
 };
 
@@ -39,6 +40,7 @@ void raycastObjectListKernel(const Objects&              objects,
                              se::Image<Eigen::Vector3f>& surface_normals_M,
                              cv::Mat&                    instance_id_image,
                              se::Image<int8_t>&          scale_image,
+                             se::Image<int8_t>&          min_scale_image,
                              const Eigen::Matrix4f&      raycast_T_MC,
                              const SensorImpl&           sensor);
 
@@ -51,6 +53,7 @@ void renderObjectListKernel(uint32_t*                         output_image_data,
                             const se::Image<Eigen::Vector3f>& object_normals_M,
                             const cv::Mat&                    instance_id_image,
                             const se::Image<int8_t>&          scale_image,
+                            const se::Image<int8_t>&          min_scale_image,
                             const RenderMode                  render_mode);
 
 void overlayBoundingVolumeKernel(uint32_t*              output_image_data,

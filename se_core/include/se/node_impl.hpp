@@ -340,6 +340,7 @@ VoxelBlockFull<T>::VoxelBlockFull(const typename T::VoxelData init_data) : Voxel
   for (unsigned int voxel_idx = 0; voxel_idx < num_voxels_in_block; voxel_idx++) {
     block_data_[voxel_idx] = init_data;
   }
+  this->min_scale_ = -1;
 }
 
 template <typename T>

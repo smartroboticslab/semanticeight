@@ -99,7 +99,8 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     processed_segmentation_(image_res_.x(), image_res_.y()),
     object_surface_point_cloud_M_(image_res_.x(), image_res_.y()),
     object_surface_normals_M_(image_res_.x(), image_res_.y()),
-    object_scale_image_(image_res_.x(), image_res_.y(), -1)
+    object_scale_image_(image_res_.x(), image_res_.y(), -1),
+    object_min_scale_image_(image_res_.x(), image_res_.y(), -1)
   {
 
     bool has_yaml_voxel_impl_config = false;
@@ -590,7 +591,8 @@ bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor) {
   raycast(sensor);
   // Raycast all objects.
   raycastObjectListKernel(objects_, visible_objects_, object_surface_point_cloud_M_,
-      object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_, raycast_T_MC_, sensor);
+      object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_,
+      object_min_scale_image_, raycast_T_MC_, sensor);
   // Compute regions where objects are occluded by the background.
   cv::Mat mask = se::occlusion_mask(object_surface_point_cloud_M_, surface_point_cloud_M_,
       map_->voxelDim(), raycast_T_MC_);
@@ -634,7 +636,8 @@ void DenseSLAMSystem::renderObjects(uint32_t*              output_image_data,
   // Overlay the objects using the current raycast.
   renderObjectListKernel(output_image_data, output_image_res,
       se::math::to_translation(*render_T_MC_), ambient, objects_, object_surface_point_cloud_M_,
-      object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_, render_mode);
+      object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_,
+      object_min_scale_image_, render_mode);
 
   if (render_bounding_volumes) {
     overlayBoundingVolumeKernel(output_image_data, output_image_res, objects_,
