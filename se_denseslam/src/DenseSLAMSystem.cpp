@@ -674,7 +674,7 @@ void DenseSLAMSystem::renderRaycast(uint32_t*              output_image_data,
 void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool print_path) {
   for (const auto& object : objects_) {
     std::vector<se::Triangle> mesh;
-    ObjVoxelImpl::dumpMesh(*(object->map_), mesh);
+    ObjVoxelImpl::dumpMesh(*(object->map_), mesh, true);
     const std::string f = filename + "_" + std::to_string(object->instance_id) + ".vtk";
     const Eigen::Matrix4f T_WO = se::math::to_inverse_transformation(object->T_OM_ * T_MW_);
     if (print_path) {

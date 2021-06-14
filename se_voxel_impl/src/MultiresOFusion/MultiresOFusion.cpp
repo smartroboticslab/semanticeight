@@ -189,7 +189,8 @@ size_t MultiresOFusion::buildAllocationList(OctreeType&,
 }
 
 void MultiresOFusion::dumpMesh(OctreeType&                map,
-                                    std::vector<se::Triangle>& mesh) {
+                                    std::vector<se::Triangle>& mesh,
+                                    const bool                 use_min_scale) {
 
-  se::algorithms::dual_marching_cube(map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh);
+  se::algorithms::dual_marching_cube(map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh, use_min_scale);
 }

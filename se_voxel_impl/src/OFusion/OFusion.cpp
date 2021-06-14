@@ -117,7 +117,8 @@ std::string OFusion::printConfig() {
 }
 
 void OFusion::dumpMesh(OctreeType&                map,
-                       std::vector<se::Triangle>& mesh) {
+                       std::vector<se::Triangle>& mesh,
+                       const bool) {
 
   se::algorithms::marching_cube(map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh);
 }
