@@ -12,10 +12,10 @@
 
 
 namespace se {
-  static constexpr float geometric_threshold = 0.02f; // edgeness
-  static constexpr float geometric_lambda = 0.1f;
+  static constexpr float geom_threshold = 0.001f; // smoothenss, edgeness
+  static constexpr float geometric_lambda = 0.05f;
   static constexpr int geometric_component_size = 0;
-  static constexpr size_t morph_diam = 3;
+  static constexpr size_t geom_dilute_size = 7;
 
 
 
@@ -55,12 +55,11 @@ namespace se {
    *
    * \note See Martin Runz, Lourdes Agapito, 'MaskFusion: Real-Time
    * Recognition, Tracking and Reconstruction of Multiple Moving Objects'
-   * Section 5.2 for more details. The way the lambda parameter was slightly
-   * changed.
+   * Section 5.2 for more details.
    *
    * \todo Generate the mask directly, see compute_geom_edges().
    */
-  void geometric_edge_kernel(se::Image<uint8_t>&               is_edge,
+  void geometric_edge_kernel(se::Image<uint8_t>&               not_edge,
                              const se::Image<Eigen::Vector3f>& point_cloud,
                              const se::Image<Eigen::Vector3f>& normals,
                              const float                       lambda,
@@ -75,7 +74,7 @@ namespace se {
         // Skip boundary
         if (   (x == 0) || (x == input_size.x() - 1)
             || (y == 0) || (y == input_size.y() - 1)) {
-          is_edge[pixel_idx] = 0;
+
           continue;
         }
 
@@ -90,7 +89,7 @@ namespace se {
                 && (i >= 0) && (i < input_size.x())
                 && (j >= 0) && (j < input_size.y())) {
 
-              const int neighbor_idx = i + j * input_size.x();
+              const int neighbor_idx = i + j * input_size.y();
 
               const float neighbor_distance
                   = calc_distance(point_cloud, normals, pixel_idx, neighbor_idx);
@@ -115,10 +114,8 @@ namespace se {
 
         // Edges are located in regions with large concavity or depth
         // discontinuities.
-        if (edgeness > threshold) {
-          is_edge[pixel_idx] = UINT8_MAX;
-        } else {
-          is_edge[pixel_idx] = 0;
+        if (edgeness <= threshold) {
+          not_edge[pixel_idx] = 1;
         }
       }
     }
@@ -143,43 +140,28 @@ namespace se {
       pointCloudToNormalKernel<false>(normals, point_cloud);
     }
 
-    // Compute the geometric edges.
-    se::Image<uint8_t> is_edge (depth_res.x(), depth_res.y());
-    geometric_edge_kernel(is_edge, point_cloud, normals, geometric_lambda, geometric_threshold);
+    se::Image<uint8_t> not_edge (depth_res.x(), depth_res.y(), 0);
+    geometric_edge_kernel(not_edge, point_cloud, normals, geometric_lambda, geom_threshold);
+    const cv::Mat not_edge_mask (depth_res.y(), depth_res.x(), CV_8UC1, not_edge.data());
 
-    // Invert the edge mask to get a convex region mask.
-    const cv::Mat edge_mask (depth_res.y(), depth_res.x(), CV_8UC1, is_edge.data());
-    cv::Mat convex_mask;
-    cv::bitwise_not(edge_mask, convex_mask);
-
-    //cv::imwrite("/home/srl/edge_mask_og.png", convex_mask);
-
-    // Perform morphological transformations to connect small edges and remove
-    // small holes.
-    const cv::Mat element = cv::getStructuringElement(
-        cv::MORPH_ELLIPSE, cv::Size(morph_diam, morph_diam));
-    cv::morphologyEx(convex_mask, convex_mask, cv::MORPH_OPEN, element);
-    //cv::morphologyEx(convex_mask, convex_mask, cv::MORPH_CLOSE, element);
-
-    //cv::imwrite("/home/srl/edge_mask.png", convex_mask);
-
-    // Find connected patches in the convex mask.
+    // Find connected patches in the edge map.
     cv::Mat geometric_label;
     cv::Mat label_stats;
     cv::Mat label_centroids; // Unused
     const int num_labels = cv::connectedComponentsWithStats(
-        convex_mask, geometric_label, label_stats, label_centroids, 4, CV_16U);
+        not_edge_mask, geometric_label, label_stats, label_centroids, 4, CV_16U);
     SegmentationResult geometric_segmentation(depth_res);
     //geometric_segmentation.combined_mask_ = geometric_label.clone(); // TODO not needed?
 
     for (int label_id = 0; label_id < num_labels; ++label_id) {
       if (label_stats.at<int32_t>(label_id, cv::CC_STAT_AREA) > geometric_component_size) {
-        cv::Mat mask = (geometric_label == label_id);
-        const cv::Mat element = cv::getStructuringElement(
-            cv::MORPH_ELLIPSE, cv::Size(morph_diam, morph_diam));
-        cv::morphologyEx(mask, mask, cv::MORPH_OPEN, element);
-        cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, element);
-        const InstanceSegmentation geo_seg(label_id, se::class_invalid, mask);
+        cv::Mat maskImage = (geometric_label == label_id);
+
+        //dirty: dilate mask a little bit
+        cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+            cv::Size(geom_dilute_size, geom_dilute_size));
+        cv::dilate(maskImage, maskImage, element );
+        InstanceSegmentation geo_seg(label_id, se::class_invalid, maskImage);
         geometric_segmentation.object_instances.push_back(geo_seg);
       }
     }

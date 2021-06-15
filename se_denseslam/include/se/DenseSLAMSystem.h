@@ -117,8 +117,6 @@ class DenseSLAMSystem {
      */
     se::SegmentationResult processed_segmentation_;
 
-    se::SegmentationResult geometric_segmentation_;
-
     /**
      * The objects detected and tracked by the pipeline. The background is
      * always the first object.
@@ -827,9 +825,6 @@ class DenseSLAMSystem {
                        const Eigen::Vector2i& output_image_res);
 
     void dumpObjectMeshes(const std::string filename, const bool print_path);
-
-    void renderGeometricSegm(uint32_t*              output_image_data,
-                             const Eigen::Vector2i& output_image_res) const;
 
     Objects getObjectMaps() {
       return objects_;
