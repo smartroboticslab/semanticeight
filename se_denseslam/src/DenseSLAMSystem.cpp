@@ -90,6 +90,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     T_MW_(T_MW),
     input_segmentation_(image_res_.x(), image_res_.y()),
     processed_segmentation_(image_res_.x(), image_res_.y()),
+    geometric_segmentation_(image_res_.x(), image_res_.y()),
     object_surface_point_cloud_M_(image_res_.x(), image_res_.y()),
     object_surface_normals_M_(image_res_.x(), image_res_.y()),
     object_scale_image_(image_res_.x(), image_res_.y(), -1)
@@ -494,6 +495,7 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor) {
   processed_segmentation_.removeInvalidDepth(valid_depth_mask_);
   //processed_segmentation_.morphologicalRefinement(10);
   // TODO: more mask prerocessing
+  geometric_segmentation_ = geometric_segmentation(depth_image_, sensor);
 
   // Compute the objects visible from the camera pose computed by tracking based on their bounding
   // volumes.
@@ -658,6 +660,14 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
     }
     save_mesh_vtk(mesh, f.c_str(), T_WO, object->voxelDim());
   }
+}
+
+
+
+void DenseSLAMSystem::renderGeometricSegm(uint32_t*              output_image_data,
+                                          const Eigen::Vector2i& output_image_res) const {
+  renderMaskKernel<INSTANCE_MASK_ELEM_T>(output_image_data, output_image_res,
+      rgba_image_, geometric_segmentation_.instanceMask());
 }
 
 
