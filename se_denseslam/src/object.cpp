@@ -27,6 +27,7 @@
       raycast_T_MC_(T_MC),
       surface_point_cloud_M_(image_res.x(), image_res.y()),
       surface_normals_M_(image_res.x(), image_res.y()),
+      min_scale_image_(image_res.x(), image_res.y(), -1),
       T_OM_(T_OM),
       T_MO_(se::math::to_inverse_transformation(T_OM_)) {
     map_ = map;
@@ -50,6 +51,7 @@ Object::Object(const Eigen::Vector2i&         image_res,
       raycast_T_MC_(T_MC),
       surface_point_cloud_M_(image_res.x(), image_res.y()),
       surface_normals_M_(image_res.x(), image_res.y()),
+      min_scale_image_(image_res.x(), image_res.y(), -1),
       T_OM_(T_OM),
       T_MO_(se::math::to_inverse_transformation(T_OM_)) {
   map_ = std::shared_ptr<se::Octree<ObjVoxelImpl::VoxelType>>(new se::Octree<ObjVoxelImpl::VoxelType>());
@@ -178,7 +180,7 @@ void Object::integrate(const se::Image<float>&         depth_image,
 void Object::raycast(const Eigen::Matrix4f& T_MC,
                      const SensorImpl&      sensor) {
   raycast_T_MC_ = T_MC;
-  raycastKernel<ObjVoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_,
+  raycastKernel<ObjVoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_, min_scale_image_,
       raycast_T_MC_, sensor);
 }
 
@@ -191,6 +193,7 @@ void Object::renderObjectVolume(uint32_t*              output_image_data,
                                 const bool             /*render_color*/) {
   se::Image<Eigen::Vector3f> render_surface_point_cloud_M (image_res_.x(), image_res_.y());
   se::Image<Eigen::Vector3f> render_surface_normals_M (image_res_.x(), image_res_.y());
+  se::Image<int8_t> min_scale_image (image_res_.x(), image_res_.y());
   if (render_T_MC.isApprox(raycast_T_MC_)) {
     // Copy the raycast from the camera viewpoint. Can't safely use memcpy with
     // Eigen objects it seems.
@@ -200,8 +203,8 @@ void Object::renderObjectVolume(uint32_t*              output_image_data,
     }
   } else {
     // Raycast the map from the render viewpoint.
-    raycastKernel<ObjVoxelImpl>(*map_, render_surface_point_cloud_M,
-        render_surface_normals_M, render_T_MC, sensor);
+    raycastKernel<ObjVoxelImpl>(*map_, render_surface_point_cloud_M, render_surface_normals_M,
+        min_scale_image, render_T_MC, sensor);
   }
   renderVolumeKernel<ObjVoxelImpl>(output_image_data, output_image_res,
       se::math::to_translation(render_T_MC), ambient,

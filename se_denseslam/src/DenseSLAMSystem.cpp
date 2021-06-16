@@ -95,6 +95,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     render_T_MC_(&T_MC_),
     T_MW_(T_MW),
     T_WM_(se::math::to_inverse_transformation(T_MW_)),
+    min_scale_image_(image_res_.x(), image_res_.y(), -1),
     input_segmentation_(image_res_.x(), image_res_.y()),
     processed_segmentation_(image_res_.x(), image_res_.y()),
     object_surface_point_cloud_M_(image_res_.x(), image_res_.y()),
@@ -281,7 +282,7 @@ bool DenseSLAMSystem::raycast(const SensorImpl& sensor) {
 
   TICK("RAYCASTING")
   raycast_T_MC_ = T_MC_;
-  raycastKernel<VoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_,
+  raycastKernel<VoxelImpl>(*map_, surface_point_cloud_M_, surface_normals_M_, min_scale_image_,
       raycast_T_MC_, sensor);
   TOCK("RAYCASTING")
   return true;
@@ -295,6 +296,7 @@ void DenseSLAMSystem::renderVolume(uint32_t*              volume_RGBA_image_data
 
   se::Image<Eigen::Vector3f> render_surface_point_cloud_M (image_res_.x(), image_res_.y());
   se::Image<Eigen::Vector3f> render_surface_normals_M (image_res_.x(), image_res_.y());
+  se::Image<int8_t> min_scale_image (image_res_.x(), image_res_.y());
   if (render_T_MC_->isApprox(raycast_T_MC_)) {
     // Copy the raycast from the camera viewpoint. Can't safely use memcpy with
     // Eigen objects it seems.
@@ -305,8 +307,8 @@ void DenseSLAMSystem::renderVolume(uint32_t*              volume_RGBA_image_data
   } else {
     TICK("RAYCASTING")
     // Raycast the map from the render viewpoint.
-    raycastKernel<VoxelImpl>(*map_, render_surface_point_cloud_M,
-        render_surface_normals_M, *render_T_MC_, sensor);
+    raycastKernel<VoxelImpl>(*map_, render_surface_point_cloud_M, render_surface_normals_M,
+        min_scale_image, *render_T_MC_, sensor);
     TOCK("RAYCASTING")
   }
 
