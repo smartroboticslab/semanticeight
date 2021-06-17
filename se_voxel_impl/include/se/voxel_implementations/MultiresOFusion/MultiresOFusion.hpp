@@ -73,7 +73,8 @@ struct MultiresOFusion {
   struct VoxelType {
     struct VoxelData {
       float  x;             // Latest mean occupancy
-      float    fg;  // Foreground probability
+      float    fg;       // Foreground probability
+      uint16_t fg_count; // Foreground probability update count
       short  y;             // Mean number of integrations
       uint8_t  r;   // Red channel
       uint8_t  g;   // Green channel
@@ -85,8 +86,8 @@ struct MultiresOFusion {
       bool operator!=(const VoxelData& other) const;
     };
 
-    static inline VoxelData invalid()  { return {0.f, 0.f, 0, 0u, 0u, 0u, false, false}; }
-    static inline VoxelData initData() { return {0.f, 0.f, 0, 0u, 0u, 0u, false, false}; }
+    static inline VoxelData invalid()  { return {0.f, 0.f, 0u, 0, 0u, 0u, 0u, false, false}; }
+    static inline VoxelData initData() { return {0.f, 0.f, 0u, 0, 0u, 0u, 0u, false, false}; }
 
     static float selectNodeValue(const VoxelData& data) {
       return data.x;
@@ -140,6 +141,7 @@ struct MultiresOFusion {
       std::string s;
       s += "x        " + std::to_string(data.x)  + "\\l";
       s += "fg       " + std::to_string(data.fg) + "\\l";
+      s += "fg_count " + std::to_string(data.fg_count) + "\\l";
       s += "y        " + std::to_string(data.y)  + "\\l";
       s += "r        " + std::to_string(data.r)  + "\\l";
       s += "g        " + std::to_string(data.g)  + "\\l";

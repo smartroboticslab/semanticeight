@@ -197,6 +197,7 @@ struct MultiresOFusionUpdate {
 
                       buffer_data.x = parent_data.x;
                       buffer_data.fg = parent_data.fg;
+                      buffer_data.fg_count = parent_data.fg_count;
                       buffer_data.y = parent_data.y; // (parent_data.y > 0) ? 1 : 0;
                       buffer_data.r = parent_data.r;
                       buffer_data.g = parent_data.g;
@@ -352,6 +353,7 @@ struct MultiresOFusionUpdate {
 
                       buffer_data.x = parent_data.x;
                       buffer_data.fg = parent_data.fg;
+                      buffer_data.fg_count = parent_data.fg_count;
                       buffer_data.y = parent_data.y; // (parent_data.y > 0) ? 1 : 0;
                       buffer_data.r = parent_data.r;
                       buffer_data.g = parent_data.g;
@@ -385,7 +387,7 @@ struct MultiresOFusionUpdate {
                                                                                                0, recommended_stride, 0,
                                                                                                0, 0, recommended_stride).finished()));
 
-      auto valid_predicate = [&](float depth_value, uint32_t /* rgba_value */, se::integration_mask_elem_t fg_value){ return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; };
+      auto valid_predicate = [&](float depth_value, uint32_t /* rgba_value */, se::integration_mask_elem_t fg_value){ return depth_value >= sensor_.near_plane && fg_value != se::InstanceSegmentation::skip_integration; };
 
 // TODO SEM maybe omp parallel for will speed this up
       for (unsigned int z = 0; z < size_at_recommended_scale_li; z++) {

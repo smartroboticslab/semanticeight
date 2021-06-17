@@ -6,6 +6,7 @@
 
 #include "../../../../../se_denseslam/include/se/constant_parameters.h"
 #include "se/str_utils.hpp"
+#include "se/instance_segmentation.hpp"
 
 #include <limits>
 
@@ -162,7 +163,10 @@ public:
     }
 
     // Update the foreground probability.
-    voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.y) / (voxel_data.y + 1);
+    if (fg_value != se::InstanceSegmentation::skip_fg_update) {
+      voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.fg_count) / (voxel_data.fg_count + 1);
+      voxel_data.fg_count++;
+    }
     // Update the color.
     voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y) / (voxel_data.y + 1);
     voxel_data.g = (se::g_from_rgba(rgba_value) + voxel_data.g * voxel_data.y) / (voxel_data.y + 1);
@@ -220,6 +224,7 @@ public:
     float x_max = 0;
     short y_max = 0;
     float fg_max = 0.0f;
+    uint16_t fg_count_max = 0u;
     uint8_t r_max = 0u;
     uint8_t g_max = 0u;
     uint8_t b_max = 0u;
@@ -234,6 +239,7 @@ public:
         x_max = child_data.x;
         y_max = child_data.y;
         fg_max = child_data.fg;
+        fg_count_max = child_data.fg_count;
         r_max = child_data.r;
         g_max = child_data.g;
         b_max = child_data.b;
@@ -253,6 +259,7 @@ public:
       node_data.x = x_max; // TODO: Need to check update?
       node_data.y = y_max;
       node_data.fg = fg_max;
+      node_data.fg_count = fg_count_max;
       node_data.r = r_max;
       node_data.g = g_max;
       node_data.b = b_max;
@@ -299,6 +306,7 @@ public:
               float x_max = 0;
               short y_max = 0;
               float fg_max = 0.0f;
+              uint16_t fg_count_max = 0u;
               uint8_t r_max = 0u;
               uint8_t g_max = 0u;
               uint8_t b_max = 0u;
@@ -321,6 +329,7 @@ public:
                         x_max = child_data.x;
                         y_max = child_data.y;
                         fg_max = child_data.fg;
+                        fg_count_max = child_data.fg_count;
                         r_max = child_data.r;
                         g_max = child_data.g;
                         b_max = child_data.b;
@@ -341,6 +350,7 @@ public:
                 target_max_data.x = x_max;
                 target_max_data.y = y_max;
                 target_max_data.fg = fg_max;
+                target_max_data.fg_count = fg_count_max;
                 target_max_data.r = r_max;
                 target_max_data.g = g_max;
                 target_max_data.b = b_max;
@@ -372,6 +382,7 @@ public:
               float x_mean = 0;
               short y_mean = 0;
               float fg_mean = 0.0f;
+              uint32_t fg_count_mean = 0u;
               uint16_t r_mean = 0u;
               uint16_t g_mean = 0u;
               uint16_t b_mean = 0u;
@@ -379,6 +390,7 @@ public:
               float x_max = 0;
               short y_max = 0;
               float fg_max = 0.0f;
+              uint16_t fg_count_max = 0u;
               uint8_t r_max = 0u;
               uint8_t g_max = 0u;
               uint8_t b_max = 0u;
@@ -401,6 +413,7 @@ public:
                       x_mean += child_data.x;
                       y_mean += child_data.y;
                       fg_mean += child_data.fg;
+                      fg_count_mean += child_data.fg_count;
                       r_mean += child_data.r;
                       g_mean += child_data.g;
                       b_mean += child_data.b;
@@ -412,6 +425,7 @@ public:
                         x_max = child_data.x;
                         y_max = child_data.y;
                         fg_max = child_data.fg;
+                        fg_count_max = child_data.fg_count;
                         r_max = child_data.r;
                         g_max = child_data.g;
                         b_max = child_data.b;
@@ -432,6 +446,7 @@ public:
                 target_data.x = x_mean / data_count;
                 target_data.y = ceil((float) y_mean) / data_count;
                 target_data.fg = fg_mean / data_count;
+                target_data.fg_count = fg_count_mean / data_count;
                 target_data.r = r_mean / data_count;
                 target_data.g = g_mean / data_count;
                 target_data.b = b_mean / data_count;
@@ -453,6 +468,7 @@ public:
                 target_max_data.x = x_max;
                 target_max_data.y = y_max;
                 target_max_data.fg = fg_max;
+                target_max_data.fg_count = fg_count_max;
                 target_max_data.r = r_max;
                 target_max_data.g = g_max;
                 target_max_data.b = b_max;
@@ -512,6 +528,7 @@ public:
               float x_mean = 0;
               short y_mean = 0;
               float fg_mean = 0.0f;
+              uint32_t fg_count_mean = 0u;
               uint16_t r_mean = 0u;
               uint16_t g_mean = 0u;
               uint16_t b_mean = 0u;
@@ -519,6 +536,7 @@ public:
               float x_max = 0;
               short y_max = 0;
               float fg_max = 0.0f;
+              uint16_t fg_count_max = 0u;
               uint8_t r_max = 0u;
               uint8_t g_max = 0u;
               uint8_t b_max = 0u;
@@ -542,6 +560,7 @@ public:
                       x_mean += child_data.x;
                       y_mean += child_data.y;
                       fg_mean += child_data.fg;
+                      fg_count_mean += child_data.fg_count;
                       r_mean += child_data.r;
                       g_mean += child_data.g;
                       b_mean += child_data.b;
@@ -553,6 +572,7 @@ public:
                         x_max = child_max_data.x;
                         y_max = child_max_data.y;
                         fg_max = child_max_data.fg;
+                        fg_count_max = child_max_data.fg_count;
                         r_max = child_max_data.r;
                         g_max = child_max_data.g;
                         b_max = child_max_data.b;
@@ -573,6 +593,7 @@ public:
                 target_data.x = x_mean / data_count;
                 target_data.y = ceil((float) y_mean) / data_count;
                 target_data.fg = fg_mean / data_count;
+                target_data.fg_count = fg_count_mean / data_count;
                 target_data.r = r_mean / data_count;
                 target_data.g = g_mean / data_count;
                 target_data.b = b_mean / data_count;
@@ -594,6 +615,7 @@ public:
                 target_max_data.x = x_max;
                 target_max_data.y = y_max;
                 target_max_data.fg = fg_max;
+                target_max_data.fg_count = fg_count_max;
                 target_max_data.r = r_max;
                 target_max_data.g = g_max;
                 target_max_data.b = b_max;
@@ -640,6 +662,7 @@ public:
     float x_max = -std::numeric_limits<float>::max();
     short y_max = 0;
     float fg_max = 0.0f;
+    uint16_t fg_count_max = 0u;
     uint8_t r_max = 0u;
     uint8_t g_max = 0u;
     uint8_t b_max = 0u;
@@ -662,6 +685,7 @@ public:
             x_max = child_data.x;
             y_max = child_data.y;
             fg_max = child_data.fg;
+            fg_count_max = child_data.fg_count;
             r_max = child_data.r;
             g_max = child_data.g;
             b_max = child_data.b;
@@ -680,6 +704,7 @@ public:
       target_data.x = x_max;
       target_data.y = y_max;
       target_data.fg = fg_max;
+      target_data.fg_count = fg_count_max;
       target_data.r = r_max;
       target_data.g = g_max;
       target_data.b = b_max;
@@ -700,6 +725,7 @@ public:
     float x_mean = 0;
     short y_mean = 0;
     float fg_mean = 0.0f;
+    uint32_t fg_count_mean = 0u;
     uint16_t r_mean = 0u;
     uint16_t g_mean = 0u;
     uint16_t b_mean = 0u;
@@ -718,6 +744,7 @@ public:
             x_mean += child_data.x;
             y_mean += child_data.y;
             fg_mean += child_data.fg;
+            fg_count_mean += child_data.fg_count;
             r_mean += child_data.r;
             g_mean += child_data.g;
             b_mean += child_data.b;
@@ -732,7 +759,7 @@ public:
     if (data_count == 8) {
       target_data.x = x_mean / data_count;
       target_data.y = ((float) y_mean) / data_count;
-      target_data.fg = fg_mean / data_count;
+      target_data.fg_count = fg_count_mean / data_count;
       target_data.r = r_mean / data_count;
       target_data.g = g_mean / data_count;
       target_data.b = b_mean / data_count;

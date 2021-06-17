@@ -37,6 +37,7 @@
 #include "se/image_utils.hpp"
 #include "se/filter.hpp"
 #include "se/functors/for_each.hpp"
+#include "se/instance_segmentation.hpp"
 
 
 
@@ -276,7 +277,7 @@ struct MultiresTSDFUpdate {
                 se::integration_mask_elem_t fg_value(0);
                 if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value, rgba_image_, rgba_value, fg_image_, fg_value,
                     [&](float depth_value, uint32_t, se::integration_mask_elem_t fg_value)
-                    { return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; })) {
+                    { return depth_value >= sensor_.near_plane && fg_value != se::InstanceSegmentation::skip_integration; })) {
                   continue;
                 }
 
@@ -291,7 +292,10 @@ struct MultiresTSDFUpdate {
                       (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value) /
                       (static_cast<float>(voxel_data.y) + 1.f), -1.f, 1.f);
                   // Update the foreground probability.
-                  voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.y) / (voxel_data.y + 1);
+                  if (fg_value != se::InstanceSegmentation::skip_fg_update) {
+                    voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.fg_count) / (voxel_data.fg_count + 1);
+                    voxel_data.fg_count++;
+                  }
                   // Update the color.
                   voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y) / (voxel_data.y + 1);
                   voxel_data.g = (se::g_from_rgba(rgba_value) + voxel_data.g * voxel_data.y) / (voxel_data.y + 1);
@@ -352,7 +356,7 @@ struct MultiresTSDFUpdate {
           se::integration_mask_elem_t fg_value(0);
           if (!sensor_.projectToPixelValue(point_C, depth_image_, depth_value, rgba_image_, rgba_value, fg_image_, fg_value,
               [&](float depth_value, uint32_t, se::integration_mask_elem_t fg_value)
-              { return depth_value >= sensor_.near_plane && 0.0f <= fg_value && fg_value <= 1.0f; })) {
+              { return depth_value >= sensor_.near_plane && fg_value != se::InstanceSegmentation::skip_integration; })) {
             continue;
           }
 
@@ -369,7 +373,10 @@ struct MultiresTSDFUpdate {
                 (static_cast<float>(voxel_data.y) + 1.f),
                 -1.f, 1.f);
             // Update the foreground probability.
-            voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.y) / (voxel_data.y + 1);
+            if (fg_value != se::InstanceSegmentation::skip_fg_update) {
+              voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.fg_count) / (voxel_data.fg_count + 1);
+              voxel_data.fg_count++;
+            }
             // Update the color.
             voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y) / (voxel_data.y + 1);
             voxel_data.g = (se::g_from_rgba(rgba_value) + voxel_data.g * voxel_data.y) / (voxel_data.y + 1);
