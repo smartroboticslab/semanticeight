@@ -116,6 +116,24 @@ int se::PinholeCamera::computeIntegrationScale(const Eigen::Vector3f& block_cent
   }
 }
 
+int se::PinholeCamera::targetIntegrationScale(const Eigen::Vector3f& block_centre,
+                                              const float            voxel_dim,
+                                              const int              max_block_scale) const {
+  const float dist = block_centre.z();
+  const float pv_ratio = dist * scaled_pixel / voxel_dim;
+  int scale = 0;
+  if (pv_ratio < 1.5) {
+    scale = 0;
+  } else if (pv_ratio < 3) {
+    scale = 1;
+  } else if (pv_ratio < 6) {
+    scale = 2;
+  } else {
+    scale = 3;
+  }
+  scale = std::min(scale, max_block_scale);
+  return scale;
+}
 
 float se::PinholeCamera::nearDist(const Eigen::Vector3f& ray_C) const {
   return near_plane / ray_C.normalized().z();
@@ -318,6 +336,31 @@ int se::OusterLidar::computeIntegrationScale(
   } else {
     return scale;
   }
+}
+
+int se::OusterLidar::targetIntegrationScale(const Eigen::Vector3f& block_centre,
+                                            const float            voxel_dim,
+                                            const int              max_block_scale) const {
+  constexpr float deg_to_rad = M_PI / 180.0f;
+  const float dist = block_centre.norm();
+  // Compute the side length in metres of a pixel projected dist metres from
+  // the camera. This computes the chord length corresponding to the ray angle
+  // at distance dist.
+  const float pixel_dim = 2.0f * dist * std::tan(min_ray_angle / 2.0f * deg_to_rad);
+  // Compute the ratio using the worst case voxel_dim (space diagonal)
+  const float pv_ratio = pixel_dim / (std::sqrt(3) * voxel_dim);
+  int scale = 0;
+  if (pv_ratio < 1.5f) {
+    scale = 0;
+  } else if (pv_ratio < 3.0f) {
+    scale = 1;
+  } else if (pv_ratio < 6.0f) {
+    scale = 2;
+  } else {
+    scale = 3;
+  }
+  scale = std::min(scale, max_block_scale);
+  return scale;
 }
 
 float se::OusterLidar::nearDist(const Eigen::Vector3f&) const {

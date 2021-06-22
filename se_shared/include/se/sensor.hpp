@@ -114,6 +114,10 @@ namespace se {
                                 const int              min_scale,
                                 const int              max_block_scale) const;
 
+    int targetIntegrationScale(const Eigen::Vector3f& block_centre,
+                               const float            voxel_dim,
+                               const int              max_block_scale) const;
+
     /**
      * \brief Return the minimum distance at which measurements are available
      * along the ray passing through pixels x and y.
@@ -300,6 +304,10 @@ namespace se {
                                 const int              last_scale,
                                 const int              min_scale,
                                 const int              max_block_scale) const;
+
+    int targetIntegrationScale(const Eigen::Vector3f& block_centre,
+                               const float            voxel_dim,
+                               const int              max_block_scale) const;
 
     /**
      * \brief Return the minimum distance at which measurements are available
