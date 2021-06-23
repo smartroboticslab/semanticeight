@@ -10,18 +10,18 @@ namespace se {
                                                              const std::vector<se::key_t>& frontiers,
                                                              const Objects&                objects,
                                                              const SensorImpl&             sensor,
-                                                             const Eigen::Matrix4f&        T_MC,
+                                                             const PoseHistory&            T_MC_history,
                                                              const ExplorationConfig&      config)
       : config_(config),
         best_idx_(SIZE_MAX) {
 
     std::deque<se::key_t> remaining_frontiers(frontiers.begin(), frontiers.end());
     candidates_.reserve(config_.num_candidates);
-    config_.candidate_config.planner_config.start_point_M_ = T_MC.topRightCorner<3,1>();
+    config_.candidate_config.planner_config.start_point_M_ = T_MC_history.poses.back().topRightCorner<3,1>();
     // Add the current pose to the candidates
     CandidateConfig candidate_config = config_.candidate_config;
-    candidate_config.planner_config.goal_point_M_ = T_MC.topRightCorner<3,1>();
-    candidates_.emplace_back(map, frontiers, objects, sensor, T_MC, candidate_config);
+    candidate_config.planner_config.goal_point_M_ = T_MC_history.poses.back().topRightCorner<3,1>();
+    candidates_.emplace_back(map, frontiers, objects, sensor, T_MC_history.poses.back(), candidate_config);
     // Sample the candidate views aborting after a number of failed retries
     const size_t max_failed = 5 * config_.num_candidates;
     const int sampling_step = std::ceil(remaining_frontiers.size() / config_.num_candidates);
@@ -29,12 +29,17 @@ namespace se {
         && rejected_candidates_.size() <= max_failed
         && !remaining_frontiers.empty()) {
       // Sample a point
-      const Eigen::Vector3f candidate_t_MC = sampleCandidate(map, remaining_frontiers, objects, sampling_step);
+      const Eigen::Vector3f candidate_t_MC = sampleCandidate(map, remaining_frontiers, objects,
+          sensor, T_MC_history, sampling_step);
+      if (T_MC_history.rejectSampledPos(candidate_t_MC, sensor)) {
+        rejected_candidates_.emplace_back(candidate_t_MC);
+        continue;
+      }
       // Create the config for this particular candidate
       CandidateConfig candidate_config = config_.candidate_config;
       candidate_config.planner_config.goal_point_M_ = candidate_t_MC;
       // Create candidate and compute its utility
-      candidates_.emplace_back(map, frontiers, objects, sensor, T_MC, candidate_config);
+      candidates_.emplace_back(map, frontiers, objects, sensor, T_MC_history.poses.back(), candidate_config);
       // Remove the candidate if it's not valid
       if (!candidates_.back().isValid()) {
         rejected_candidates_.push_back(candidates_.back());
@@ -94,24 +99,30 @@ namespace se {
   Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr        map,
                                                                 std::deque<se::key_t>& frontiers,
                                                                 const Objects&         /*objects*/,
+                                                                const SensorImpl&      sensor,
+                                                                const PoseHistory&     T_MC_history,
                                                                 const int              sampling_step) {
     // TODO take objects into account
     if (frontiers.empty()) {
       return Eigen::Vector3f::Constant(NAN);
     }
-    // Use the first element as the code of the sample
-    const se::key_t code = frontiers.front();
-    frontiers.pop_front();
-    // Move the next sampling_step - 1 elements to the back
-    if (!frontiers.empty()) {
-      for (int i = 0; i < sampling_step - 1; ++i) {
-        frontiers.push_back(frontiers.front());
-        frontiers.pop_front();
+    Eigen::Vector3f pos;
+    //do {
+      // Use the first element as the code of the sample
+      const se::key_t code = frontiers.front();
+      frontiers.pop_front();
+      // Move the next sampling_step - 1 elements to the back
+      if (!frontiers.empty()) {
+        for (int i = 0; i < sampling_step - 1; ++i) {
+          frontiers.push_back(frontiers.front());
+          frontiers.pop_front();
+        }
       }
-    }
-    // Return the coordinates of the sampled Volume's centre
-    const int size = map->depthToSize(keyops::depth(code));
-    return map->voxelDim() * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
+      // Return the coordinates of the sampled Volume's centre
+      const int size = map->depthToSize(keyops::depth(code));
+      pos = map->voxelDim() * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
+    //} while (T_MC_history.rejectSampledPos(pos, sensor));
+    return pos;
   }
 } // namespace se
 

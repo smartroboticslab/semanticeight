@@ -227,6 +227,9 @@ namespace se {
     Eigen::Matrix<float, 4, num_frustum_vertices_> frustum_vertices_;
     Eigen::Matrix<float, 4, num_frustum_normals_> frustum_normals_;
 
+    /** The radius of the sphere centered on the camera frame and containing the frustum. */
+    float radius;
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:

@@ -9,6 +9,7 @@
 #include <deque>
 
 #include <se/candidate_view.hpp>
+#include <se/pose_history.hpp>
 
 namespace se {
   struct ExplorationConfig {
@@ -28,7 +29,7 @@ namespace se {
                                    const std::vector<se::key_t>& frontiers,
                                    const Objects&                objects,
                                    const SensorImpl&             sensor,
-                                   const Eigen::Matrix4f&        T_MC,
+                                   const PoseHistory&            T_MC_history,
                                    const ExplorationConfig&      config);
 
       CandidateView bestView() const;
@@ -51,6 +52,8 @@ namespace se {
       static Eigen::Vector3f sampleCandidate(const OctreePtr        map,
                                              std::deque<se::key_t>& frontiers,
                                              const Objects&         objects,
+                                             const SensorImpl&      sensor,
+                                             const PoseHistory&     T_MC_history,
                                              const int              sampling_step);
   };
 } // namespace se

@@ -43,6 +43,8 @@ namespace se {
        */
       CandidateView();
 
+      CandidateView(const Eigen::Vector3f& t_MC);
+
       /** \brief Create a CandidateView and compute its utility.
        */
       CandidateView(const OctreePtr&              map,

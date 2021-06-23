@@ -31,6 +31,15 @@ namespace se {
 
 
 
+  CandidateView::CandidateView(const Eigen::Vector3f& t_MC)
+      : CandidateView::CandidateView()
+  {
+    path_MC_.push_back(Eigen::Matrix4f::Identity());
+    path_MC_.back().topRightCorner<3,1>() = t_MC;
+  }
+
+
+
   CandidateView::CandidateView(const OctreePtr&              map,
                                const std::vector<se::key_t>& /*frontiers*/,
                                const Objects&                objects,

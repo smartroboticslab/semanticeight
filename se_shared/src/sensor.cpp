@@ -36,6 +36,8 @@ se::PinholeCamera::PinholeCamera(const SensorConfig& c)
 
   horizontal_fov = 2.0f * atanf(c.width / (2.0f * c.fx));
   vertical_fov = 2.0f * atanf(c.height / (2.0f * c.fy));
+
+  radius = frustum_vertices_.col(4).norm();
 }
 
 se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf)
