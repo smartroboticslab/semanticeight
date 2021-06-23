@@ -61,6 +61,7 @@
 #include "object.hpp"
 #include "object_rendering.hpp"
 #include "se/single_path_exploration_planner.hpp"
+#include "se/pose_history.hpp"
 
 
 
@@ -661,6 +662,7 @@ class DenseSLAMSystem {
      */
     void setT_MC(const Eigen::Matrix4f& T_MC) {
       T_MC_ = T_MC;
+      T_MC_history_.poses.push_back(T_MC_);
     }
 
     /**
@@ -672,6 +674,7 @@ class DenseSLAMSystem {
      */
     void setT_WC(const Eigen::Matrix4f& T_WC) {
       T_MC_ = T_MW_ * T_WC;
+      T_MC_history_.poses.push_back(T_MC_);
     }
 
     /**
@@ -891,6 +894,7 @@ class DenseSLAMSystem {
     float free_volume     = 0.0f;
     float occupied_volume = 0.0f;
     float explored_volume = 0.0f;
+    se::PoseHistory T_MC_history_;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

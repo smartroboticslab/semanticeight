@@ -742,7 +742,7 @@ se::Path DenseSLAMSystem::computeNextPath_WC(const SensorImpl& sensor) {
           config_.skeleton_sample_precision,
           config_.solving_time}}};
   const std::vector<se::key_t> frontier_vec(frontiers_.begin(), frontiers_.end());
-  se::SinglePathExplorationPlanner planner (map_, frontier_vec, objects_, sensor, T_MC_, config);
+  se::SinglePathExplorationPlanner planner (map_, frontier_vec, objects_, sensor, T_MC_history_, config);
   candidate_views_ = planner.views();
   rejected_candidate_views_ = planner.rejectedViews();
   goal_view_ = planner.bestView();
