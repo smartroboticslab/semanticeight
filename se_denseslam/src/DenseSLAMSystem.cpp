@@ -726,6 +726,7 @@ bool DenseSLAMSystem::goalReached() const {
 
 
 se::Path DenseSLAMSystem::computeNextPath_WC(const SensorImpl& sensor) {
+  freeCurrentPosition();
   se::ExplorationConfig config {
       config_.num_candidates,
       {
@@ -1047,6 +1048,60 @@ void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor) {
   for (const auto& point_M : aabb_points_M) {
     const Eigen::Vector3f voxel_dist_M = (centre_M - point_M).array().abs().matrix();
     if (voxel_dist_M.head<2>().norm() <= radius && voxel_dist_M.z() <= height) {
+      map_->setAtPoint(point_M, data, scale);
+    }
+  }
+}
+
+
+
+void DenseSLAMSystem::freeCurrentPosition() {
+  if (!std::is_same<VoxelImpl, MultiresOFusion>::value) {
+    std::cerr << "Error: Only MultiresOFusion is supported\n";
+    std::abort();
+  }
+  // Compute the sphere parameters.
+  const float radius = config_.robot_radius + config_.safety_radius;
+  const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3,1>();
+  // Compute the sphere's AABB corners in metres and voxels
+  const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f::Constant(radius);
+  const Eigen::Vector3f aabb_max_M = centre_M + Eigen::Vector3f::Constant(radius);
+  // Compute the coordinates of all the points corresponding to voxels in the AABB
+  std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> aabb_points_M;
+  for (float z = aabb_min_M.z(); z <= aabb_max_M.z(); z += map_->voxelDim()) {
+    for (float y = aabb_min_M.y(); y <= aabb_max_M.y(); y += map_->voxelDim()) {
+      for (float x = aabb_min_M.x(); x <= aabb_max_M.x(); x += map_->voxelDim()) {
+        aabb_points_M.push_back(Eigen::Vector3f(x, y, z));
+      }
+    }
+  }
+  // Allocate the required VoxelBlocks
+  std::set<se::key_t> code_set;
+  for (const auto& point_M : aabb_points_M) {
+    const Eigen::Vector3i voxel = map_->pointToVoxel(point_M);
+    if (map_->contains(voxel)) {
+      code_set.insert(map_->hash(voxel.x(), voxel.y(), voxel.z(), map_->blockDepth()));
+    }
+  }
+  std::vector<se::key_t> codes (code_set.begin(), code_set.end());
+  map_->allocate(codes.data(), codes.size());
+  // The data to store in the free voxels
+  auto data = VoxelImpl::VoxelType::initData();
+  data.x = -21; // The path planning threshold is -20.
+  data.y = 1;
+  data.observed = true;
+  // Allocate the VoxelBlocks up to some scale
+  constexpr int scale = 3;
+  std::vector<VoxelImpl::VoxelBlockType*> blocks;
+  map_->getBlockList(blocks, false);
+  for (auto& block : blocks) {
+    block->active(true);
+    block->allocateDownTo(scale);
+  }
+  // Set the sphere voxels to free
+  for (const auto& point_M : aabb_points_M) {
+    const Eigen::Vector3f voxel_dist_M = (centre_M - point_M).array().abs().matrix();
+    if (voxel_dist_M.norm() <= radius) {
       map_->setAtPoint(point_M, data, scale);
     }
   }

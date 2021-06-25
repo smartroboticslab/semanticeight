@@ -243,6 +243,7 @@ class DenseSLAMSystem {
      * The frontier status of voxels in the cylinder is also set correctly.
      */
     void freeInitCylinder(const SensorImpl& sensor);
+    void freeCurrentPosition();
 
 
 
