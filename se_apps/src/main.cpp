@@ -26,6 +26,7 @@
 
 #include "se/image/image.hpp"
 #include "se/DenseSLAMSystem.h"
+#include "se/exploration_planner.hpp"
 #include "se/perfstats.h"
 #include "se/system_info.hpp"
 
@@ -50,6 +51,7 @@ static uint32_t* instance_render = nullptr;
 static uint32_t* raycast_render = nullptr;
 static se::Reader* reader = nullptr;
 static DenseSLAMSystem* pipeline = nullptr;
+static se::ExplorationPlanner* planner = nullptr;
 static int num_planning_iterations = 0;
 
 static Eigen::Vector3f t_MW;
@@ -166,6 +168,19 @@ int main(int argc, char** argv) {
       Eigen::Vector3f::Constant(config.map_dim.x()),
       t_MW,
       config.pyramid, config, config.voxel_impl_yaml);
+  se::ExplorationConfig exploration_config = {
+    config.num_candidates, {
+      config.raycast_width,
+      config.raycast_height,
+      config.linear_velocity,
+      config.angular_velocity, {
+        "", Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(),
+        config.robot_radius,
+        config.safety_radius,
+        config.min_control_point_radius,
+        config.skeleton_sample_precision,
+        config.solving_time}}};
+  planner = new se::ExplorationPlanner(pipeline->getMap(), pipeline->T_MW(), exploration_config);
 
   // ========= UPDATE INIT POSE =========
   se::ReaderStatus read_ok = se::ReaderStatus::ok;
@@ -176,6 +191,7 @@ int main(int argc, char** argv) {
   }
   pipeline->setInitT_WC(config.init_T_WB * config.T_BC);
   pipeline->setT_WC(config.init_T_WB * config.T_BC);
+  planner->setT_WC(config.init_T_WB * config.T_BC);
 
   if (read_ok != se::ReaderStatus::ok) {
     std::cerr << "Couldn't read initial pose\n";
@@ -250,6 +266,7 @@ int main(int argc, char** argv) {
   }
 
   //  =========  FREE BASIC BUFFERS  =========
+  delete planner;
   delete pipeline;
   delete progress_bar;
   delete[] rgba_render;
@@ -309,6 +326,7 @@ int processAll(se::Reader*        reader,
       read_ok = reader->getPose(init_T_WB, frame_offset);
       pipeline->setInitT_WC(init_T_WB * config->T_BC);
       pipeline->setT_WC(init_T_WB * config->T_BC);
+      planner->setT_WC(init_T_WB * config->T_BC);
     }
     if (read_ok != se::ReaderStatus::ok) {
       std::cerr << "Couldn't read pose\n";
@@ -378,6 +396,7 @@ int processAll(se::Reader*        reader,
     } else {
       // Set the pose to the ground truth.
       pipeline->setT_WC(T_WB * config->T_BC);
+      planner->setT_WC(T_WB * config->T_BC);
       tracked = true;
     }
     // Call object tracking.
@@ -395,9 +414,9 @@ int processAll(se::Reader*        reader,
     }
 
     // Planning TMP
-    if (pipeline->goalReached() || num_planning_iterations == 0) {
+    if (planner->goalReached() || num_planning_iterations == 0) {
       std::cout << "Planning " << num_planning_iterations << "\n";
-      const se::Path path_WC = pipeline->computeNextPath_WC(sensor);
+      const se::Path path_WC = planner->computeNextPath_WC(pipeline->getFrontiers(), pipeline->getObjectMaps(), sensor);
       num_planning_iterations++;
     }
 

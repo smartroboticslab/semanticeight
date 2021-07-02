@@ -46,6 +46,7 @@ foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
     "./src/pose_history.cpp"
     "./src/exploration_utils.cpp"
     "./src/single_path_exploration_planner.cpp"
+    "./src/exploration_planner.cpp"
     "./src/DenseSLAMSystem.cpp"
   )
   target_include_directories(${LIB_NAME} BEFORE

@@ -176,16 +176,7 @@ class DenseSLAMSystem {
     // Exploration only ///////////////////////////////////////////////////////
     std::set<se::key_t> updated_nodes_;
     std::set<se::key_t> frontiers_;
-    Eigen::Matrix4f goal_T_MC_;
-    se::Path path_M_;
-    se::Path path_W_;
-    std::vector<se::CandidateView> candidate_views_;
-    std::vector<se::CandidateView> rejected_candidate_views_;
-    se::CandidateView goal_view_;
     static constexpr int min_frontier_volume_ = 1;
-    static constexpr float goal_position_threshold_ = 0.2f;
-    static constexpr float goal_yaw_threshold_ = se::math::deg_to_rad * 5.0f;
-    static constexpr float goal_roll_pitch_threshold_ = se::math::deg_to_rad * 10.0f;
 
 
 
@@ -662,7 +653,6 @@ class DenseSLAMSystem {
      */
     void setT_MC(const Eigen::Matrix4f& T_MC) {
       T_MC_ = T_MC;
-      T_MC_history_.poses.push_back(T_MC_);
     }
 
     /**
@@ -674,7 +664,6 @@ class DenseSLAMSystem {
      */
     void setT_WC(const Eigen::Matrix4f& T_WC) {
       T_MC_ = T_MW_ * T_WC;
-      T_MC_history_.poses.push_back(T_MC_);
     }
 
     /**
@@ -870,31 +859,15 @@ class DenseSLAMSystem {
      */
     void freeInitialPosition(const SensorImpl& sensor);
 
+    std::set<se::key_t> getFrontiers() const {
+      return frontiers_;
+    }
+
     std::vector<se::Volume<VoxelImpl::VoxelType>> frontierVolumes() const;
-
-    bool goalReached() const;
-
-    /** \brief Call the exploration planner and return the resulting camera path in the world frame.
-     * The returned path is a series of T_WC.
-     */
-    se::Path computeNextPath_WC(const SensorImpl& sensor);
-
-    std::vector<se::CandidateView> candidateViews() const;
-
-    std::vector<se::CandidateView> rejectedCandidateViews() const;
-
-    se::CandidateView goalView() const;
-
-    se::Image<uint32_t> renderEntropy(const SensorImpl& sensor,
-                                      const bool        visualize_yaw = true);
-
-    se::Image<uint32_t> renderEntropyDepth(const SensorImpl& sensor,
-                                           const bool        visualize_yaw = true);
 
     float free_volume     = 0.0f;
     float occupied_volume = 0.0f;
     float explored_volume = 0.0f;
-    se::PoseHistory T_MC_history_;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
