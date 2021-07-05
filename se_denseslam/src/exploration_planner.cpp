@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "se/exploration_planner.hpp"
+#include "se/exploration_utils.hpp"
 
 namespace se {
-  ExplorationPlanner::ExplorationPlanner(const OctreePtr          map,
+  ExplorationPlanner::ExplorationPlanner(OctreePtr                map,
                                          const Eigen::Matrix4f&   T_MW,
                                          const ExplorationConfig& config)
       : map_(map), config_(config), T_MW_(T_MW), T_WM_(se::math::to_inverse_transformation(T_MW))
@@ -58,7 +59,9 @@ namespace se {
                                               const Objects&         objects,
                                               const SensorImpl&      sensor)
   {
-    //freeCurrentPosition(); // TODO call on map
+    //const float radius = config_.candidate_config.planner_config.robot_radius_ +
+    //  config_.candidate_config.planner_config.safety_radius_ + 0.1f;
+    //freeSphere(*map_, T_MC_history_.poses.back().topRightCorner<3,1>(), radius);
     const std::vector<key_t> frontier_vec(frontiers.begin(), frontiers.end());
     SinglePathExplorationPlanner planner (map_, frontier_vec, objects, sensor, T_MC_history_, config_);
     candidate_views_ = planner.views();

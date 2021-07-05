@@ -10,7 +10,7 @@
 namespace se {
   class ExplorationPlanner {
     public:
-      ExplorationPlanner(const OctreePtr          map,
+      ExplorationPlanner(OctreePtr                map,
                          const Eigen::Matrix4f&   T_MW,
                          const ExplorationConfig& config);
 
@@ -43,7 +43,7 @@ namespace se {
 
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:
-      const OctreePtr map_;
+      OctreePtr map_;
       const ExplorationConfig config_;
       Eigen::Matrix4f T_MW_;
       Eigen::Matrix4f T_WM_;

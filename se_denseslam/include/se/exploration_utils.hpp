@@ -19,6 +19,10 @@ namespace se {
     float occupied_volume = 0.0f;
     float explored_volume = 0.0f;
   };
+
+  void freeSphere(se::Octree<VoxelImpl::VoxelType>& map,
+                  const Eigen::Vector3f&            centre,
+                  float                             radius);
 } // namespace se
 
 #endif // __EXPLORATION_UTILS_HPP
