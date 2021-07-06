@@ -29,16 +29,6 @@ namespace ptp {
     se::Node<MultiresOFusion::VoxelType>* nodeStack[se::Octree<MultiresOFusion::VoxelType>::max_voxel_depth * 8 + 1];
     size_t stack_idx = 0;
 
-    std::vector<Eigen::Vector3i> min_leaf_nodes;
-    for (int i = 0; i < 3; i++) {
-      min_leaf_nodes.push_back(Eigen::Vector3i(octree_->size(), octree_->size(), octree_->size()));
-    }
-
-    std::vector<Eigen::Vector3i> max_leaf_nodes;
-    for (int i = 0; i < 3; i++) {
-      max_leaf_nodes.push_back(Eigen::Vector3i(0, 0, 0));
-    }
-
     se::Node<MultiresOFusion::VoxelType> *node = octree_->root();
 
     Eigen::Vector3f map_bounds_min(octree_->size(), octree_->size(), octree_->size());
@@ -58,9 +48,8 @@ namespace ptp {
           const Eigen::Vector3i block_coord = block->coordinates();
 
           for (int i = 0; i < 3; i++) {
-            if ((block_coord(i) <= (min_leaf_nodes[i])(i)) && (block_coord(i) < map_bounds_min(i))) {
-              min_leaf_nodes[i] = block_coord;
-              MultiresOFusion::VoxelBlockType* block = octree_->fetch(min_leaf_nodes[i](0), min_leaf_nodes[i](1), min_leaf_nodes[i](2));
+            if (block_coord(i) < map_bounds_min(i)) {
+              MultiresOFusion::VoxelBlockType* block = octree_->fetch(block_coord(0), block_coord(1), block_coord(2));
               const Eigen::Vector3i blockCoord = block->coordinates();
               int x, y, z;
               int xlast = blockCoord(0) + block_size;
@@ -83,9 +72,8 @@ namespace ptp {
           }
 
           for (int i = 0; i < 3; i++) {
-            if ((block_coord(i) >= (max_leaf_nodes[i])(i)) && ((block_coord(i) + block_size - 1) > map_bounds_min(i))) {
-              max_leaf_nodes[i] = block_coord;
-              MultiresOFusion::VoxelBlockType* block = octree_->fetch(max_leaf_nodes[i](0), max_leaf_nodes[i](1), max_leaf_nodes[i](2));
+            if ((block_coord(i) + block_size - 1) > map_bounds_min(i)) {
+              MultiresOFusion::VoxelBlockType* block = octree_->fetch(block_coord(0), block_coord(1), block_coord(2));
               const Eigen::Vector3i blockCoord = block->coordinates();
               int x, y, z, blockSide;
               blockSide = (int) MultiresOFusion::VoxelBlockType::size_li;
@@ -105,6 +93,16 @@ namespace ptp {
                   }
                 }
               }
+            }
+          }
+        } else {
+          if (node->children_mask() == 0) {
+            const auto& data = node->data();
+            if (data.x != 0) {
+              const Eigen::Vector3f node_coord_min = node->coordinates().cast<float>();
+              const Eigen::Vector3f node_coord_max = node_coord_min + Eigen::Vector3f::Constant(node->size() - 1);
+              map_bounds_min = map_bounds_min.cwiseMin(node_coord_min);
+              map_bounds_max = map_bounds_max.cwiseMax(node_coord_max);
             }
           }
         }
