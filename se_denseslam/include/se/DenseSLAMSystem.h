@@ -849,6 +849,8 @@ class DenseSLAMSystem {
 
     void dumpObjectMeshes(const std::string filename, const bool print_path);
 
+    std::vector<std::vector<se::Triangle>> objectTriangleMeshesV();
+
     Objects getObjectMaps() {
       return objects_;
     }

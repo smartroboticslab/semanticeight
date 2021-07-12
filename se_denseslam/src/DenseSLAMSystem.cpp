@@ -698,6 +698,17 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
 
 
 
+std::vector<std::vector<se::Triangle>> DenseSLAMSystem::objectTriangleMeshesV() {
+  std::vector<std::vector<se::Triangle>> meshes (objects_.size());
+  for (size_t i = 0; i < objects_.size(); i++) {
+    const auto& object = *objects_[i];
+    ObjVoxelImpl::dumpMesh(*object.map_, meshes[i], true);
+  }
+  return meshes;
+}
+
+
+
 
 
 // Exploration only ///////////////////////////////////////////////////////
