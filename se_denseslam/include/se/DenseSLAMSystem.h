@@ -368,6 +368,8 @@ class DenseSLAMSystem {
                   const std::string filename_meter = "",
                   const bool        print_path = false);
 
+    std::vector<se::Triangle> triangleMeshV();
+
     /** \brief Export the octree structure and slices.
      *
      * \param[in] base_filename The base name of the file without suffix.

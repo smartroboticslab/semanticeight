@@ -396,6 +396,16 @@ void DenseSLAMSystem::dumpMesh(const std::string filename_voxel,
 
 
 
+std::vector<se::Triangle> DenseSLAMSystem::triangleMeshV() {
+  TICK("triangleMesh")
+  std::vector<se::Triangle> mesh;
+  VoxelImpl::dumpMesh(*map_, mesh);
+  TOCK("triangleMesh")
+  return mesh;
+}
+
+
+
 void DenseSLAMSystem::saveStructure(const std::string base_filename) {
 
   TICK("saveStructure")
