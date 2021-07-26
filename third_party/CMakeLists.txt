@@ -20,3 +20,5 @@ add_subdirectory(cnpy)
 option(SRL_PROJECTION_BUILD_TESTS "Enable testing" OFF)
 add_subdirectory(srl_projection)
 
+add_subdirectory(frustum_intersector)
+
