@@ -205,16 +205,16 @@ namespace se {
     /** \brief The vertical field of view in radians. */
     float vertical_fov;
 
+    static constexpr int num_frustum_vertices_ = 8;
+    static constexpr int num_frustum_normals_ = 6;
+    Eigen::Matrix<float, 4, num_frustum_vertices_> frustum_vertices_;
+    Eigen::Matrix<float, 4, num_frustum_normals_> frustum_normals_;
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
       void computeFrustumVertices();
       void computeFrustumNormals();
-
-      static constexpr int num_frustum_vertices_ = 8;
-      static constexpr int num_frustum_normals_ = 6;
-      Eigen::Matrix<float, 4, num_frustum_vertices_> frustum_vertices_;
-      Eigen::Matrix<float, 4, num_frustum_normals_> frustum_normals_;
   };
 
 

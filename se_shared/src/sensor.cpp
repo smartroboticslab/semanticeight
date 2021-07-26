@@ -194,20 +194,20 @@ void se::PinholeCamera::computeFrustumVertices() {
   // Back-project the frame corners to get the frustum vertices
   // Top left
   model.backProject(Eigen::Vector2f(0.0f, 0.0f), &point_C);
-  frustum_vertices_.col(0).head<3>() = point_C;
-  frustum_vertices_.col(4).head<3>() = point_C;
+  frustum_vertices_.col(0) = point_C.homogeneous();
+  frustum_vertices_.col(4) = point_C.homogeneous();
   // Top right
   model.backProject(Eigen::Vector2f(model.imageWidth(), 0.0f), &point_C);
-  frustum_vertices_.col(1).head<3>() = point_C;
-  frustum_vertices_.col(5).head<3>() = point_C;
+  frustum_vertices_.col(1) = point_C.homogeneous();
+  frustum_vertices_.col(5) = point_C.homogeneous();
   // Bottom right
   model.backProject(Eigen::Vector2f(model.imageWidth(), model.imageHeight()), &point_C);
-  frustum_vertices_.col(2).head<3>() = point_C;
-  frustum_vertices_.col(6).head<3>() = point_C;
+  frustum_vertices_.col(2) = point_C.homogeneous();
+  frustum_vertices_.col(6) = point_C.homogeneous();
   // Bottom left
   model.backProject(Eigen::Vector2f(0.0f, model.imageHeight()), &point_C);
-  frustum_vertices_.col(3).head<3>() = point_C;
-  frustum_vertices_.col(7).head<3>() = point_C;
+  frustum_vertices_.col(3) = point_C.homogeneous();
+  frustum_vertices_.col(7) = point_C.homogeneous();
   // Scale the frustum vertices with the appropriate depth for near and far
   // plane vertices
   for (int i = 0; i < num_frustum_vertices_ / 2; ++i) {
