@@ -11,6 +11,7 @@
 #include <se/entropy.hpp>
 #include <se/image/image.hpp>
 #include <se/object_utils.hpp>
+#include <se/pose_history.hpp>
 #include <ptp/OccupancyWorld.hpp>
 #include <ptp/PlanningParameter.hpp>
 #include <ptp/ProbCollisionChecker.hpp>
@@ -52,6 +53,7 @@ namespace se {
                     const Objects&                objects,
                     const SensorImpl&             sensor,
                     const Eigen::Matrix4f&        T_MC,
+                    const PoseHistory&            T_MC_history,
                     const CandidateConfig&        config);
 
       bool isValid() const;
@@ -66,7 +68,8 @@ namespace se {
       Eigen::Matrix4f goal() const;
 
       void computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
-                                  const SensorImpl&                   sensor);
+                                  const SensorImpl&                   sensor,
+                                  const PoseHistory&                  T_MC_history);
 
       Image<uint32_t> renderEntropy(const Octree<VoxelImpl::VoxelType>& map,
                                     const SensorImpl&                   sensor,
@@ -89,6 +92,8 @@ namespace se {
       float path_time_;
       /** An image containing the information gain produced by the 360 raycasting. */
       Image<float> entropy_image_;
+      /** An image containing the percentage of frustum overlap with the candidate's neighbors. */
+      Image<float> frustum_overlap_image_;
       /** An image containing the minimum integration scale for each raycasted object. */
       Image<int8_t> min_scale_image_;
       /** The information gain for the map at the optimal yaw angle. */
@@ -102,7 +107,8 @@ namespace se {
       /** \brief Perform a 360 degree raycast and compute the optimal yaw angle.
        */
       void entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
-                          const SensorImpl&                   sensor);
+                          const SensorImpl&                   sensor,
+                          const PoseHistory&                  T_MC_history);
 
       void computeUtility();
 

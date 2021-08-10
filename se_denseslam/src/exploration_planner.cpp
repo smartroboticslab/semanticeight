@@ -13,6 +13,8 @@ namespace se {
   {
   }
 
+
+
   void ExplorationPlanner::setT_WC(const Eigen::Matrix4f& T_WC)
   {
     T_MC_history_.poses.push_back(T_MW_ * T_WC);

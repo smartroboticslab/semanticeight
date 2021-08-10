@@ -7,6 +7,7 @@
 #define __INFORMATION_GAIN_HPP
 
 #include <se/octree.hpp>
+#include <se/pose_history.hpp>
 #include <se/sensor_implementation.hpp>
 #include <se/voxel_implementations.hpp>
 
@@ -39,10 +40,16 @@ namespace se {
                      const SensorImpl&                   sensor,
                      const Eigen::Vector3f&              t_MB);
 
+  void frustum_overlap(Image<float>&          frustum_overlap_image,
+                       const SensorImpl&      sensor,
+                       const Eigen::Matrix4f& T_MC,
+                       const PoseHistory&     T_MC_history);
+
   /** \brief Compute the yaw angle in the map frame M that maximizes the entropy.
    * \return The yaw angle (first) and the respective entropy (second).
    */
   std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
+                                      const Image<float>& frustum_overlap_image,
                                       const SensorImpl&   sensor);
 
   /** \brief Overlay the sensor FOV at yaw_M on the image.

@@ -5,6 +5,7 @@
 #ifndef __POSE_HISTORY_HPP
 #define __POSE_HISTORY_HPP
 
+#include <random>
 #include <vector>
 
 #include <Eigen/Dense>

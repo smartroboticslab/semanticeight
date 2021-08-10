@@ -21,7 +21,7 @@ namespace se {
     // Add the current pose to the candidates
     CandidateConfig candidate_config = config_.candidate_config;
     candidate_config.planner_config.goal_point_M_ = T_MC_history.poses.back().topRightCorner<3,1>();
-    candidates_.emplace_back(map, frontiers, objects, sensor, T_MC_history.poses.back(), candidate_config);
+    candidates_.emplace_back(map, frontiers, objects, sensor, T_MC_history.poses.back(), T_MC_history, candidate_config);
     // Sample the candidate views aborting after a number of failed retries
     const size_t max_failed = 5 * config_.num_candidates;
     const int sampling_step = std::ceil(remaining_frontiers.size() / config_.num_candidates);
@@ -39,7 +39,7 @@ namespace se {
       CandidateConfig candidate_config = config_.candidate_config;
       candidate_config.planner_config.goal_point_M_ = candidate_t_MC;
       // Create candidate and compute its utility
-      candidates_.emplace_back(map, frontiers, objects, sensor, T_MC_history.poses.back(), candidate_config);
+      candidates_.emplace_back(map, frontiers, objects, sensor, T_MC_history.poses.back(), T_MC_history, candidate_config);
       // Remove the candidate if it's not valid
       if (!candidates_.back().isValid()) {
         rejected_candidates_.push_back(candidates_.back());
@@ -61,7 +61,7 @@ namespace se {
       return;
     }
     // Compute the yaw angles at each path vertex of the best candidate
-    candidates_[best_idx_].computeIntermediateYaw(*map, sensor);
+    candidates_[best_idx_].computeIntermediateYaw(*map, sensor, T_MC_history);
   }
 
 

@@ -59,6 +59,7 @@ foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
   target_link_libraries(${LIB_NAME}
     PUBLIC
       ${OMPL_LIBRARIES}
+	  FI::FrustumIntersector
   )
   set_target_properties(${LIB_NAME} PROPERTIES
     CXX_STANDARD 17

@@ -3,6 +3,9 @@
 // SPDX-FileCopyrightText: 2020 Sotiris Papatheodorou
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <algorithm>
+#include <frustum_intersector.hpp>
+
 #include "se/entropy.hpp"
 
 namespace se {
@@ -135,6 +138,7 @@ namespace se {
    *         the image width is 0.
    */
   std::pair<int, float> max_window(const Image<float>& image,
+                                   const Image<float>& frustum_overlap_image,
                                    const int           window_width) {
     const int num_windows = image.width();
     // Sum all columns in the image to speed up subsequent computations. The window is applied to
@@ -144,7 +148,7 @@ namespace se {
     // Don't add an omp parallel for here
     for (int y = 0; y < image.height(); y++) {
       for (int x = 0; x < image.width(); x++) {
-        column_sums[x] += image(x, y);
+        column_sums[x] += image(x, y) * (1.0f - frustum_overlap_image[x]);
       }
     }
     // Find the window with the maximum sum
@@ -220,12 +224,34 @@ namespace se {
 
 
 
+  void frustum_overlap(Image<float>&          frustum_overlap_image,
+                       const SensorImpl&      sensor,
+                       const Eigen::Matrix4f& T_MC,
+                       const PoseHistory&     T_MC_history) {
+    const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
+    const se::PoseVector neighbors = T_MC_history.neighbourPoses(T_MC, sensor);
+#pragma omp parallel for
+    for (int x = 0; x < frustum_overlap_image.width(); x++) {
+      std::vector<float> overlap;
+      overlap.reserve(neighbors.size());
+      for (const auto& n_T_MC : neighbors) {
+        // Convert the neighbor pose to the candidate frame.
+        const Eigen::Matrix4f T_CCn = T_CM * n_T_MC;
+        overlap.push_back(fi::frustum_intersection_pc(sensor.frustum_vertices_, T_CCn));
+      }
+      frustum_overlap_image[x] = *std::max_element(overlap.begin(), overlap.end());
+    }
+  }
+
+
+
   std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
+                                      const Image<float>& frustum_overlap_image,
                                       const SensorImpl&   sensor) {
     // Use a sliding window to compute the yaw angle that results in the maximum entropy
     const float window_percentage = sensor.horizontal_fov / (2.0f * M_PI_F);
     const int window_width = window_percentage * entropy_image.width() + 0.5f;
-    const std::pair<int, float> r = max_window(entropy_image, window_width);
+    const std::pair<int, float> r = max_window(entropy_image, frustum_overlap_image, window_width);
     // Azimuth angle of the left edge of the window
     const int best_idx = r.first;
     const float theta = azimuth_from_index(best_idx, entropy_image.width(), 2.0f * M_PI_F);
