@@ -425,7 +425,7 @@ namespace se {
 
 
   void SegmentationResult::resize(const int w, const int h) {
-    if (!empty() && (width != w || height != h)) {
+    if (width != w || height != h) {
       // Resize all individual masks
       for (auto& instance : object_instances) {
         instance.resize(w, h);
