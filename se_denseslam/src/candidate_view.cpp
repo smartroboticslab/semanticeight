@@ -125,7 +125,8 @@ namespace se {
       Image<float> frustum_overlap_image (entropy_image_.width(), 1);
       raycast_entropy(entropy_image, map, sensor, path_MC_[i].topRightCorner<3,1>());
       frustum_overlap(frustum_overlap_image, sensor, path_MC_[i], T_MC_history);
-      const std::pair<float, float> r = optimal_yaw(entropy_image, frustum_overlap_image, sensor);
+      const std::pair<float, float> r = optimal_yaw(entropy_image, frustum_overlap_image, sensor,
+          true);
       path_MC_[i].topLeftCorner<3,3>() = yawToC_MC(r.first);
     }
   }
@@ -182,7 +183,8 @@ namespace se {
     // Raycast at the last path vertex
     raycast_entropy(entropy_image_, map, sensor, path_MC_.back().topRightCorner<3,1>());
     frustum_overlap(frustum_overlap_image_, sensor, path_MC_.back(), T_MC_history);
-    const std::pair<float, float> r = optimal_yaw(entropy_image_, frustum_overlap_image_, sensor);
+    const std::pair<float, float> r = optimal_yaw(entropy_image_, frustum_overlap_image_, sensor,
+        true);
     yaw_M_ = r.first;
     entropy_ = r.second;
   }

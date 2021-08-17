@@ -50,7 +50,8 @@ namespace se {
    */
   std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
                                       const Image<float>& frustum_overlap_image,
-                                      const SensorImpl&   sensor);
+                                      const SensorImpl&   sensor,
+                                      const bool          use_frustum = true);
 
   /** \brief Overlay the sensor FOV at yaw_M on the image.
    * \note Typically used only for visualization and debugging.

@@ -139,7 +139,8 @@ namespace se {
    */
   std::pair<int, float> max_window(const Image<float>& image,
                                    const Image<float>& frustum_overlap_image,
-                                   const int           window_width) {
+                                   const int           window_width,
+                                   const bool          use_frustum = true) {
     const int num_windows = image.width();
     // Sum all columns in the image to speed up subsequent computations. The window is applied to
     // all rows so this way we'll only do window_width - 1 additions for each window instead of
@@ -148,7 +149,7 @@ namespace se {
     // Don't add an omp parallel for here
     for (int y = 0; y < image.height(); y++) {
       for (int x = 0; x < image.width(); x++) {
-        column_sums[x] += image(x, y) * (1.0f - frustum_overlap_image[x]);
+        column_sums[x] += image(x, y) * (use_frustum ? (1.0f - frustum_overlap_image[x]) : 1.0f);
       }
     }
     // Find the window with the maximum sum
@@ -247,11 +248,12 @@ namespace se {
 
   std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
                                       const Image<float>& frustum_overlap_image,
-                                      const SensorImpl&   sensor) {
+                                      const SensorImpl&   sensor,
+                                      const bool          use_frustum) {
     // Use a sliding window to compute the yaw angle that results in the maximum entropy
     const float window_percentage = sensor.horizontal_fov / (2.0f * M_PI_F);
     const int window_width = window_percentage * entropy_image.width() + 0.5f;
-    const std::pair<int, float> r = max_window(entropy_image, frustum_overlap_image, window_width);
+    const std::pair<int, float> r = max_window(entropy_image, frustum_overlap_image, window_width, use_frustum);
     // Azimuth angle of the left edge of the window
     const int best_idx = r.first;
     const float theta = azimuth_from_index(best_idx, entropy_image.width(), 2.0f * M_PI_F);
