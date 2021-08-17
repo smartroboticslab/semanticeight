@@ -444,7 +444,7 @@ int processAll(se::Reader*        reader,
     pipeline->renderTrack(track_render, pipeline->getImageResolution());
     if (render_volume) {
       pipeline->renderObjects(volume_render_color, pipeline->getImageResolution(), sensor, RenderMode::Color, false);
-      pipeline->renderObjects(volume_render, pipeline->getImageResolution(), sensor, RenderMode::InstanceID);
+      pipeline->renderObjects(volume_render, pipeline->getImageResolution(), sensor, RenderMode::InstanceID, false);
       pipeline->renderRaycast(raycast_render, pipeline->getImageResolution());
     }
     pipeline->renderObjectClasses(class_render, pipeline->getImageResolution());
@@ -461,13 +461,29 @@ int processAll(se::Reader*        reader,
   //  =========  SAVE VOLUME RENDER  =========
 
   if (render_volume && config->output_render_file != "") {
-    std::stringstream output_render_file_ss;
-    output_render_file_ss << config->output_render_file << "_frame_"
-                          << std::setw(4) << std::setfill('0') << frame << ".png";
-    lodepng_encode32_file(output_render_file_ss.str().c_str(),
-                          (unsigned char*)volume_render,
-                          (pipeline->getImageResolution()).x(),
-                          (pipeline->getImageResolution()).y());
+    stdfs::create_directories(config->output_render_file);
+
+    const int w = (pipeline->getImageResolution()).x();
+    const int h = (pipeline->getImageResolution()).y();
+    const std::string prefix = config->output_render_file + "/";
+    std::stringstream path_suffix_ss;
+    path_suffix_ss << std::setw(5) << std::setfill('0') << frame << ".png";
+    const std::string suffix = path_suffix_ss.str();
+
+    std::unique_ptr<uint32_t[]> segmentation_render (new uint32_t[w * h]);
+    pipeline->renderInputSegmentation(segmentation_render.get(), pipeline->getImageResolution());
+    std::unique_ptr<uint32_t[]> volume_aabb_render (new uint32_t[w * h]);
+    pipeline->renderObjects(volume_aabb_render.get(), pipeline->getImageResolution(), sensor, RenderMode::InstanceID);
+
+    lodepng_encode32_file((prefix + "rgba_" + suffix).c_str(), (unsigned char*) rgba_render, w, h);
+    lodepng_encode32_file((prefix + "depth_" + suffix).c_str(), (unsigned char*) depth_render, w, h);
+    lodepng_encode32_file((prefix + "segm_" + suffix).c_str(), (unsigned char*) segmentation_render.get(), w, h);
+    lodepng_encode32_file((prefix + "volume_" + suffix).c_str(), (unsigned char*) volume_render, w, h);
+    lodepng_encode32_file((prefix + "volume_color_" + suffix).c_str(), (unsigned char*) volume_render_color, w, h);
+    lodepng_encode32_file((prefix + "volume_aabb_" + suffix).c_str(), (unsigned char*) volume_aabb_render.get(), w, h);
+    lodepng_encode32_file((prefix + "raycast_" + suffix).c_str(), (unsigned char*) raycast_render, w, h);
+    lodepng_encode32_file((prefix + "instance_" + suffix).c_str(), (unsigned char*) instance_render, w, h);
+    lodepng_encode32_file((prefix + "class_" + suffix).c_str(), (unsigned char*) class_render, w, h);
   }
 
   // ==========     DUMP MESH      =========
@@ -483,12 +499,13 @@ int processAll(se::Reader*        reader,
   }
 
   if (mesh_volume && config->output_mesh_file != "") {
+    stdfs::create_directories(config->output_mesh_file);
     std::stringstream output_mesh_meter_file_ss;
-    output_mesh_meter_file_ss << config->output_mesh_file << "_meter_frame_"
-                              << std::setw(4) << std::setfill('0') << frame << ".vtk";
+    output_mesh_meter_file_ss << config->output_mesh_file << "/mesh_"
+                              << std::setw(5) << std::setfill('0') << frame << ".vtk";
     pipeline->dumpMesh("", output_mesh_meter_file_ss.str().c_str(), !config->enable_benchmark);
     std::stringstream output_mesh_object_file_ss;
-    output_mesh_object_file_ss << config->output_mesh_file << "_frame_"
+    output_mesh_object_file_ss << config->output_mesh_file << "/mesh_"
                               << std::setw(5) << std::setfill('0') << frame << "_object";
     pipeline->dumpObjectMeshes(output_mesh_object_file_ss.str().c_str(), !config->enable_benchmark);
   }

@@ -789,6 +789,12 @@ class DenseSLAMSystem {
      */
     bool raycastObjectsAndBg(const SensorImpl& sensor);
 
+    void renderInputSegmentation(uint32_t*              image_data,
+                                 const Eigen::Vector2i& image_res) {
+      renderMaskKernel<se::class_mask_elem_t>(image_data, image_res,
+          rgba_image_, input_segmentation_.classMask());
+    }
+
     /**
      * Render the current 3D reconstruction.
      *
