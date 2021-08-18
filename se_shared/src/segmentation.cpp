@@ -128,9 +128,11 @@ namespace se {
 
 
   std::string class_id_to_str(const int class_id) {
-    assert(class_id >= 0);
-    assert(class_id < class_names.size());
-    return se::class_names[class_id];
+    if (0 <= class_id && class_id < class_names.size()) {
+      return se::class_names[class_id];
+    } else {
+      return "invalid";
+    }
   }
 
 
