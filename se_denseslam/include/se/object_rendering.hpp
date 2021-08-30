@@ -42,7 +42,8 @@ void raycastObjectListKernel(const Objects&              objects,
                              se::Image<int8_t>&          scale_image,
                              se::Image<int8_t>&          min_scale_image,
                              const Eigen::Matrix4f&      raycast_T_MC,
-                             const SensorImpl&           sensor);
+                             const SensorImpl&           sensor,
+                             const int                   frame);
 
 void renderObjectListKernel(uint32_t*                         output_image_data,
                             const Eigen::Vector2i&            output_image_res,

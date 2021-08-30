@@ -18,7 +18,8 @@ void raycastObjectListKernel(const Objects&              objects,
                              se::Image<int8_t>&          scale_image,
                              se::Image<int8_t>&          min_scale_image,
                              const Eigen::Matrix4f&      raycast_T_MC,
-                             const SensorImpl&           sensor) {
+                             const SensorImpl&           sensor,
+                             const int                   frame) {
   TICKD("raycastObjectListKernel");
   const std::vector<int> visible_objects_vec (visible_objects.begin(), visible_objects.end());
 #if SE_BOUNDING_VOLUME > 0
@@ -167,7 +168,9 @@ void raycastObjectListKernel(const Objects&              objects,
       }
     }
   }
-  dbg::images.save("/home/srl/raycast/", "object");
+  std::stringstream p;
+  p << "object_raycast_" << std::setw(5) << std::setfill('0') << frame;
+  dbg::images.save("/home/srl/renders", p.str());
   TOCK("raycastObjectListKernel");
 }
 

@@ -509,7 +509,7 @@ bool DenseSLAMSystem::preprocessSegmentation(
 
 
 
-bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor) {
+bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
   std::cout << "trackObjects in:   Number of current objects: "
       << objects_.size() << "\n";
@@ -532,7 +532,7 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor) {
   visible_objects_ = se::get_visible_object_ids(objects_, sensor, T_MC_);
 
   // Raycast the background and objects from the current pose.
-  raycastObjectsAndBg(sensor);
+  raycastObjectsAndBg(sensor, frame);
 
   // Match new objects to existing visible object instances.
   matchObjectInstances(processed_segmentation_, iou_threshold_);
@@ -592,7 +592,7 @@ bool DenseSLAMSystem::integrateObjects(const SensorImpl& sensor,
 
 
 
-bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor) {
+bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor, const int frame) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
   std::cout << "Raycasting in:     " << "\n";
 #endif
@@ -602,7 +602,7 @@ bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor) {
   // Raycast all objects.
   raycastObjectListKernel(objects_, visible_objects_, object_surface_point_cloud_M_,
       object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_,
-      object_min_scale_image_, raycast_T_MC_, sensor);
+      object_min_scale_image_, raycast_T_MC_, sensor, frame);
   // Compute regions where objects are occluded by the background.
   cv::Mat mask = se::occlusion_mask(object_surface_point_cloud_M_, surface_point_cloud_M_,
       map_->voxelDim(), raycast_T_MC_);

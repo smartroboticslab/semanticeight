@@ -761,7 +761,7 @@ class DenseSLAMSystem {
      *
      * \param[in] sensor
      */
-    bool trackObjects(const SensorImpl& sensor);
+    bool trackObjects(const SensorImpl& sensor, const int frame);
 
     /**
      * Integrate the 3D reconstruction resulting from the current frame to the
@@ -787,7 +787,7 @@ class DenseSLAMSystem {
      * \param[in] sensor
      * \return true if raycasting was performed and false if it wasn't.
      */
-    bool raycastObjectsAndBg(const SensorImpl& sensor);
+    bool raycastObjectsAndBg(const SensorImpl& sensor, const int frame);
 
     void renderInputSegmentation(uint32_t*              image_data,
                                  const Eigen::Vector2i& image_res) {

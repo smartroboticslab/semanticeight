@@ -400,7 +400,7 @@ int processAll(se::Reader*        reader,
       tracked = true;
     }
     // Call object tracking.
-    pipeline->trackObjects(sensor);
+    pipeline->trackObjects(sensor, frame);
 
 
 
@@ -438,7 +438,7 @@ int processAll(se::Reader*        reader,
           frame == std::abs(config->rendering_rate) : frame % config->rendering_rate == 0;
     }
     // Raycast first to avoid doing it during the rendering
-    pipeline->raycastObjectsAndBg(sensor);
+    pipeline->raycastObjectsAndBg(sensor, frame);
     pipeline->renderRGBA(rgba_render, pipeline->getImageResolution());
     pipeline->renderDepth(depth_render, pipeline->getImageResolution(), sensor);
     pipeline->renderTrack(track_render, pipeline->getImageResolution());
