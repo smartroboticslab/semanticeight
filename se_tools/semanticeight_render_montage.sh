@@ -37,10 +37,10 @@ for depth in $depth_renders; do
 	n=$(frame_number "$depth")
 	out="$out_dir/render_$(printf '%05d' "$n").png"
 
-	montage -label %t \
+	printf 'montage -label %%t %s %s %s %s %s %s %s %s %s -geometry +2+2 -tile 3x3 %s\n' \
 		"$rgba" "$segm" "$depth" \
 		"$instance" "$class" "$raycast" \
 		"$volume" "$volume_aabb" "$volume_color" \
-		-geometry +2+2 -tile 3x3 "$out"
-done
+		"$out"
+done | parallel
 
