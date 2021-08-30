@@ -148,6 +148,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     valid_depth_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()), se::mask_t, cv::Scalar(255));
     raycasted_instance_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()),
         se::instance_mask_t, cv::Scalar(se::instance_bg));
+    occlusion_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()), se::mask_t, cv::Scalar(0));
 }
 
 
@@ -604,12 +605,18 @@ bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor, const int fr
       object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_,
       object_min_scale_image_, raycast_T_MC_, sensor, frame);
   // Compute regions where objects are occluded by the background.
-  cv::Mat mask = se::occlusion_mask(object_surface_point_cloud_M_, surface_point_cloud_M_,
+  occlusion_mask_ = se::occlusion_mask(object_surface_point_cloud_M_, surface_point_cloud_M_,
       map_->voxelDim(), raycast_T_MC_);
+  //std::stringstream p;
+  //p << "/home/srl/raycast_" << std::setw(5) << std::setfill('0') << frame << ".png";
+  //cv::imwrite(p.str(), raycasted_instance_mask_ + 1);
+  //std::stringstream q;
+  //q << "/home/srl/occlusion_" << std::setw(5) << std::setfill('0') << frame << ".png";
+  //cv::imwrite(q.str(), occlusion_mask_);
   // Occlude the object raycasts by the background.
 #pragma omp parallel for
   for (int pixel_idx = 0; pixel_idx < image_res_.prod(); ++pixel_idx) {
-    const bool object_occluded = mask.at<se::mask_elem_t>(pixel_idx);
+    const bool object_occluded = occlusion_mask_.at<se::mask_elem_t>(pixel_idx);
     if (object_occluded) {
       object_surface_point_cloud_M_[pixel_idx] = surface_point_cloud_M_[pixel_idx];
       object_surface_normals_M_[pixel_idx] = surface_normals_M_[pixel_idx];

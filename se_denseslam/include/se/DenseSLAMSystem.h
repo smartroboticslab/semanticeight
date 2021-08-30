@@ -148,6 +148,7 @@ class DenseSLAMSystem {
      * was raycasted at the corresponding pixel. Its type is se::instance_mask_t.
      */
     cv::Mat raycasted_instance_mask_;
+    cv::Mat occlusion_mask_;
 
     se::Image<Eigen::Vector3f> object_surface_point_cloud_M_;
     se::Image<Eigen::Vector3f> object_surface_normals_M_;
