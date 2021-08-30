@@ -37,7 +37,7 @@ for depth in $depth_renders; do
 	n=$(frame_number "$depth")
 	out="$out_dir/render_$(printf '%05d' "$n").png"
 
-	printf 'montage -label %%t %s %s %s %s %s %s %s %s %s -geometry +2+2 -tile 3x3 %s\n' \
+	printf 'montage -label %%t -font Liberation-Mono %s %s %s %s %s %s %s %s %s -geometry +2+2 -tile 3x3 %s\n' \
 		"$rgba" "$segm" "$depth" \
 		"$instance" "$class" "$raycast" \
 		"$volume" "$volume_aabb" "$volume_color" \
