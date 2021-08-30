@@ -85,7 +85,6 @@ namespace dbg {
                 const size_t width,
                 const size_t height) {
 
-        assert(num_images > 0 && "Error: num_images must be positive");
         assert(width      > 0 && "Error: width must be positive");
         assert(height     > 0 && "Error: height must be positive");
 
@@ -129,7 +128,9 @@ namespace dbg {
         assert(x < images_[image_index].width() && "Error: x out of bounds");
         assert(y < images_[image_index].height() && "Error: y out of bounds");
 
-        images_[image_index](x, y) = value;
+        if (!images_.empty()) {
+          images_[image_index](x, y) = value;
+        }
       }
 
       uint32_t get(const size_t image_index,
