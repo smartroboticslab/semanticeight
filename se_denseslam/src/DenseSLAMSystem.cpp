@@ -622,6 +622,7 @@ bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor, const int fr
       object_surface_normals_M_[pixel_idx] = surface_normals_M_[pixel_idx];
       raycasted_instance_mask_.at<se::instance_mask_elem_t>(pixel_idx) = se::instance_bg;
       object_scale_image_[pixel_idx] = -1;
+      object_min_scale_image_[pixel_idx] = -1;
     }
   }
 
