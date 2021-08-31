@@ -294,7 +294,7 @@ struct MultiresTSDFUpdate {
                   // Update the foreground probability.
                   if (fg_value != se::InstanceSegmentation::skip_fg_update) {
                     voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.fg_count) / (voxel_data.fg_count + 1);
-                    voxel_data.fg_count++;
+                    voxel_data.fg_count = fminf(voxel_data.fg_count + 1, MultiresTSDF::max_weight);
                   }
                   // Update the color.
                   voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y) / (voxel_data.y + 1);
@@ -375,7 +375,7 @@ struct MultiresTSDFUpdate {
             // Update the foreground probability.
             if (fg_value != se::InstanceSegmentation::skip_fg_update) {
               voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.fg_count) / (voxel_data.fg_count + 1);
-              voxel_data.fg_count++;
+              voxel_data.fg_count = fminf(voxel_data.fg_count + 1, MultiresTSDF::max_weight);
             }
             // Update the color.
             voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y) / (voxel_data.y + 1);
