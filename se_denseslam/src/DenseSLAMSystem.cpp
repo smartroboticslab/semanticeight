@@ -648,14 +648,65 @@ void DenseSLAMSystem::renderObjects(uint32_t*              output_image_data,
                                     const RenderMode       render_mode,
                                     const bool             render_bounding_volumes) {
 
-  // Render the background normally.
-  renderVolume(output_image_data, output_image_res, sensor);
+  se::Image<Eigen::Vector3f> render_surface_point_cloud_M (image_res_.x(), image_res_.y());
+  se::Image<Eigen::Vector3f> render_surface_normals_M (image_res_.x(), image_res_.y());
+  se::Image<int8_t> min_scale_image (image_res_.x(), image_res_.y());
+  se::Image<Eigen::Vector3f> object_surface_point_cloud_M (image_res_.x(), image_res_.y());
+  se::Image<Eigen::Vector3f> object_surface_normals_M (image_res_.x(), image_res_.y());
+  se::Image<int8_t> object_scale_image (image_res_.x(), image_res_.y());
+  se::Image<int8_t> object_min_scale_image (image_res_.x(), image_res_.y());
+  cv::Mat raycasted_instance_mask = cv::Mat(cv::Size(image_res_.x(), image_res_.y()),
+        se::instance_mask_t, cv::Scalar(se::instance_bg));
+  std::set<int> visible_objects;
+  if (render_T_MC_->isApprox(raycast_T_MC_)) {
+    // Copy the raycast from the camera viewpoint. Can't safely use memcpy with
+    // Eigen objects it seems.
+    for (size_t i = 0; i < surface_point_cloud_M_.size(); ++i) {
+      render_surface_point_cloud_M[i] = surface_point_cloud_M_[i];
+      render_surface_normals_M[i] = surface_normals_M_[i];
+      object_surface_point_cloud_M[i] = object_surface_point_cloud_M_[i];
+      object_surface_normals_M[i] = object_surface_normals_M_[i];
+      object_scale_image[i] = object_scale_image_[i];
+      object_min_scale_image[i] = object_min_scale_image_[i];
+    }
+    raycasted_instance_mask = raycasted_instance_mask_;
+    visible_objects = visible_objects_;
+  } else {
+    visible_objects = se::get_visible_object_ids(objects_, sensor, *render_T_MC_);
+    // Raycast the map from the render viewpoint.
+    raycastKernel<VoxelImpl>(*map_, render_surface_point_cloud_M, render_surface_normals_M,
+        min_scale_image, *render_T_MC_, sensor);
+    // Raycast the objects from the render viewpoint.
+    raycastObjectListKernel(objects_, visible_objects, object_surface_point_cloud_M,
+        object_surface_normals_M, raycasted_instance_mask, object_scale_image,
+        object_min_scale_image, *render_T_MC_, sensor, -1);
+    // Compute regions where objects are occluded by the background.
+    cv::Mat occlusion_mask = se::occlusion_mask(object_surface_point_cloud_M,
+        render_surface_point_cloud_M, map_->voxelDim(), *render_T_MC_);
+    // Occlude the object raycasts by the background.
+#pragma omp parallel for
+    for (int pixel_idx = 0; pixel_idx < image_res_.prod(); ++pixel_idx) {
+      const bool object_occluded = occlusion_mask.at<se::mask_elem_t>(pixel_idx);
+      if (object_occluded) {
+        object_surface_point_cloud_M[pixel_idx] = render_surface_point_cloud_M[pixel_idx];
+        object_surface_normals_M[pixel_idx] = render_surface_normals_M[pixel_idx];
+        raycasted_instance_mask.at<se::instance_mask_elem_t>(pixel_idx) = se::instance_bg;
+        object_scale_image[pixel_idx] = -1;
+        object_min_scale_image_[pixel_idx] = -1;
+      }
+    }
+  }
 
-  // Overlay the objects using the current raycast.
+  // Render the background normally.
+  renderVolumeKernel<VoxelImpl>(output_image_data, output_image_res,
+      se::math::to_translation(*render_T_MC_), ambient,
+      render_surface_point_cloud_M, render_surface_normals_M);
+
+  // Overlay the objects using the raycast.
   renderObjectListKernel(output_image_data, output_image_res,
-      se::math::to_translation(*render_T_MC_), ambient, objects_, object_surface_point_cloud_M_,
-      object_surface_normals_M_, raycasted_instance_mask_, object_scale_image_,
-      object_min_scale_image_, render_mode);
+      se::math::to_translation(*render_T_MC_), ambient, objects_, object_surface_point_cloud_M,
+      object_surface_normals_M, raycasted_instance_mask, object_scale_image,
+      object_min_scale_image, render_mode);
 
   if (render_bounding_volumes) {
     overlayBoundingVolumeKernel(output_image_data, output_image_res, objects_,
