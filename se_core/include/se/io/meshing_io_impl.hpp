@@ -147,6 +147,9 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
   }
   file << "element face " << num_faces << "\n";
   file << "property list uchar int vertex_index\n";
+  file << "property uchar red\n";
+  file << "property uchar green\n";
+  file << "property uchar blue\n";
   if (has_cell_data) {
     file << "property float face_value\n";
   }
@@ -169,6 +172,9 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
   // Write faces and face data
   for (size_t i = 0; i < num_faces; ++i ) {
     file << "3 " << 3*i << " " << 3*i + 1 << " " << 3*i + 2;
+    const Triangle& triangle_M = mesh[i];
+    const Eigen::Vector3i rgb = (255.0f * color_fraction_map[triangle_M.max_vertex_scale]).cast<int>();
+    file << " " << rgb.x() << " " << rgb.y() << " " << rgb.z();
     if (has_cell_data) {
       file << " " << cell_data[i] << "\n";
     } else {
