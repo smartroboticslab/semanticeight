@@ -46,6 +46,8 @@ static uint32_t* depth_render = nullptr;
 static uint32_t* track_render = nullptr;
 static uint32_t* volume_render = nullptr;
 static uint32_t* volume_render_color = nullptr;
+static uint32_t* volume_render_scale = nullptr;
+static uint32_t* volume_render_min_scale = nullptr;
 static uint32_t* class_render = nullptr;
 static uint32_t* instance_render = nullptr;
 static uint32_t* raycast_render = nullptr;
@@ -157,6 +159,8 @@ int main(int argc, char** argv) {
   track_render =  new uint32_t[image_res.x() * image_res.y()];
   volume_render = new uint32_t[image_res.x() * image_res.y()];
   volume_render_color = new uint32_t[image_res.x() * image_res.y()];
+  volume_render_scale = new uint32_t[image_res.x() * image_res.y()];
+  volume_render_min_scale = new uint32_t[image_res.x() * image_res.y()];
   class_render =    new uint32_t[image_res.x() * image_res.y()];
   instance_render = new uint32_t[image_res.x() * image_res.y()];
   raycast_render  = new uint32_t[image_res.x() * image_res.y()];
@@ -274,6 +278,8 @@ int main(int argc, char** argv) {
   delete[] track_render;
   delete[] volume_render;
   delete[] volume_render_color;
+  delete[] volume_render_scale;
+  delete[] volume_render_min_scale;
   delete[] class_render;
   delete[] instance_render;
   delete[] raycast_render;
@@ -443,8 +449,10 @@ int processAll(se::Reader*        reader,
     pipeline->renderDepth(depth_render, pipeline->getImageResolution(), sensor);
     pipeline->renderTrack(track_render, pipeline->getImageResolution());
     if (render_volume) {
-      pipeline->renderObjects(volume_render_color, pipeline->getImageResolution(), sensor, RenderMode::Color, false);
       pipeline->renderObjects(volume_render, pipeline->getImageResolution(), sensor, RenderMode::InstanceID, false);
+      pipeline->renderObjects(volume_render_color, pipeline->getImageResolution(), sensor, RenderMode::Color, false);
+      pipeline->renderObjects(volume_render_scale, pipeline->getImageResolution(), sensor, RenderMode::Scale, false);
+      pipeline->renderObjects(volume_render_min_scale, pipeline->getImageResolution(), sensor, RenderMode::MinScale, false);
       pipeline->renderRaycast(raycast_render, pipeline->getImageResolution());
     }
     pipeline->renderObjectClasses(class_render, pipeline->getImageResolution());
@@ -480,6 +488,8 @@ int processAll(se::Reader*        reader,
     lodepng_encode32_file((prefix + "segm_" + suffix).c_str(), (unsigned char*) segmentation_render.get(), w, h);
     lodepng_encode32_file((prefix + "volume_" + suffix).c_str(), (unsigned char*) volume_render, w, h);
     lodepng_encode32_file((prefix + "volume_color_" + suffix).c_str(), (unsigned char*) volume_render_color, w, h);
+    lodepng_encode32_file((prefix + "volume_scale_" + suffix).c_str(), (unsigned char*) volume_render_scale, w, h);
+    lodepng_encode32_file((prefix + "volume_min_scale_" + suffix).c_str(), (unsigned char*) volume_render_min_scale, w, h);
     lodepng_encode32_file((prefix + "volume_aabb_" + suffix).c_str(), (unsigned char*) volume_aabb_render.get(), w, h);
     lodepng_encode32_file((prefix + "raycast_" + suffix).c_str(), (unsigned char*) raycast_render, w, h);
     lodepng_encode32_file((prefix + "instance_" + suffix).c_str(), (unsigned char*) instance_render, w, h);
