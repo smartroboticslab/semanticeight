@@ -744,12 +744,12 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
   for (const auto& object : objects_) {
     std::vector<se::Triangle> mesh;
     ObjVoxelImpl::dumpMesh(*(object->map_), mesh, true);
-    const std::string f = filename + "_" + std::to_string(object->instance_id) + ".vtk";
+    const std::string f = filename + "_" + std::to_string(object->instance_id) + ".ply";
     const Eigen::Matrix4f T_WO = se::math::to_inverse_transformation(object->T_OM_ * T_MW_);
     if (print_path) {
       std::cout << "Saving triangle mesh to file :" << f  << "\n";
     }
-    save_mesh_vtk(mesh, f.c_str(), T_WO, object->voxelDim());
+    save_mesh_ply(mesh, f.c_str(), T_WO, object->voxelDim());
   }
 }
 
