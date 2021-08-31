@@ -95,6 +95,11 @@ struct MultiresTSDFUpdate {
             float mean = 0;
             int sample_count = 0;
             float weight = 0;
+            float fg = 0.0f;
+            float fg_count = 0.0f;
+            float r = 0;
+            float g = 0;
+            float b = 0;
             for (int k = 0; k < stride; k += stride / 2) {
               for (int j = 0; j < stride; j += stride / 2) {
                 for (int i = 0; i < stride; i += stride / 2) {
@@ -102,6 +107,11 @@ struct MultiresTSDFUpdate {
                   if (child_data.y != 0) {
                     mean += child_data.x;
                     weight += child_data.y;
+                    fg += child_data.fg;
+                    fg_count += child_data.fg_count;
+                    r += child_data.r;
+                    g += child_data.g;
+                    b += child_data.b;
                     sample_count++;
                   }
                 }
@@ -112,9 +122,19 @@ struct MultiresTSDFUpdate {
             if (sample_count != 0) {
               mean /= sample_count;
               weight /= sample_count;
+              fg /= sample_count;
+              fg_count /= sample_count;
+              r /= sample_count;
+              g /= sample_count;
+              b /= sample_count;
               voxel_data.x = mean;
               voxel_data.x_last = mean;
               voxel_data.y = ceil(weight);
+              voxel_data.fg = ceil(fg);
+              voxel_data.fg_count = ceil(fg_count);
+              voxel_data.r = ceil(r);
+              voxel_data.g = ceil(g);
+              voxel_data.b = ceil(b);
             } else {
               voxel_data = VoxelType::initData();
             }
@@ -138,11 +158,21 @@ struct MultiresTSDFUpdate {
     float mean = 0;
     int sample_count = 0;
     float weight = 0;
+    float fg = 0.0f;
+    float fg_count = 0.0f;
+    float r = 0;
+    float g = 0;
+    float b = 0;
     for (int child_idx = 0; child_idx < 8; ++child_idx) {
       const VoxelData& child_data = node->childData(child_idx);
       if (child_data.y != 0) {
         mean += child_data.x;
         weight += child_data.y;
+        fg += child_data.fg;
+        fg_count += child_data.fg_count;
+        r += child_data.r;
+        g += child_data.g;
+        b += child_data.b;
         sample_count++;
       }
     }
@@ -153,9 +183,19 @@ struct MultiresTSDFUpdate {
       VoxelData& node_data = node->parent()->childData(child_idx);
       mean /= sample_count;
       weight /= sample_count;
+      fg /= sample_count;
+      fg_count /= sample_count;
+      r /= sample_count;
+      g /= sample_count;
+      b /= sample_count;
       node_data.x = mean;
       node_data.x_last = mean;
       node_data.y = ceil(weight);
+      node_data.fg = ceil(fg);
+      node_data.fg_count = ceil(fg_count);
+      node_data.r = ceil(r);
+      node_data.g = ceil(g);
+      node_data.b = ceil(b);
       node_data.delta_y = 0;
     }
     node->timestamp(timestamp);
@@ -202,10 +242,21 @@ struct MultiresTSDFUpdate {
                     voxel_data.y = is_valid ? parent_data.y : 0;
                     voxel_data.x_last = voxel_data.x;
                     voxel_data.delta_y = 0;
+                    // TODO SEM maybe interpolate here too?
+                    voxel_data.fg = parent_data.fg;
+                    voxel_data.fg_count = is_valid ? parent_data.fg_count : 0;
+                    voxel_data.r = parent_data.r;
+                    voxel_data.g = parent_data.g;
+                    voxel_data.b = parent_data.b;
                   } else {
                     voxel_data.x = std::max(voxel_data.x + delta_x, -1.f);
                     voxel_data.y = fminf(voxel_data.y + parent_data.delta_y, MultiresTSDF::max_weight);
                     voxel_data.delta_y = parent_data.delta_y;
+                    voxel_data.fg = parent_data.fg;
+                    voxel_data.fg_count = fminf(voxel_data.fg_count + parent_data.fg_count, MultiresTSDF::max_weight);
+                    voxel_data.r = parent_data.r;
+                    voxel_data.g = parent_data.g;
+                    voxel_data.b = parent_data.b;
                   }
                   block->setData(voxel_coord, voxel_scale - 1, voxel_data);
                 }
@@ -259,10 +310,21 @@ struct MultiresTSDFUpdate {
                   voxel_data.y = is_valid ? parent_data.y : 0;
                   voxel_data.x_last = voxel_data.x;
                   voxel_data.delta_y = 0;
+                  // TODO SEM maybe interpolate here too?
+                  voxel_data.fg = parent_data.fg;
+                  voxel_data.fg_count = is_valid ? parent_data.fg_count : 0;
+                  voxel_data.r = parent_data.r;
+                  voxel_data.g = parent_data.g;
+                  voxel_data.b = parent_data.b;
                 } else {
                   voxel_data.x = se::math::clamp(voxel_data.x + delta_x, -1.f, 1.f);
                   voxel_data.y = fminf(voxel_data.y + parent_data.delta_y, MultiresTSDF::max_weight);
                   voxel_data.delta_y = parent_data.delta_y;
+                  voxel_data.fg = parent_data.fg;
+                  voxel_data.fg_count = fminf(voxel_data.fg_count + parent_data.fg_count, MultiresTSDF::max_weight);
+                  voxel_data.r = parent_data.r;
+                  voxel_data.g = parent_data.g;
+                  voxel_data.b = parent_data.b;
                 }
 
                 const Eigen::Vector3f point_C = (T_CM_ * (voxel_dim_ * voxel_sample_coord_f).homogeneous()).head(3);
