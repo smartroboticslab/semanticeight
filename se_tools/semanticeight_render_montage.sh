@@ -33,14 +33,16 @@ for depth in $depth_renders; do
 	volume=$(printf '%s\n' "$depth" | sed 's/depth/volume/')
 	volume_aabb=$(printf '%s\n' "$depth" | sed 's/depth/volume_aabb/')
 	volume_color=$(printf '%s\n' "$depth" | sed 's/depth/volume_color/')
+	volume_scale=$(printf '%s\n' "$depth" | sed 's/depth/volume_scale/')
+	volume_min_scale=$(printf '%s\n' "$depth" | sed 's/depth/volume_min_scale/')
 
 	n=$(frame_number "$depth")
 	out="$out_dir/render_$(printf '%05d' "$n").png"
 
-	printf 'montage -label %%t -font Liberation-Mono %s %s %s %s %s %s %s %s %s -geometry +2+2 -tile 3x3 %s\n' \
+	printf 'montage -label %%t -font Liberation-Mono %s %s %s null: %s %s %s %s %s %s %s %s -geometry +2+2 -tile 4x %s\n' \
 		"$rgba" "$segm" "$depth" \
-		"$instance" "$class" "$raycast" \
-		"$volume" "$volume_aabb" "$volume_color" \
+		"$instance" "$class" "$raycast" "$volume_color" \
+		"$volume" "$volume_aabb" "$volume_scale" "$volume_min_scale" \
 		"$out"
 done | parallel
 
