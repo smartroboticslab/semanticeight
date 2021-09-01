@@ -5,8 +5,6 @@
 
 #include "se/segmentation.hpp"
 
-constexpr float default_res = 0.1f;
-
 namespace se {
   // The names of the 41 Matterport3D semantic classes plus the background. Everything but "chair" is stuff.
   const std::vector<std::string> matterport3d_class_names    {"background",  "wall",       "floor",      "chair",      "door",       "table",      "picture",    "cabinet",    "cushion",    "window",     "sofa",       "bed",        "curtain",    "chest_of_drawers",  "plant",      "sink",       "stairs",     "ceiling",    "toilet",     "stool",      "towel",      "mirror",     "tv_monitor",  "shower",     "column",     "bathtub",    "counter",    "fireplace",  "lighting",   "beam",       "railing",    "shelving",   "blinds",     "gym_equipment",  "seating",    "board_panel",  "furniture",   "appliances",  "clothes",    "objects",    "misc",       "unlabel"};

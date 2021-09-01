@@ -117,10 +117,10 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i&   image_res,
     const float voxel_dim = map_dim_.x() / map_size_.x();
     if (has_yaml_voxel_impl_config) {
       VoxelImpl::configure(yaml_voxel_impl_config, voxel_dim);
-      ObjVoxelImpl::configure(yaml_voxel_impl_config, voxel_dim);
+      ObjVoxelImpl::configure(yaml_voxel_impl_config, se::default_res);
     } else {
       VoxelImpl::configure(voxel_dim);
-      ObjVoxelImpl::configure(voxel_dim);
+      ObjVoxelImpl::configure(se::default_res);
     }
 
     // Initialize the Gaussian for the bilateral filter
