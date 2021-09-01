@@ -279,7 +279,7 @@ namespace se {
        * \param[out] segmentation The next RGBA segmentation data.
        * \return An appropriate status code.
        */
-      ReaderStatus nextSegmentation(SegmentationResult& segmentation);
+      virtual ReaderStatus nextSegmentation(SegmentationResult& segmentation);
 
     private:
       size_t ground_truth_frame_;

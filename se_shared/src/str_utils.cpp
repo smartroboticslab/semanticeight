@@ -117,5 +117,20 @@ namespace str_utils {
     }
   }
 
+  bool is_float(const std::string& s,
+                const bool         accept_negative)
+  {
+    // Try to parse the string as a float.
+    try
+    {
+      size_t int_len = 0;
+      const float f = std::stof(s, &int_len);
+      return ((int_len == s.size()) && (accept_negative || (f >= 0.0f)));
+    } catch (const std::exception& e)
+    {
+      return false;
+    }
+  }
+
 } // namespace str_utils
 

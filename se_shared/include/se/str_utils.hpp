@@ -65,6 +65,9 @@ namespace str_utils {
   std::string header_to_pretty_str(const std::string header_name,
                                    const int width = default_width);
 
+  bool is_float(const std::string& s,
+                const bool         accept_negative = true);
+
   /**
    * Strip last component from file name. Similar to dirname from coreutils.
    */

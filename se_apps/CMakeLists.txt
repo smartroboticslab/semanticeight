@@ -17,6 +17,7 @@ set(READER_SRC
   src/reader_base.cpp
   src/reader_iclnuim.cpp
   src/reader_newercollege.cpp
+  src/reader_interiornet.cpp
   src/reader_openni.cpp
   src/reader_raw.cpp
   src/reader.cpp
