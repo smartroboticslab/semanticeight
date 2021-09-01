@@ -512,7 +512,7 @@ int processAll(se::Reader*        reader,
     stdfs::create_directories(config->output_mesh_file);
     std::stringstream output_mesh_meter_file_ss;
     output_mesh_meter_file_ss << config->output_mesh_file << "/mesh_"
-                              << std::setw(5) << std::setfill('0') << frame << ".vtk";
+                              << std::setw(5) << std::setfill('0') << frame << ".ply";
     pipeline->dumpMesh("", output_mesh_meter_file_ss.str().c_str(), !config->enable_benchmark);
     std::stringstream output_mesh_object_file_ss;
     output_mesh_object_file_ss << config->output_mesh_file << "/mesh_"
