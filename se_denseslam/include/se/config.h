@@ -351,6 +351,8 @@ namespace se {
     bool bilateral_filter;
 
     // Exploration only ///////////////////////////////////////////////////////
+    bool enable_exploration;
+
     int num_candidates;
 
     int raycast_width;
@@ -418,6 +420,7 @@ namespace se {
         output_render_file(""),
         render_volume_fullsize(false),
         bilateral_filter(false),
+        enable_exploration(true),
         num_candidates(10),
         raycast_width(36),
         raycast_height(10),
@@ -514,6 +517,7 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
   out << "\n";
 
   // Exploration only ///////////////////////////////////////////////////////
+  out << str_utils::bool_to_pretty_str(config.enable_exploration,         "Enable exploration") << "\n";
   out << str_utils::value_to_pretty_str(config.num_candidates,            "Num candidates") << "\n";
   out << str_utils::value_to_pretty_str(config.raycast_width,             "Raycast width") << "\n";
   out << str_utils::value_to_pretty_str(config.raycast_height,            "Raycast height") << "\n";
