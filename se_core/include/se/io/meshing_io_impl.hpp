@@ -142,6 +142,9 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
   file << "property float x\n";
   file << "property float y\n";
   file << "property float z\n";
+  file << "property uchar red\n";
+  file << "property uchar green\n";
+  file << "property uchar blue\n";
   if (has_point_data) {
     file << "property float vertex_value\n";
   }
@@ -161,6 +164,7 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
     for (int v = 0; v < 3; ++v) {
       const Eigen::Vector3f vertex_W = (T_WM * (voxel_dim * triangle_M.vertexes[v]).homogeneous()).head(3);
       file << vertex_W.x() << " " << vertex_W.y() << " " << vertex_W.z();
+      file << " " << (int) triangle_M.r[v] << " " << (int) triangle_M.g[v] << " " << (int) triangle_M.b[v];
       if (has_point_data) {
         file << " " << point_data[3*i + v] << "\n";
       } else {

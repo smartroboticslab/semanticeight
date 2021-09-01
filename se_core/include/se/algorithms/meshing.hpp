@@ -43,11 +43,14 @@ typedef struct Triangle {
   Eigen::Vector3f vertexes[3];
   Eigen::Vector3f vnormals[3];
   Eigen::Vector3f normal;
-  float color;
+  uint8_t r[3];
+  uint8_t g[3];
+  uint8_t b[3];
   float surface_area;
   int   max_vertex_scale;
 
-  Triangle(){
+  Triangle()
+    : r {0u, 0u, 0u}, g {0u, 0u, 0u}, b {0u, 0u, 0u} {
     vertexes[0] = Eigen::Vector3f::Constant(0);
     vertexes[1] = Eigen::Vector3f::Constant(0);
     vertexes[2] = Eigen::Vector3f::Constant(0);
@@ -990,6 +993,14 @@ namespace algorithms {
               triangle.vertexes[1] = vertex_1;
               triangle.vertexes[2] = vertex_2;
               triangle.max_vertex_scale = dual_max_scale;
+              // Interpolate color at each vertex
+              for (int i = 0; i < 3; i++) {
+                typename FieldType::VoxelData data;
+                map.get(triangle.vertexes[i].cast<int>(), data, 0);
+                triangle.r[i] = map.interp(triangle.vertexes[i], [](const auto& data) { return data.r; }).first;
+                triangle.g[i] = map.interp(triangle.vertexes[i], [](const auto& data) { return data.g; }).first;
+                triangle.b[i] = map.interp(triangle.vertexes[i], [](const auto& data) { return data.b; }).first;
+              }
 
               lck.lock();
               triangles.push_back(triangle);
