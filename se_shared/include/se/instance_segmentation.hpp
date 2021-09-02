@@ -100,6 +100,11 @@ namespace se {
 
     static constexpr float skip_fg_update = -2.0f;
 
+    /** Threshold used to convert instance mask elements from the interval [0,UINT8_MAX] to the set
+     * {0,UINT8_MAX}.
+     */
+    static constexpr uint8_t instance_mask_threshold = UINT8_MAX / 2;
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 

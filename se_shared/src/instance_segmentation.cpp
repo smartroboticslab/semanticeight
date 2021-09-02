@@ -9,6 +9,7 @@ namespace se {
   constexpr size_t InstanceSegmentation::morph_diam_;
   constexpr float InstanceSegmentation::skip_integration;
   constexpr float InstanceSegmentation::skip_fg_update;
+  constexpr uint8_t InstanceSegmentation::instance_mask_threshold;
 
   InstanceSegmentation::InstanceSegmentation()
     : instance_id(instance_invalid),
@@ -25,6 +26,7 @@ namespace se {
       instance_mask(instance_mask),
       conf(class_id)
   {
+    cv::threshold(instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
   }
 
 
@@ -35,6 +37,7 @@ namespace se {
     : instance_id(instance_id),
       instance_mask(instance_mask),
       conf(confidence) {
+    cv::threshold(instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
   }
 
 
@@ -43,6 +46,7 @@ namespace se {
                                              const cv::Mat&             instance_mask)
     : instance_id(instance_id),
       instance_mask(instance_mask) {
+    cv::threshold(instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
   }
 
 
