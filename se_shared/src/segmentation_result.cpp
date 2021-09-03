@@ -18,7 +18,7 @@ typedef float numpy_confidence_t;
 
 bool read_masks(const std::string& filename, std::vector<cv::Mat>& masks) {
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-  std::cout << "Reading masks from:               " << filename << "\n";
+  printf("Reading masks from:               %s\n", filename.c_str());
 #endif
   // Empty the vector
   masks.resize(0);
@@ -34,7 +34,7 @@ bool read_masks(const std::string& filename, std::vector<cv::Mat>& masks) {
   if (num_masks == 0) {
     // Return if no objects were detected
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout << "Read " << masks.size() << " masks\n";
+    printf("Read %zu masks\n", masks.size());
 #endif
     return true;
   } else {
@@ -73,8 +73,7 @@ bool read_masks(const std::string& filename, std::vector<cv::Mat>& masks) {
       masks[i] *= 255;
     }
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout << "Read " << masks.size() << " masks at "
-        << width << "x" << height << "\n";
+    printf("Read %zu masks at %zux%zu\n", masks.size(), width, height);
 #endif
     return true;
   }
@@ -87,7 +86,7 @@ bool read_masks(const std::string& filename, std::vector<cv::Mat>& masks) {
 bool read_class_ids(const std::string&    filename,
                     std::vector<uint8_t>& class_ids) {
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-  std::cout << "Reading class IDs from:           " << filename << "\n";
+  printf("Reading class IDs from:           %s\n", filename.c_str());
 #endif
   // Empty the vector
   class_ids.resize(0);
@@ -104,7 +103,7 @@ bool read_class_ids(const std::string&    filename,
   if (num_objects == 0) {
     // Return if no objects were detected
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout << "Read " << class_ids.size() << " class IDs\n";
+    printf("Read %zu class IDs\n", class_ids.size());
 #endif
     return true;
   } else {
@@ -123,7 +122,7 @@ bool read_class_ids(const std::string&    filename,
     // Allocate vector
     class_ids.resize(num_objects);
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout << "Read " << class_ids.size() << " class IDs: ";
+    printf("Read %zu class IDs: ", class_ids.size());
 #endif
 
     // Read class IDs
@@ -131,11 +130,11 @@ bool read_class_ids(const std::string&    filename,
       // The NumPy arrays store the final class IDs, with the background as a class.
       class_ids[i] = static_cast<uint8_t>(class_ids_npy.data<numpy_class_id_t>()[i]);
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-      std::cout << (unsigned int) class_ids[i] << " ";
+      printf("%u ", (unsigned int) class_ids[i]);
 #endif
     }
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout << "\n";
+    printf("\n");
 #endif
     return true;
   }
@@ -148,7 +147,7 @@ bool read_class_ids(const std::string&    filename,
 bool read_all_confs(const std::string&          filename,
                     se::VecDetectionConfidence& all_probs) {
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-  std::cout << "Reading class probabilities from: " << filename << "\n";
+  printf("Reading class probabilities from: %s\n", filename.c_str());
 #endif
   // Empty the vector
   all_probs.resize(0);
@@ -165,7 +164,7 @@ bool read_all_confs(const std::string&          filename,
   if (num_objects == 0) {
     // Return if no objects were detected
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout << "Read " << all_probs.size() << " class probabilities\n";
+    printf("Read %zu class probabilities\n", all_probs.size());
 #endif
     return true;
   } else {
@@ -189,7 +188,7 @@ bool read_all_confs(const std::string&          filename,
     // Allocate vector
     all_probs = se::VecDetectionConfidence(num_objects);
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout << "Read " << all_probs.size() << " class probabilities: ";
+    printf("Read %zu class probabilities: ", all_probs.size());
 #endif
     // Read class probabilities
     numpy_confidence_t* current_probs_npy = all_probs_npy.data<numpy_confidence_t>();
@@ -197,11 +196,11 @@ bool read_all_confs(const std::string&          filename,
       all_probs[i] = se::DetectionConfidence(current_probs_npy);
       current_probs_npy += (se::class_names.size() - 1);
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-      std::cout << all_probs[i].confidence() << " ";
+      printf("%5.3f ", all_probs[i].confidence());
 #endif
     }
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-      std::cout << "\n";
+      printf("\n");
 #endif
     return true;
   }
@@ -229,8 +228,7 @@ namespace se {
     clear();
 
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout << "Loading segmentation data from: " << base_dir + "/*/"
-        + base_name + ".npy" << std::endl;
+    printf("Loading segmentation data from:   %s/*/%s.npy\n", base_dir.c_str(), base_name.c_str());
 #endif
 
     bool success;
@@ -459,8 +457,9 @@ namespace se {
       const float nonzero_percent = (float) nonzero / (float) total_elements;
       if (nonzero_percent < percent_nonzero_threshold) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-        std::cout << "Removed " << *(object_instances.begin() + i)
-            << " with " << nonzero_percent << "%% nonzero mask elements\n";
+        printf("Removed ");
+        (object_instances.begin() + i)->print();
+        printf(" with %6.2f%% nonzero mask elements\n", nonzero_percent);
 #endif
         object_instances.erase(object_instances.begin() + i);
       }
@@ -475,8 +474,9 @@ namespace se {
     for (int i = object_instances.size()-1; i >= 0; --i) {
       if (object_instances[i].classId() == class_id) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-        std::cout << "Removed " << *(object_instances.begin() + i)
-            << " with class " << class_id << "\n";
+        printf("Removed ");
+        (object_instances.begin() + i)->print();
+        printf(" with class %d\n", class_id);
 #endif
         object_instances.erase(object_instances.begin() + i);
       }
@@ -491,8 +491,9 @@ namespace se {
     for (int i = object_instances.size()-1; i >= 0; --i) {
       if (is_class_stuff(object_instances[i].classId())) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-        std::cout << "Removed " << *(object_instances.begin() + i)
-            << " as STUFF\n";
+        printf("Removed ");
+        (object_instances.begin() + i)->print();
+        printf(" as STUFF\n");
 #endif
         object_instances.erase(object_instances.begin() + i);
       }
@@ -507,8 +508,9 @@ namespace se {
     for (int i = object_instances.size()-1; i >= 0; --i) {
       if (object_instances[i].instance_id == se::instance_invalid) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-        std::cout << "Removed " << *(object_instances.begin() + i)
-            << " as invalid instance\n";
+        printf("Removed ");
+        (object_instances.begin() + i)->print();
+        printf(" as invalid instance\n");
 #endif
         object_instances.erase(object_instances.begin() + i);
       }
@@ -526,8 +528,9 @@ namespace se {
           mask_intersection);
       if (cv::countNonZero(mask_intersection) == 0) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-        std::cout << "Removed " << *(object_instances.begin() + i)
-            << " due to invalid depth\n";
+        printf("Removed ");
+        (object_instances.begin() + i)->print();
+        printf(" due to invalid depth\n");
 #endif
         object_instances.erase(object_instances.begin() + i);
       }
@@ -542,12 +545,10 @@ namespace se {
     for (int i = object_instances.size()-1; i >= 0; --i) {
       if (object_instances[i].confidence() < conf_thres) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-        const std::ios_base::fmtflags f (std::cout.flags());
-        std::cout << "Removed " << *(object_instances.begin() + i)
-            << std::setw(3) << std::setprecision(0)
-            << " with confidence " << 100.0f * object_instances[i].confidence()
-            << "% < " << 100.0f * conf_thres << "%\n";
-        std::cout.flags(f);
+        printf("Removed ");
+        (object_instances.begin() + i)->print();
+        printf(" with confidence %3.0f%% < %3.0f%%\n",
+            100.0f * object_instances[i].confidence(), 100.0f * conf_thres);
 #endif
         object_instances.erase(object_instances.begin() + i);
       }

@@ -487,23 +487,19 @@ bool DenseSLAMSystem::preprocessSegmentation(
     const se::SegmentationResult& segmentation) {
 
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << "Preprocessing in: "
-      << "   Masks " << segmentation.width << "x" << segmentation.height
-      << "   Objects " << segmentation.object_instances.size()
-      << "\n";
+  printf("Preprocessing in:    Masks %dx%d   Objects %zu\n",
+      segmentation.width, segmentation.height, segmentation.object_instances.size());
 #endif
 
   // Copy the segmentation output and resize if needed
   input_segmentation_ = segmentation;
   input_segmentation_.resize(image_res_.x(), image_res_.y());
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << input_segmentation_;
-  std::cout << "Preprocessing out:"
-      << "   RGB " << rgba_image_.width() << "x" << rgba_image_.height()
-      << "   Depth " << depth_image_.width() << "x" << depth_image_.height()
-      << "   Masks " << input_segmentation_.width << "x" << input_segmentation_.height
-      << "   Objects " << input_segmentation_.object_instances.size()
-      << "\n\n";
+  input_segmentation_.print();
+  printf("Preprocessing out:   RGB %dx%d   Depth %dx%d   Masks %dx%d   Objects %zu\n\n",
+      rgba_image_.width(), rgba_image_.height(), depth_image_.width(), depth_image_.height(),
+      input_segmentation_.width, input_segmentation_.height,
+      input_segmentation_.object_instances.size());
 #endif
   return true;
 }
@@ -512,8 +508,7 @@ bool DenseSLAMSystem::preprocessSegmentation(
 
 bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << "trackObjects in:   Number of current objects: "
-      << objects_.size() << "\n";
+  printf("trackObjects in:   Number of current objects: %zu\n", objects_.size());
 #endif
   updateValidDepthMask(depth_image_);
 
@@ -547,9 +542,8 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame) {
   generateObjects(processed_segmentation_, sensor);
 
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << processed_segmentation_;
-  std::cout << "trackObjects out:  Number of current objects: "
-      << objects_.size() << "\n\n";
+  processed_segmentation_.print();
+  printf("trackObjects out:  Number of current objects: %zu\n\n", objects_.size());
 #endif
   return true;
 }
@@ -559,8 +553,8 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame) {
 bool DenseSLAMSystem::integrateObjects(const SensorImpl& sensor,
                                        const size_t      frame) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << "Integration in:    Number of objects to integrate: "
-      << processed_segmentation_.object_instances.size() << "\n";
+  printf("Integration in:    Number of objects to integrate: %zu\n",
+      processed_segmentation_.object_instances.size());
 #endif
   // Integrate each object detection, including the background.
   for (auto& object_detection : processed_segmentation_.object_instances) {
@@ -577,15 +571,17 @@ bool DenseSLAMSystem::integrateObjects(const SensorImpl& sensor,
 #else
 #endif
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-    std::cout << object_detection << "\n";
+    object_detection.print();
+    printf("\n");
 #endif
   }
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << "Integration out:    " << "\n\n";
+  printf("Integration out:    \n\n");
 #endif
 #if SE_VERBOSE == SE_VERBOSE_MINIMAL
   for (const auto& object : objects_) {
-    std::cout << *object << "\n";
+    object->print();
+    printf("\n");
   }
 #endif
   return true;
@@ -595,7 +591,7 @@ bool DenseSLAMSystem::integrateObjects(const SensorImpl& sensor,
 
 bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor, const int frame) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << "Raycasting in:     " << "\n";
+  printf("Raycasting in:     \n");
 #endif
 
   // Raycast the background.
@@ -628,14 +624,12 @@ bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor, const int fr
 
 #if SE_VERBOSE >= SE_VERBOSE_FLOOD
   for (const auto& instance_id : visible_objects_) {
-    std::cout << instance_id << " ";
+    printf("%d ", instance_id);
   }
-  std::cout << "\n";
+  printf("\n");
 #endif
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << "Raycasting out:    Visible objects: "
-    << visible_objects_.size() << "/" << objects_.size()
-    << "\n\n";
+  printf("Raycasting out:    Visible objects: %zu/%zu\n\n", visible_objects_.size(), objects_.size());
 #endif
   return true;
 }
@@ -814,15 +808,10 @@ void DenseSLAMSystem::computeNewObjectParameters(
   map_dim = fminf(2.5 * max_dim, 5.0);
 
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-  std::cout<< __func__ << " max/min x/y/z: "
-      << vertex_min.x() << " " << vertex_max.x() << " "
-      << vertex_min.y() << " " << vertex_max.y() << " "
-      << vertex_min.z() << " " << vertex_max.z()
-      << std::endl;
-  std::cout<< __func__ << " average of vertex out of " << count << ": "
-      << vertex_mean.x() << " " << vertex_mean.y() << " " << vertex_mean.z()
-      << ", with the max size " << max_dim
-      << std::endl;
+  printf("%s max/min x/y/z: %f %f %f %f %f %f\n", __func__, vertex_min.x(), vertex_max.x(),
+      vertex_min.y(), vertex_max.y(), vertex_min.z(), vertex_max.z());
+  printf("%s average of vertex out of %d: %f %f %f, with the max size %f\n", __func__, count,
+      vertex_mean.x(), vertex_mean.y(), vertex_mean.z(), max_dim);
 #endif
 
   // Select the map size depending on the object class.
@@ -877,7 +866,9 @@ void DenseSLAMSystem::matchObjectInstances(
     // Set the instance ID to that of the best match.
     detection.instance_id = best_instance_id;
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-    std::cout << "Matched " << detection << " with IoU: " << best_score << std::endl;
+    printf("Matched ");
+    detection.print();
+    printf(" with IoU: %f\n", best_score);
 #endif
   }
 }
@@ -933,12 +924,9 @@ void DenseSLAMSystem::generateObjects(se::SegmentationResult& masks,
     visible_objects_.insert(object_detection.instance_id);
 
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
-    std::cout <<  __func__ << ":"
-        << "   volume extent: " << map_dim
-        << "   volume size: " << map_size
-        << "   volume step: " << map_dim / map_size
-        << "   class id: "<< class_id
-        << "   T_OM:\n" << T_OM << std::endl;
+    printf("%s:   volume extent: %f   volume size: %d   volume step: %f   class id: %d   T_OM:\n",
+        __func__, map_dim, map_size, map_dim / map_size, class_id);
+    std::cout << T_OM << "\n";
 #endif
   }
 
@@ -974,7 +962,7 @@ void DenseSLAMSystem::generateUndetectedInstances(se::SegmentationResult& detect
     }
   }
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
-  std::cout << "Unmatched objects " << undetected_objects.size() << "\n";
+  printf("Unmatched objects %zu\n", undetected_objects.size());
 #endif
 
   // Create a detection for each undetected object.
