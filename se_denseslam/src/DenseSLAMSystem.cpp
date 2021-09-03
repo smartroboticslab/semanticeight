@@ -526,6 +526,9 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame) {
   // Compute the objects visible from the camera pose computed by tracking based on their bounding
   // volumes.
   visible_objects_ = se::get_visible_object_ids(objects_, sensor, T_MC_);
+#if SE_VERBOSE >= SE_VERBOSE_NORMAL
+  printf("                   Number of visible objects: %zu\n", visible_objects_.size());
+#endif
 
   // Raycast the background and objects from the current pose.
   raycastObjectsAndBg(sensor, frame);
@@ -857,9 +860,11 @@ void DenseSLAMSystem::matchObjectInstances(
       //const float score = iou * same_class;
 
       // Test if a better match was found.
-      if ((score > matching_threshold) and (score > best_score)) {
+      if (score > best_score) {
         best_score = score;
-        best_instance_id = object.instance_id;
+        if (score > matching_threshold) {
+          best_instance_id = object.instance_id;
+        }
       }
     }
 
