@@ -213,6 +213,20 @@ void Object::renderObjectVolume(uint32_t*              output_image_data,
 
 
 
+void Object::print(FILE* f) const {
+  // The longest class name has 16 characters (chest_of_drawers) but we'll likely not need larger
+  // than 8 characters (backpack).
+  fprintf(f, "Object %3d, %8s (%d) %3.0f%%, scales",
+      instance_id, se::class_id_to_str(classId()).c_str(), classId(), 100.0f * conf.confidence());
+  // Show detailed information about the minimum scales of the allocated VoxelBlocks.
+  const int num_blocks = std::accumulate(num_blocks_per_min_scale.begin(), num_blocks_per_min_scale.end(), 0);
+  for (int s = 0; s <= ObjVoxelImpl::VoxelBlockType::max_scale; s++) {
+    fprintf(f, " %3.0f%%", 100.0f * num_blocks_per_min_scale[s] / num_blocks);
+  }
+}
+
+
+
 std::ostream& operator<<(std::ostream& os, const Object& o) {
   const std::ios_base::fmtflags f (os.flags());
   // Assuming up to 999 objects.

@@ -14,8 +14,6 @@ namespace se {
    * InstanceSegmentation structs.
    */
   struct SegmentationResult {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     int width;
     int height;
 
@@ -156,6 +154,10 @@ namespace se {
     int merge(const InstanceSegmentation& other, const float overlap_thres);
 
     int merge(const SegmentationResult& other, const float overlap_thres);
+
+    void print(FILE* f = stdout) const;
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 
 

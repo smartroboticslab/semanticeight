@@ -154,6 +154,17 @@ namespace se {
 
 
 
+  void InstanceSegmentation::print(FILE* f) const {
+    const std::string object_type = is_class_stuff(classId()) ? "STUFF" : "THING";
+    fprintf(f, "%3d   %dx%d %5.3f   %3d %3.0f%% %s %s %s",
+        instance_id, instance_mask.cols, instance_mask.rows,
+        cv::countNonZero(instance_mask) / static_cast<float>(instance_mask.total()),
+        classId(), 100.0f * confidence(), (detected() ? "  detected" : "undetected"),
+        object_type.c_str(), class_id_to_str(classId()).c_str());
+  }
+
+
+
   std::ostream& operator<<(std::ostream& os, const InstanceSegmentation& o) {
     const std::string object_type
         = is_class_stuff(o.classId()) ? "STUFF " : "THING ";

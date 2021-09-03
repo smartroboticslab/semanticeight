@@ -90,6 +90,8 @@ namespace se {
      */
     bool detected() const;
 
+    void print(FILE* f = stdout) const;
+
     /** Diameter of the circle used for morphological transformations in
      * InstanceSegmentation::generateIntegrationMask() and
      * InstanceSegmentation::morphologicalRefinement().

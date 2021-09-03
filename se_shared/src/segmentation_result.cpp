@@ -583,6 +583,15 @@ namespace se {
 
 
 
+  void SegmentationResult::print(FILE* f) const {
+    for (const auto& object : object_instances) {
+      object.print(f);
+      fprintf(f, "\n");
+    }
+  }
+
+
+
   std::ostream& operator<<(std::ostream& os, const SegmentationResult& s) {
     for (const auto& object : s.object_instances) {
       os << object << "\n";

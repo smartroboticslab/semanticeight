@@ -167,6 +167,8 @@ class Object {
                             const Eigen::Matrix4f& render_T_MC,
                             const bool             render_color);
 
+    void print(FILE* f = stdout) const;
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
