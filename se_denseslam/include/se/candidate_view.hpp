@@ -49,6 +49,7 @@ namespace se {
       /** \brief Create a CandidateView and compute its utility.
        */
       CandidateView(const OctreePtr&              map,
+                    ptp::OccupancyWorld&          ptp_map,
                     const std::vector<se::key_t>& frontiers,
                     const Objects&                objects,
                     const SensorImpl&             sensor,

@@ -42,6 +42,7 @@ namespace se {
 
 
   CandidateView::CandidateView(const OctreePtr&              map,
+                               ptp::OccupancyWorld&          ptp_map,
                                const std::vector<se::key_t>& /*frontiers*/,
                                const Objects&                objects,
                                const SensorImpl&             sensor,
@@ -58,12 +59,9 @@ namespace se {
         utility_(-1.0f),
         config_(config) {
     // Set-up the planner
-    ompl::msg::setLogLevel(ompl::msg::LOG_ERROR);
     const ptp::PlanningParameter planner_config (config_.planner_config);
-    ptp::OccupancyWorld planner_world;
-    planner_world.setOctree(map);
-    ptp::ProbCollisionChecker planner_collision_checker (planner_world, planner_config);
-    ptp::SafeFlightCorridorGenerator planner (planner_world, planner_collision_checker, planner_config);
+    ptp::ProbCollisionChecker planner_collision_checker (ptp_map, planner_config);
+    ptp::SafeFlightCorridorGenerator planner (ptp_map, planner_collision_checker, planner_config);
     if (config_.planner_config.start_point_M_.isApprox(config_.planner_config.goal_point_M_)) {
       // No need to do path planning if start and goal positions are the same
       path_MC_.push_back(T_MC);

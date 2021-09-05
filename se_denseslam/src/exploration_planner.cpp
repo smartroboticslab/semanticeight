@@ -11,6 +11,7 @@ namespace se {
                                          const ExplorationConfig& config)
       : map_(map), config_(config), T_MW_(T_MW), T_WM_(se::math::to_inverse_transformation(T_MW))
   {
+    ompl::msg::setLogLevel(ompl::msg::LOG_ERROR);
   }
 
 
