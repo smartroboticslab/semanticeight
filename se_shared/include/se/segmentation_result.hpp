@@ -118,6 +118,8 @@ namespace se {
      */
     void morphologicalRefinement(const size_t element_diameter);
 
+    void removeDepthOutliers(const cv::Mat& depth);
+
     /**
      * Remove all object instances whose masks' percentage (in the interval [0,
      * 1]) of nonzero elements is lower than percent_nonzero_threshold.

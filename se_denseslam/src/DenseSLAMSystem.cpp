@@ -521,6 +521,8 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame) {
   processed_segmentation_.removeSmall(small_mask_threshold_);
   processed_segmentation_.removeInvalidDepth(valid_depth_mask_);
   //processed_segmentation_.morphologicalRefinement(10);
+  //cv::Mat depth_cv (cv::Size(depth_image_.width(), depth_image_.height()), CV_32FC1, depth_image_.data());
+  //processed_segmentation_.removeDepthOutliers(depth_cv);
   // TODO: more mask prerocessing
 
   // Compute the objects visible from the camera pose computed by tracking based on their bounding

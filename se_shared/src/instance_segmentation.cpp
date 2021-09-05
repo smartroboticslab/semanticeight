@@ -126,6 +126,19 @@ namespace se {
 
 
 
+  void InstanceSegmentation::removeDepthOutliers(const cv::Mat& depth) {
+    cv::Scalar mu_cv, stddev_cv;
+    cv::meanStdDev(depth, mu_cv, stddev_cv, instance_mask);
+    const float stddev = stddev_cv[0];
+    // Arbitrary distance threshold in meters.
+    if (stddev > 0.5f) {
+      cv::Mat inliers = (depth - mu_cv) <= 3 * stddev_cv;
+      cv::bitwise_and(instance_mask, inliers, instance_mask);
+    }
+  }
+
+
+
   int InstanceSegmentation::merge(const InstanceSegmentation& other,
                                   const float                 overlap_thres) {
     // Compute the amount of overlap.

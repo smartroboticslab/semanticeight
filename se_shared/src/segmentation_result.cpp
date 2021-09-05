@@ -444,6 +444,14 @@ namespace se {
 
 
 
+  void SegmentationResult::removeDepthOutliers(const cv::Mat& depth) {
+    for (auto& instance : object_instances) {
+      instance.removeDepthOutliers(depth);
+    }
+  }
+
+
+
   void SegmentationResult::removeSmall(const float percent_nonzero_threshold) {
     // Loop over all detected instances in reverse to make multiple removals
     // faster.

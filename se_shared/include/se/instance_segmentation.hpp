@@ -83,6 +83,8 @@ namespace se {
      */
     void morphologicalRefinement(const size_t element_diameter = morph_diam_);
 
+    void removeDepthOutliers(const cv::Mat& depth);
+
     int merge(const InstanceSegmentation& other, const float overlap_thres);
 
     /** Return true if this instance was detected by the segmentation network and false if it was
