@@ -42,6 +42,8 @@ namespace se {
                            const PinholeCamera&   camera,
                            const float            opacity) const = 0;
 
+      virtual std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>> edges() const = 0;
+
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 
@@ -99,6 +101,8 @@ namespace se {
                    const PinholeCamera&   camera,
                    const float            opacity) const;
 
+      std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>> edges() const;
+
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 
@@ -138,6 +142,8 @@ namespace se {
                    const Eigen::Matrix4f& T_VC,
                    const PinholeCamera&   camera,
                    const float            opacity) const;
+
+      std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>> edges() const;
 
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

@@ -335,6 +335,12 @@ void se::BoundingSphere::overlay(uint32_t*                out,
 
 
 
+std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>> se::BoundingSphere::edges() const {
+  return std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>>();
+}
+
+
+
 
 
 se::AABB::AABB()
@@ -476,6 +482,29 @@ void se::AABB::overlay(uint32_t*                out,
   cv::line(out_mat, projected_vertices[1], projected_vertices[5], _overlay_color);
   cv::line(out_mat, projected_vertices[2], projected_vertices[6], _overlay_color);
   cv::line(out_mat, projected_vertices[3], projected_vertices[7], _overlay_color);
+}
+
+
+
+std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>> se::AABB::edges() const {
+  std::vector<Eigen::Vector3f,Eigen::aligned_allocator<Eigen::Vector3f>> e;
+  e.reserve(24);
+  // Add the bottom AABB edges.
+  e.push_back(vertices_.col(0)); e.push_back(vertices_.col(1));
+  e.push_back(vertices_.col(1)); e.push_back(vertices_.col(3));
+  e.push_back(vertices_.col(3)); e.push_back(vertices_.col(2));
+  e.push_back(vertices_.col(2)); e.push_back(vertices_.col(0));
+  // Add the top AABB edges.
+  e.push_back(vertices_.col(4)); e.push_back(vertices_.col(5));
+  e.push_back(vertices_.col(5)); e.push_back(vertices_.col(7));
+  e.push_back(vertices_.col(7)); e.push_back(vertices_.col(6));
+  e.push_back(vertices_.col(6)); e.push_back(vertices_.col(4));
+  // Add the vertical AABB edges.
+  e.push_back(vertices_.col(0)); e.push_back(vertices_.col(4));
+  e.push_back(vertices_.col(1)); e.push_back(vertices_.col(5));
+  e.push_back(vertices_.col(2)); e.push_back(vertices_.col(6));
+  e.push_back(vertices_.col(3)); e.push_back(vertices_.col(7));
+  return e;
 }
 
 
