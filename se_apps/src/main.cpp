@@ -61,6 +61,7 @@ static std::ostream* log_stream = &std::cout;
 static std::ofstream log_file_stream;
 
 int processAll(se::Reader*        reader,
+               const SensorImpl&  sensor,
                bool               process_frame,
                bool               render_images,
                se::Configuration* config,
@@ -165,6 +166,16 @@ int main(int argc, char** argv) {
   instance_render = new uint32_t[image_res.x() * image_res.y()];
   raycast_render  = new uint32_t[image_res.x() * image_res.y()];
 
+  const Eigen::VectorXf elevation_angles = (Eigen::VectorXf(64) << 17.744, 17.12, 16.536, 15.982, 15.53, 14.936, 14.373, 13.823, 13.373, 12.786, 12.23, 11.687, 11.241, 10.67, 10.132, 9.574, 9.138, 8.577, 8.023, 7.479, 7.046, 6.481, 5.944, 5.395, 4.963, 4.401, 3.859, 3.319, 2.871, 2.324, 1.783, 1.238, 0.786, 0.245, -0.299, -0.849, -1.288, -1.841, -2.275, -2.926, -3.378, -3.91, -4.457, -5.004, -5.46, -6.002, -6.537, -7.096, -7.552, -8.09, -8.629, -9.196, -9.657, -10.183, -10.732, -11.289, -11.77, -12.297, -12.854, -13.415, -13.916, -14.442, -14.997, -15.595).finished();
+  const Eigen::VectorXf azimuth_angles = (Eigen::VectorXf(64) << 3.102, 3.0383750000000003, 2.98175, 2.950125, 3.063, 3.021375, 3.00175, 2.996125, 3.045, 3.031375, 3.03375, 3.043125, 3.042, 3.043375, 3.05175, 3.074125, 3.03, 3.051375, 3.0797499999999998, 3.101125, 3.034, 3.067375, 3.09775, 3.142125, 3.048, 3.093375, 3.13475, 3.170125, 3.059, 3.107375, 3.15275, 3.194125, 3.085, 3.136375, 3.17675, 3.217125, 3.117, 3.159375, 3.15275, 3.257125, 3.149, 3.189375, 3.22975, 3.270125, 3.19, 3.222375, 3.26075, 3.291125, 3.23, 3.253375, 3.28775, 3.301125, 3.274, 3.299375, 3.31975, 3.306125, 3.327, 3.3453749999999998, 3.3377499999999998, 3.322125, 3.393, 3.384375, 3.35875, 3.324125).finished();
+  const SensorImpl sensor({image_res.x(), image_res.y(), config.left_hand_frame,
+                           config.near_plane, config.far_plane,
+                           config.sensor_intrinsics[0] / config.sensor_downsampling_factor,
+                           config.sensor_intrinsics[1] / config.sensor_downsampling_factor,
+                           ((config.sensor_intrinsics[2] + 0.5f) / config.sensor_downsampling_factor - 0.5f),
+                           ((config.sensor_intrinsics[3] + 0.5f) / config.sensor_downsampling_factor - 0.5f),
+                           azimuth_angles, elevation_angles});
+
   t_MW = config.t_MW_factor.cwiseProduct(config.map_dim);
   pipeline = new DenseSLAMSystem(
       image_res,
@@ -233,7 +244,7 @@ int main(int argc, char** argv) {
       exit(1);
     }
 
-    while (processAll(reader, true, config.enable_render, &config, false) == 0) {}
+    while (processAll(reader, sensor, true, config.enable_render, &config, false) == 0) {}
   } else {
 #ifdef SE_QT
     qtLinkKinectQt(argc,argv, &pipeline, &reader, &config,
@@ -243,7 +254,7 @@ int main(int argc, char** argv) {
       std::cerr << "No valid input file specified\n";
       exit(1);
     }
-    while (processAll(reader, true, true, &config, false) == 0) {
+    while (processAll(reader, sensor, true, true, &config, false) == 0) {
 #ifdef SE_GLUT
       drawthem(rgba_render,   image_res,
                depth_render,  image_res,
@@ -287,6 +298,7 @@ int main(int argc, char** argv) {
 
 
 int processAll(se::Reader*        reader,
+               const SensorImpl&  sensor,
                bool               process_frame,
                bool               render_images,
                se::Configuration* config,
@@ -305,18 +317,6 @@ int processAll(se::Reader*        reader,
   const Eigen::Vector2i input_image_res = (reader != nullptr)
       ? reader->depthImageRes()
       : Eigen::Vector2i(640, 480);
-  const Eigen::Vector2i image_res
-      = input_image_res / config->sensor_downsampling_factor;
-
-  const Eigen::VectorXf elevation_angles = (Eigen::VectorXf(64) << 17.744, 17.12, 16.536, 15.982, 15.53, 14.936, 14.373, 13.823, 13.373, 12.786, 12.23, 11.687, 11.241, 10.67, 10.132, 9.574, 9.138, 8.577, 8.023, 7.479, 7.046, 6.481, 5.944, 5.395, 4.963, 4.401, 3.859, 3.319, 2.871, 2.324, 1.783, 1.238, 0.786, 0.245, -0.299, -0.849, -1.288, -1.841, -2.275, -2.926, -3.378, -3.91, -4.457, -5.004, -5.46, -6.002, -6.537, -7.096, -7.552, -8.09, -8.629, -9.196, -9.657, -10.183, -10.732, -11.289, -11.77, -12.297, -12.854, -13.415, -13.916, -14.442, -14.997, -15.595).finished();
-  const Eigen::VectorXf azimuth_angles = (Eigen::VectorXf(64) << 3.102, 3.0383750000000003, 2.98175, 2.950125, 3.063, 3.021375, 3.00175, 2.996125, 3.045, 3.031375, 3.03375, 3.043125, 3.042, 3.043375, 3.05175, 3.074125, 3.03, 3.051375, 3.0797499999999998, 3.101125, 3.034, 3.067375, 3.09775, 3.142125, 3.048, 3.093375, 3.13475, 3.170125, 3.059, 3.107375, 3.15275, 3.194125, 3.085, 3.136375, 3.17675, 3.217125, 3.117, 3.159375, 3.15275, 3.257125, 3.149, 3.189375, 3.22975, 3.270125, 3.19, 3.222375, 3.26075, 3.291125, 3.23, 3.253375, 3.28775, 3.301125, 3.274, 3.299375, 3.31975, 3.306125, 3.327, 3.3453749999999998, 3.3377499999999998, 3.322125, 3.393, 3.384375, 3.35875, 3.324125).finished();
-  const SensorImpl sensor({image_res.x(), image_res.y(), config->left_hand_frame,
-                           config->near_plane, config->far_plane,
-                           config->sensor_intrinsics[0] / config->sensor_downsampling_factor,
-                           config->sensor_intrinsics[1] / config->sensor_downsampling_factor,
-                           ((config->sensor_intrinsics[2] + 0.5f) / config->sensor_downsampling_factor - 0.5f),
-                           ((config->sensor_intrinsics[3] + 0.5f) / config->sensor_downsampling_factor - 0.5f),
-                           azimuth_angles, elevation_angles});
 
   static se::Image<float> input_depth_image (input_image_res.x(), input_image_res.y());
   static se::Image<uint32_t> input_rgba_image (input_image_res.x(), input_image_res.y());
