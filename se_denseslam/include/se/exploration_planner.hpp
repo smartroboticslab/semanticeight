@@ -41,6 +41,14 @@ namespace se {
       Image<uint32_t> renderEntropyDepth(const SensorImpl& sensor,
                                          const bool        visualize_yaw = true);
 
+      /** Write the path vertices in the world frame as a PLY file.
+       */
+      int writePathPLY(const std::string& filename) const;
+
+      /** Write the path vertices in the world frame as a TSV file.
+       */
+      int writePathTSV(const std::string& filename) const;
+
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:
       const OctreePtr map_;
