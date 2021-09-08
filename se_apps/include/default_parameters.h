@@ -577,6 +577,10 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       if (has_yaml_exploration_config && yaml_exploration_config["num_candidates"]) {
         config.num_candidates = yaml_exploration_config["num_candidates"].as<size_t>();
       }
+      // Exploration weight
+      if (has_yaml_exploration_config && yaml_exploration_config["exploration_weight"]) {
+        config.exploration_weight = yaml_exploration_config["exploration_weight"].as<float>();
+      }
       // use_pose_history
       if (has_yaml_exploration_config && yaml_exploration_config["use_pose_history"]) {
         config.use_pose_history = yaml_exploration_config["use_pose_history"].as<bool>();

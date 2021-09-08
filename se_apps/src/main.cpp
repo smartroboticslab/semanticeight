@@ -185,6 +185,7 @@ int main(int argc, char** argv) {
       config.pyramid, config, config.voxel_impl_yaml);
   se::ExplorationConfig exploration_config = {
     config.num_candidates, {
+      config.exploration_weight,
       config.use_pose_history,
       config.raycast_width,
       config.raycast_height,

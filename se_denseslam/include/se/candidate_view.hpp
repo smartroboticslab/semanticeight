@@ -24,6 +24,7 @@ namespace se {
 
   struct CandidateConfig {
     // Utility settings
+    float exploration_weight = 0.5f;
     bool use_pose_history = true;
     // Raycasting parameters
     int raycast_width = 36;

@@ -190,7 +190,7 @@ namespace se {
 
 
   void CandidateView::computeUtility() {
-    utility_ = (entropy_ + lod_gain_) / path_time_;
+    utility_ = (config_.exploration_weight * entropy_ + (1.0f - config_.exploration_weight) * lod_gain_) / path_time_;
   }
 
 

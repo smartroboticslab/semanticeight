@@ -355,6 +355,8 @@ namespace se {
 
     int num_candidates;
 
+    float exploration_weight;
+
     bool use_pose_history;
 
     int raycast_width;
@@ -424,6 +426,7 @@ namespace se {
         bilateral_filter(false),
         enable_exploration(true),
         num_candidates(10),
+        exploration_weight(0.5f),
         use_pose_history(true),
         raycast_width(36),
         raycast_height(10),
@@ -522,6 +525,7 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
   // Exploration only ///////////////////////////////////////////////////////
   out << str_utils::bool_to_pretty_str(config.enable_exploration,         "Enable exploration") << "\n";
   out << str_utils::value_to_pretty_str(config.num_candidates,            "Num candidates") << "\n";
+  out << str_utils::value_to_pretty_str(config.exploration_weight,        "Exploration weight") << "\n";
   out << str_utils::bool_to_pretty_str(config.use_pose_history,           "Use pose history") << "\n";
   out << str_utils::value_to_pretty_str(config.raycast_width,             "Raycast width") << "\n";
   out << str_utils::value_to_pretty_str(config.raycast_height,            "Raycast height") << "\n";
