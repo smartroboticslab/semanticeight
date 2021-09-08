@@ -23,6 +23,8 @@ namespace se {
   typedef std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> Path;
 
   struct CandidateConfig {
+    // Utility settings
+    bool use_pose_history = true;
     // Raycasting parameters
     int raycast_width = 36;
     int raycast_height = 10;

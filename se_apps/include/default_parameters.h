@@ -577,6 +577,10 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       if (has_yaml_exploration_config && yaml_exploration_config["num_candidates"]) {
         config.num_candidates = yaml_exploration_config["num_candidates"].as<size_t>();
       }
+      // use_pose_history
+      if (has_yaml_exploration_config && yaml_exploration_config["use_pose_history"]) {
+        config.use_pose_history = yaml_exploration_config["use_pose_history"].as<bool>();
+      }
       // Raycast width
       if (has_yaml_exploration_config && yaml_exploration_config["raycast_width"]) {
         config.raycast_width = yaml_exploration_config["raycast_width"].as<float>();
