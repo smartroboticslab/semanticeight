@@ -21,7 +21,7 @@ namespace se {
   /** An std::vector used to map semantic class IDs to voxel resolutions in metres. */
   extern std::vector<float> class_res;
   /** The map resolution used for most objects. */
-  constexpr float default_res = 0.1f;
+  constexpr float default_res = 0.01f;
 
   // If you change any of the mask types below, ensure you also change the
   // respective element type.
