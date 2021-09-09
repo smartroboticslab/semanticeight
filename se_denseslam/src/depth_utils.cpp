@@ -184,7 +184,7 @@ namespace se {
 
     // Get a mask for the regions where the background depth is closer than the object depth. Add a
     // threshold to take the coarser background voxels into account.
-    cv::Mat threshold (s, CV_32FC1, cv::Scalar(2.0f * background_voxel_dim));
+    cv::Mat threshold (s, CV_32FC1, cv::Scalar(4.0f * background_voxel_dim));
     cv::Mat mask = abs(object_depth_mat - background_depth_mat) > threshold;
     return mask;
   }
