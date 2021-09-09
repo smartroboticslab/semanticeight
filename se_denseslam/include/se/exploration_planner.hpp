@@ -43,11 +43,13 @@ namespace se {
 
       /** Write the path vertices in the world frame as a PLY file.
        */
-      int writePathPLY(const std::string& filename) const;
+      int writePathPLY(const std::string& filename,
+                       const Eigen::Matrix4f& T_CB = Eigen::Matrix4f::Identity()) const;
 
       /** Write the path vertices in the world frame as a TSV file.
        */
-      int writePathTSV(const std::string& filename) const;
+      int writePathTSV(const std::string& filename,
+                       const Eigen::Matrix4f& T_CB = Eigen::Matrix4f::Identity()) const;
 
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:

@@ -114,7 +114,8 @@ namespace se {
 
 
 
-  int ExplorationPlanner::writePathPLY(const std::string& filename) const {
+  int ExplorationPlanner::writePathPLY(const std::string& filename,
+                                       const Eigen::Matrix4f& T_CB) const {
     std::ofstream f (filename);
     if (!f.is_open()) {
       std::cerr << "Unable to write file " << filename << "\n";
@@ -137,8 +138,8 @@ namespace se {
     f << "property int vertex2\n";
     f << "end_header\n";
     for (const auto& T_MC : T_MC_history_.poses) {
-      const Eigen::Vector3f& t_WC = (T_WM_ * T_MC).topRightCorner<3,1>();
-      f << t_WC.x() << " " << t_WC.y() << " " << t_WC.z() << " 255 0 0\n";
+      const Eigen::Vector3f& t_WB = (T_WM_ * T_MC * T_CB).topRightCorner<3,1>();
+      f << t_WB.x() << " " << t_WB.y() << " " << t_WB.z() << " 255 0 0\n";
     }
     for (size_t i = 0; i < num_edges; i++) {
       f << i << " " << i + 1 << "\n";
@@ -149,7 +150,8 @@ namespace se {
 
 
 
-  int ExplorationPlanner::writePathTSV(const std::string& filename) const {
+  int ExplorationPlanner::writePathTSV(const std::string& filename,
+                                       const Eigen::Matrix4f& T_CB) const {
     std::ofstream f (filename);
     if (!f.is_open()) {
       std::cerr << "Unable to write file " << filename << "\n";
@@ -157,11 +159,11 @@ namespace se {
     }
     f << "tx\tty\ttz\tqx\tqy\tqz\tqw\n";
     for (const auto& T_MC : T_MC_history_.poses) {
-      const Eigen::Matrix4f& T_WC = T_WM_ * T_MC;
-      const Eigen::Vector3f& t_WC = T_WC.topRightCorner<3,1>();
-      const Eigen::Quaternionf q_WC (T_WC.topLeftCorner<3,3>());
-      f << t_WC.x() << "\t" << t_WC.y() << "\t" << t_WC.z()
-        << "\t" << q_WC.x() << "\t" << q_WC.y() << "\t" << q_WC.z() << "\t" << q_WC.w() << "\n";
+      const Eigen::Matrix4f& T_WB = T_WM_ * T_MC * T_CB;
+      const Eigen::Vector3f& t_WB = T_WB.topRightCorner<3,1>();
+      const Eigen::Quaternionf q_WB (T_WB.topLeftCorner<3,3>());
+      f << t_WB.x() << "\t" << t_WB.y() << "\t" << t_WB.z()
+        << "\t" << q_WB.x() << "\t" << q_WB.y() << "\t" << q_WB.z() << "\t" << q_WB.w() << "\n";
     }
     f.close();
     return 0;
