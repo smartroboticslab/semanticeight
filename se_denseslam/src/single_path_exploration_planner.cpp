@@ -102,8 +102,8 @@ namespace se {
   Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr        map,
                                                                 std::deque<se::key_t>& frontiers,
                                                                 const Objects&         /*objects*/,
-                                                                const SensorImpl&      sensor,
-                                                                const PoseHistory&     T_MC_history,
+                                                                const SensorImpl&      /*sensor*/,
+                                                                const PoseHistory&     /*T_MC_history*/,
                                                                 const int              sampling_step) {
     // TODO take objects into account
     if (frontiers.empty()) {
