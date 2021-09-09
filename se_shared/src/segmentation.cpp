@@ -126,7 +126,7 @@ namespace se {
 
 
   std::string class_id_to_str(const int class_id) {
-    if (0 <= class_id && class_id < class_names.size()) {
+    if (0 <= class_id && static_cast<size_t>(class_id) < class_names.size()) {
       return se::class_names[class_id];
     } else {
       return "invalid";
