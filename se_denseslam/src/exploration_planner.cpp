@@ -8,49 +8,56 @@
 namespace se {
   ExplorationPlanner::ExplorationPlanner(const OctreePtr          map,
                                          const Eigen::Matrix4f&   T_MW,
+                                         const Eigen::Matrix4f&   T_BC,
                                          const ExplorationConfig& config)
-      : map_(map), config_(config), T_MW_(T_MW), T_WM_(se::math::to_inverse_transformation(T_MW))
+      : map_(map), config_(config), T_MW_(T_MW), T_WM_(se::math::to_inverse_transformation(T_MW)),
+        T_BC_(T_BC), T_CB_(se::math::to_inverse_transformation(T_BC))
   {
     ompl::msg::setLogLevel(ompl::msg::LOG_ERROR);
   }
 
 
 
-  void ExplorationPlanner::setT_WC(const Eigen::Matrix4f& T_WC)
+  void ExplorationPlanner::setT_WB(const Eigen::Matrix4f& T_WB)
   {
-    T_MC_history_.poses.push_back(T_MW_ * T_WC);
+    T_MB_history_.poses.push_back(T_MW_ * T_WB);
+    T_MC_history_.poses.push_back(T_MB_history_.poses.back() * T_BC_);
   }
 
 
 
-  Eigen::Matrix4f ExplorationPlanner::getT_WC()
+  Eigen::Matrix4f ExplorationPlanner::getT_WB()
   {
-    return T_WM_ * T_MC_history_.poses.back();
+    return T_WM_ * T_MB_history_.poses.back();
   }
 
 
 
-  Path ExplorationPlanner::getT_WCHistory() const
+  Path ExplorationPlanner::getT_WBHistory() const
   {
-    return T_MC_history_.poses;
+    const Path& T_MB_history = T_MB_history_.poses;
+    Path T_WB_history (T_MB_history.size());
+    std::transform(T_MB_history.begin(), T_MB_history.end(), T_WB_history.begin(),
+        [&](const auto& T_MB) { return T_WM_ * T_MB; });
+    return T_WB_history;
   }
 
 
 
   bool ExplorationPlanner::goalReached() const
   {
-    const Eigen::Matrix4f& current_T_MC = T_MC_history_.poses.back();
-    const Eigen::Matrix4f& goal_T_MC = goal_view_.isValid() ? goal_view_.goal() : current_T_MC;
-    if (math::position_error(goal_T_MC, current_T_MC).norm() > goal_position_threshold_) {
+    const Eigen::Matrix4f& current_T_MB = T_MB_history_.poses.back();
+    const Eigen::Matrix4f& goal_T_MB = goal_view_.isValid() ? goal_view_.goalT_MB() : current_T_MB;
+    if (math::position_error(goal_T_MB, current_T_MB).norm() > goal_position_threshold_) {
       return false;
     }
-    if (fabsf(math::yaw_error(goal_T_MC, current_T_MC)) > goal_yaw_threshold_) {
+    if (fabsf(math::yaw_error(goal_T_MB, current_T_MB)) > goal_yaw_threshold_) {
       return false;
     }
-    if (fabsf(math::pitch_error(goal_T_MC, current_T_MC)) > goal_roll_pitch_threshold_) {
+    if (fabsf(math::pitch_error(goal_T_MB, current_T_MB)) > goal_roll_pitch_threshold_) {
       return false;
     }
-    if (fabsf(math::roll_error(goal_T_MC, current_T_MC)) > goal_roll_pitch_threshold_) {
+    if (fabsf(math::roll_error(goal_T_MB, current_T_MB)) > goal_roll_pitch_threshold_) {
       return false;
     }
     return true;
@@ -58,12 +65,12 @@ namespace se {
 
 
 
-  Path ExplorationPlanner::computeNextPath_WC(const std::set<key_t>& frontiers,
+  Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
                                               const Objects&         objects,
                                               const SensorImpl&      sensor)
   {
     const std::vector<key_t> frontier_vec(frontiers.begin(), frontiers.end());
-    SinglePathExplorationPlanner planner (map_, frontier_vec, objects, sensor, T_MC_history_, config_);
+    SinglePathExplorationPlanner planner (map_, frontier_vec, objects, sensor, T_BC_, T_MB_history_, T_MC_history_, config_);
     candidate_views_ = planner.views();
     rejected_candidate_views_ = planner.rejectedViews();
     goal_view_ = planner.bestView();
@@ -71,7 +78,7 @@ namespace se {
     // Convert the goal path from the map to the world frame.
     Path goal_path_W (goal_path_M.size());
     std::transform(goal_path_M.begin(), goal_path_M.end(), goal_path_W.begin(),
-        [&](const Eigen::Matrix4f& T_MC) { return T_WM_ * T_MC; });
+        [&](const Eigen::Matrix4f& T_MB) { return T_WM_ * T_MB; });
     return goal_path_W;
   }
 
@@ -101,7 +108,7 @@ namespace se {
   Image<uint32_t> ExplorationPlanner::renderEntropy(const SensorImpl& sensor,
                                                     const bool        visualize_yaw)
   {
-    return goal_view_.renderEntropy(*map_, sensor, visualize_yaw);
+    return goal_view_.renderEntropy(*map_, sensor, T_BC_, visualize_yaw);
   }
 
 
@@ -109,19 +116,18 @@ namespace se {
   Image<uint32_t> ExplorationPlanner::renderEntropyDepth(const SensorImpl& sensor,
                                                          const bool        visualize_yaw)
   {
-    return goal_view_.renderDepth(*map_, sensor, visualize_yaw);
+    return goal_view_.renderDepth(*map_, sensor, T_BC_, visualize_yaw);
   }
 
 
 
-  int ExplorationPlanner::writePathPLY(const std::string& filename,
-                                       const Eigen::Matrix4f& T_CB) const {
+  int ExplorationPlanner::writePathPLY(const std::string& filename) const {
     std::ofstream f (filename);
     if (!f.is_open()) {
       std::cerr << "Unable to write file " << filename << "\n";
       return 1;
     }
-    const size_t num_vertices = T_MC_history_.poses.size();
+    const size_t num_vertices = T_MB_history_.poses.size();
     const size_t num_edges = num_vertices - 1;
     f << "ply\n";
     f << "format ascii 1.0\n";
@@ -137,8 +143,8 @@ namespace se {
     f << "property int vertex1\n";
     f << "property int vertex2\n";
     f << "end_header\n";
-    for (const auto& T_MC : T_MC_history_.poses) {
-      const Eigen::Vector3f& t_WB = (T_WM_ * T_MC * T_CB).topRightCorner<3,1>();
+    for (const auto& T_MB : T_MB_history_.poses) {
+      const Eigen::Vector3f& t_WB = (T_WM_ * T_MB).topRightCorner<3,1>();
       f << t_WB.x() << " " << t_WB.y() << " " << t_WB.z() << " 255 0 0\n";
     }
     for (size_t i = 0; i < num_edges; i++) {
@@ -150,16 +156,15 @@ namespace se {
 
 
 
-  int ExplorationPlanner::writePathTSV(const std::string& filename,
-                                       const Eigen::Matrix4f& T_CB) const {
+  int ExplorationPlanner::writePathTSV(const std::string& filename) const {
     std::ofstream f (filename);
     if (!f.is_open()) {
       std::cerr << "Unable to write file " << filename << "\n";
       return 1;
     }
     f << "tx\tty\ttz\tqx\tqy\tqz\tqw\n";
-    for (const auto& T_MC : T_MC_history_.poses) {
-      const Eigen::Matrix4f& T_WB = T_WM_ * T_MC * T_CB;
+    for (const auto& T_MB : T_MB_history_.poses) {
+      const Eigen::Matrix4f& T_WB = T_WM_ * T_MB;
       const Eigen::Vector3f& t_WB = T_WB.topRightCorner<3,1>();
       const Eigen::Quaternionf q_WB (T_WB.topLeftCorner<3,3>());
       f << t_WB.x() << "\t" << t_WB.y() << "\t" << t_WB.z()

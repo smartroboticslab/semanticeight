@@ -47,7 +47,7 @@ namespace se {
        */
       CandidateView();
 
-      CandidateView(const Eigen::Vector3f& t_MC);
+      CandidateView(const Eigen::Vector3f& t_MB);
 
       /** \brief Create a CandidateView and compute its utility.
        */
@@ -56,31 +56,35 @@ namespace se {
                     const std::vector<se::key_t>& frontiers,
                     const Objects&                objects,
                     const SensorImpl&             sensor,
-                    const Eigen::Matrix4f&        T_MC,
+                    const Eigen::Matrix4f&        T_MB,
+                    const Eigen::Matrix4f&        T_BC,
                     const PoseHistory&            T_MC_history,
                     const CandidateConfig&        config);
 
       bool isValid() const;
 
       /** \brief Return the path to the candidate view.
-       * The first path element is the T_MC supplied to the candidate view constructor.
+       * The first path element is the T_MB supplied to the candidate view constructor.
        */
       Path path() const;
 
       float utility() const;
 
-      Eigen::Matrix4f goal() const;
+      Eigen::Matrix4f goalT_MB() const;
 
       void computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
                                   const SensorImpl&                   sensor,
+                                  const Eigen::Matrix4f&              T_BC,
                                   const PoseHistory&                  T_MC_history);
 
       Image<uint32_t> renderEntropy(const Octree<VoxelImpl::VoxelType>& map,
                                     const SensorImpl&                   sensor,
+                                    const Eigen::Matrix4f&              T_BC,
                                     const bool                          visualize_yaw = true) const;
 
       Image<uint32_t> renderDepth(const Octree<VoxelImpl::VoxelType>& map,
                                   const SensorImpl&                   sensor,
+                                  const Eigen::Matrix4f&              T_BC,
                                   const bool                          visualize_yaw = true) const;
 
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -88,8 +92,8 @@ namespace se {
     private:
       /** The optimal yaw angle with respect to the information gain. */
       float yaw_M_;
-      /** std::vector of T_MC. */
-      Path path_MC_;
+      /** std::vector of T_MB. */
+      Path path_MB_;
       /** The length of the path in metres. */
       float path_length_;
       /** The time needed to complete the path. */
@@ -112,13 +116,14 @@ namespace se {
        */
       void entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
                           const SensorImpl&                   sensor,
+                          const Eigen::Matrix4f&              T_BC,
                           const PoseHistory&                  T_MC_history);
 
       void computeUtility();
 
-      /** \brief Create a rotation matrix C_MC from a yaw angle in the Map frame.
+      /** \brief Create a rotation matrix C_MB from a yaw angle in the Map frame.
        */
-      static Eigen::Matrix3f yawToC_MC(const float yaw_M);
+      static Eigen::Matrix3f yawToC_MB(const float yaw_M);
 
       /** \brief Convert a path from the format returned by ptp to that used by semanticeight.
        */

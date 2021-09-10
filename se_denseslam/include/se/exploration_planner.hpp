@@ -8,24 +8,29 @@
 #include "se/single_path_exploration_planner.hpp"
 
 namespace se {
+  /** The API uses Body poses in the World frame but internally everything is performed in the Map
+   * frame. Body poses are used for sampling and path planning and they are converted to camera
+   * poses for raycasting.
+   */
   class ExplorationPlanner {
     public:
       ExplorationPlanner(const OctreePtr          map,
                          const Eigen::Matrix4f&   T_MW,
+                         const Eigen::Matrix4f&   T_BC,
                          const ExplorationConfig& config);
 
-      void setT_WC(const Eigen::Matrix4f& T_WC);
+      void setT_WB(const Eigen::Matrix4f& T_WB);
 
-      Eigen::Matrix4f getT_WC();
+      Eigen::Matrix4f getT_WB();
 
-      Path getT_WCHistory() const;
+      Path getT_WBHistory() const;
 
       bool goalReached() const;
 
       /** Call the exploration planner and return the resulting camera path in the world frame.
-       * The returned path is a series of T_WC.
+       * The returned path is a series of T_WB.
        */
-      Path computeNextPath_WC(const std::set<key_t>& frontiers,
+      Path computeNextPath_WB(const std::set<key_t>& frontiers,
                               const Objects&         objects,
                               const SensorImpl&      sensor);
 
@@ -41,15 +46,13 @@ namespace se {
       Image<uint32_t> renderEntropyDepth(const SensorImpl& sensor,
                                          const bool        visualize_yaw = true);
 
-      /** Write the path vertices in the world frame as a PLY file.
+      /** Write the T_WB history as a PLY file.
        */
-      int writePathPLY(const std::string& filename,
-                       const Eigen::Matrix4f& T_CB = Eigen::Matrix4f::Identity()) const;
+      int writePathPLY(const std::string& filename) const;
 
-      /** Write the path vertices in the world frame as a TSV file.
+      /** Write the T_WB history as a TSV file.
        */
-      int writePathTSV(const std::string& filename,
-                       const Eigen::Matrix4f& T_CB = Eigen::Matrix4f::Identity()) const;
+      int writePathTSV(const std::string& filename) const;
 
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:
@@ -57,6 +60,9 @@ namespace se {
       const ExplorationConfig config_;
       Eigen::Matrix4f T_MW_;
       Eigen::Matrix4f T_WM_;
+      Eigen::Matrix4f T_BC_;
+      Eigen::Matrix4f T_CB_;
+      PoseHistory T_MB_history_;
       PoseHistory T_MC_history_;
       std::vector<CandidateView> candidate_views_;
       std::vector<CandidateView> rejected_candidate_views_;

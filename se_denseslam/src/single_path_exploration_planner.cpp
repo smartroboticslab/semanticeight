@@ -10,6 +10,8 @@ namespace se {
                                                              const std::vector<se::key_t>& frontiers,
                                                              const Objects&                objects,
                                                              const SensorImpl&             sensor,
+                                                             const Eigen::Matrix4f&        T_BC,
+                                                             const PoseHistory&            T_MB_history,
                                                              const PoseHistory&            T_MC_history,
                                                              const ExplorationConfig&      config)
       : config_(config),
@@ -17,14 +19,14 @@ namespace se {
 
     std::deque<se::key_t> remaining_frontiers(frontiers.begin(), frontiers.end());
     candidates_.reserve(config_.num_candidates);
-    config_.candidate_config.planner_config.start_point_M_ = T_MC_history.poses.back().topRightCorner<3,1>();
+    config_.candidate_config.planner_config.start_t_MB_ = T_MB_history.poses.back().topRightCorner<3,1>();
     // Create the planner map.
     ptp::OccupancyWorld planner_world;
     planner_world.setOctree(map);
     // Add the current pose to the candidates
     CandidateConfig candidate_config = config_.candidate_config;
-    candidate_config.planner_config.goal_point_M_ = T_MC_history.poses.back().topRightCorner<3,1>();
-    candidates_.emplace_back(map, planner_world, frontiers, objects, sensor, T_MC_history.poses.back(), T_MC_history, candidate_config);
+    candidate_config.planner_config.goal_t_MB_ = T_MB_history.poses.back().topRightCorner<3,1>();
+    candidates_.emplace_back(map, planner_world, frontiers, objects, sensor, T_MB_history.poses.back(), T_BC, T_MC_history, candidate_config);
     // Sample the candidate views aborting after a number of failed retries
     const size_t max_failed = 5 * config_.num_candidates;
     const int sampling_step = std::ceil(remaining_frontiers.size() / config_.num_candidates);
@@ -32,17 +34,17 @@ namespace se {
         && rejected_candidates_.size() <= max_failed
         && !remaining_frontiers.empty()) {
       // Sample a point
-      const Eigen::Vector3f candidate_t_MC = sampleCandidate(map, remaining_frontiers, objects,
-          sensor, T_MC_history, sampling_step);
-      if (T_MC_history.rejectSampledPos(candidate_t_MC, sensor)) {
-        rejected_candidates_.emplace_back(candidate_t_MC);
+      const Eigen::Vector3f candidate_t_MB = sampleCandidate(map, remaining_frontiers, objects,
+          sensor, T_MB_history, sampling_step);
+      if (T_MB_history.rejectSampledPos(candidate_t_MB, sensor)) {
+        rejected_candidates_.emplace_back(candidate_t_MB);
         continue;
       }
       // Create the config for this particular candidate
       CandidateConfig candidate_config = config_.candidate_config;
-      candidate_config.planner_config.goal_point_M_ = candidate_t_MC;
+      candidate_config.planner_config.goal_t_MB_ = candidate_t_MB;
       // Create candidate and compute its utility
-      candidates_.emplace_back(map, planner_world, frontiers, objects, sensor, T_MC_history.poses.back(), T_MC_history, candidate_config);
+      candidates_.emplace_back(map, planner_world, frontiers, objects, sensor, T_MB_history.poses.back(), T_BC, T_MC_history, candidate_config);
       // Remove the candidate if it's not valid
       if (!candidates_.back().isValid()) {
         rejected_candidates_.push_back(candidates_.back());
@@ -64,7 +66,7 @@ namespace se {
       return;
     }
     // Compute the yaw angles at each path vertex of the best candidate
-    candidates_[best_idx_].computeIntermediateYaw(*map, sensor, T_MC_history);
+    candidates_[best_idx_].computeIntermediateYaw(*map, sensor, T_BC, T_MC_history);
   }
 
 
@@ -103,7 +105,7 @@ namespace se {
                                                                 std::deque<se::key_t>& frontiers,
                                                                 const Objects&         /*objects*/,
                                                                 const SensorImpl&      /*sensor*/,
-                                                                const PoseHistory&     /*T_MC_history*/,
+                                                                const PoseHistory&     /*T_MB_history*/,
                                                                 const int              sampling_step) {
     // TODO take objects into account
     if (frontiers.empty()) {
@@ -124,7 +126,7 @@ namespace se {
       // Return the coordinates of the sampled Volume's centre
       const int size = map->depthToSize(keyops::depth(code));
       pos = map->voxelDim() * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
-    //} while (T_MC_history.rejectSampledPos(pos, sensor));
+    //} while (T_MB_history.rejectSampledPos(pos, sensor));
     return pos;
   }
 } // namespace se

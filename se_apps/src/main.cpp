@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
         config.min_control_point_radius,
         config.skeleton_sample_precision,
         config.solving_time}}};
-  planner = new se::ExplorationPlanner(pipeline->getMap(), pipeline->T_MW(), exploration_config);
+  planner = new se::ExplorationPlanner(pipeline->getMap(), pipeline->T_MW(), config.T_BC, exploration_config);
 
   // ========= UPDATE INIT POSE =========
   se::ReaderStatus read_ok = se::ReaderStatus::ok;
@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
   }
   pipeline->setInitT_WC(config.init_T_WB * config.T_BC);
   pipeline->setT_WC(config.init_T_WB * config.T_BC);
-  planner->setT_WC(config.init_T_WB * config.T_BC);
+  planner->setT_WB(config.init_T_WB);
 
   if (read_ok != se::ReaderStatus::ok) {
     std::cerr << "Couldn't read initial pose\n";
@@ -334,7 +334,7 @@ int processAll(se::Reader*        reader,
       read_ok = reader->getPose(init_T_WB, frame_offset);
       pipeline->setInitT_WC(init_T_WB * config->T_BC);
       pipeline->setT_WC(init_T_WB * config->T_BC);
-      planner->setT_WC(init_T_WB * config->T_BC);
+      planner->setT_WB(init_T_WB);
     }
     if (read_ok != se::ReaderStatus::ok) {
       std::cerr << "Couldn't read pose\n";
@@ -404,7 +404,7 @@ int processAll(se::Reader*        reader,
     } else {
       // Set the pose to the ground truth.
       pipeline->setT_WC(T_WB * config->T_BC);
-      planner->setT_WC(T_WB * config->T_BC);
+      planner->setT_WB(T_WB);
       tracked = true;
     }
     // Call object tracking.
@@ -424,7 +424,7 @@ int processAll(se::Reader*        reader,
     // Planning TMP
     if (planner->goalReached() || num_planning_iterations == 0) {
       std::cout << "Planning " << num_planning_iterations << "\n";
-      const se::Path path_WC = planner->computeNextPath_WC(pipeline->getFrontiers(), pipeline->getObjectMaps(), sensor);
+      const se::Path path_WB = planner->computeNextPath_WB(pipeline->getFrontiers(), pipeline->getObjectMaps(), sensor);
       num_planning_iterations++;
     }
 

@@ -32,11 +32,11 @@ namespace se {
 
 
 
-  CandidateView::CandidateView(const Eigen::Vector3f& t_MC)
+  CandidateView::CandidateView(const Eigen::Vector3f& t_MB)
       : CandidateView::CandidateView()
   {
-    path_MC_.push_back(Eigen::Matrix4f::Identity());
-    path_MC_.back().topRightCorner<3,1>() = t_MC;
+    path_MB_.push_back(Eigen::Matrix4f::Identity());
+    path_MB_.back().topRightCorner<3,1>() = t_MB;
   }
 
 
@@ -46,7 +46,8 @@ namespace se {
                                const std::vector<se::key_t>& /*frontiers*/,
                                const Objects&                objects,
                                const SensorImpl&             sensor,
-                               const Eigen::Matrix4f&        T_MC,
+                               const Eigen::Matrix4f&        T_MB,
+                               const Eigen::Matrix4f&        T_BC,
                                const PoseHistory&            T_MC_history,
                                const CandidateConfig&        config)
       : path_length_(-1.0f),
@@ -62,29 +63,29 @@ namespace se {
     const ptp::PlanningParameter planner_config (config_.planner_config);
     ptp::ProbCollisionChecker planner_collision_checker (ptp_map, planner_config);
     ptp::SafeFlightCorridorGenerator planner (ptp_map, planner_collision_checker, planner_config);
-    if (config_.planner_config.start_point_M_.isApprox(config_.planner_config.goal_point_M_)) {
+    if (config_.planner_config.start_t_MB_.isApprox(config_.planner_config.goal_t_MB_)) {
       // No need to do path planning if start and goal positions are the same
-      path_MC_.push_back(T_MC);
-      path_MC_.push_back(T_MC);
+      path_MB_.push_back(T_MB);
+      path_MB_.push_back(T_MB);
     } else {
       // Plan a path to the goal
-      if (planner.planPath(config_.planner_config.start_point_M_, config_.planner_config.goal_point_M_)
+      if (planner.planPath(config_.planner_config.start_t_MB_, config_.planner_config.goal_t_MB_)
           == ptp::PlanningResult::Failed) {
         // Could not plan a path. Add the attempted goal point to the path for visualization
-        path_MC_.push_back(Eigen::Matrix4f::Identity());
-        path_MC_.back().topRightCorner<3,1>() = config_.planner_config.goal_point_M_;
+        path_MB_.push_back(Eigen::Matrix4f::Identity());
+        path_MB_.back().topRightCorner<3,1>() = config_.planner_config.goal_t_MB_;
         return;
       }
-      path_MC_ = convertPath(planner.getPath());
+      path_MB_ = convertPath(planner.getPath());
     }
     // Raycast to compute the optimal yaw angle.
-    entropyRaycast(*map, sensor, T_MC_history);
-    path_MC_.back().topLeftCorner<3,3>() = yawToC_MC(yaw_M_);
+    entropyRaycast(*map, sensor, T_BC, T_MC_history);
+    path_MB_.back().topLeftCorner<3,3>() = yawToC_MB(yaw_M_);
     // Get the LoD gain of the objects.
     const SensorImpl raycasting_sensor (sensor, 0.5f);
-    lod_gain_ = lod_gain_raycasting(objects, sensor, raycasting_sensor, path_MC_.back());
+    lod_gain_ = lod_gain_raycasting(objects, sensor, raycasting_sensor, path_MB_.back() * T_BC);
     // Compute the utility.
-    path_time_ = pathTime(path_MC_, config_.velocity_linear, config_.velocity_angular);
+    path_time_ = pathTime(path_MB_, config_.velocity_linear, config_.velocity_angular);
     computeUtility();
   }
 
@@ -97,7 +98,7 @@ namespace se {
 
 
   Path CandidateView::path() const {
-    return path_MC_;
+    return path_MB_;
   }
 
 
@@ -108,23 +109,25 @@ namespace se {
 
 
 
-  Eigen::Matrix4f CandidateView::goal() const {
-    return path_MC_.back();
+  Eigen::Matrix4f CandidateView::goalT_MB() const {
+    return path_MB_.back();
   }
 
 
 
   void CandidateView::computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
                                              const SensorImpl&                   sensor,
+                                             const Eigen::Matrix4f&              T_BC,
                                              const PoseHistory&                  T_MC_history) {
     // Raycast and optimize yaw at each intermediate path vertex
-    for (size_t i = 1; i < path_MC_.size() - 1; i++) {
+    for (size_t i = 1; i < path_MB_.size() - 1; i++) {
+      const Eigen::Matrix4f T_MC = path_MB_[i] * T_BC;
       Image<float> entropy_image (entropy_image_.width(), entropy_image_.height());
       Image<float> frustum_overlap_image (entropy_image_.width(), 1);
-      raycast_entropy(entropy_image, map, sensor, path_MC_[i].topRightCorner<3,1>());
-      frustum_overlap(frustum_overlap_image, sensor, path_MC_[i], T_MC_history);
+      raycast_entropy(entropy_image, map, sensor, T_MC.topRightCorner<3,1>());
+      frustum_overlap(frustum_overlap_image, sensor, T_MC, T_MC_history);
       const std::pair<float, float> r = optimal_yaw(entropy_image, frustum_overlap_image, sensor);
-      path_MC_[i].topLeftCorner<3,3>() = yawToC_MC(r.first);
+      path_MB_[i].topLeftCorner<3,3>() = yawToC_MB(r.first);
     }
   }
 
@@ -132,10 +135,14 @@ namespace se {
 
   Image<uint32_t> CandidateView::renderEntropy(const Octree<VoxelImpl::VoxelType>& map,
                                                const SensorImpl&                   sensor,
+                                               const Eigen::Matrix4f&              T_BC,
                                                const bool                          visualize_yaw) const {
     const Eigen::Vector2i res (entropy_image_.width(), entropy_image_.height());
+    Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
+    T_MB.topRightCorner<3,1>() = config_.planner_config.goal_t_MB_;
+    const Eigen::Matrix4f T_MC = T_MB * T_BC;
     Image<float> entropy (res.x(), res.y());
-    raycast_entropy(entropy, map, sensor, config_.planner_config.goal_point_M_);
+    raycast_entropy(entropy, map, sensor, T_MC.topRightCorner<3,1>());
     // Visualize the entropy in a colour image by reusing the depth colourmar
     Image<uint32_t> entropy_render (res.x(), res.y());
     // Decrease the max entropy somewhat otherwise the render is all black
@@ -157,11 +164,15 @@ namespace se {
 
   Image<uint32_t> CandidateView::renderDepth(const Octree<VoxelImpl::VoxelType>& map,
                                              const SensorImpl&                   sensor,
-                                             const bool                           visualize_yaw) const {
+                                             const Eigen::Matrix4f&              T_BC,
+                                             const bool                          visualize_yaw) const {
     const Eigen::Vector2i res (entropy_image_.width(), entropy_image_.height());
+    Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
+    T_MB.topRightCorner<3,1>() = config_.planner_config.goal_t_MB_;
+    const Eigen::Matrix4f T_MC = T_MB * T_BC;
     // Raycast to get the depth
     Image<float> depth (res.x(), res.y());
-    raycast_depth(depth, map, sensor, config_.planner_config.goal_point_M_);
+    raycast_depth(depth, map, sensor, T_MC.topRightCorner<3,1>());
     // Render to a colour image
     Image<uint32_t> depth_render (res.x(), res.y());
     se::depth_to_rgba(depth_render.data(), depth.data(), res, sensor.near_plane, sensor.far_plane);
@@ -176,11 +187,13 @@ namespace se {
 
   void CandidateView::entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
                                      const SensorImpl&                   sensor,
+                                     const Eigen::Matrix4f&              T_BC,
                                      const PoseHistory&                  T_MC_history) {
+    const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC;
     // Raycast at the last path vertex
-    raycast_entropy(entropy_image_, map, sensor, path_MC_.back().topRightCorner<3,1>());
+    raycast_entropy(entropy_image_, map, sensor, T_MC.topRightCorner<3,1>());
     if (config_.use_pose_history) {
-      frustum_overlap(frustum_overlap_image_, sensor, path_MC_.back(), T_MC_history);
+      frustum_overlap(frustum_overlap_image_, sensor, T_MC, T_MC_history);
     }
     const std::pair<float, float> r = optimal_yaw(entropy_image_, frustum_overlap_image_, sensor);
     yaw_M_ = r.first;
@@ -195,15 +208,14 @@ namespace se {
 
 
 
-  Eigen::Matrix3f CandidateView::yawToC_MC(const float yaw_M) {
-    static Eigen::Matrix3f C_BC = (Eigen::Matrix3f() << 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0).finished();
+  Eigen::Matrix3f CandidateView::yawToC_MB(const float yaw_M) {
     Eigen::Matrix3f C_MB = Eigen::Matrix3f::Zero();
     C_MB(0,0) =  cos(yaw_M);
     C_MB(0,1) = -sin(yaw_M);
     C_MB(1,0) =  sin(yaw_M);
     C_MB(1,1) =  cos(yaw_M);
     C_MB(2,2) =  1.0f;
-    return C_MB * C_BC;
+    return C_MB;
   }
 
 
@@ -211,8 +223,8 @@ namespace se {
   Path CandidateView::convertPath(const ptp::Path<ptp::kDim>::Ptr ptp_path) {
     Path path (ptp_path->states.size(), Eigen::Matrix4f::Identity());
     for (size_t i = 0; i < ptp_path->states.size(); ++i) {
-      const Eigen::Vector3f& t_MC = ptp_path->states[i].segment_end;
-      path[i].topRightCorner<3,1>() = t_MC;
+      const Eigen::Vector3f& t_MB = ptp_path->states[i].segment_end;
+      path[i].topRightCorner<3,1>() = t_MB;
     }
     return path;
   }

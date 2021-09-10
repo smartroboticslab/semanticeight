@@ -182,7 +182,7 @@ namespace se {
   void raycast_entropy(Image<float>&                       entropy_image,
                        const Octree<VoxelImpl::VoxelType>& map,
                        const SensorImpl&                   sensor,
-                       const Eigen::Vector3f&              t_MB) {
+                       const Eigen::Vector3f&              t_MC) {
 #pragma omp parallel for
     for (int y = 0; y < entropy_image.height(); y++) {
 #pragma omp simd
@@ -190,7 +190,7 @@ namespace se {
         const Eigen::Vector3f ray_dir_M = ray_dir_from_pixel(x, y,
             entropy_image.width(), entropy_image.height(), sensor.vertical_fov);
         // Accumulate the entropy along the ray
-        entropy_image(x, y) = information_gain_along_ray(map, t_MB, ray_dir_M,
+        entropy_image(x, y) = information_gain_along_ray(map, t_MC, ray_dir_M,
             sensor.near_plane, sensor.far_plane);
         // Normalize the per-ray entropy in the interval [0-1].
         entropy_image(x, y) /= max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
@@ -203,7 +203,7 @@ namespace se {
   void raycast_depth(Image<float>&                       depth_image,
                      const Octree<VoxelImpl::VoxelType>& map,
                      const SensorImpl&                   sensor,
-                     const Eigen::Vector3f&              t_MB) {
+                     const Eigen::Vector3f&              t_MC) {
 #pragma omp parallel for
     for (int y = 0; y < depth_image.height(); y++) {
 #pragma omp simd
@@ -211,12 +211,12 @@ namespace se {
         const Eigen::Vector3f ray_dir_M = ray_dir_from_pixel(x, y,
             depth_image.width(), depth_image.height(), sensor.vertical_fov);
         // Compute the hit along the ray
-        const Eigen::Vector4f hit_M = VoxelImpl::raycast(map, t_MB, ray_dir_M,
+        const Eigen::Vector4f hit_M = VoxelImpl::raycast(map, t_MC, ray_dir_M,
             sensor.near_plane, sensor.far_plane);
         if (hit_M == Eigen::Vector4f::Zero()) {
           depth_image(x, y) = 0.0f;
         } else {
-          depth_image(x, y) = (hit_M.head<3>() - t_MB).norm();
+          depth_image(x, y) = (hit_M.head<3>() - t_MC).norm();
         }
       }
     }

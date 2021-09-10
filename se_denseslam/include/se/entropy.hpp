@@ -21,24 +21,24 @@ namespace se {
                         const float near_plane,
                         const float far_plane);
 
-  /** \brief Perform a 360 degree raycasting using a spherical camera model at t_MB computing the
+  /** \brief Perform a 360 degree raycasting using a spherical camera model at t_MC computing the
    * map entropy. The size of entropy_image determines the number of rays cast. Frame B is
    * x-forward, z-up.
    */
   void raycast_entropy(Image<float>&                       entropy_image,
                        const Octree<VoxelImpl::VoxelType>& map,
                        const SensorImpl&                   sensor,
-                       const Eigen::Vector3f&              t_MB);
+                       const Eigen::Vector3f&              t_MC);
 
-  /** \brief Perform a 360 degree raycasting using a spherical camera model at t_MB computing the
-   * depth along rays from t_MB. The size of depth_image determines the number of rays cast. Frame B
+  /** \brief Perform a 360 degree raycasting using a spherical camera model at t_MC computing the
+   * depth along rays from t_MC. The size of depth_image determines the number of rays cast. Frame B
    * is x-forward, z-up.
    * \note Typically used only for visualization and debugging.
    */
   void raycast_depth(Image<float>&                       depth_image,
                      const Octree<VoxelImpl::VoxelType>& map,
                      const SensorImpl&                   sensor,
-                     const Eigen::Vector3f&              t_MB);
+                     const Eigen::Vector3f&              t_MC);
 
   void frustum_overlap(Image<float>&          frustum_overlap_image,
                        const SensorImpl&      sensor,
