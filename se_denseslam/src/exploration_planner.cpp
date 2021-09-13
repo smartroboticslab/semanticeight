@@ -48,7 +48,11 @@ namespace se {
   {
     const Eigen::Matrix4f& current_T_MB = T_MB_history_.poses.back();
     const Eigen::Matrix4f& goal_T_MB = goal_view_.isValid() ? goal_view_.goalT_MB() : current_T_MB;
-    if (math::position_error(goal_T_MB, current_T_MB).norm() > goal_position_threshold_) {
+    const Eigen::Vector3f pos_error = math::position_error(goal_T_MB, current_T_MB);
+    if (pos_error.head<2>().norm() > goal_xy_threshold_) {
+      return false;
+    }
+    if (pos_error.tail<1>().norm() > goal_z_threshold_) {
       return false;
     }
     if (fabsf(math::yaw_error(goal_T_MB, current_T_MB)) > goal_yaw_threshold_) {
