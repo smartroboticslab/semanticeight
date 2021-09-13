@@ -49,3 +49,7 @@ test.bin
 # Test results
 se_core/test/out/
 
+# ctags
+tags
+TAGS
+
