@@ -188,12 +188,16 @@ namespace se {
   float lod_gain_raycasting(const Objects&         objects,
                             const SensorImpl&      sensor,
                             const SensorImpl&      raycasting_sensor,
-                            const Eigen::Matrix4f& T_MC) {
+                            const Eigen::Matrix4f& T_MC,
+                            Image<int8_t>&         min_scale_image) {
     size_t num_nonzero_scale = 0;
     const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
     const std::set<int> vo = get_visible_object_ids(objects, raycasting_sensor, T_MC);
     const std::vector<int> visible_objects (vo.begin(), vo.end());
     const Eigen::Vector2i image_res (raycasting_sensor.model.imageWidth(), raycasting_sensor.model.imageHeight());
+    if (min_scale_image.width() != image_res.x() || min_scale_image.height() != image_res.y()) {
+      min_scale_image = Image<int8_t>(image_res.x(), image_res.y());
+    }
 #if SE_BOUNDING_VOLUME > 0
     // Compute the visible object raycasting masks based on their bounding volumes.
     std::vector<cv::Mat> raycasting_masks;
@@ -206,6 +210,8 @@ namespace se {
     for (int y = 0; y < image_res.y(); ++y) {
 #pragma omp simd
       for (int x = 0; x < image_res.x(); ++x) {
+        // Initialize the image to an invalid scale.
+        min_scale_image(x, y) = -1;
         // Compute the ray for this pixel.
         const Eigen::Vector2f pixel_f (x, y);
         Eigen::Vector3f ray_dir_C;
@@ -297,6 +303,7 @@ namespace se {
         // Update the gain of the nearest object hit.
         if (nearest_hit_instance_id != se::instance_invalid) {
           if (nearest_hit_expected_scale < nearest_hit_min_scale) {
+            min_scale_image(x, y) = nearest_hit_min_scale;
             num_nonzero_scale++;
           }
         }

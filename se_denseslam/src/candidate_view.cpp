@@ -54,7 +54,7 @@ namespace se {
         path_time_(-1.0f),
         entropy_image_(config.raycast_width, config.raycast_height),
         frustum_overlap_image_(config.raycast_width, 1, 0.0f),
-        min_scale_image_(window_width(config.raycast_width, sensor.horizontal_fov), config.raycast_height),
+        min_scale_image_(1, 1),
         entropy_(-1.0f),
         lod_gain_(-1.0f),
         utility_(-1.0f),
@@ -83,7 +83,7 @@ namespace se {
     path_MB_.back().topLeftCorner<3,3>() = yawToC_MB(yaw_M_);
     // Get the LoD gain of the objects.
     const SensorImpl raycasting_sensor (sensor, 0.5f);
-    lod_gain_ = lod_gain_raycasting(objects, sensor, raycasting_sensor, path_MB_.back() * T_BC);
+    lod_gain_ = lod_gain_raycasting(objects, sensor, raycasting_sensor, path_MB_.back() * T_BC, min_scale_image_);
     // Compute the utility.
     path_time_ = pathTime(path_MB_, config_.velocity_linear, config_.velocity_angular);
     computeUtility();
@@ -158,6 +158,22 @@ namespace se {
       overlay_yaw(entropy_render, yaw_M_, sensor);
     }
     return entropy_render;
+  }
+
+
+
+  Image<uint32_t> CandidateView::renderMinScale(const Octree<VoxelImpl::VoxelType>& /*map*/,
+                                                const SensorImpl&                   sensor,
+                                                const Eigen::Matrix4f&              /*T_BC*/) const {
+    constexpr int max_scale_p1 = VoxelImpl::VoxelBlockType::max_scale + 1;
+    Image<uint32_t> min_scale_render (min_scale_image_.width(), min_scale_image_.height());
+#pragma omp parallel for
+    for (size_t i = 0; i < min_scale_render.size(); ++i) {
+      // Scale the minimum scale to the interval [0,255].
+      const uint8_t s = UINT8_MAX * static_cast<float>(min_scale_image_[i] + 1) / max_scale_p1;
+      min_scale_render[i] = se::pack_rgba(s, s, s, 0xFF);
+    }
+    return min_scale_render;
   }
 
 

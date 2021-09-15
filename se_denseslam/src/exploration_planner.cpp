@@ -125,6 +125,13 @@ namespace se {
 
 
 
+  Image<uint32_t> ExplorationPlanner::renderMinScale(const SensorImpl& sensor)
+  {
+    return goal_view_.renderMinScale(*map_, sensor, T_BC_);
+  }
+
+
+
   int ExplorationPlanner::writePathPLY(const std::string& filename) const {
     std::ofstream f (filename);
     if (!f.is_open()) {

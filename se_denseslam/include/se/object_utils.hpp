@@ -43,7 +43,8 @@ namespace se {
   float lod_gain_raycasting(const Objects&         objects,
                             const SensorImpl&      sensor,
                             const SensorImpl&      raycasting_sensor,
-                            const Eigen::Matrix4f& T_MC);
+                            const Eigen::Matrix4f& T_MC,
+                            Image<int8_t>&         min_scale_image);
 
 } // namespace se
 

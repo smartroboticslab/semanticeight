@@ -82,6 +82,10 @@ namespace se {
                                     const Eigen::Matrix4f&              T_BC,
                                     const bool                          visualize_yaw = true) const;
 
+      Image<uint32_t> renderMinScale(const Octree<VoxelImpl::VoxelType>& map,
+                                     const SensorImpl&                   sensor,
+                                     const Eigen::Matrix4f&              T_BC) const;
+
       Image<uint32_t> renderDepth(const Octree<VoxelImpl::VoxelType>& map,
                                   const SensorImpl&                   sensor,
                                   const Eigen::Matrix4f&              T_BC,
