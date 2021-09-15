@@ -97,7 +97,7 @@ namespace se {
 
 
 
-  Path CandidateView::path() const {
+  const Path& CandidateView::path() const {
     return path_MB_;
   }
 
@@ -109,7 +109,7 @@ namespace se {
 
 
 
-  Eigen::Matrix4f CandidateView::goalT_MB() const {
+  const Eigen::Matrix4f& CandidateView::goalT_MB() const {
     return path_MB_.back();
   }
 

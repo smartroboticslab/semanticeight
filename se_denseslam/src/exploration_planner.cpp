@@ -26,7 +26,7 @@ namespace se {
 
 
 
-  Eigen::Matrix4f ExplorationPlanner::getT_WB()
+  Eigen::Matrix4f ExplorationPlanner::getT_WB() const
   {
     return T_WM_ * T_MB_history_.poses.back();
   }
@@ -88,21 +88,21 @@ namespace se {
 
 
 
-  std::vector<CandidateView> ExplorationPlanner::candidateViews() const
+  const std::vector<CandidateView>& ExplorationPlanner::candidateViews() const
   {
     return candidate_views_;
   }
 
 
 
-  std::vector<CandidateView> ExplorationPlanner::rejectedCandidateViews() const
+  const std::vector<CandidateView>& ExplorationPlanner::rejectedCandidateViews() const
   {
     return rejected_candidate_views_;
   }
 
 
 
-  CandidateView ExplorationPlanner::goalView() const
+  const CandidateView& ExplorationPlanner::goalView() const
   {
     return goal_view_;
   }

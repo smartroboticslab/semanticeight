@@ -66,11 +66,11 @@ namespace se {
       /** \brief Return the path to the candidate view.
        * The first path element is the T_MB supplied to the candidate view constructor.
        */
-      Path path() const;
+      const Path& path() const;
 
       float utility() const;
 
-      Eigen::Matrix4f goalT_MB() const;
+      const Eigen::Matrix4f& goalT_MB() const;
 
       void computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
                                   const SensorImpl&                   sensor,

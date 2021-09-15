@@ -21,7 +21,7 @@ namespace se {
 
       void setT_WB(const Eigen::Matrix4f& T_WB);
 
-      Eigen::Matrix4f getT_WB();
+      Eigen::Matrix4f getT_WB() const;
 
       Path getT_WBHistory() const;
 
@@ -34,11 +34,11 @@ namespace se {
                               const Objects&         objects,
                               const SensorImpl&      sensor);
 
-      std::vector<CandidateView> candidateViews() const;
+      const std::vector<CandidateView>& candidateViews() const;
 
-      std::vector<CandidateView> rejectedCandidateViews() const;
+      const std::vector<CandidateView>& rejectedCandidateViews() const;
 
-      CandidateView goalView() const;
+      const CandidateView& goalView() const;
 
       Image<uint32_t> renderEntropy(const SensorImpl& sensor,
                                     const bool        visualize_yaw = true);
