@@ -237,6 +237,8 @@ class DenseSLAMSystem {
      */
     void freeInitCylinder(const SensorImpl& sensor);
 
+    void freeInitSphere();
+
 
 
   public:
@@ -867,7 +869,7 @@ class DenseSLAMSystem {
      * Create some free space around the robot's starting position.
      * The frontier status of the free voxels is set correctly.
      */
-    void freeInitialPosition(const SensorImpl& sensor);
+    void freeInitialPosition(const SensorImpl& sensor, const std::string& type = "cylinder");
 
     std::set<se::key_t> getFrontiers() const {
       return frontiers_;
