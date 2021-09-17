@@ -133,6 +133,11 @@ namespace se {
        */
       static Path convertPath(const ptp::Path<ptp::kDim>::Ptr ptp_path);
 
+      /** \brief Change the positions of path vertices that are within radius of the first vertex to
+       * the position of the first vertex.
+       */
+      static void removeSmallMovements(Path& path, const float radius);
+
       /** \brief Compute the time required to complete the path by moving with the constant
        * velocities provided. The yaw time takes into account the intermmediate yaw values, not just
        * the start and and yaw angles.

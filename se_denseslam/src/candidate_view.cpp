@@ -77,6 +77,7 @@ namespace se {
         return;
       }
       path_MB_ = convertPath(planner.getPath());
+      removeSmallMovements(path_MB_, config_.planner_config.robot_radius_ + config_.planner_config.safety_radius_);
     }
     // Raycast to compute the optimal yaw angle.
     entropyRaycast(*map, sensor, T_BC, T_MC_history);
@@ -243,6 +244,20 @@ namespace se {
       path[i].topRightCorner<3,1>() = t_MB;
     }
     return path;
+  }
+
+
+
+  void CandidateView::removeSmallMovements(Path& path, const float radius) {
+    if (!path.empty()) {
+      const Eigen::Vector3f t_MB_0 = path[0].topRightCorner<3,1>();
+      for (size_t i = 1; i < path.size(); ++i) {
+        const Eigen::Vector3f t_MB = path[i].topRightCorner<3,1>();
+        if ((t_MB_0 - t_MB).norm() <= radius) {
+          path[i].topRightCorner<3,1>() = t_MB_0;
+        }
+      }
+    }
   }
 
 
