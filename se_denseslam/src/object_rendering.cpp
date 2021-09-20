@@ -5,7 +5,7 @@
 
 #include "se/object_rendering.hpp"
 #include "se/semanticeight_definitions.hpp"
-#define NO_DEBUG_IMAGES
+//#define SE_DEBUG_IMAGES
 #include "se/debug_images.hpp"
 
 

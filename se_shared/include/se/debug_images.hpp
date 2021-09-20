@@ -16,18 +16,7 @@
 
 
 namespace dbg {
-#ifdef NO_DEBUG_IMAGES
-  class DebugImages {
-    public:
-      DebugImages() {}
-      void init(const size_t, const size_t, const size_t) {}
-      void save(const std::string&, const std::string&) const {}
-      void set(const size_t, const size_t, const size_t, const uint32_t) {}
-      uint32_t get(const size_t, const size_t, const size_t) const {
-        return 0xDEADBEEF;
-      }
-  };
-#else
+#ifdef SE_DEBUG_IMAGES
   class Image {
     public:
       Image(const size_t width, const size_t height, const uint32_t value)
@@ -146,6 +135,17 @@ namespace dbg {
 
     private:
       std::vector<Image> images_;
+  };
+#else
+  class DebugImages {
+    public:
+      DebugImages() {}
+      void init(const size_t, const size_t, const size_t) {}
+      void save(const std::string&, const std::string&) const {}
+      void set(const size_t, const size_t, const size_t, const uint32_t) {}
+      uint32_t get(const size_t, const size_t, const size_t) const {
+        return 0xDEADBEEF;
+      }
   };
 #endif
 
