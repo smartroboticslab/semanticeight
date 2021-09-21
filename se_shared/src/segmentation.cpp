@@ -92,13 +92,6 @@ namespace se {
 
     const float ratio = fmaxf(mask1_ratio, mask2_ratio);
 
-    if (ratio > 0.99f) {
-        const float inverse_ratio = fmaxf(1.f / mask1_ratio, 1.f / mask2_ratio);
-        if (inverse_ratio > 1.5f) {
-          return 0.f;
-        }
-    }
-
     return ratio;
   }
 
