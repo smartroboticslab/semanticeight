@@ -77,8 +77,6 @@ namespace se {
         return;
       }
       path_MB_ = convertPath(planner.getPath());
-      removeSmallMovements(path_MB_, config_.planner_config.robot_radius_ + config_.planner_config.safety_radius_);
-      yawBeforeMoving(path_MB_);
     }
     // Raycast to compute the optimal yaw angle.
     entropyRaycast(*map, sensor, T_BC, T_MC_history);
@@ -131,6 +129,7 @@ namespace se {
       const std::pair<float, float> r = optimal_yaw(entropy_image, frustum_overlap_image, sensor);
       path_MB_[i].topLeftCorner<3,3>() = yawToC_MB(r.first);
     }
+    yawBeforeMoving(path_MB_);
   }
 
 
