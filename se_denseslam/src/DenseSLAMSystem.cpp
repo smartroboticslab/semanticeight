@@ -274,7 +274,7 @@ bool DenseSLAMSystem::integrate(const SensorImpl&  sensor,
   update_frontiers(*map_, frontiers_, min_frontier_volume_);
   TOCK("FRONTIERS")
   // Update the free/occupied volume.
-  se::ExploredVolume ev (*map_);
+  se::ExploredVolume ev (*map_, aabb_min_M_, aabb_max_M_);
   free_volume = ev.free_volume;
   occupied_volume = ev.occupied_volume;
   explored_volume = ev.explored_volume;

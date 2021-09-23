@@ -5,18 +5,82 @@
 #include "se/exploration_utils.hpp"
 #include "se/utils/math_utils.h"
 
+/** Return the volume of the intersection of two axis-aligned rectangular
+ * cuboids.
+ *
+ * \note Assuming a_min < a_max and b_min < b_max.
+ *
+ * \note https://studiofreya.com/3d-math-and-physics/simple-aabb-vs-aabb-collision-detection/
+ */
+float rect_cuboid_intersection_volume(const Eigen::Vector3f& a_min,
+                                      const Eigen::Vector3f& a_max,
+                                      const Eigen::Vector3f& b_min,
+                                      const Eigen::Vector3f& b_max) {
+  const Eigen::Vector3f a_center = (a_max + a_min) / 2.0f;
+  const Eigen::Vector3f b_center = (b_max + b_min) / 2.0f;
+  const Eigen::Vector3f a_sides = a_max - a_min;
+  const Eigen::Vector3f b_sides = b_max - b_min;
+  const Eigen::Vector3f center_dists = (a_center - b_center).array().abs().matrix();
+  const Eigen::Vector3f limit_dists = (a_sides + b_sides) / 2.0f;
+
+  if ((a_min.array() <= b_min.array()).all() && (b_max.array() <= a_max.array()).all()) {
+    // a contains b.
+    return b_sides.prod();
+
+  } else if ((b_min.array() <= a_min.array()).all() && (a_max.array() <= b_max.array()).all()) {
+    // b contains a.
+    return a_sides.prod();
+
+  } else if ((center_dists.array() < limit_dists.array()).all()) {
+    // a intersects b if they overlap in all 3 axes.
+    Eigen::Vector3f inters_sides = limit_dists - center_dists;
+    // The intersection side cannot be larger than the side of the smallest cuboid.
+    const Eigen::Vector3f min_sides = (a_sides.array().min(b_sides.array())).matrix();
+    if (inters_sides.x() > min_sides.x()) {
+      inters_sides.x() = min_sides.x();
+    }
+    if (inters_sides.y() > min_sides.y()) {
+      inters_sides.y() = min_sides.y();
+    }
+    if (inters_sides.z() > min_sides.z()) {
+      inters_sides.z() = min_sides.z();
+    }
+    return inters_sides.x() * inters_sides.y() * inters_sides.z();
+
+  } else {
+    // a and b do not intersect.
+    return 0.0f;
+  }
+}
+
+
+
 namespace se {
-  ExploredVolume::ExploredVolume(se::Octree<VoxelImpl::VoxelType>& map) {
+  ExploredVolume::ExploredVolume(se::Octree<VoxelImpl::VoxelType>& map,
+                                 const Eigen::Vector3f&            aabb_min_M,
+                                 const Eigen::Vector3f&            aabb_max_M) {
+    const bool intersect = aabb_min_M.x() < aabb_max_M.x() && aabb_min_M.y() < aabb_max_M.y()
+      && aabb_min_M.z() < aabb_max_M.z();
     for (const auto& volume : map) {
       // The iterator will not return invalid (uninitialized) data so just focus on free and
       // occupied.
       if (se::math::cu(volume.dim) == 0.0f) {
         std::cout << "WAT?\n";
       }
-      if (VoxelImpl::VoxelType::isFree(volume.data)) {
-        free_volume += se::math::cu(volume.dim);
+      float v = 0.0f;
+      if (intersect) {
+        // Compute the voxel AABB.
+        const Eigen::Vector3f voxel_min_M = volume.centre_M - Eigen::Vector3f::Constant(volume.dim / 2.0f);
+        const Eigen::Vector3f voxel_max_M = volume.centre_M + Eigen::Vector3f::Constant(volume.dim / 2.0f);
+        // Intersect with the map AABB.
+        v = rect_cuboid_intersection_volume(aabb_min_M, aabb_max_M, voxel_min_M, voxel_max_M);
       } else {
-        occupied_volume += se::math::cu(volume.dim);
+        v = se::math::cu(volume.dim);
+      }
+      if (VoxelImpl::VoxelType::isFree(volume.data)) {
+        free_volume += v;
+      } else {
+        occupied_volume += v;
       }
     }
     explored_volume = free_volume + occupied_volume;

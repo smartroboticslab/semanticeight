@@ -13,7 +13,9 @@ namespace se {
    */
   struct ExploredVolume {
     ExploredVolume() = default;
-    ExploredVolume(se::Octree<VoxelImpl::VoxelType>& map);
+    ExploredVolume(se::Octree<VoxelImpl::VoxelType>& map,
+                   const Eigen::Vector3f&            aabb_min_M = Eigen::Vector3f::Zero(),
+                   const Eigen::Vector3f&            aabb_max_M = Eigen::Vector3f::Zero());
 
     float free_volume     = 0.0f;
     float occupied_volume = 0.0f;
