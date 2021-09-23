@@ -6,6 +6,11 @@
 #include "se/exploration_utils.hpp"
 
 namespace se {
+  constexpr float ExplorationPlanner::goal_xy_threshold_;
+  constexpr float ExplorationPlanner::goal_z_threshold_;
+  constexpr float ExplorationPlanner::goal_yaw_threshold_;
+  constexpr float ExplorationPlanner::goal_roll_pitch_threshold_;
+
   ExplorationPlanner::ExplorationPlanner(const OctreePtr          map,
                                          const Eigen::Matrix4f&   T_MW,
                                          const Eigen::Matrix4f&   T_BC,
