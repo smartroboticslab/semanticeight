@@ -78,6 +78,7 @@ namespace se {
       }
       path_MB_ = convertPath(planner.getPath());
       removeSmallMovements(path_MB_, config_.planner_config.robot_radius_ + config_.planner_config.safety_radius_);
+      yawBeforeMoving(path_MB_);
     }
     // Raycast to compute the optimal yaw angle.
     entropyRaycast(*map, sensor, T_BC, T_MC_history);
@@ -258,6 +259,21 @@ namespace se {
         }
       }
     }
+  }
+
+
+
+  void CandidateView::yawBeforeMoving(Path& path) {
+    Path new_path;
+    for (size_t i = 0; i < path.size() - 1; ++i) {
+      // Add the current waypoint.
+      new_path.push_back(path[i]);
+      // Add an waypoint with the orientation of the next and the position of the current waypoint.
+      new_path.push_back(path[i + 1]);
+      new_path.back().topRightCorner<3,1>() = path[i].topRightCorner<3,1>();
+    }
+    new_path.push_back(path.back());
+    path = new_path;
   }
 
 

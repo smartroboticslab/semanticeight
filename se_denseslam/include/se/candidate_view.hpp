@@ -138,6 +138,11 @@ namespace se {
        */
       static void removeSmallMovements(Path& path, const float radius);
 
+      /** \brief Add intermmediate path waypoints so that yaw is performed before moving to the next
+       * waypoint. This is used to avoid aggressive MAV flying.
+       */
+      static void yawBeforeMoving(Path& path);
+
       /** \brief Compute the time required to complete the path by moving with the constant
        * velocities provided. The yaw time takes into account the intermmediate yaw values, not just
        * the start and and yaw angles.
