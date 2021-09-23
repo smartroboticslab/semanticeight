@@ -351,6 +351,10 @@ namespace se {
     bool bilateral_filter;
 
     // Exploration only ///////////////////////////////////////////////////////
+    Eigen::Vector3f aabb_min_W;
+
+    Eigen::Vector3f aabb_max_W;
+
     bool enable_exploration;
 
     int num_candidates;
@@ -424,6 +428,8 @@ namespace se {
         output_render_file(""),
         render_volume_fullsize(false),
         bilateral_filter(false),
+        aabb_min_W(0.0f, 0.0f, 0.0f),
+        aabb_max_W(0.0f, 0.0f, 0.0f),
         enable_exploration(true),
         num_candidates(10),
         exploration_weight(0.5f),
@@ -523,6 +529,8 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
   out << "\n";
 
   // Exploration only ///////////////////////////////////////////////////////
+  out << str_utils::vector_to_pretty_str(config.aabb_min_W,               "AABB min_w") << "\n";
+  out << str_utils::vector_to_pretty_str(config.aabb_max_W,               "AABB max_w") << "\n";
   out << str_utils::bool_to_pretty_str(config.enable_exploration,         "Enable exploration") << "\n";
   out << str_utils::value_to_pretty_str(config.num_candidates,            "Num candidates") << "\n";
   out << str_utils::value_to_pretty_str(config.exploration_weight,        "Exploration weight") << "\n";

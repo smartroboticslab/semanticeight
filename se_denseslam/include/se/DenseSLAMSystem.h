@@ -178,6 +178,8 @@ class DenseSLAMSystem {
     std::set<se::key_t> updated_nodes_;
     std::set<se::key_t> frontiers_;
     static constexpr int min_frontier_volume_ = 1;
+    Eigen::Vector3f aabb_min_M_;
+    Eigen::Vector3f aabb_max_M_;
 
 
 
