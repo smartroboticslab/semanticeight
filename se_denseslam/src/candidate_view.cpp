@@ -129,6 +129,11 @@ namespace se {
       const std::pair<float, float> r = optimal_yaw(entropy_image, frustum_overlap_image, sensor);
       path_MB_[i].topLeftCorner<3,3>() = yawToC_MB(r.first);
     }
+    // Set the yaw of the first vertex to that of the second vertex in order to avoid a useless yaw
+    // to the identity orientation.
+    if (path_MB_.size() >= 2) {
+      path_MB_[0].topLeftCorner<3,3>() = path_MB_[1].topLeftCorner<3,3>();
+    }
     yawBeforeMoving(path_MB_);
   }
 
