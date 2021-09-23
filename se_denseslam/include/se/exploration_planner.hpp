@@ -11,6 +11,9 @@ namespace se {
   /** The API uses Body poses in the World frame but internally everything is performed in the Map
    * frame. Body poses are used for sampling and path planning and they are converted to camera
    * poses for raycasting.
+   *
+   * The ExplorationPlanner keeps a copy of the path internally and removes vertices whenever
+   * goalReached() succeeds.
    */
   class ExplorationPlanner {
     public:
@@ -25,7 +28,11 @@ namespace se {
 
       Path getT_WBHistory() const;
 
-      bool goalReached() const;
+      bool needsNewGoal() const;
+
+      bool goalReached();
+
+      bool goalT_WB(Eigen::Matrix4f& T_WB) const;
 
       /** Call the exploration planner and return the resulting camera path in the world frame.
        * The returned path is a series of T_WB.
@@ -58,6 +65,8 @@ namespace se {
 
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:
+      typedef std::queue<Eigen::Matrix4f, std::deque<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>> PathQueue;
+
       const OctreePtr map_;
       const ExplorationConfig config_;
       Eigen::Matrix4f T_MW_;
@@ -69,6 +78,7 @@ namespace se {
       std::vector<CandidateView> candidate_views_;
       std::vector<CandidateView> rejected_candidate_views_;
       CandidateView goal_view_;
+      PathQueue goal_path_T_MB_;
 
       static constexpr float goal_xy_threshold_ = 0.2f;
       static constexpr float goal_z_threshold_ = 0.2f;

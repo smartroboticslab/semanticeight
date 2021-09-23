@@ -49,10 +49,22 @@ namespace se {
 
 
 
-  bool ExplorationPlanner::goalReached() const
+  bool ExplorationPlanner::needsNewGoal() const
   {
+    return goal_path_T_MB_.empty();
+  }
+
+
+
+  bool ExplorationPlanner::goalReached()
+  {
+    // If there is no goal, we have reached the goal.
+    if (goal_path_T_MB_.empty()) {
+      return true;
+    }
+    // Compute the error's between the current pose and the next vertex of the goal path.
     const Eigen::Matrix4f& current_T_MB = T_MB_history_.poses.back();
-    const Eigen::Matrix4f& goal_T_MB = goal_view_.isValid() ? goal_view_.goalT_MB() : current_T_MB;
+    const Eigen::Matrix4f& goal_T_MB = goal_path_T_MB_.front();
     const Eigen::Vector3f pos_error = math::position_error(goal_T_MB, current_T_MB);
     if (pos_error.head<2>().norm() > goal_xy_threshold_) {
       return false;
@@ -69,7 +81,21 @@ namespace se {
     if (fabsf(math::roll_error(goal_T_MB, current_T_MB)) > goal_roll_pitch_threshold_) {
       return false;
     }
+    // Remove the reached pose from the goal path.
+    goal_path_T_MB_.pop();
     return true;
+  }
+
+
+
+  bool ExplorationPlanner::goalT_WB(Eigen::Matrix4f& T_WB) const
+  {
+    if (goal_path_T_MB_.empty()) {
+      return false;
+    } else {
+      T_WB = T_WM_ * goal_path_T_MB_.front();
+      return true;
+    }
   }
 
 
@@ -84,6 +110,10 @@ namespace se {
     rejected_candidate_views_ = planner.rejectedViews();
     goal_view_ = planner.bestView();
     const Path& goal_path_M = planner.bestPath();
+    // Add it to the goal path queue.
+    for (const auto& T_MB : goal_path_M) {
+      goal_path_T_MB_.push(T_MB);
+    }
     // Convert the goal path from the map to the world frame.
     Path goal_path_W (goal_path_M.size());
     std::transform(goal_path_M.begin(), goal_path_M.end(), goal_path_W.begin(),
