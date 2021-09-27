@@ -9,10 +9,7 @@
 
 
 TEST(Entropy, logOdds) {
-  constexpr size_t n = 20;
-  constexpr float step = 1.0f / n;
-  for (size_t i = 0; i < n; i++) {
-    const float p = i * step;
+  for (float p = 0.03f; p <= 0.97f; p += 0.1f) {
     EXPECT_FLOAT_EQ(se::log_odds_to_prob(se::prob_to_log_odds(p)), p);
   }
 }
@@ -38,13 +35,13 @@ TEST(Entropy, windowWidth) {
   const float data[w * h] = {
       4, 3, 2, 1, 1, 0, 0, 0, 0, 5,
       2, 2, 1, 1, 1, 1, 1, 1, 1, 1};
-  se::Image<float> img (w, h);
-  for (size_t i = 0; i < img.size(); i++) {
-    img[i] = data[i];
-  }
+  se::Image<float> entropy_image (w, h);
+  memcpy(entropy_image.data(), data, w * h * sizeof(float));
+  se::Image<float> frustum_overlap_image (w, h, 0.0f);
+
   // Compute max window
   constexpr int window_width = 3;
-  const std::pair<int,float> r = se::max_window(img, window_width);
+  const std::pair<int,float> r = se::max_window(entropy_image, frustum_overlap_image, window_width);
   EXPECT_EQ(r.first, 9);
   EXPECT_FLOAT_EQ(r.second, (5 + 1 + 4 + 2 + 3 + 2));
 }

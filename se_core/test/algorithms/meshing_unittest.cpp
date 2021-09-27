@@ -40,10 +40,13 @@ struct TestVoxelT {
   struct VoxelData {
     float x;
     float y;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
   };
   static inline VoxelData invalid(){ return {0.f, 0.f}; }
   static inline VoxelData initData(){ return {-1.f, 1.f}; }
-  
+
   static float selectValue(const TestVoxelT::VoxelData& data) {
     return data.x;
   };
@@ -51,7 +54,7 @@ struct TestVoxelT {
   static bool isInside(const TestVoxelT::VoxelData& data) {
     return data.x < 0.f;
   };
-  
+
   using VoxelBlockType = se::VoxelBlockFull<TestVoxelT>;
 
   using MemoryPoolType = se::PagedMemoryPool<TestVoxelT>;
@@ -1279,7 +1282,7 @@ TEST(MeshingTest, WallCrossesXCoarseToFineAlongZ) {
   int   block_stride_3    = 1 << block_scale_0;
   float block_value_3_out = 4.f;
   float block_value_3_in  = -4.f;
-  
+
   Eigen::Matrix4f T_MW = Eigen::Matrix4f::Identity();
 
   for (unsigned z = 0; z < 32; z += VoxelBlockType::size_li) {
