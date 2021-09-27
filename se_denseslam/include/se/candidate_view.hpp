@@ -77,10 +77,13 @@ namespace se {
                                   const Eigen::Matrix4f&              T_BC,
                                   const PoseHistory&                  T_MC_history);
 
-      Image<uint32_t> renderEntropy(const Octree<VoxelImpl::VoxelType>& map,
-                                    const SensorImpl&                   sensor,
-                                    const Eigen::Matrix4f&              T_BC,
-                                    const bool                          visualize_yaw = true) const;
+      Image<uint32_t> renderEntropy(const SensorImpl& sensor,
+                                    const bool        visualize_yaw = true) const;
+
+      Image<uint32_t> renderCurrentEntropy(const Octree<VoxelImpl::VoxelType>& map,
+                                           const SensorImpl&                   sensor,
+                                           const Eigen::Matrix4f&              T_BC,
+                                           const bool                          visualize_yaw = true) const;
 
       Image<uint32_t> renderMinScale(const Octree<VoxelImpl::VoxelType>& map,
                                      const SensorImpl&                   sensor,
@@ -148,6 +151,11 @@ namespace se {
        * the start and and yaw angles.
        */
       static float pathTime(const Path& path, float velocity_linear, float velocity_angular);
+
+      static Image<uint32_t> visualizeEntropy(const Image<float>& entropy,
+                                              const SensorImpl&   sensor,
+                                              const float         yaw_M,
+                                              const bool          visualize_yaw = true);
   };
 } // namespace se
 

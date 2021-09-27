@@ -144,16 +144,16 @@ namespace se {
 
 
 
-  Image<uint32_t> ExplorationPlanner::renderEntropy(const SensorImpl& sensor,
-                                                    const bool        visualize_yaw)
+  Image<uint32_t> ExplorationPlanner::renderCurrentEntropy(const SensorImpl& sensor,
+                                                           const bool        visualize_yaw)
   {
-    return goal_view_.renderEntropy(*map_, sensor, T_BC_, visualize_yaw);
+    return goal_view_.renderCurrentEntropy(*map_, sensor, T_BC_, visualize_yaw);
   }
 
 
 
-  Image<uint32_t> ExplorationPlanner::renderEntropyDepth(const SensorImpl& sensor,
-                                                         const bool        visualize_yaw)
+  Image<uint32_t> ExplorationPlanner::renderCurrentEntropyDepth(const SensorImpl& sensor,
+                                                                const bool        visualize_yaw)
   {
     return goal_view_.renderDepth(*map_, sensor, T_BC_, visualize_yaw);
   }

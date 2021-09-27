@@ -139,31 +139,23 @@ namespace se {
 
 
 
-  Image<uint32_t> CandidateView::renderEntropy(const Octree<VoxelImpl::VoxelType>& map,
-                                               const SensorImpl&                   sensor,
-                                               const Eigen::Matrix4f&              T_BC,
-                                               const bool                          visualize_yaw) const {
-    const Eigen::Vector2i res (entropy_image_.width(), entropy_image_.height());
+  Image<uint32_t> CandidateView::renderEntropy(const SensorImpl& sensor,
+                                               const bool        visualize_yaw) const {
+    return visualizeEntropy(entropy_image_, sensor, yaw_M_, visualize_yaw);
+  }
+
+
+
+  Image<uint32_t> CandidateView::renderCurrentEntropy(const Octree<VoxelImpl::VoxelType>& map,
+                                                      const SensorImpl&                   sensor,
+                                                      const Eigen::Matrix4f&              T_BC,
+                                                      const bool                          visualize_yaw) const {
     Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
     T_MB.topRightCorner<3,1>() = config_.planner_config.goal_t_MB_;
     const Eigen::Matrix4f T_MC = T_MB * T_BC;
-    Image<float> entropy (res.x(), res.y());
+    Image<float> entropy (entropy_image_.width(), entropy_image_.height());
     raycast_entropy(entropy, map, sensor, T_MC.topRightCorner<3,1>());
-    // Visualize the entropy in a colour image by reusing the depth colourmar
-    Image<uint32_t> entropy_render (res.x(), res.y());
-    // Decrease the max entropy somewhat otherwise the render is all black
-    for (size_t i = 0; i < entropy.size(); ++i) {
-      // Scale and clamp the entropy for visualization since it's values are typically too low.
-      const uint8_t e = se::math::clamp(UINT8_MAX * (6.0f * entropy[i]) + 0.5f, 0.0f, static_cast<float>(UINT8_MAX));
-      entropy_render[i] = se::pack_rgba(e, e, e, 0xFF);
-    }
-    // Using the depth colourmap does not result in a very intuitive visualization
-    //se::depth_to_rgba(entropy_render.data(), entropy_image_.data(), res, 0.0f, max_e);
-    // Visualize the optimal yaw
-    if (visualize_yaw) {
-      overlay_yaw(entropy_render, yaw_M_, sensor);
-    }
-    return entropy_render;
+    return visualizeEntropy(entropy, sensor, yaw_M_, visualize_yaw);
   }
 
 
@@ -299,6 +291,24 @@ namespace se {
     }
     const float t = std::max(t_tran, t_rot);
     return (std::fabs(t) > 10.0f * FLT_EPSILON) ? t : NAN;
+  }
+
+
+
+  Image<uint32_t> CandidateView::visualizeEntropy(const Image<float>& entropy,
+                                                  const SensorImpl&   sensor,
+                                                  const float         yaw_M,
+                                                  const bool          visualize_yaw) {
+    Image<uint32_t> entropy_render (entropy.width(), entropy.height());
+    for (size_t i = 0; i < entropy.size(); ++i) {
+      // Scale and clamp the entropy for visualization since its values are typically too low.
+      const uint8_t e = se::math::clamp(UINT8_MAX * (6.0f * entropy[i]) + 0.5f, 0.0f, static_cast<float>(UINT8_MAX));
+      entropy_render[i] = se::pack_rgba(e, e, e, 0xFF);
+    }
+    if (visualize_yaw) {
+      overlay_yaw(entropy_render, yaw_M, sensor);
+    }
+    return entropy_render;
   }
 } // namespace se
 

@@ -47,11 +47,11 @@ namespace se {
 
       const CandidateView& goalView() const;
 
-      Image<uint32_t> renderEntropy(const SensorImpl& sensor,
-                                    const bool        visualize_yaw = true);
+      Image<uint32_t> renderCurrentEntropy(const SensorImpl& sensor,
+                                           const bool        visualize_yaw = true);
 
-      Image<uint32_t> renderEntropyDepth(const SensorImpl& sensor,
-                                         const bool        visualize_yaw = true);
+      Image<uint32_t> renderCurrentEntropyDepth(const SensorImpl& sensor,
+                                                const bool        visualize_yaw = true);
 
       Image<uint32_t> renderMinScale(const SensorImpl& sensor);
 
