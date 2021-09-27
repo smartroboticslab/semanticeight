@@ -94,27 +94,28 @@ namespace se {
                                   const Eigen::Matrix4f&              T_BC,
                                   const bool                          visualize_yaw = true) const;
 
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    private:
       /** The optimal yaw angle with respect to the information gain. */
       float yaw_M_;
-      /** std::vector of T_MB. */
-      Path path_MB_;
       /** The length of the path in metres. */
       float path_length_;
       /** The time needed to complete the path. */
       float path_time_;
+      /** The information gain for the map at the optimal yaw angle. */
+      float entropy_;
+      /** The object level-of-detail gain at the optimal yaw angle. */
+      float lod_gain_;
       /** An image containing the information gain produced by the 360 raycasting. */
       Image<float> entropy_image_;
       /** An image containing the percentage of frustum overlap with the candidate's neighbors. */
       Image<float> frustum_overlap_image_;
       /** An image containing the minimum integration scale for each raycasted object. */
       Image<int8_t> min_scale_image_;
-      /** The information gain for the map at the optimal yaw angle. */
-      float entropy_;
-      /** The object level-of-detail gain at the optimal yaw angle. */
-      float lod_gain_;
+
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    private:
+      /** std::vector of T_MB. */
+      Path path_MB_;
       /** A function of entropy and path_time. */
       float utility_;
       CandidateConfig config_;
