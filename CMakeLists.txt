@@ -16,6 +16,7 @@ option(SE_BUILD_TESTS "Build the supereight unit tests" OFF)
 option(SE_BUILD_GLUT_GUI "Build the OpenGL-based GUI" ON)
 option(SE_BUILD_QT_GUI "Build the Qt-based GUI" OFF)
 option(SE_USE_OMP "Compile with OpenMP" ON)
+option(SE_USE_ASAN "Compile with the address sanitizer" OFF)
 
 # Compile without measuring individual function times
 add_definitions(-DSE_ENABLE_PERFSTATS=1)
@@ -32,6 +33,15 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # Link against the GNU C++ library even when using clang
   # Clang also requires explicitly linking with the math library
   link_libraries(stdc++ m)
+endif()
+if(SE_USE_ASAN)
+  add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+  link_libraries(-fsanitize=address)
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    link_libraries(-static-libsan)
+  else()
+    link_libraries(-static-libasan)
+  endif()
 endif()
 
 
