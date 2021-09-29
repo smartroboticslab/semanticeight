@@ -22,11 +22,11 @@ namespace se {
   CandidateView::CandidateView()
       : path_length_(-1.0f),
         path_time_(-1.0f),
+        entropy_(-1.0f),
+        lod_gain_(-1.0f),
         entropy_image_(1, 1),
         frustum_overlap_image_(1, 1),
         min_scale_image_(1, 1),
-        entropy_(-1.0f),
-        lod_gain_(-1.0f),
         utility_(-1.0f) {
   }
 
@@ -52,11 +52,11 @@ namespace se {
                                const CandidateConfig&        config)
       : path_length_(-1.0f),
         path_time_(-1.0f),
+        entropy_(-1.0f),
+        lod_gain_(-1.0f),
         entropy_image_(config.raycast_width, config.raycast_height),
         frustum_overlap_image_(config.raycast_width, 1, 0.0f),
         min_scale_image_(1, 1),
-        entropy_(-1.0f),
-        lod_gain_(-1.0f),
         utility_(-1.0f),
         config_(config) {
     // Set-up the planner
@@ -161,7 +161,7 @@ namespace se {
 
 
   Image<uint32_t> CandidateView::renderMinScale(const Octree<VoxelImpl::VoxelType>& /*map*/,
-                                                const SensorImpl&                   sensor,
+                                                const SensorImpl&                   /*sensor*/,
                                                 const Eigen::Matrix4f&              /*T_BC*/) const {
     constexpr int max_scale_p1 = VoxelImpl::VoxelBlockType::max_scale + 1;
     Image<uint32_t> min_scale_render (min_scale_image_.width(), min_scale_image_.height());
