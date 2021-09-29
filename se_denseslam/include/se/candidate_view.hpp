@@ -147,6 +147,8 @@ namespace se {
        */
       static void yawBeforeMoving(Path& path);
 
+      static void yawWhileMoving(Path& path, float velocity_linear, float velocity_angular);
+
       /** \brief Compute the time required to complete the path by moving with the constant
        * velocities provided. The yaw time takes into account the intermmediate yaw values, not just
        * the start and and yaw angles.

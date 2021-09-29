@@ -135,6 +135,7 @@ namespace se {
       path_MB_[0].topLeftCorner<3,3>() = path_MB_[1].topLeftCorner<3,3>();
     }
     yawBeforeMoving(path_MB_);
+    //yawWhileMoving(path_MB_, config_.velocity_linear, config_.velocity_angular);
   }
 
 
@@ -269,6 +270,34 @@ namespace se {
       new_path.back().topRightCorner<3,1>() = path[i].topRightCorner<3,1>();
     }
     new_path.push_back(path.back());
+    path = new_path;
+  }
+
+
+
+  void CandidateView::yawWhileMoving(Path& path, float velocity_linear, float velocity_angular) {
+    constexpr float yaw_step = se::math::deg_to_rad * 45;
+    Path new_path;
+    for (size_t i = 0; i < path.size() - 1; ++i) {
+      new_path.push_back(path[i]);
+      const Eigen::Vector3f t_prev = path[i].topRightCorner<3,1>();
+      const Eigen::Vector3f t_next = path[i + 1].topRightCorner<3,1>();
+      const Eigen::Vector3f t_diff = t_next - t_prev;
+      const Eigen::Quaternionf q_prev = Eigen::Quaternionf(path[i].topLeftCorner<3,3>());
+      const Eigen::Quaternionf q_next = Eigen::Quaternionf(path[i + 1].topLeftCorner<3,3>());
+      const float dist = (t_next - t_prev).norm();
+      const float yaw_diff = math::yaw_error(path[i], path[i + 1]);
+      const float time_tran = dist / velocity_linear;
+      const float time_rot = yaw_diff / velocity_angular;
+      const float time = std::max(time_tran, time_rot);
+      const float dt = yaw_step / velocity_angular;
+      for (float t = 0.0f; t < time; t += dt) {
+        const float tt = t / time;
+        new_path.emplace_back(Eigen::Matrix4f::Identity());
+        new_path.back().topRightCorner<3,1>() = t_prev + tt * t_diff;
+        new_path.back().topLeftCorner<3,3>() = q_prev.slerp(tt, q_next).toRotationMatrix();
+      }
+    }
     path = new_path;
   }
 
