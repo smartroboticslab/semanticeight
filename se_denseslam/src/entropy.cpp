@@ -12,9 +12,13 @@ namespace se {
   /** \brief Convert a probability to log-odds form.
    */
   float prob_to_log_odds(float p) {
-    assert(p >= 0.0f);
-    assert(p <= 1.0f);
-    return log2f(p / (1.0f - p));
+    if (p == 0.0f) {
+      return -INFINITY;
+    } else if (p == 1.0f) {
+      return INFINITY;
+    } else {
+      return log2f(p / (1.0f - p));
+    }
   }
 
 
@@ -22,7 +26,14 @@ namespace se {
   /** \brief Convert a probability in log-odds form to a normal probability.
    */
   float log_odds_to_prob(float l) {
-    return exp2f(l) / (1.0f + exp2f(l));
+    // Too small/large values will produce NaNs, set an arbitrary limit that works on 32-bit floats.
+    if (l <= -100.0f) {
+      return 0.0f;
+    } else if (l >= 100.0f) {
+      return 1.0f;
+    } else {
+      return exp2f(l) / (1.0f + exp2f(l));
+    }
   }
 
 
@@ -32,10 +43,12 @@ namespace se {
    * \return The entropy in the interval [0, 1].
    */
   float entropy(float p) {
-    assert(p >= 0.0f);
-    assert(p <= 1.0f);
-    const float p_compl = 1.0f - p;
-    return -p * logf(p) - p_compl * logf(p_compl);
+    if (p == 0.0f || p == 1.0f) {
+      return 0.0f;
+    } else {
+      const float p_compl = 1.0f - p;
+      return -p * log2f(p) - p_compl * log2f(p_compl);
+    }
   }
 
 
