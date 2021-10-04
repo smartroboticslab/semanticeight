@@ -328,7 +328,7 @@ namespace se {
     // Compute the rotation time
     float t_rot = 0.0f;
     for (size_t i = 0; i < path.size() - 1; ++i) {
-      const float yaw_diff = math::yaw_error(path[i], path[i + 1]);
+      const float yaw_diff = fabsf(math::yaw_error(path[i], path[i + 1]));
       t_rot += yaw_diff / velocity_angular;
     }
     const float t = std::max(t_tran, t_rot);
