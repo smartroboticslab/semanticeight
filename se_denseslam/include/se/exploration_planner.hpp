@@ -47,6 +47,8 @@ namespace se {
 
       const CandidateView& goalView() const;
 
+      size_t goalViewIndex() const;
+
       Image<uint32_t> renderCurrentEntropy(const SensorImpl& sensor,
                                            const bool        visualize_yaw = true);
 
@@ -78,6 +80,7 @@ namespace se {
       std::vector<CandidateView> candidate_views_;
       std::vector<CandidateView> rejected_candidate_views_;
       CandidateView goal_view_;
+      size_t goal_view_idx_;
       PathQueue goal_path_T_MB_;
 
       static constexpr float goal_xy_threshold_ = 0.2f;

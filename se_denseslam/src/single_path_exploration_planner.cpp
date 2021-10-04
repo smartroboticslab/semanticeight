@@ -77,6 +77,12 @@ namespace se {
 
 
 
+  size_t SinglePathExplorationPlanner::bestViewIndex() const {
+    return best_idx_;
+  }
+
+
+
   Path SinglePathExplorationPlanner::bestPath() const {
     return candidates_[best_idx_].path();
   }

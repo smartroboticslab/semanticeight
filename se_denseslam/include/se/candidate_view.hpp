@@ -70,6 +70,8 @@ namespace se {
 
       float utility() const;
 
+      std::string utilityStr() const;
+
       const Eigen::Matrix4f& goalT_MB() const;
 
       void computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
@@ -110,6 +112,7 @@ namespace se {
       Image<float> frustum_overlap_image_;
       /** An image containing the minimum integration scale for each raycasted object. */
       Image<int8_t> min_scale_image_;
+      std::string utility_str_;
 
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

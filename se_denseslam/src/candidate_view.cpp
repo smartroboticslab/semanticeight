@@ -109,6 +109,12 @@ namespace se {
 
 
 
+  std::string CandidateView::utilityStr() const {
+    return utility_str_;
+  }
+
+
+
   const Eigen::Matrix4f& CandidateView::goalT_MB() const {
     return path_MB_.back();
   }
@@ -219,6 +225,13 @@ namespace se {
 
   void CandidateView::computeUtility() {
     utility_ = (config_.exploration_weight * entropy_ + (1.0f - config_.exploration_weight) * lod_gain_) / path_time_;
+    constexpr char format[] = "(%4.2f * %6.4f + %4.2f * %6.4f) / %-7.3f = %f";
+    // Resize the string with the appropriate number of characters to fit the output of snprintf().
+    const int s = snprintf(nullptr, 0, format, config_.exploration_weight, entropy_,
+        (1.0f - config_.exploration_weight), lod_gain_, path_time_, utility_);
+    utility_str_ = std::string(s + 1, '\0');
+    snprintf(utility_str_.data(), s + 1, format, config_.exploration_weight, entropy_,
+        (1.0f - config_.exploration_weight), lod_gain_, path_time_, utility_);
   }
 
 

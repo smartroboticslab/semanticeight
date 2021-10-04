@@ -109,6 +109,7 @@ namespace se {
     candidate_views_ = planner.views();
     rejected_candidate_views_ = planner.rejectedViews();
     goal_view_ = planner.bestView();
+    goal_view_idx_ = planner.bestViewIndex();
     const Path& goal_path_M = planner.bestPath();
     // Add it to the goal path queue.
     for (const auto& T_MB : goal_path_M) {
@@ -140,6 +141,13 @@ namespace se {
   const CandidateView& ExplorationPlanner::goalView() const
   {
     return goal_view_;
+  }
+
+
+
+  size_t ExplorationPlanner::goalViewIndex() const
+  {
+    return goal_view_idx_;
   }
 
 

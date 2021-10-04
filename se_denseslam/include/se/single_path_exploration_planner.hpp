@@ -36,6 +36,8 @@ namespace se {
 
       CandidateView bestView() const;
 
+      size_t bestViewIndex() const;
+
       Path bestPath() const;
 
       float bestUtility() const;
