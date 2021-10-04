@@ -1059,7 +1059,8 @@ void DenseSLAMSystem::freeInitSphere() {
   }
   // Compute the sphere parameters
   const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3,1>();
-  const float radius_M = 2.0f * (config_.robot_radius + config_.safety_radius);
+  // 2.4 because the same ratio was used in the ICRA 2020 paper.
+  const float radius_M = 2.4f * (config_.robot_radius + config_.safety_radius);
   // Compute the cylinder's AABB corners in metres and voxels
   const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f(radius_M, radius_M, radius_M);
   const Eigen::Vector3f aabb_max_M = centre_M + Eigen::Vector3f(radius_M, radius_M, radius_M);
