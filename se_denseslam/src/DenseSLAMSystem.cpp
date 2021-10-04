@@ -1025,10 +1025,10 @@ void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor) {
   // Add the allocated VoxelBlocks to the frontier set
   se::setunion(frontiers_, code_set);
   // The data to store in the free voxels
-  auto data = VoxelImpl::VoxelType::initData();
-  data.x = -21; // The path planning threshold is -20.
-  data.y = 1;
-  data.observed = true;
+  auto new_data = VoxelImpl::VoxelType::initData();
+  new_data.x = -21; // The path planning threshold is -20.
+  new_data.y = 1;
+  new_data.observed = true;
   // Allocate the VoxelBlocks up to some scale
   constexpr int scale = 0;
   std::vector<VoxelImpl::VoxelBlockType*> blocks;
@@ -1041,7 +1041,11 @@ void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor) {
   for (const auto& point_M : aabb_points_M) {
     const Eigen::Vector3f voxel_dist_M = (centre_M - point_M).array().abs().matrix();
     if (voxel_dist_M.head<2>().norm() <= radius && voxel_dist_M.z() <= height) {
-      map_->setAtPoint(point_M, data, scale);
+      VoxelImpl::VoxelType::VoxelData current_data;
+      map_->getAtPoint(point_M, current_data, scale);
+      if (!VoxelImpl::VoxelType::isInside(current_data)) {
+        map_->setAtPoint(point_M, new_data, scale);
+      }
     }
   }
 }
@@ -1081,10 +1085,10 @@ void DenseSLAMSystem::freeInitSphere() {
   // Add the allocated VoxelBlocks to the frontier set
   se::setunion(frontiers_, code_set);
   // The data to store in the free voxels
-  auto data = VoxelImpl::VoxelType::initData();
-  data.x = -21; // The path planning threshold is -20.
-  data.y = 1;
-  data.observed = true;
+  auto new_data = VoxelImpl::VoxelType::initData();
+  new_data.x = -21; // The path planning threshold is -20.
+  new_data.y = 1;
+  new_data.observed = true;
   // Allocate the VoxelBlocks up to some scale
   constexpr int scale = 0;
   std::vector<VoxelImpl::VoxelBlockType*> blocks;
@@ -1097,7 +1101,11 @@ void DenseSLAMSystem::freeInitSphere() {
   for (const auto& point_M : aabb_points_M) {
     const Eigen::Vector3f voxel_dist_M = (centre_M - point_M).array().abs().matrix();
     if (voxel_dist_M.norm() <= radius_M) {
-      map_->setAtPoint(point_M, data, scale);
+      VoxelImpl::VoxelType::VoxelData current_data;
+      map_->getAtPoint(point_M, current_data, scale);
+      if (!VoxelImpl::VoxelType::isInside(current_data)) {
+        map_->setAtPoint(point_M, new_data, scale);
+      }
     }
   }
 }
