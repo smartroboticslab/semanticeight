@@ -371,6 +371,8 @@ namespace se {
 
     float angular_velocity;
 
+    float delta_t;
+
     /** The radius of the robot's bounding sphere in metres.
      * <br>\em Default: 0.3
      */
@@ -438,6 +440,7 @@ namespace se {
         raycast_height(10),
         linear_velocity(1.0f),
         angular_velocity(0.1f),
+        delta_t(0.1f),
         robot_radius(0.3f),
         safety_radius(0.0f),
         min_control_point_radius(0.1f),
@@ -539,6 +542,7 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
   out << str_utils::value_to_pretty_str(config.raycast_height,            "Raycast height") << "\n";
   out << str_utils::value_to_pretty_str(config.linear_velocity,           "Linear velocity") << "\n";
   out << str_utils::value_to_pretty_str(config.angular_velocity,          "Angular velocity") << "\n";
+  out << str_utils::value_to_pretty_str(config.delta_t,                   "Delta t") << "\n";
   out << str_utils::value_to_pretty_str(config.robot_radius,              "Robot radius") <<  "\n";
   out << str_utils::value_to_pretty_str(config.safety_radius,             "Safety radius") << "\n";
   out << str_utils::value_to_pretty_str(config.min_control_point_radius,  "Min control point radius") << "\n";
