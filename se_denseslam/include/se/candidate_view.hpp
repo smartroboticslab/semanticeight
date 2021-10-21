@@ -96,6 +96,34 @@ namespace se {
                                   const Eigen::Matrix4f&              T_BC,
                                   const bool                          visualize_yaw = true) const;
 
+      /** ICRA 2020
+       */
+      static Path addIntermediateTranslation(const Eigen::Matrix4f& segment_start_M,
+                                             const Eigen::Matrix4f& segment_end_M,
+                                             float                  delta_t,
+                                             float                  velocity_linear,
+                                             float                  resolution);
+
+      /** ICRA 2020
+       */
+      static Path addIntermediateYaw(const Eigen::Matrix4f& segment_start_M,
+                                     const Eigen::Matrix4f& segment_end_M,
+                                     float                  delta_t,
+                                     float                  velocity_angular);
+
+      /** ICRA 2020
+       */
+      static Path fuseIntermediatePaths(const Path& intermediate_translation,
+                                        const Path& intermediate_yaw);
+
+      /** ICRA 2020
+       */
+      static Path getFinalPath(const Path& path_M,
+                               float       delta_t,
+                               float       velocity_linear,
+                               float       velocity_angular,
+                               float       resolution);
+
       /** The optimal yaw angle with respect to the information gain. */
       float yaw_M_;
       /** The length of the path in metres. */

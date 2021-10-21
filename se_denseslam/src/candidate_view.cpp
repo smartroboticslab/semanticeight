@@ -206,6 +206,107 @@ namespace se {
 
 
 
+  Path CandidateView::addIntermediateTranslation(const Eigen::Matrix4f& segment_start_M,
+                                                 const Eigen::Matrix4f& segment_end_M,
+                                                 float                  delta_t,
+                                                 float                  velocity_linear,
+                                                 float                  resolution) {
+    Path path;
+    path.emplace_back(segment_start_M);
+    const Eigen::Vector3f diff = math::position_error(segment_start_M, segment_end_M);
+    const Eigen::Vector3f dir = diff.normalized();
+    const Eigen::Vector3f t_start = segment_start_M.topRightCorner<3,1>();
+    const float dist = diff.norm();
+    // The dist_increment makes no sense.
+    // ((m/s * s) / m/voxel) / m = (m / m/voxel) / m = (m * voxel/m) / m = voxel / m
+    const float dist_increment = (velocity_linear * delta_t / resolution) / dist;
+    for (float t = 0.0f; t <= 1.0f; t += dist_increment) {
+      const Eigen::Vector3f t_intermediate = t_start + dir * t * dist;
+      Eigen::Matrix4f intermediate_pose = Eigen::Matrix4f::Identity();
+      intermediate_pose.topRightCorner<3,1>() = t_intermediate;
+      path.emplace_back(intermediate_pose);
+    }
+    path.emplace_back(segment_end_M);
+    return path;
+  }
+
+
+
+  Path CandidateView::addIntermediateYaw(const Eigen::Matrix4f& segment_start_M,
+                                         const Eigen::Matrix4f& segment_end_M,
+                                         float                  delta_t,
+                                         float                  velocity_angular) {
+    Path path;
+    const float yaw_diff = math::yaw_error(segment_start_M, segment_end_M);
+    const float yaw_increment = (velocity_angular * delta_t) / std::abs(yaw_diff);
+    for (float t = 0.0f; t <= 1.0f ; t += yaw_increment) {
+      // Interpolate the quaternion.
+      Eigen::Quaternionf q_start (segment_start_M.topLeftCorner<3,3>());
+      Eigen::Quaternionf q_end (segment_end_M.topLeftCorner<3,3>());
+      Eigen::Quaternionf q_intermediate = q_start.slerp(t, q_end).normalized();
+      // Create the intermediate pose.
+      Eigen::Matrix4f intermediate_pose = segment_end_M;
+      intermediate_pose.topLeftCorner<3,3>() = q_intermediate.toRotationMatrix();
+      path.emplace_back(intermediate_pose);
+    }
+    path.emplace_back(segment_end_M);
+    return path;
+  }
+
+
+
+  Path CandidateView::fuseIntermediatePaths(const Path& intermediate_translation,
+                                            const Path& intermediate_yaw) {
+    Path path (std::max(intermediate_translation.size(), intermediate_yaw.size()));
+    if (intermediate_yaw.size() >= intermediate_translation.size()) {
+      for (size_t i = 0; i < intermediate_yaw.size(); i++) {
+        path[i] = intermediate_yaw[i];
+        if (i < intermediate_translation.size()) {
+          path[i].topRightCorner<3,1>() = intermediate_translation[i].topRightCorner<3,1>();
+        } else {
+          path[i].topRightCorner<3,1>() = intermediate_translation.back().topRightCorner<3,1>();
+        }
+      }
+    } else {
+      for (size_t i = 0; i < intermediate_translation.size(); i++) {
+        path[i] = intermediate_translation[i];
+        if (i < intermediate_yaw.size()) {
+          path[i].topLeftCorner<3,3>() = intermediate_yaw[i].topLeftCorner<3,3>();
+        } else {
+          path[i].topLeftCorner<3,3>() = intermediate_yaw.back().topLeftCorner<3,3>();
+        }
+      }
+    }
+    return path;
+  }
+
+
+
+  Path CandidateView::getFinalPath(const Path& path_M,
+                                   float       delta_t,
+                                   float       velocity_linear,
+                                   float       velocity_angular,
+                                   float       resolution) {
+    Path final_path_M;
+    for (size_t i = 1; i < path_M.size(); i++) {
+      Path tran_path;
+      if (math::position_error(path_M[i - 1], path_M[i]).norm() > velocity_linear * delta_t) {
+        tran_path = addIntermediateTranslation(path_M[i-1], path_M[i], delta_t, velocity_linear,
+            resolution);
+      } else {
+        tran_path.emplace_back(path_M[i-1]);
+        tran_path.emplace_back(path_M[i]);
+      }
+      const Path yaw_path = addIntermediateYaw(path_M[i-1], path_M[i], delta_t, velocity_angular);
+
+      const Path fused_path = fuseIntermediatePaths(tran_path, yaw_path);
+      final_path_M.insert(final_path_M.end(), fused_path.begin(), fused_path.end());
+    }
+    return final_path_M;
+  }
+
+
+
   void CandidateView::entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
                                      const SensorImpl&                   sensor,
                                      const Eigen::Matrix4f&              T_BC,
