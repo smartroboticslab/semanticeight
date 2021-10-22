@@ -140,8 +140,9 @@ namespace se {
     if (path_MB_.size() >= 2) {
       path_MB_[0].topLeftCorner<3,3>() = path_MB_[1].topLeftCorner<3,3>();
     }
-    yawBeforeMoving(path_MB_);
+    //yawBeforeMoving(path_MB_);
     //yawWhileMoving(path_MB_, config_.velocity_linear, config_.velocity_angular);
+    path_MB_ = getFinalPath(path_MB_, config_.delta_t, config_.velocity_linear, config_.velocity_angular, map.voxelDim());
   }
 
 
