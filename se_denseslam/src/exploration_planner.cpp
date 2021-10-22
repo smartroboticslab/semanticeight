@@ -100,6 +100,13 @@ namespace se {
 
 
 
+  void ExplorationPlanner::popGoalT_WB()
+  {
+    goal_path_T_MB_.pop();
+  }
+
+
+
   Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
                                               const Objects&         objects,
                                               const SensorImpl&      sensor)

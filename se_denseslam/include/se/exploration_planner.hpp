@@ -34,6 +34,10 @@ namespace se {
 
       bool goalT_WB(Eigen::Matrix4f& T_WB) const;
 
+      /** This is only added as a hack to get the ICRA 2020 exploration to work.
+       */
+      void popGoalT_WB();
+
       /** Call the exploration planner and return the resulting camera path in the world frame.
        * The returned path is a series of T_WB.
        */
