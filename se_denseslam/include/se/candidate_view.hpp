@@ -30,6 +30,7 @@ namespace se {
     int raycast_width = 36;
     int raycast_height = 10;
     // MAV velocity
+    float delta_t = 0.5f;
     float velocity_linear = 1.0f;
     float velocity_angular = 0.1f;
     // Path planner parameters

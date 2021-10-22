@@ -189,6 +189,7 @@ int main(int argc, char** argv) {
       config.use_pose_history,
       config.raycast_width,
       config.raycast_height,
+      config.delta_t,
       config.linear_velocity,
       config.angular_velocity, {
         "", Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(),

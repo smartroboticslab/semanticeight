@@ -331,7 +331,7 @@ namespace se {
     const int s = snprintf(nullptr, 0, format, config_.exploration_weight, entropy_,
         (1.0f - config_.exploration_weight), lod_gain_, path_time_, utility_);
     utility_str_ = std::string(s + 1, '\0');
-    snprintf(utility_str_.data(), s + 1, format, config_.exploration_weight, entropy_,
+    snprintf(&utility_str_[0], s + 1, format, config_.exploration_weight, entropy_,
         (1.0f - config_.exploration_weight), lod_gain_, path_time_, utility_);
   }
 
