@@ -11,6 +11,7 @@
 #include <se/entropy.hpp>
 #include <se/image/image.hpp>
 #include <se/object_utils.hpp>
+#include <se/path.hpp>
 #include <se/pose_history.hpp>
 #include <ptp/OccupancyWorld.hpp>
 #include <ptp/PlanningParameter.hpp>
@@ -19,8 +20,6 @@
 
 namespace se {
   typedef std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> OctreePtr;
-
-  typedef std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> Path;
 
   struct CandidateConfig {
     // Utility settings

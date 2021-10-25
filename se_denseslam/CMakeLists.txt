@@ -42,6 +42,7 @@ foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
     "./src/ptp/ProbCollisionChecker.cpp"
     "./src/ptp/SafeFlightCorridorGenerator.cpp"
     "./src/entropy.cpp"
+    "./src/path.cpp"
     "./src/candidate_view.cpp"
     "./src/pose_history.cpp"
     "./src/exploration_utils.cpp"
