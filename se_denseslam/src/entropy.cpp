@@ -107,18 +107,16 @@ namespace se {
 
 
 
-  /** \brieaf Compute the ray direction in the map frame for a pixel x,y of an image width x height
-   * when performing a 360-degree raycast with the supplied verical_fov.
+  /** \brieaf Compute the ray direction in the map frame (x-forward, z-up) for a pixel x,y of an
+   * image width x height when performing a 360-degree raycast with the supplied verical_fov.
    */
   Eigen::Vector3f ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov) {
     // Compute the spherical coordinates of the ray.
     const float theta = azimuth_from_index(x, width, 2.0f * M_PI_F);
     const float phi = polar_from_index(y, height, vertical_fov);
     // Convert spherical coordinates to cartesian coordinates assuming a radius of 1.
-    const Eigen::Vector3f ray_dir_C (sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
-    // The conversion between the 360 camera frame to the map is only a translation which should not
-    // be a applied to a ray direction so ray_dir_C is also ray_dir_M.
-    return ray_dir_C;
+    const Eigen::Vector3f ray_dir_M (sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
+    return ray_dir_M;
   }
 
 
