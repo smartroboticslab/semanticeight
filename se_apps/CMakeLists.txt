@@ -41,7 +41,6 @@ foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
   target_link_libraries(${EXE_NAME}
     PRIVATE
       SE::DenseSLAM${SENSOR_IMPL}
-      stdc++fs
   )
   # Allow handling large files in 32-bit systems
   target_compile_definitions(${EXE_NAME} PRIVATE "-D_FILE_OFFSET_BITS=64")

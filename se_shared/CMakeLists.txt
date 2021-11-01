@@ -28,9 +28,10 @@ target_link_libraries(${LIB_NAME}
 	Lode::PNG
     ${YAML_CPP_LIBRARIES}
     CNPY::cnpy
+    stdc++fs
 )
 set_target_properties(${LIB_NAME} PROPERTIES
-  CXX_STANDARD 14
+  CXX_STANDARD 17
   CXX_STANDARD_REQUIRED ON
   CXX_EXTENSIONS OFF
 )

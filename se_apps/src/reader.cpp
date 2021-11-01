@@ -8,7 +8,7 @@
 
 #include "reader.hpp"
 
-#include "filesystem.hpp"
+#include "se/filesystem.hpp"
 #include "se/str_utils.hpp"
 #include "reader_iclnuim.hpp"
 #include "reader_newercollege.hpp"

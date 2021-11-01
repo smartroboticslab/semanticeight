@@ -16,7 +16,7 @@
 #include "lodepng.h"
 
 #include "reader_iclnuim.hpp"
-#include "filesystem.hpp"
+#include "se/filesystem.hpp"
 #include "se/image_utils.hpp"
 
 
