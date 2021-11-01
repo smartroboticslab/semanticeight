@@ -77,13 +77,13 @@ namespace se {
    * corresponds to the middle row of the image.
    * \return The polar angle in the interval [0,pi].
    */
-  float polar_from_index(const int y_idx, const int height, const float vfov) {
+  float polar_from_index(int y_idx, int height, float vfov, float pitch_offset) {
     assert(0 <= y_idx);
     assert(y_idx < height);
     assert(0 < vfov);
     assert(vfov <= M_PI_F);
     const float delta_phi = vfov / height;
-    const float phi_min = M_PI_F / 2.0f - vfov / 2.0f;
+    const float phi_min = M_PI_F / 2.0f - vfov / 2.0f + pitch_offset;
     // Both image row coordinates and polar angles increase downwards.
     return phi_min + delta_phi * y_idx;
   }
@@ -110,10 +110,15 @@ namespace se {
   /** \brieaf Compute the ray direction in the map frame (x-forward, z-up) for a pixel x,y of an
    * image width x height when performing a 360-degree raycast with the supplied verical_fov.
    */
-  Eigen::Vector3f ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov) {
+  Eigen::Vector3f ray_dir_from_pixel(int   x,
+                                     int   y,
+                                     int   width,
+                                     int   height,
+                                     float vertical_fov,
+                                     float pitch_offset) {
     // Compute the spherical coordinates of the ray.
     const float theta = azimuth_from_index(x, width, 2.0f * M_PI_F);
-    const float phi = polar_from_index(y, height, vertical_fov);
+    const float phi = polar_from_index(y, height, vertical_fov, pitch_offset);
     // Convert spherical coordinates to cartesian coordinates assuming a radius of 1.
     const Eigen::Vector3f ray_dir_M (sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
     return ray_dir_M;
@@ -195,6 +200,23 @@ namespace se {
 
 
 
+  Image<Eigen::Vector3f> ray_image(const int              width,
+                                   const int              height,
+                                   const SensorImpl&      sensor,
+                                   const float            pitch_offset) {
+    Image<Eigen::Vector3f> rays(width, height);
+#pragma omp parallel for
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        const Eigen::Vector3f ray_M = ray_dir_from_pixel(x, y, width, height, sensor.vertical_fov, pitch_offset);
+        rays(x, y) = ray_M;
+      }
+    }
+    return rays;
+  }
+
+
+
   float max_ray_entropy(const float voxel_dim,
                         const float near_plane,
                         const float far_plane) {
@@ -206,15 +228,24 @@ namespace se {
   void raycast_entropy(Image<float>&                       entropy_image,
                        const Octree<VoxelImpl::VoxelType>& map,
                        const SensorImpl&                   sensor,
-                       const Eigen::Vector3f&              t_MC) {
+                       const Eigen::Matrix4f&              T_MB,
+                       const Eigen::Matrix4f&              T_BC) {
+    const Eigen::Vector3f& t_MB = T_MB.topRightCorner<3,1>();
+    // Transformation from the camera body frame Bc (x-forward, z-up) to the camera frame C
+    // (z-forward, x-right).
+    Eigen::Matrix4f T_CBc;
+    T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
+    const Eigen::Matrix4f T_BBc = T_BC * T_CBc;
+    // The pitch angle of the camera relative to the body frame.
+    const float pitch = math::wrap_angle_pi(T_BBc.topLeftCorner<3,3>().eulerAngles(2, 1, 0).y());
 #pragma omp parallel for
     for (int y = 0; y < entropy_image.height(); y++) {
 #pragma omp simd
       for (int x = 0; x < entropy_image.width(); x++) {
         const Eigen::Vector3f ray_dir_M = ray_dir_from_pixel(x, y,
-            entropy_image.width(), entropy_image.height(), sensor.vertical_fov);
+            entropy_image.width(), entropy_image.height(), sensor.vertical_fov, pitch);
         // Accumulate the entropy along the ray
-        entropy_image(x, y) = information_gain_along_ray(map, t_MC, ray_dir_M,
+        entropy_image(x, y) = information_gain_along_ray(map, t_MB, ray_dir_M,
             sensor.near_plane, sensor.far_plane);
         // Normalize the per-ray entropy in the interval [0-1].
         entropy_image(x, y) /= max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
@@ -227,20 +258,29 @@ namespace se {
   void raycast_depth(Image<float>&                       depth_image,
                      const Octree<VoxelImpl::VoxelType>& map,
                      const SensorImpl&                   sensor,
-                     const Eigen::Vector3f&              t_MC) {
+                     const Eigen::Matrix4f&              T_MB,
+                     const Eigen::Matrix4f&              T_BC) {
+    const Eigen::Vector3f& t_MB = T_MB.topRightCorner<3,1>();
+    // Transformation from the camera body frame Bc (x-forward, z-up) to the camera frame C
+    // (z-forward, x-right).
+    Eigen::Matrix4f T_CBc;
+    T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
+    const Eigen::Matrix4f T_BBc = T_BC * T_CBc;
+    // The pitch angle of the camera relative to the body frame.
+    const float pitch = math::wrap_angle_pi(T_BBc.topLeftCorner<3,3>().eulerAngles(2, 1, 0).y());
 #pragma omp parallel for
     for (int y = 0; y < depth_image.height(); y++) {
 #pragma omp simd
       for (int x = 0; x < depth_image.width(); x++) {
         const Eigen::Vector3f ray_dir_M = ray_dir_from_pixel(x, y,
-            depth_image.width(), depth_image.height(), sensor.vertical_fov);
+            depth_image.width(), depth_image.height(), sensor.vertical_fov, pitch);
         // Compute the hit along the ray
-        const Eigen::Vector4f hit_M = VoxelImpl::raycast(map, t_MC, ray_dir_M,
+        const Eigen::Vector4f hit_M = VoxelImpl::raycast(map, t_MB, ray_dir_M,
             sensor.near_plane, sensor.far_plane);
         if (hit_M == Eigen::Vector4f::Zero()) {
           depth_image(x, y) = 0.0f;
         } else {
-          depth_image(x, y) = (hit_M.head<3>() - t_MC).norm();
+          depth_image(x, y) = (hit_M.head<3>() - t_MB).norm();
         }
       }
     }

@@ -15,3 +15,18 @@ target_link_libraries(${unit_test_name}
 )
 gtest_add_tests(${unit_test_name} "" AUTO)
 
+set(unit_test_name entropy-raycast-unittest)
+add_executable(${unit_test_name}
+  "entropy_raycast_unittest.cpp"
+)
+target_include_directories(${unit_test_name} BEFORE
+  PRIVATE
+    "../../include"
+    "../../../se_voxel_impl/include"
+)
+target_link_libraries(${unit_test_name}
+  PRIVATE
+    SE::DenseSLAMPinholeCamera
+)
+gtest_add_tests(${unit_test_name} "" AUTO)
+

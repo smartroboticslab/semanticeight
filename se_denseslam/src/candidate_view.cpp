@@ -130,7 +130,7 @@ namespace se {
       const Eigen::Matrix4f T_MC = path_MB_[i] * T_BC;
       Image<float> entropy_image (entropy_image_.width(), entropy_image_.height());
       Image<float> frustum_overlap_image (entropy_image_.width(), 1);
-      raycast_entropy(entropy_image, map, sensor, T_MC.topRightCorner<3,1>());
+      raycast_entropy(entropy_image, map, sensor, path_MB_[i], T_BC);
       frustum_overlap(frustum_overlap_image, sensor, T_MC, T_MC_history);
       const std::pair<float, float> r = optimal_yaw(entropy_image, frustum_overlap_image, sensor);
       path_MB_[i].topLeftCorner<3,3>() = yawToC_MB(r.first);
@@ -160,9 +160,8 @@ namespace se {
                                                       const bool                          visualize_yaw) const {
     Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
     T_MB.topRightCorner<3,1>() = config_.planner_config.goal_t_MB_;
-    const Eigen::Matrix4f T_MC = T_MB * T_BC;
     Image<float> entropy (entropy_image_.width(), entropy_image_.height());
-    raycast_entropy(entropy, map, sensor, T_MC.topRightCorner<3,1>());
+    raycast_entropy(entropy, map, sensor, T_MB, T_BC);
     return visualizeEntropy(entropy, sensor, yaw_M_, visualize_yaw);
   }
 
@@ -191,10 +190,9 @@ namespace se {
     const Eigen::Vector2i res (entropy_image_.width(), entropy_image_.height());
     Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
     T_MB.topRightCorner<3,1>() = config_.planner_config.goal_t_MB_;
-    const Eigen::Matrix4f T_MC = T_MB * T_BC;
     // Raycast to get the depth
     Image<float> depth (res.x(), res.y());
-    raycast_depth(depth, map, sensor, T_MC.topRightCorner<3,1>());
+    raycast_depth(depth, map, sensor, T_MB, T_BC);
     // Render to a colour image
     Image<uint32_t> depth_render (res.x(), res.y());
     se::depth_to_rgba(depth_render.data(), depth.data(), res, sensor.near_plane, sensor.far_plane);
@@ -314,7 +312,7 @@ namespace se {
                                      const PoseHistory&                  T_MC_history) {
     const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC;
     // Raycast at the last path vertex
-    raycast_entropy(entropy_image_, map, sensor, T_MC.topRightCorner<3,1>());
+    raycast_entropy(entropy_image_, map, sensor, path_MB_.back(), T_BC);
     if (config_.use_pose_history) {
       frustum_overlap(frustum_overlap_image_, sensor, T_MC, T_MC_history);
     }
