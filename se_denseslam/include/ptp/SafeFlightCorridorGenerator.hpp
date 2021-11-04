@@ -88,6 +88,8 @@ namespace ptp {
     void prunePath(og::PathGeometric& path);
     void simplifyPath(ompl::geometric::PathGeometric& path);
 
+    /** Return the planned path. Its first vertex is always the start position.
+     */
     Path<kDim>::Ptr getPath() { return path_; };
 
   private:
