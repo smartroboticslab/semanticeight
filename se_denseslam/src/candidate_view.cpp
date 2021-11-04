@@ -5,6 +5,8 @@
 
 #include "se/candidate_view.hpp"
 
+#include <cassert>
+
 #include <se/image_utils.hpp>
 #include <se/utils/math_utils.h>
 
@@ -77,6 +79,11 @@ namespace se {
         return;
       }
       path_MB_ = convertPath(planner.getPath());
+      // The first path vertex should have the same position as the current pose but a unit
+      // orientation. Set it to exactly the current pose.
+      assert(("The first path position is the current position",
+            path_MB_.front().topRightCorner<3,1>().isApprox(T_MB.topRightCorner<3,1>())));
+      path_MB_.front() = T_MB;
     }
     // Raycast to compute the optimal yaw angle.
     entropyRaycast(*map, sensor, T_BC, T_MC_history);
@@ -134,11 +141,6 @@ namespace se {
       frustum_overlap(frustum_overlap_image, sensor, T_MC, T_MC_history);
       const std::pair<float, float> r = optimal_yaw(entropy_image, frustum_overlap_image, sensor);
       path_MB_[i].topLeftCorner<3,3>() = yawToC_MB(r.first);
-    }
-    // Set the yaw of the first vertex to that of the second vertex in order to avoid a useless yaw
-    // to the identity orientation.
-    if (path_MB_.size() >= 2) {
-      path_MB_[0].topLeftCorner<3,3>() = path_MB_[1].topLeftCorner<3,3>();
     }
     //yawBeforeMoving(path_MB_);
     //yawWhileMoving(path_MB_, config_.velocity_linear, config_.velocity_angular);
