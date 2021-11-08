@@ -184,7 +184,9 @@ int main(int argc, char** argv) {
       t_MW,
       config.pyramid, config, config.voxel_impl_yaml);
   se::ExplorationConfig exploration_config = {
-    config.num_candidates, {
+    config.num_candidates,
+    (pipeline->T_MW() * config.sampling_min_W.homogeneous()).head<3>(),
+    (pipeline->T_MW() * config.sampling_max_W.homogeneous()).head<3>(), {
       config.exploration_weight,
       config.use_pose_history,
       config.raycast_width,

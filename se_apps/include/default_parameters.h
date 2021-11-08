@@ -544,6 +544,12 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       if (has_yaml_map_config && yaml_map_config["aabb_max_W"]) {
         config.aabb_max_W = Eigen::Vector3f(yaml_map_config["aabb_max_W"].as<std::vector<float>>().data());
       }
+      if (has_yaml_map_config && yaml_map_config["sampling_min_W"]) {
+        config.sampling_min_W = Eigen::Vector3f(yaml_map_config["sampling_min_W"].as<std::vector<float>>().data());
+      }
+      if (has_yaml_map_config && yaml_map_config["sampling_max_W"]) {
+        config.sampling_max_W = Eigen::Vector3f(yaml_map_config["sampling_max_W"].as<std::vector<float>>().data());
+      }
 
       // CONFIGURE SENSOR
       // Sensor type

@@ -35,7 +35,7 @@ namespace se {
         && !remaining_frontiers.empty()) {
       // Sample a point
       const Eigen::Vector3f candidate_t_MB = sampleCandidate(map, remaining_frontiers, objects,
-          sensor, T_MB_history, sampling_step);
+          sensor, T_MB_history, sampling_step, config_.sampling_min_M, config_.sampling_max_M);
       if (T_MB_history.rejectSampledPos(candidate_t_MB, sensor)) {
         rejected_candidates_.emplace_back(candidate_t_MB);
         continue;
@@ -112,7 +112,9 @@ namespace se {
                                                                 const Objects&         /*objects*/,
                                                                 const SensorImpl&      /*sensor*/,
                                                                 const PoseHistory&     /*T_MB_history*/,
-                                                                const int              sampling_step) {
+                                                                const int              sampling_step,
+                                                                const Eigen::Vector3f& sampling_min_M,
+                                                                const Eigen::Vector3f& sampling_max_M) {
     // TODO take objects into account
     if (frontiers.empty()) {
       return Eigen::Vector3f::Constant(NAN);
@@ -132,7 +134,9 @@ namespace se {
       // Return the coordinates of the sampled Volume's centre
       const int size = map->depthToSize(keyops::depth(code));
       pos = map->voxelDim() * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
+      se::math::clamp(pos, sampling_min_M, sampling_max_M);
     //} while (T_MB_history.rejectSampledPos(pos, sensor));
+    //} while (!math::is_between(pos, sampling_min_M, sampling_max_M));
     return pos;
   }
 } // namespace se

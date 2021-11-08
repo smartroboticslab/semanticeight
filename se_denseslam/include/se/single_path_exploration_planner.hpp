@@ -14,6 +14,8 @@
 namespace se {
   struct ExplorationConfig {
     int num_candidates;
+    Eigen::Vector3f sampling_min_M;
+    Eigen::Vector3f sampling_max_M;
     CandidateConfig candidate_config;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -58,7 +60,9 @@ namespace se {
                                              const Objects&         objects,
                                              const SensorImpl&      sensor,
                                              const PoseHistory&     T_MC_history,
-                                             const int              sampling_step);
+                                             const int              sampling_step,
+                                             const Eigen::Vector3f& sampling_min_M,
+                                             const Eigen::Vector3f& sampling_max_M);
   };
 } // namespace se
 
