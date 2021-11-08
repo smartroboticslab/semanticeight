@@ -420,6 +420,15 @@ namespace se {
       const float end_roll = wrap_angle_pi(end_pose.topLeftCorner<3,3>().eulerAngles(2, 1, 0).z());
       return angle_diff(start_roll, end_roll);
     }
+
+
+
+    template<typename T, int Rows>
+    bool is_between(const Eigen::Matrix<T, Rows, 1>& x,
+                    const Eigen::Matrix<T, Rows, 1>& min_x,
+                    const Eigen::Matrix<T, Rows, 1>& max_x) {
+      return (min_x.array() <= x.array()).all() && (x.array() <= max_x.array()).all();
+    }
   }
 }
 #endif

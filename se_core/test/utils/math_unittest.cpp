@@ -164,3 +164,26 @@ TEST(MathUtils, angle_diff) {
   }
 }
 
+TEST(MathUtils, is_between) {
+  EXPECT_TRUE(se::math::is_between(
+        Eigen::Vector3f(0, 0, 0),
+        Eigen::Vector3f(0, 0, 0),
+        Eigen::Vector3f(0, 0, 0)));
+  EXPECT_TRUE(se::math::is_between(
+        Eigen::Vector3f(-1, 2, 0),
+        Eigen::Vector3f(-3, 0, -INFINITY),
+        Eigen::Vector3f(1, INFINITY, 3)));
+  EXPECT_TRUE(se::math::is_between(
+        Eigen::Vector3f(2, 3, -8),
+        Eigen::Vector3f(-INFINITY, -INFINITY, -INFINITY),
+        Eigen::Vector3f(INFINITY, INFINITY, INFINITY)));
+  EXPECT_TRUE(se::math::is_between(
+        Eigen::Vector3f(2, 3, 1.2),
+        Eigen::Vector3f(-INFINITY, -INFINITY, 0.5),
+        Eigen::Vector3f(INFINITY, INFINITY, 2.5)));
+  EXPECT_FALSE(se::math::is_between(
+        Eigen::Vector3f(2, -1, 5.5),
+        Eigen::Vector3f(-1, 0, 5),
+        Eigen::Vector3f(3, 8, 6)));
+}
+
