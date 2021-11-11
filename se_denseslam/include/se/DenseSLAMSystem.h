@@ -177,7 +177,7 @@ class DenseSLAMSystem {
     // Exploration only ///////////////////////////////////////////////////////
     std::set<se::key_t> updated_nodes_;
     std::set<se::key_t> frontiers_;
-    static constexpr int min_frontier_volume_ = 1;
+    int frontier_cluster_min_size_;
     Eigen::Vector3f aabb_min_M_;
     Eigen::Vector3f aabb_max_M_;
 

@@ -538,6 +538,9 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       if (has_yaml_map_config && yaml_map_config["t_MW_factor"]) {
         config.t_MW_factor = Eigen::Vector3f(yaml_map_config["t_MW_factor"].as<std::vector<float>>().data());
       }
+      if (has_yaml_map_config && yaml_map_config["frontier_cluster_min_volume"]) {
+        config.frontier_cluster_min_volume = yaml_map_config["frontier_cluster_min_volume"].as<float>();
+      }
       if (has_yaml_map_config && yaml_map_config["aabb_min_W"]) {
         config.aabb_min_W = Eigen::Vector3f(yaml_map_config["aabb_min_W"].as<std::vector<float>>().data());
       }
