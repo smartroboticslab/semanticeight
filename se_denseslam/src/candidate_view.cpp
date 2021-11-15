@@ -428,11 +428,13 @@ namespace se {
       t_tran += translation.norm() / velocity_linear;
     }
     // Compute the rotation time
-    float t_rot = 0.0f;
-    for (size_t i = 0; i < path.size() - 1; ++i) {
-      const float yaw_diff = fabsf(math::yaw_error(path[i], path[i + 1]));
-      t_rot += yaw_diff / velocity_angular;
-    }
+    //float t_rot = 0.0f;
+    //for (size_t i = 0; i < path.size() - 1; ++i) {
+    //  const float yaw_diff = fabsf(math::yaw_error(path[i], path[i + 1]));
+    //  t_rot += yaw_diff / velocity_angular;
+    //}
+    const float yaw_diff = fabsf(math::yaw_error(path.front(), path.back()));
+    const float t_rot = yaw_diff / velocity_angular;
     const float t = std::max(t_tran, t_rot);
     return (std::fabs(t) > 10.0f * FLT_EPSILON) ? t : NAN;
   }
