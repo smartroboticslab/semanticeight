@@ -73,6 +73,11 @@ namespace str_utils {
    */
   std::string dirname(const std::string& path);
 
+  /** Return the result of expanding a leading ~ in path.
+   * \note Also expands environment variables since it uses wordexp(3) internally.
+   * \note Currently only implemented for POSIX systems.
+   */
+  std::string expand_user(const std::string& path);
 } // namespace str_utils
 
 #endif // STR_UTILS_HPP

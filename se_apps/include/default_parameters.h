@@ -434,6 +434,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       // Sequence path file or directory path
       if (has_yaml_general_config && yaml_general_config["sequence_path"]) {
         config.sequence_path = yaml_general_config["sequence_path"].as<std::string>();
+        config.sequence_path = str_utils::expand_user(config.sequence_path);
       }
 
       // En/disable ground truth
@@ -443,6 +444,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       // Ground truth file path
       if (has_yaml_general_config && yaml_general_config["ground_truth_file"]) {
         config.ground_truth_file = yaml_general_config["ground_truth_file"].as<std::string>();
+        config.ground_truth_file = str_utils::expand_user(config.ground_truth_file);
       }
 
       // Benchmark and result file or directory path
@@ -452,6 +454,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       // Log path
       if (has_yaml_general_config && yaml_general_config["log_path"]) {
         config.log_file = yaml_general_config["log_path"].as<std::string>();
+        config.log_file = str_utils::expand_user(config.log_file);
       }
       // En/disable render
       if (has_yaml_general_config && yaml_general_config["enable_render"]) {
@@ -460,6 +463,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       // Render path
       if (has_yaml_general_config && yaml_general_config["output_render_path"]) {
         config.output_render_file = yaml_general_config["output_render_path"].as<std::string>();
+        config.output_render_file = str_utils::expand_user(config.output_render_file);
       }
       // En/disable meshing
       if (has_yaml_general_config && yaml_general_config["enable_meshing"]) {
@@ -468,6 +472,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       // Output mesh file path
       if (has_yaml_general_config && yaml_general_config["output_mesh_path"]) {
         config.output_mesh_file = yaml_general_config["output_mesh_path"].as<std::string>();
+        config.output_mesh_file = str_utils::expand_user(config.output_mesh_file);
       }
       // En/disable octree structure
       if (has_yaml_general_config && yaml_general_config["enable_structure"]) {
@@ -476,6 +481,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv) {
       // Output octree structure path
       if (has_yaml_general_config && yaml_general_config["output_structure_path"]) {
         config.output_structure_file = yaml_general_config["output_structure_path"].as<std::string>();
+        config.output_structure_file = str_utils::expand_user(config.output_structure_file);
       }
 
       // Integration rate
