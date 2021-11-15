@@ -134,7 +134,7 @@ namespace se {
     static_assert(std::is_same<VoxelImpl, MultiresOFusion>::value,
         "360 raycasting implemented only for MultiresOFusion");
     float ray_entropy = 0.0f;
-    const float t_step = map.voxelDim() / 2.0f;
+    const float t_step = map.voxelDim();
     for (float t = t_near; t <= t_far; t += t_step) {
       const Eigen::Vector3f point_M = ray_origin_M + t * ray_dir_M;
       const float l = map.interpAtPoint(point_M, VoxelImpl::VoxelType::threshold).first;
