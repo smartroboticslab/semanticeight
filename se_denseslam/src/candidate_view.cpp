@@ -144,7 +144,7 @@ namespace se {
     }
     //yawBeforeMoving(path_MB_);
     //yawWhileMoving(path_MB_, config_.velocity_linear, config_.velocity_angular);
-    path_MB_ = getFinalPath(path_MB_, config_.delta_t, config_.velocity_linear, config_.velocity_angular, map.voxelDim());
+    //path_MB_ = getFinalPath(path_MB_, config_.delta_t, config_.velocity_linear, config_.velocity_angular, map.voxelDim());
   }
 
 
