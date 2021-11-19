@@ -52,6 +52,10 @@ test-install:
 doc:
 	doxygen
 
+.PHONY: format
+format:
+	find se_apps se_core se_denseslam se_shared se_voxel_impl -regex '.*\.\(cpp\|hpp\|c\|h\)' -exec clang-format-10 -style=file -i {} \;
+
 
 
 .PHONY: clean
