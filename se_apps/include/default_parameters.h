@@ -25,6 +25,8 @@
 #include "se/filesystem.hpp"
 #include "se/str_utils.hpp"
 #include "se/utils/math_utils.h"
+#include "se/sensor_implementation.hpp"
+#include "se/voxel_implementations.hpp"
 
 // Put colons after options with arguments
 static std::string short_options = "bB:c:deEf:FgGhI:l:m:M:n:N:o:qQr:s:t:uUv:V:Y:z:Z:?";

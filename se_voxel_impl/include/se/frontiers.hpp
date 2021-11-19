@@ -5,7 +5,8 @@
 #ifndef __FRONTIERS_HPP
 #define __FRONTIERS_HPP
 
-#include "se/set_operations.hpp"
+#include <se/octree.hpp>
+#include <se/set_operations.hpp>
 
 namespace se {
 /** Test if the volume at the supplied coordinates and scale is a frontier.

@@ -9,6 +9,10 @@
 
 #ifndef __PowerMonitor__
 #define __PowerMonitor__
+
+#include <cstdio>
+#include <se/perfstats.h>
+
 class PowerMonitor {
     public:
     enum Sensor { SENSOR_A7 = 45, SENSOR_A15 = 40, SENSOR_GPU = 44, SENSOR_DRAM = 41 };
