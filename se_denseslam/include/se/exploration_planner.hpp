@@ -24,7 +24,11 @@ namespace se {
 
       void setT_WB(const Eigen::Matrix4f& T_WB);
 
+      void setPlanningT_WB(const Eigen::Matrix4f& T_WB);
+
       Eigen::Matrix4f getT_WB() const;
+
+      Eigen::Matrix4f getPlanningT_WB() const;
 
       Path getT_WBHistory() const;
 
@@ -79,6 +83,9 @@ namespace se {
       Eigen::Matrix4f T_WM_;
       Eigen::Matrix4f T_BC_;
       Eigen::Matrix4f T_CB_;
+      // The pose planning the next path will start from.
+      Eigen::Matrix4f planning_T_MB_;
+      // History of fusion poses.
       PoseHistory T_MB_history_;
       PoseHistory T_MC_history_;
       std::vector<CandidateView> candidate_views_;

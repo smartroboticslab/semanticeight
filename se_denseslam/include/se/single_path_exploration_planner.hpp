@@ -31,6 +31,7 @@ namespace se {
                                    const std::vector<se::key_t>& frontiers,
                                    const Objects&                objects,
                                    const SensorImpl&             sensor,
+                                   const Eigen::Matrix4f&        T_MB,
                                    const Eigen::Matrix4f&        T_BC,
                                    const PoseHistory&            T_MB_history,
                                    const PoseHistory&            T_MC_history,

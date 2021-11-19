@@ -31,9 +31,23 @@ namespace se {
 
 
 
+  void ExplorationPlanner::setPlanningT_WB(const Eigen::Matrix4f& T_WB)
+  {
+      planning_T_MB_ = T_MW_ * T_WB;
+  }
+
+
+
   Eigen::Matrix4f ExplorationPlanner::getT_WB() const
   {
     return T_WM_ * T_MB_history_.poses.back();
+  }
+
+
+
+  Eigen::Matrix4f ExplorationPlanner::getPlanningT_WB() const
+  {
+    return T_WM_ * planning_T_MB_;
   }
 
 
@@ -112,7 +126,7 @@ namespace se {
                                               const SensorImpl&      sensor)
   {
     const std::vector<key_t> frontier_vec(frontiers.begin(), frontiers.end());
-    SinglePathExplorationPlanner planner (map_, frontier_vec, objects, sensor, T_BC_, T_MB_history_, T_MC_history_, config_);
+    SinglePathExplorationPlanner planner (map_, frontier_vec, objects, sensor, planning_T_MB_, T_BC_, T_MB_history_, T_MC_history_, config_);
     candidate_views_ = planner.views();
     rejected_candidate_views_ = planner.rejectedViews();
     goal_view_ = planner.bestView();
