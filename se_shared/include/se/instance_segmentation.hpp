@@ -11,10 +11,10 @@
 #include "se/detection_confidence.hpp"
 
 namespace se {
-  /** Segmentation data for a single object instance. Objects that were not detected by the
+/** Segmentation data for a single object instance. Objects that were not detected by the
    * segmentation network will have an invalid conf.
    */
-  struct InstanceSegmentation {
+struct InstanceSegmentation {
     /** The ID of this particular object instance. Used to distinguish objects of the same class.
      */
     int instance_id;
@@ -40,19 +40,16 @@ namespace se {
     /** If class_id is a valid semantic class ID, the corresponding element of conf will be set to
      * 1 and all other elements to 0.
      */
-    InstanceSegmentation(const int      instance_id,
-                         const int      class_id,
-                         const cv::Mat& instance_mask);
+    InstanceSegmentation(const int instance_id, const int class_id, const cv::Mat& instance_mask);
 
-    InstanceSegmentation(const int                  instance_id,
-                         const cv::Mat&             instance_mask,
+    InstanceSegmentation(const int instance_id,
+                         const cv::Mat& instance_mask,
                          const DetectionConfidence& confidence);
 
     /** Create an undetected InstanceSegmentation. InstanceSegmentation::detected() will return
      * false.
      */
-    InstanceSegmentation(const int                  instance_id,
-                         const cv::Mat&             instance_mask);
+    InstanceSegmentation(const int instance_id, const cv::Mat& instance_mask);
 
     /** Retern the ID of the detected object class.
      */
@@ -110,22 +107,22 @@ namespace se {
     static constexpr uint8_t instance_mask_threshold = UINT8_MAX / 2;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  };
+};
 
-  std::ostream& operator<<(std::ostream& os, const InstanceSegmentation& o);
+std::ostream& operator<<(std::ostream& os, const InstanceSegmentation& o);
 
 
 
-  /** A vector containing InstanceSegmentation structs.
+/** A vector containing InstanceSegmentation structs.
    */
-  typedef std::vector<InstanceSegmentation, Eigen::aligned_allocator<InstanceSegmentation> >
-      InstanceSegmentationVec;
-  typedef std::vector<InstanceSegmentation, Eigen::aligned_allocator<InstanceSegmentation> >::iterator
-      InstanceSegmentationVecIt;
-  typedef std::vector<InstanceSegmentation, Eigen::aligned_allocator<InstanceSegmentation> >::const_iterator
-      InstanceSegmentationVecCIt;
+typedef std::vector<InstanceSegmentation, Eigen::aligned_allocator<InstanceSegmentation>>
+    InstanceSegmentationVec;
+typedef std::vector<InstanceSegmentation, Eigen::aligned_allocator<InstanceSegmentation>>::iterator
+    InstanceSegmentationVecIt;
+typedef std::vector<InstanceSegmentation,
+                    Eigen::aligned_allocator<InstanceSegmentation>>::const_iterator
+    InstanceSegmentationVecCIt;
 
 } // namespace se
 
 #endif // INSTANCE_SEGMENTATION_HPP
-

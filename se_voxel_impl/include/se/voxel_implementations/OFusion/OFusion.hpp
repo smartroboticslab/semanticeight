@@ -29,15 +29,15 @@
 #ifndef __OFUSION_HPP
 #define __OFUSION_HPP
 
-#include "se/octree.hpp"
-#include "se/image/image.hpp"
-#include "se/algorithms/meshing.hpp"
-#include "se/sensor_implementation.hpp"
-#include "se/perfstats.h"
-#include "se/timings.h"
-
 #include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
+
+#include "se/algorithms/meshing.hpp"
+#include "se/image/image.hpp"
+#include "se/octree.hpp"
+#include "se/perfstats.h"
+#include "se/sensor_implementation.hpp"
+#include "se/timings.h"
 
 
 
@@ -45,151 +45,161 @@
  * Occupancy mapping voxel implementation.
  */
 struct OFusion {
-
-  /**
+    /**
    * The voxel type used as the template parameter for se::Octree.
    */
-  struct VoxelType {
-    /**
+    struct VoxelType {
+        /**
      * The struct stored in each se::Octree voxel.
      */
-    struct VoxelData {
-      float  x; /**< The occupancy value in log-odds. */
-      float    fg;  // Foreground probability
-      double y; /**< The timestamp of the last update. */
-      uint16_t num; // Number of measurements fused for the foreground probability and color
-      uint8_t  r;   // Red channel
-      uint8_t  g;   // Green channel
-      uint8_t  b;   // Blue channel
+        struct VoxelData {
+            float x;      /**< The occupancy value in log-odds. */
+            float fg;     // Foreground probability
+            double y;     /**< The timestamp of the last update. */
+            uint16_t num; // Number of measurements fused for the foreground probability and color
+            uint8_t r;    // Red channel
+            uint8_t g;    // Green channel
+            uint8_t b;    // Blue channel
 
-      bool operator==(const VoxelData& other) const;
-      bool operator!=(const VoxelData& other) const;
+            bool operator==(const VoxelData& other) const;
+            bool operator!=(const VoxelData& other) const;
+        };
+
+        static inline VoxelData invalid()
+        {
+            return {0.f, 0.f, 0.f, 0u, 0u, 0u, 0u};
+        }
+        static inline VoxelData initData()
+        {
+            return {0.f, 0.f, 0.f, 0u, 0u, 0u, 0u};
+        }
+
+        static inline float selectValue(const VoxelData& data)
+        {
+            return data.x;
+        };
+
+        static float selectNodeValue(const VoxelData& data)
+        {
+            return selectValue(data);
+        };
+
+        static float selectVoxelValue(const VoxelData& data)
+        {
+            return selectValue(data);
+        };
+
+        static bool isInside(const VoxelData& data)
+        {
+            return data.x > surface_boundary;
+        };
+
+        static bool isValid(const VoxelData& data)
+        {
+            return data.y > 0;
+        };
+
+        using VoxelBlockType = se::VoxelBlockFinest<OFusion::VoxelType>;
+
+        using MemoryPoolType = se::PagedMemoryPool<OFusion::VoxelType>;
+        template<typename ElemT>
+        using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
     };
 
-    static inline VoxelData invalid()  { return {0.f, 0.f, 0.f, 0u, 0u, 0u, 0u}; }
-    static inline VoxelData initData() { return {0.f, 0.f, 0.f, 0u, 0u, 0u, 0u}; }
+    using VoxelData = OFusion::VoxelType::VoxelData;
+    using OctreeType = se::Octree<OFusion::VoxelType>;
+    using VoxelBlockType = typename OFusion::VoxelType::VoxelBlockType;
 
-    static inline float selectValue(const VoxelData& data) {
-      return data.x;
-    };
-
-    static float selectNodeValue(const VoxelData& data) {
-      return selectValue(data);
-    };
-
-    static float selectVoxelValue(const VoxelData& data) {
-      return selectValue(data);
-    };
-
-    static bool isInside(const VoxelData& data) {
-      return data.x > surface_boundary;
-    };
-
-    static bool isValid(const VoxelData& data) {
-      return data.y > 0;
-    };
-
-    using VoxelBlockType = se::VoxelBlockFinest<OFusion::VoxelType>;
-
-    using MemoryPoolType = se::PagedMemoryPool<OFusion::VoxelType>;
-    template <typename ElemT>
-    using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
-  };
-
-  using VoxelData      = OFusion::VoxelType::VoxelData;
-  using OctreeType     = se::Octree<OFusion::VoxelType>;
-  using VoxelBlockType = typename OFusion::VoxelType::VoxelBlockType;
-
-  /**
+    /**
    * No need to invert the normals when rendering an occupancy map.
    */
-  static constexpr bool invert_normals = false;
+    static constexpr bool invert_normals = false;
 
-  /**
+    /**
    * The surface is considered to be where the log-odds occupancy probability
    * crosses this value.
    */
-  static float surface_boundary;
+    static float surface_boundary;
 
-  /**
+    /**
    * Stored occupancy probabilities in log-odds are clamped to never be lower
    * than this value.
    */
-  static float min_occupancy;
+    static float min_occupancy;
 
-  /**
+    /**
    * Stored occupancy probabilities in log-odds are clamped to never be greater
    * than this value.
    */
-  static float max_occupancy;
+    static float max_occupancy;
 
-  /**
+    /**
    * The value of the time constant tau in equation (10) from \cite
    * VespaRAL18.
    */
-  static float tau;
+    static float tau;
 
-  static float sigma_min_factor;
-  static float sigma_max_factor;
+    static float sigma_min_factor;
+    static float sigma_max_factor;
 
-  static float sigma_min;
-  static float sigma_max;
+    static float sigma_min;
+    static float sigma_max;
 
-  /**
+    /**
    * Grow rate factor of uncertainty
    */
-  static float k_sigma;
+    static float k_sigma;
 
-  static std::string type() { return "ofusion"; }
+    static std::string type()
+    {
+        return "ofusion";
+    }
 
-  /**
+    /**
    * Configure the OFusion parameters
    */
-  static void configure(const float voxel_dim);
-  static void configure(YAML::Node yaml_config, const float voxel_dim);
+    static void configure(const float voxel_dim);
+    static void configure(YAML::Node yaml_config, const float voxel_dim);
 
-  static std::string printConfig();
+    static std::string printConfig();
 
-  /**
+    /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
    * camera pose.
    */
-  static size_t buildAllocationList(OctreeType&             map,
-                                    const se::Image<float>& depth_image,
-                                    const Eigen::Matrix4f&  T_MC,
-                                    const SensorImpl&       sensor,
-                                    se::key_t*              allocation_list,
-                                    size_t                  reserved);
+    static size_t buildAllocationList(OctreeType& map,
+                                      const se::Image<float>& depth_image,
+                                      const Eigen::Matrix4f& T_MC,
+                                      const SensorImpl& sensor,
+                                      se::key_t* allocation_list,
+                                      size_t reserved);
 
 
 
-  /**
+    /**
    * Integrate a depth image into the map.
    */
-  static void integrate(OctreeType&             map,
-                        const se::Image<float>& depth_image,
-                        const se::Image<uint32_t>& rgba_image,
-                        const cv::Mat&             fg_image,
-                        const Eigen::Matrix4f&  T_CM,
-                        const SensorImpl&       sensor,
-                        const unsigned          frame);
+    static void integrate(OctreeType& map,
+                          const se::Image<float>& depth_image,
+                          const se::Image<uint32_t>& rgba_image,
+                          const cv::Mat& fg_image,
+                          const Eigen::Matrix4f& T_CM,
+                          const SensorImpl& sensor,
+                          const unsigned frame);
 
 
 
-  /**
+    /**
    * Cast a ray and return the point where the surface was hit.
    */
-  static Eigen::Vector4f raycast(const OctreeType&      map,
-                                 const Eigen::Vector3f& ray_origin_M,
-                                 const Eigen::Vector3f& ray_dir_M,
-                                 const float            t_near,
-                                 const float            t_far);
+    static Eigen::Vector4f raycast(const OctreeType& map,
+                                   const Eigen::Vector3f& ray_origin_M,
+                                   const Eigen::Vector3f& ray_dir_M,
+                                   const float t_near,
+                                   const float t_far);
 
-  static void dumpMesh(OctreeType&                map,
-                       std::vector<se::Triangle>& mesh,
-                       const bool                 use_min_scale = false);
-
+    static void
+    dumpMesh(OctreeType& map, std::vector<se::Triangle>& mesh, const bool use_min_scale = false);
 };
 
 #endif
-

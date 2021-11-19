@@ -29,6 +29,7 @@
  */
 
 #include "se/voxel_implementations/ExampleVoxelImpl/ExampleVoxelImpl.hpp"
+
 #include "se/str_utils.hpp"
 
 
@@ -36,55 +37,59 @@
 // Initialize static data members.
 constexpr bool invert_normals = false;
 
-void ExampleVoxelImpl::configure() {
-  // set to default values
+void ExampleVoxelImpl::configure()
+{
+    // set to default values
 }
 
-void ExampleVoxelImpl::configure(YAML::Node yaml_config) {
-  configure()
-  if (yaml_config.IsNull()) return;
+void ExampleVoxelImpl::configure(YAML::Node yaml_config)
+{
+    configure() if (yaml_config.IsNull()) return;
 
-  // set yaml value if parameter key is available
+    // set yaml value if parameter key is available
 };
 
-std::string ExampleVoxelImpl::printConfig() {
-  std::stringstream out;
-  out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
-  out << str_utils::bool_to_pretty_str(ExampleVoxelImpl::invert_normals, "Invert normals") << "\n";
-  return out.str();
+std::string ExampleVoxelImpl::printConfig()
+{
+    std::stringstream out;
+    out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
+    out << str_utils::bool_to_pretty_str(ExampleVoxelImpl::invert_normals, "Invert normals")
+        << "\n";
+    return out.str();
 }
 
 // Implement static member functions.
-size_t ExampleVoxelImpl::buildAllocationList(OctreeType&             map,
+size_t ExampleVoxelImpl::buildAllocationList(OctreeType& map,
                                              const se::Image<float>& depth_image,
-                                             const Eigen::Matrix4f&  T_MC,
-                                             const SensorImpl&       sensor,
-                                             se::key_t*              allocation_list,
-                                             size_t                  reserved) {
-
-  return 0;
+                                             const Eigen::Matrix4f& T_MC,
+                                             const SensorImpl& sensor,
+                                             se::key_t* allocation_list,
+                                             size_t reserved)
+{
+    return 0;
 }
 
 
 
-void ExampleVoxelImpl::integrate(OctreeType&             map,
+void ExampleVoxelImpl::integrate(OctreeType& map,
                                  const se::Image<float>& depth_image,
-                                 const Eigen::Matrix4f&  T_CM,
-                                 const SensorImpl&       sensor,
-                                 const unsigned          frame) {
+                                 const Eigen::Matrix4f& T_CM,
+                                 const SensorImpl& sensor,
+                                 const unsigned frame)
+{
 }
 
 
 
-Eigen::Vector4f ExampleVoxelImpl::raycast(const OctreeType&      map,
+Eigen::Vector4f ExampleVoxelImpl::raycast(const OctreeType& map,
                                           const Eigen::Vector3f& ray_origin_M,
                                           const Eigen::Vector3f& ray_dir_M,
-                                          const float            t_near,
-                                          const float            t_far) {
-  return Eigen::Vector4f::Zero();
+                                          const float t_near,
+                                          const float t_far)
+{
+    return Eigen::Vector4f::Zero();
 }
 
-void ExampleVoxelImpl::dumpMesh(OctreeType&                map,
-                                std::vector<se::Triangle>& mesh) {
+void ExampleVoxelImpl::dumpMesh(OctreeType& map, std::vector<se::Triangle>& mesh)
+{
 }
-

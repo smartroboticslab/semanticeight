@@ -11,12 +11,12 @@
 
 namespace se {
 
-  /*! \brief A cube with data.
+/*! \brief A cube with data.
    * Used to represent the data stored in an se::Octree at mutliple scales and
    * locations.
    */
-  template <typename T>
-  struct Volume {
+template<typename T>
+struct Volume {
     typedef typename T::VoxelData VoxelData;
 
     /** The coordinates of the Volume's centre in the Map frame. */
@@ -30,10 +30,7 @@ namespace se {
 
     Volume();
 
-    Volume(const Eigen::Vector3f& centre_M,
-           float                  dim,
-           int                    size,
-           const VoxelData&       data);
+    Volume(const Eigen::Vector3f& centre_M, float dim, int size, const VoxelData& data);
 
     Volume(const Volume& other);
 
@@ -44,11 +41,10 @@ namespace se {
     bool operator==(const Volume& other) const;
 
     bool operator!=(const Volume& other) const;
-  };
+};
 
 } // namespace se
 
 #include "volume_impl.hpp"
 
 #endif // __VOLUME_HPP
-

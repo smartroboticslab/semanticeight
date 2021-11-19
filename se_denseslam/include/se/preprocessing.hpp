@@ -37,35 +37,34 @@
 #ifndef __PREPROCESSING_HPP
 #define __PREPROCESSING_HPP
 
+#include <Eigen/Dense>
 #include <cstdint>
 
-#include <Eigen/Dense>
-
-#include "se/timings.h"
 #include "se/commons.h"
-#include "se/utils/math_utils.h"
 #include "se/image/image.hpp"
 #include "se/sensor_implementation.hpp"
+#include "se/timings.h"
+#include "se/utils/math_utils.h"
 
 
 
-void bilateralFilterKernel(se::Image<float>&         out,
-                           const se::Image<float>&   in,
+void bilateralFilterKernel(se::Image<float>& out,
+                           const se::Image<float>& in,
                            const std::vector<float>& gaussian,
-                           const float               e_d,
-                           const int                 radius);
+                           const float e_d,
+                           const int radius);
 
 
 
 void depthToPointCloudKernel(se::Image<Eigen::Vector3f>& point_cloud_C,
-                             const se::Image<float>&     depth_image,
-                             const SensorImpl&           sensor);
+                             const se::Image<float>& depth_image,
+                             const SensorImpl& sensor);
 
 
 
-void pointCloudToDepthKernel(se::Image<float>&                 depth_image,
+void pointCloudToDepthKernel(se::Image<float>& depth_image,
                              const se::Image<Eigen::Vector3f>& point_cloud_X,
-                             const Eigen::Matrix4f&            T_CX);
+                             const Eigen::Matrix4f& T_CX);
 
 
 
@@ -73,9 +72,9 @@ void pointCloudToDepthKernel(se::Image<float>&                 depth_image,
  * NegY should only be true when reading an ICL-NUIM dataset which has a
  * left-handed coordinate system (the y focal length will be negative).
  */
-template <bool NegY>
-void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>&       out,
-                         const se::Image<Eigen::Vector3f>& in);
+template<bool NegY>
+void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>& out,
+                              const se::Image<Eigen::Vector3f>& in);
 
 
 
@@ -86,16 +85,16 @@ void pointCloudToNormalKernel(se::Image<Eigen::Vector3f>&       out,
  * edges. Depth values of 0 are considered invalid and are ignored when
  * computing the median.
  */
-void downsampleDepthKernel(const float*           input_depth,
+void downsampleDepthKernel(const float* input_depth,
                            const Eigen::Vector2i& input_res,
-                           se::Image<float>&      output_depth);
+                           se::Image<float>& output_depth);
 
 
 
-void halfSampleRobustImageKernel(se::Image<float>&       out,
+void halfSampleRobustImageKernel(se::Image<float>& out,
                                  const se::Image<float>& in,
-                                 const float             e_d,
-                                 const int               r);
+                                 const float e_d,
+                                 const int r);
 
 
 /**
@@ -109,9 +108,8 @@ void halfSampleRobustImageKernel(se::Image<float>&       out,
  * data for each pixel is stored in ARGB order, with the alpha channel in the
  * MSB of the uint32_t and the red channel in the LSB of the uint32_t.
  */
-void downsampleImageKernel(const uint32_t*        input_RGBA,
+void downsampleImageKernel(const uint32_t* input_RGBA,
                            const Eigen::Vector2i& input_res,
-                           se::Image<uint32_t>&   output_RGBA);
+                           se::Image<uint32_t>& output_RGBA);
 
 #endif
-

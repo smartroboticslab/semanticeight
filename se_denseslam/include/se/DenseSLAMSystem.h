@@ -35,40 +35,39 @@
 #ifndef _KERNELS_
 #define _KERNELS_
 
+#include <Eigen/Dense>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <octomap/octomap.h>
 #include <set>
 #include <vector>
-
 #include <yaml-cpp/yaml.h>
-#include <Eigen/Dense>
-#include <octomap/octomap.h>
 
-#include "se/commons.h"
-#include "se/perfstats.h"
-#include "se/timings.h"
-#include "se/config.h"
-#include "se/octree.hpp"
-#include "se/image/image.hpp"
-#include "se/segmentation_result.hpp"
-#include "se/sensor_implementation.hpp"
-#include "se/voxel_implementations.hpp"
-#include "preprocessing.hpp"
-#include "tracking.hpp"
-#include "se/io/octomap_io.hpp"
 #include "object.hpp"
 #include "object_rendering.hpp"
-#include "se/single_path_exploration_planner.hpp"
+#include "preprocessing.hpp"
+#include "se/commons.h"
+#include "se/config.h"
+#include "se/image/image.hpp"
+#include "se/io/octomap_io.hpp"
+#include "se/octree.hpp"
+#include "se/perfstats.h"
 #include "se/pose_history.hpp"
+#include "se/segmentation_result.hpp"
+#include "se/sensor_implementation.hpp"
+#include "se/single_path_exploration_planner.hpp"
+#include "se/timings.h"
+#include "se/voxel_implementations.hpp"
+#include "tracking.hpp"
 
 
 
 class DenseSLAMSystem {
-  using VoxelBlockType = typename VoxelImpl::VoxelType::VoxelBlockType;
+    using VoxelBlockType = typename VoxelImpl::VoxelType::VoxelBlockType;
 
-  private:
+    private:
     // Input images
     Eigen::Vector2i image_res_;
     se::Image<float> depth_image_;
@@ -77,7 +76,7 @@ class DenseSLAMSystem {
     // Pipeline config
     Eigen::Vector3f map_dim_;
     Eigen::Vector3i map_size_;
-	se::Configuration config_;
+    se::Configuration config_;
     std::vector<float> gaussian_;
 
     // Camera pose
@@ -87,9 +86,9 @@ class DenseSLAMSystem {
     // Tracking
     Eigen::Matrix4f previous_T_MC_; // Camera pose of the previous image in map frame
     std::vector<int> iterations_;
-    std::vector<se::Image<float> > scaled_depth_image_;
-    std::vector<se::Image<Eigen::Vector3f> > input_point_cloud_C_;
-    std::vector<se::Image<Eigen::Vector3f> > input_normals_C_;
+    std::vector<se::Image<float>> scaled_depth_image_;
+    std::vector<se::Image<Eigen::Vector3f>> input_point_cloud_C_;
+    std::vector<se::Image<Eigen::Vector3f>> input_normals_C_;
     std::vector<float> reduction_output_;
     std::vector<TrackData> tracking_result_;
 
@@ -106,7 +105,7 @@ class DenseSLAMSystem {
     Eigen::Matrix4f T_MW_; // Constant world to map frame transformation
     Eigen::Matrix4f T_WM_;
     std::vector<se::key_t> allocation_list_;
-    std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > map_;
+    std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map_;
 
     // Semanticeight-only /////////////////////////////////////////////////////
     /** Contains the minimum scale at which the background has been integrated as of the last
@@ -195,11 +194,11 @@ class DenseSLAMSystem {
      *
      * \todo TODO Improve the heuristics used for the object size.
      */
-    void computeNewObjectParameters(Eigen::Matrix4f&       T_OM,
-                                    int&                   volume_size,
-                                    float&                 volume_extent,
-                                    const cv::Mat&         mask,
-                                    const int              class_id,
+    void computeNewObjectParameters(Eigen::Matrix4f& T_OM,
+                                    int& volume_size,
+                                    float& volume_extent,
+                                    const cv::Mat& mask,
+                                    const int class_id,
                                     const Eigen::Matrix4f& T_MC);
 
     /**
@@ -212,8 +211,7 @@ class DenseSLAMSystem {
      * \note The raycasted_object_mask_ must have been created by raycasting
      * the current object list using DenseSLAMSystem::raycastObjectsAndBg().
      */
-    void matchObjectInstances(se::SegmentationResult& detections,
-                              const float             matching_threshold);
+    void matchObjectInstances(se::SegmentationResult& detections, const float matching_threshold);
 
     /**
      * Generate new objects based on the segmentation masks. Only generate
@@ -225,8 +223,7 @@ class DenseSLAMSystem {
      * \param[in] sensor
      * ::Configuration.camera for details.
      */
-    void generateObjects(se::SegmentationResult& masks,
-                         const SensorImpl&       sensor);
+    void generateObjects(se::SegmentationResult& masks, const SensorImpl& sensor);
 
     void updateValidDepthMask(const se::Image<float>& depth);
 
@@ -243,7 +240,7 @@ class DenseSLAMSystem {
 
 
 
-  public:
+    public:
     /**
      * Constructor using the initial camera position.
      *
@@ -257,13 +254,13 @@ class DenseSLAMSystem {
      * \param[in] pyramid See se::Configuration.pyramid for more details.
      * \param[in] config_ The pipeline options.
      */
-    DenseSLAMSystem(const Eigen::Vector2i&   image_res,
-                    const Eigen::Vector3i&   map_size,
-                    const Eigen::Vector3f&   map_dim,
-                    const Eigen::Vector3f&   t_MW,
-                    std::vector<int> &       pyramid,
+    DenseSLAMSystem(const Eigen::Vector2i& image_res,
+                    const Eigen::Vector3i& map_size,
+                    const Eigen::Vector3f& map_dim,
+                    const Eigen::Vector3f& t_MW,
+                    std::vector<int>& pyramid,
                     const se::Configuration& config,
-                    const std::string        voxel_impl_yaml_path = "");
+                    const std::string voxel_impl_yaml_path = "");
     /**
      * Constructor using the initial camera position.
      *
@@ -276,13 +273,13 @@ class DenseSLAMSystem {
      * \param[in] pyramid See se::Configuration.pyramid for more details.
      * \param[in] config_ The pipeline options.
      */
-    DenseSLAMSystem(const Eigen::Vector2i&   image_res,
-                    const Eigen::Vector3i&   map_size,
-                    const Eigen::Vector3f&   map_dim,
-                    const Eigen::Matrix4f&   T_MW,
-                    std::vector<int> &       pyramid,
+    DenseSLAMSystem(const Eigen::Vector2i& image_res,
+                    const Eigen::Vector3i& map_size,
+                    const Eigen::Vector3f& map_dim,
+                    const Eigen::Matrix4f& T_MW,
+                    std::vector<int>& pyramid,
                     const se::Configuration& config,
-                    const std::string        voxel_impl_yaml_path = "");
+                    const std::string voxel_impl_yaml_path = "");
 
     /**
      * Preprocess a single depth frame and add it to the pipeline.
@@ -296,9 +293,9 @@ class DenseSLAMSystem {
      * bilateral filter to reduce the measurement noise.
      * \return true (does not fail).
      */
-    bool preprocessDepth(const float*           input_depth_image_data,
+    bool preprocessDepth(const float* input_depth_image_data,
                          const Eigen::Vector2i& input_depth_image_res,
-                         const bool             filter_depth_image);
+                         const bool filter_depth_image);
 
     /**
      * Preprocess an RGBA frame and add it to the pipeline.
@@ -312,7 +309,7 @@ class DenseSLAMSystem {
      * bilateral filter to reduce the measurement noise.
      * \return true (does not fail).
      */
-    bool preprocessColor(const uint32_t*        input_RGBA_image_data,
+    bool preprocessColor(const uint32_t* input_RGBA_image_data,
                          const Eigen::Vector2i& input_RGBA_image_res);
 
     /**
@@ -327,8 +324,7 @@ class DenseSLAMSystem {
      * \param[in] icp_threshold The ICP convergence threshold.
      * \return true if the camera pose was updated and false if it wasn't.
      */
-    bool track(const SensorImpl& sensor,
-               const float       icp_threshold);
+    bool track(const SensorImpl& sensor, const float icp_threshold);
 
     /**
      * Integrate the 3D reconstruction resulting from the current frame to the
@@ -341,8 +337,7 @@ class DenseSLAMSystem {
      * \param[in] frame The index of the current frame (starts from 0).
      * \return true (does not fail).
      */
-    bool integrate(const SensorImpl& sensor,
-                   const unsigned    frame);
+    bool integrate(const SensorImpl& sensor, const unsigned frame);
 
     /**
      * \brief Raycast the map from the current pose to create a point cloud (point cloud map)
@@ -371,7 +366,7 @@ class DenseSLAMSystem {
      */
     void dumpMesh(const std::string filename_voxel,
                   const std::string filename_meter = "",
-                  const bool        print_path = false);
+                  const bool print_path = false);
 
     std::vector<se::Triangle> triangleMeshV();
 
@@ -381,8 +376,8 @@ class DenseSLAMSystem {
      */
     void saveStructure(const std::string base_filename);
 
-    void structureStats(size_t&              num_nodes,
-                        size_t&              num_blocks,
+    void structureStats(size_t& num_nodes,
+                        size_t& num_blocks,
                         std::vector<size_t>& num_blocks_per_scale);
 
     /** \brief Render the current 3D reconstruction.
@@ -396,9 +391,9 @@ class DenseSLAMSystem {
      * \param[in] output_image_res   The dimensions of the output array (width
      *                               and height in pixels).
      */
-    void renderVolume(uint32_t*              output_image_data,
+    void renderVolume(uint32_t* output_image_data,
                       const Eigen::Vector2i& output_image_res,
-                      const SensorImpl&      sensor);
+                      const SensorImpl& sensor);
 
     /**
      * Render the output of the tracking algorithm. The meaning of the colors
@@ -421,8 +416,7 @@ class DenseSLAMSystem {
      * \param[in] output_image_res   The dimensions of the output array (width
      *                               and height in pixels).
      */
-    void renderTrack(uint32_t*              output_image_data,
-                     const Eigen::Vector2i& output_image_res);
+    void renderTrack(uint32_t* output_image_data, const Eigen::Vector2i& output_image_res);
 
     /**
 	 * Render the current depth frame. The frame is rendered before
@@ -438,9 +432,9 @@ class DenseSLAMSystem {
      * \param[in] output_image_res   The dimensions of the output array (width
      *                               and height in pixels).
      */
-    void renderDepth(uint32_t*              output_image_data,
+    void renderDepth(uint32_t* output_image_data,
                      const Eigen::Vector2i& output_image_res,
-                     const SensorImpl&      sensor);
+                     const SensorImpl& sensor);
 
     /**
      * Render the RGB frame currently in the pipeline.
@@ -452,8 +446,7 @@ class DenseSLAMSystem {
      * \param[in] output_RGBA_image_res   The dimensions of the output image
      *                                    (width and height in pixels).
      */
-    void renderRGBA(uint32_t*              output_RGBA_image_data,
-                    const Eigen::Vector2i& output_RGBA_image_res);
+    void renderRGBA(uint32_t* output_RGBA_image_data, const Eigen::Vector2i& output_RGBA_image_res);
 
     //
     // Getters
@@ -462,78 +455,75 @@ class DenseSLAMSystem {
     /*
      * TODO Document this.
      */
-    std::shared_ptr<se::Octree<VoxelImpl::VoxelType> > getMap() {
-      return map_;
+    std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> getMap()
+    {
+        return map_;
     }
 
-    void saveMap(const std::string& map_filename) {
-      map_->save(map_filename);
+    void saveMap(const std::string& map_filename)
+    {
+        map_->save(map_filename);
     }
 
-    void loadMap(const std::string& map_filename) {
-      map_->load(map_filename);
+    void loadMap(const std::string& map_filename)
+    {
+        map_->load(map_filename);
     }
 
-    template <typename ValueSelector>
+    template<typename ValueSelector>
     void saveOctoMapBinary(const std::string& octomap_binary_filename,
-                           const float        threshold,
-                           ValueSelector      value_selector,
-                           const int          x_lb = 0,
-                           const int          y_lb = 0,
-                           const int          z_lb = 0,
-                           int                x_ub = 0,
-                           int                y_ub = 0,
-                           int                z_ub = 0) {
+                           const float threshold,
+                           ValueSelector value_selector,
+                           const int x_lb = 0,
+                           const int y_lb = 0,
+                           const int z_lb = 0,
+                           int x_ub = 0,
+                           int y_ub = 0,
+                           int z_ub = 0)
+    {
+        // Initialise default boundaries. Can't be set above as map_size_ is non-static.
+        x_ub = (x_ub == 0) ? map_size_.x() : x_ub;
+        y_ub = (y_ub == 0) ? map_size_.y() : y_ub;
+        z_ub = (z_ub == 0) ? map_size_.z() : z_ub;
 
-      // Initialise default boundaries. Can't be set above as map_size_ is non-static.
-      x_ub = (x_ub == 0) ? map_size_.x() : x_ub;
-      y_ub = (y_ub == 0) ? map_size_.y() : y_ub;
-      z_ub = (z_ub == 0) ? map_size_.z() : z_ub;
-
-      // Check if boundaries are valid
-      if (   x_ub <= x_lb
-          || y_ub <= y_lb
-          || z_ub <= z_lb) {
-        return;
-      }
-
-      // Convert boundaries to meter units
-      const float x_lb_m = x_lb * map_->voxelDim();
-      const float y_lb_m = y_lb * map_->voxelDim();
-      const float z_lb_m = z_lb * map_->voxelDim();
-      const float x_ub_m = x_ub * map_->voxelDim();
-      const float y_ub_m = y_ub * map_->voxelDim();
-      const float z_ub_m = z_ub * map_->voxelDim();
-
-      // Create a lambda function to set the state of a single voxel.
-      const auto set_node_value = [&](octomap::OcTree&                                octomap,
-                                      const octomap::point3d&                         voxel_coord,
-                                      const typename VoxelImpl::VoxelType::VoxelData& voxel_data) {
-
-        // Check if the voxel is in the boundaries
-        if (   voxel_coord.x() >= x_lb_m
-            && voxel_coord.y() >= y_lb_m
-            && voxel_coord.z() >= z_lb_m
-            && voxel_coord.x() < x_ub_m
-            && voxel_coord.y() < y_ub_m
-            && voxel_coord.z() < z_ub_m) {
-
-          // Do not update unknown voxels.
-          if (VoxelImpl::VoxelType::isValid(voxel_data)) {
-            if (value_selector(voxel_data) < threshold) {
-              // Free
-              octomap.updateNode(voxel_coord, false, false);
-            } else {
-              octomap.updateNode(voxel_coord, true, false);
-            }
-          }
+        // Check if boundaries are valid
+        if (x_ub <= x_lb || y_ub <= y_lb || z_ub <= z_lb) {
+            return;
         }
 
-      };
+        // Convert boundaries to meter units
+        const float x_lb_m = x_lb * map_->voxelDim();
+        const float y_lb_m = y_lb * map_->voxelDim();
+        const float z_lb_m = z_lb * map_->voxelDim();
+        const float x_ub_m = x_ub * map_->voxelDim();
+        const float y_ub_m = y_ub * map_->voxelDim();
+        const float z_ub_m = z_ub * map_->voxelDim();
 
-      octomap::OcTree* octomap =  se::to_octomap(*map_, set_node_value);
-      octomap->writeBinary(octomap_binary_filename);
-      delete octomap;
+        // Create a lambda function to set the state of a single voxel.
+        const auto set_node_value =
+            [&](octomap::OcTree& octomap,
+                const octomap::point3d& voxel_coord,
+                const typename VoxelImpl::VoxelType::VoxelData& voxel_data) {
+                // Check if the voxel is in the boundaries
+                if (voxel_coord.x() >= x_lb_m && voxel_coord.y() >= y_lb_m
+                    && voxel_coord.z() >= z_lb_m && voxel_coord.x() < x_ub_m
+                    && voxel_coord.y() < y_ub_m && voxel_coord.z() < z_ub_m) {
+                    // Do not update unknown voxels.
+                    if (VoxelImpl::VoxelType::isValid(voxel_data)) {
+                        if (value_selector(voxel_data) < threshold) {
+                            // Free
+                            octomap.updateNode(voxel_coord, false, false);
+                        }
+                        else {
+                            octomap.updateNode(voxel_coord, true, false);
+                        }
+                    }
+                }
+            };
+
+        octomap::OcTree* octomap = se::to_octomap(*map_, set_node_value);
+        octomap->writeBinary(octomap_binary_filename);
+        delete octomap;
     }
 
     /**
@@ -541,8 +531,9 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of the translation.
      */
-    Eigen::Vector3f t_MW() {
-      return se::math::to_translation(T_MW_);
+    Eigen::Vector3f t_MW()
+    {
+        return se::math::to_translation(T_MW_);
     }
 
     /**
@@ -550,8 +541,9 @@ class DenseSLAMSystem {
      *
      * \return The rotation (3x3 rotation matrix) and translation (3x1 vector) encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f T_MW() {
-      return T_MW_;
+    Eigen::Matrix4f T_MW()
+    {
+        return T_MW_;
     }
 
     /**
@@ -559,9 +551,10 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of the translation.
      */
-    Eigen::Vector3f t_WM() {
-      Eigen::Vector3f t_WM = se::math::to_inverse_translation(T_MW_);
-      return t_WM;
+    Eigen::Vector3f t_WM()
+    {
+        Eigen::Vector3f t_WM = se::math::to_inverse_translation(T_MW_);
+        return t_WM;
     }
 
     /**
@@ -569,9 +562,10 @@ class DenseSLAMSystem {
      *
      * \return The rotation (3x3 rotation matrix) and translation (3x1 vector) encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f T_WM() {
-      Eigen::Matrix4f T_WM = se::math::to_inverse_transformation(T_MW_);
-      return T_WM;
+    Eigen::Matrix4f T_WM()
+    {
+        Eigen::Matrix4f T_WM = se::math::to_inverse_transformation(T_MW_);
+        return T_WM;
     }
 
     /**
@@ -579,8 +573,9 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates t_MC.
      */
-    Eigen::Vector3f t_MC() {
-      return se::math::to_translation(T_MC_);
+    Eigen::Vector3f t_MC()
+    {
+        return se::math::to_translation(T_MC_);
     }
 
     /**
@@ -588,10 +583,11 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of t_WC.
      */
-    Eigen::Vector3f t_WC() {
-      Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
-      Eigen::Vector3f t_WC = se::math::to_translation(T_WC);
-      return t_WC;
+    Eigen::Vector3f t_WC()
+    {
+        Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
+        Eigen::Vector3f t_WC = se::math::to_translation(T_WC);
+        return t_WC;
     }
 
     /**
@@ -599,8 +595,9 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of initt_MC.
      */
-    Eigen::Vector3f initt_MC(){
-      return se::math::to_translation(T_MC_);
+    Eigen::Vector3f initt_MC()
+    {
+        return se::math::to_translation(T_MC_);
     }
 
     /**
@@ -608,10 +605,11 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of initt_WC.
      */
-    Eigen::Vector3f initt_WC(){
-      Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
-      Eigen::Vector3f initt_WC = se::math::to_translation(init_T_WC);
-      return initt_WC;
+    Eigen::Vector3f initt_WC()
+    {
+        Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
+        Eigen::Vector3f initt_WC = se::math::to_translation(init_T_WC);
+        return initt_WC;
     }
 
     /**
@@ -619,8 +617,9 @@ class DenseSLAMSystem {
      *
      * \return The current camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f T_MC() {
-      return T_MC_;
+    Eigen::Matrix4f T_MC()
+    {
+        return T_MC_;
     }
 
     /**
@@ -628,9 +627,10 @@ class DenseSLAMSystem {
      *
      * \return The current camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f T_WC() {
-      Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
-      return T_WC;
+    Eigen::Matrix4f T_WC()
+    {
+        Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
+        return T_WC;
     }
 
     /**
@@ -638,8 +638,9 @@ class DenseSLAMSystem {
      *
      * \return The initial camera pose init_T_MC_ encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f initT_MC() {
-      return init_T_MC_;
+    Eigen::Matrix4f initT_MC()
+    {
+        return init_T_MC_;
     }
 
     /**
@@ -647,9 +648,10 @@ class DenseSLAMSystem {
      *
      * \return The initial camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f initT_WC() {
-      Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
-      return init_T_WC;
+    Eigen::Matrix4f initT_WC()
+    {
+        Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
+        return init_T_WC;
     }
 
     /**
@@ -657,8 +659,9 @@ class DenseSLAMSystem {
      *
      * \param[in] T_MC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setT_MC(const Eigen::Matrix4f& T_MC) {
-      T_MC_ = T_MC;
+    void setT_MC(const Eigen::Matrix4f& T_MC)
+    {
+        T_MC_ = T_MC;
     }
 
     /**
@@ -668,8 +671,9 @@ class DenseSLAMSystem {
      *
      * \param[in] T_WC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setT_WC(const Eigen::Matrix4f& T_WC) {
-      T_MC_ = T_MW_ * T_WC;
+    void setT_WC(const Eigen::Matrix4f& T_WC)
+    {
+        T_MC_ = T_MW_ * T_WC;
     }
 
     /**
@@ -677,8 +681,9 @@ class DenseSLAMSystem {
      *
      * \param[in] init_T_MC The initial camera pose encoded in a 4x4 matrix.
      */
-    void setInitT_MC(const Eigen::Matrix4f& init_T_MC) {
-      init_T_MC_ = init_T_MC;
+    void setInitT_MC(const Eigen::Matrix4f& init_T_MC)
+    {
+        init_T_MC_ = init_T_MC;
     }
 
     /**
@@ -688,8 +693,9 @@ class DenseSLAMSystem {
      *
      * \param[in] init_T_WC The initial camera pose encoded in a 4x4 matrix.
      */
-    void setInitT_WC(const Eigen::Matrix4f& init_T_WC) {
-      init_T_MC_ = T_MW_ * init_T_WC;
+    void setInitT_WC(const Eigen::Matrix4f& init_T_WC)
+    {
+        init_T_MC_ = T_MW_ * init_T_WC;
     }
 
     /**
@@ -697,15 +703,16 @@ class DenseSLAMSystem {
      *
      * \param[in] T_WC The desired camera pose encoded in a 4x4 matrix.
      */
-    void setRenderT_MC(Eigen::Matrix4f* render_T_MC = nullptr) {
-      if (render_T_MC == nullptr){
-        render_T_MC_ = &T_MC_;
-        need_render_ = false;
-      }
-      else {
-        render_T_MC_ = render_T_MC;
-        need_render_ = true;
-      }
+    void setRenderT_MC(Eigen::Matrix4f* render_T_MC = nullptr)
+    {
+        if (render_T_MC == nullptr) {
+            render_T_MC_ = &T_MC_;
+            need_render_ = false;
+        }
+        else {
+            render_T_MC_ = render_T_MC;
+            need_render_ = true;
+        }
     }
 
     /**
@@ -716,8 +723,9 @@ class DenseSLAMSystem {
      *
      * \return The current rendering camera pose render_T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f *renderT_MC_() {
-      return render_T_MC_;
+    Eigen::Matrix4f* renderT_MC_()
+    {
+        return render_T_MC_;
     }
 
     /**
@@ -725,8 +733,9 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z dimensions of the volume.
      */
-    Eigen::Vector3f getMapDimension() {
-      return (map_dim_);
+    Eigen::Vector3f getMapDimension()
+    {
+        return (map_dim_);
     }
 
     /**
@@ -734,8 +743,9 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z resolution of the volume.
      */
-    Eigen::Vector3i getMapSize() {
-      return (map_size_);
+    Eigen::Vector3i getMapSize()
+    {
+        return (map_size_);
     }
 
     /**
@@ -744,8 +754,9 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the frame width and height.
      */
-    Eigen::Vector2i getImageResolution() {
-      return (image_res_);
+    Eigen::Vector2i getImageResolution()
+    {
+        return (image_res_);
     }
 
 
@@ -778,8 +789,7 @@ class DenseSLAMSystem {
      * \return true if the current 3D reconstruction was added to the octree
      * and false if it wasn't.
      */
-    bool integrateObjects(const SensorImpl& sensor,
-                          const size_t      frame);
+    bool integrateObjects(const SensorImpl& sensor, const size_t frame);
 
     /**
      * Raycast the 3D reconstruction after integration to generate the vertex
@@ -794,10 +804,10 @@ class DenseSLAMSystem {
      */
     bool raycastObjectsAndBg(const SensorImpl& sensor, const int frame);
 
-    void renderInputSegmentation(uint32_t*              image_data,
-                                 const Eigen::Vector2i& image_res) {
-      renderMaskKernel<se::class_mask_elem_t>(image_data, image_res,
-          rgba_image_, input_segmentation_.classMask());
+    void renderInputSegmentation(uint32_t* image_data, const Eigen::Vector2i& image_res)
+    {
+        renderMaskKernel<se::class_mask_elem_t>(
+            image_data, image_res, rgba_image_, input_segmentation_.classMask());
     }
 
     /**
@@ -812,11 +822,11 @@ class DenseSLAMSystem {
      * \param[in] sensor
      * details.
      */
-    void renderObjects(uint32_t*              output_image_data,
+    void renderObjects(uint32_t* output_image_data,
                        const Eigen::Vector2i& output_image_res,
-                       const SensorImpl&      sensor,
-                       const RenderMode       render_mode = RenderMode::InstanceID,
-                       const bool             render_bounding_volumes = true);
+                       const SensorImpl& sensor,
+                       const RenderMode render_mode = RenderMode::InstanceID,
+                       const bool render_bounding_volumes = true);
 
     /**
      * Render the predicted class of each object overlaid on the current RGB
@@ -829,7 +839,7 @@ class DenseSLAMSystem {
      * \param[in] output_RGBA_image_res   The dimensions of the output image
      *                                    (width and height in pixels).
      */
-    void renderObjectClasses(uint32_t*              output_image_data,
+    void renderObjectClasses(uint32_t* output_image_data,
                              const Eigen::Vector2i& output_image_res) const;
 
     /**
@@ -842,7 +852,7 @@ class DenseSLAMSystem {
      * \param[in] output_RGBA_image_res   The dimensions of the output image
      *                                    (width and height in pixels).
      */
-    void renderObjectInstances(uint32_t*              output_image_data,
+    void renderObjectInstances(uint32_t* output_image_data,
                                const Eigen::Vector2i& output_image_res) const;
 
     /**
@@ -855,15 +865,15 @@ class DenseSLAMSystem {
      * \param[in] output_image_res The dimensions of the output image (width
      * and height in pixels).
      */
-    void renderRaycast(uint32_t*              output_image_data,
-                       const Eigen::Vector2i& output_image_res);
+    void renderRaycast(uint32_t* output_image_data, const Eigen::Vector2i& output_image_res);
 
     void dumpObjectMeshes(const std::string filename, const bool print_path);
 
     std::vector<std::vector<se::Triangle>> objectTriangleMeshesV();
 
-    Objects getObjectMaps() {
-      return objects_;
+    Objects getObjectMaps()
+    {
+        return objects_;
     }
 
     // Exploration only ///////////////////////////////////////////////////////
@@ -873,13 +883,14 @@ class DenseSLAMSystem {
      */
     void freeInitialPosition(const SensorImpl& sensor, const std::string& type = "cylinder");
 
-    std::set<se::key_t> getFrontiers() const {
-      return frontiers_;
+    std::set<se::key_t> getFrontiers() const
+    {
+        return frontiers_;
     }
 
     std::vector<se::Volume<VoxelImpl::VoxelType>> frontierVolumes() const;
 
-    float free_volume     = 0.0f;
+    float free_volume = 0.0f;
     float occupied_volume = 0.0f;
     float explored_volume = 0.0f;
 

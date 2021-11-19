@@ -32,20 +32,18 @@
 #ifndef NEIGHBOR_GATHER_HPP
 #define NEIGHBOR_GATHER_HPP
 
+#include <Eigen/Dense>
 #include <array>
 
-#include <Eigen/Dense>
-
 namespace se {
-  /*!
+/*!
    * Voxel face neighbor gather offsets. The order is -z -y -x +x +y +z which
    * is the order the voxels will have in memory if they belong to the same
    * VoxelBlock.
    */
-  static const Eigen::Vector3i face_neighbor_offsets[6] =
-  {{0, 0, -1}, {0, -1, 0}, {-1, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+static const Eigen::Vector3i face_neighbor_offsets[6] =
+    {{0, 0, -1}, {0, -1, 0}, {-1, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
-}
+} // namespace se
 
 #endif
-

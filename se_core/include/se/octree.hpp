@@ -32,26 +32,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef OCTREE_HPP
 #define OCTREE_HPP
 
-#include <cstring>
 #include <algorithm>
-#include <vector>
-#include "utils/math_utils.h"
-#include "octree_defines.h"
-#include "utils/morton_utils.hpp"
-#include "octant_ops.hpp"
-#include "octree_iterator.hpp"
-
 #include <array>
-#include <tuple>
+#include <cstring>
 #include <queue>
+#include <tuple>
 #include <unordered_set>
-#include "node.hpp"
-#include "utils/memory_pool.hpp"
+#include <vector>
+
 #include "algorithms/unique.hpp"
 #include "geometry/aabb_collision.hpp"
 #include "interpolation/interp_gather.hpp"
-#include "se/interpolation/interp_gather.hpp"
 #include "neighbors/neighbor_gather.hpp"
+#include "node.hpp"
+#include "octant_ops.hpp"
+#include "octree_defines.h"
+#include "octree_iterator.hpp"
+#include "se/interpolation/interp_gather.hpp"
+#include "utils/math_utils.h"
+#include "utils/memory_pool.hpp"
+#include "utils/morton_utils.hpp"
 
 namespace se {
 
@@ -62,10 +62,10 @@ namespace se {
  */
 #define SAMPLE_POINT_POSITION 0.5f
 
-template <typename T>
+template<typename T>
 class VoxelBlockRayIterator;
 
-template <typename T>
+template<typename T>
 class node_iterator;
 
 /*! \brief The main octree class.
@@ -73,83 +73,122 @@ class node_iterator;
  * For a minimal working example of the kind of struct needed as a template
  * parameter see ExampleVoxelT.
  */
-template <typename T>
+template<typename T>
 class Octree {
-  typedef typename T::VoxelData VoxelData;
-  using VoxelBlockType = typename T::VoxelBlockType;
+    typedef typename T::VoxelData VoxelData;
+    using VoxelBlockType = typename T::VoxelBlockType;
 
-public:
-  // Compile-time constant expressions
-  // # of voxels per side in a voxel block
-  static constexpr unsigned int block_size = BLOCK_SIZE;
-  // maximum tree depth in bits
-  static constexpr unsigned int max_voxel_depth = ((sizeof(key_t) * 8) / 3);
-  // Tree depth at which blocks are found
-  static constexpr unsigned int max_block_depth = max_voxel_depth - math::log2_const(BLOCK_SIZE);
+    public:
+    // Compile-time constant expressions
+    // # of voxels per side in a voxel block
+    static constexpr unsigned int block_size = BLOCK_SIZE;
+    // maximum tree depth in bits
+    static constexpr unsigned int max_voxel_depth = ((sizeof(key_t) * 8) / 3);
+    // Tree depth at which blocks are found
+    static constexpr unsigned int max_block_depth = max_voxel_depth - math::log2_const(BLOCK_SIZE);
 
-  static const Eigen::Vector3f sample_offset_frac_;
+    static const Eigen::Vector3f sample_offset_frac_;
 
 
-  Octree(){
-  };
+    Octree(){};
 
-  ~Octree(){
-  }
+    ~Octree()
+    {
+    }
 
-  /*! \brief Initialises the octree attributes
+    /*! \brief Initialises the octree attributes
    * \param size number of voxels per side of the cube
    * \param dim cube extension per side, in meter
    */
-  void init(int size, float dim);
+    void init(int size, float dim);
 
-  inline int size() const { return size_; }
-  inline float dim() const { return dim_; }
-  inline float voxelDim() const { return voxel_dim_; }
-  inline float inverseVoxelDim() const { return inverse_voxel_dim_; }
-  inline int numLevels() const { return num_levels_; }
-  inline int voxelDepth() const { return voxel_depth_; }
-  inline int maxBlockScale() const { return max_block_scale_; }
-  inline int blockDepth() const { return block_depth_; }
-  inline int sizeToDepth(int size) const { return voxel_depth_ - se::math::log2_const(size); }
-  inline int depthToSize(int depth) const { return 1 << (voxel_depth_ - depth); }
-  inline int scaleToDepth(int scale) const { return voxel_depth_ - scale; }
-  inline int depthToScale(int depth) const { return voxel_depth_ - depth; }
-  inline Node<T>* root() const { return root_; }
+    inline int size() const
+    {
+        return size_;
+    }
+    inline float dim() const
+    {
+        return dim_;
+    }
+    inline float voxelDim() const
+    {
+        return voxel_dim_;
+    }
+    inline float inverseVoxelDim() const
+    {
+        return inverse_voxel_dim_;
+    }
+    inline int numLevels() const
+    {
+        return num_levels_;
+    }
+    inline int voxelDepth() const
+    {
+        return voxel_depth_;
+    }
+    inline int maxBlockScale() const
+    {
+        return max_block_scale_;
+    }
+    inline int blockDepth() const
+    {
+        return block_depth_;
+    }
+    inline int sizeToDepth(int size) const
+    {
+        return voxel_depth_ - se::math::log2_const(size);
+    }
+    inline int depthToSize(int depth) const
+    {
+        return 1 << (voxel_depth_ - depth);
+    }
+    inline int scaleToDepth(int scale) const
+    {
+        return voxel_depth_ - scale;
+    }
+    inline int depthToScale(int depth) const
+    {
+        return voxel_depth_ - depth;
+    }
+    inline Node<T>* root() const
+    {
+        return root_;
+    }
 
-  OctreeIterator<T> begin();
-  OctreeIterator<T> end();
+    OctreeIterator<T> begin();
+    OctreeIterator<T> end();
 
-  /*! \brief Verify if the each coordinate x, y and z is in the interval [0, size - 1]
+    /*! \brief Verify if the each coordinate x, y and z is in the interval [0, size - 1]
    *
    * \param[in] x The voxel x coordinate
    * \param[in] y The voxel y coordinate
    * \param[in] z The voxel z coordinate
    * \return    True if each coordinate x, y and z is in the interval [0, size - 1]; False otherwise.
    */
-  inline bool contains(const int x, const int y, const int z) const;
+    inline bool contains(const int x, const int y, const int z) const;
 
-  /*! \brief Verify if each voxel coordinate is in the interval [0, size - 1]
+    /*! \brief Verify if each voxel coordinate is in the interval [0, size - 1]
    *
    * \param[in] voxel_coord The coordinates of the voxel.
    * \return    True if each voxel coordinate is in the interval [0, size - 1]; False otherwise.
    */
-  inline bool contains(const Eigen::Vector3i& voxel_coord) const;
+    inline bool contains(const Eigen::Vector3i& voxel_coord) const;
 
-  /*! \brief Verify if each voxel coordinate is in the interval [0, size)
+    /*! \brief Verify if each voxel coordinate is in the interval [0, size)
    *
    * \param[in] voxel_coord_f The coordinates of the voxel.
    * \return    True if each voxel coordinate is in the interval [0, size); False otherwise.
    */
-  inline bool contains(const Eigen::Vector3f& voxel_coord_f) const;
+    inline bool contains(const Eigen::Vector3f& voxel_coord_f) const;
 
-  /*! \brief Verify if each point coordinate is in the interval [0, dim)
+    /*! \brief Verify if each point coordinate is in the interval [0, dim)
    *
    * \param[in] point_M The coordinates of the point.
    * \return    True if each point coordinate is in the interval [0, dim); False otherwise.
    */
-  inline bool containsPoint(const Eigen::Vector3f& point_M) const;
+    inline bool containsPoint(const Eigen::Vector3f& point_M) const;
 
-  /*! \brief Return the data at the supplied voxel coordinates and scale.
+    /*! \brief Return the data at the supplied voxel coordinates and scale.
    *
    * \param[in]  x        The voxel x coordinate in the interval [0, size - 1].
    * \param[in]  y        The voxel y coordinate in the interval [0, size - 1].
@@ -161,11 +200,9 @@ public:
    *
    * \return The scale the data was extracted from.
    */
-  int get(const int x, const int y, const int z,
-          VoxelData& data,
-          const int  min_scale = 0) const;
+    int get(const int x, const int y, const int z, VoxelData& data, const int min_scale = 0) const;
 
-  /*! \brief Return the data at the supplied voxel coordinates and scale.
+    /*! \brief Return the data at the supplied voxel coordinates and scale.
    *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
    *                        be in the interval [0, size - 1].
@@ -176,11 +213,9 @@ public:
    *
    * \return The scale the data was extracted from.
    */
-  int get(const Eigen::Vector3i& voxel_coord,
-          VoxelData&             data,
-          const int              min_scale = 0) const;
+    int get(const Eigen::Vector3i& voxel_coord, VoxelData& data, const int min_scale = 0) const;
 
-  /*! \brief Return the data at the supplied 3D point and scale.
+    /*! \brief Return the data at the supplied 3D point and scale.
    *
    * \param[in] point_M   The coordinates of the point. Each component must be in
    *                      the interval [0, dim).
@@ -192,11 +227,9 @@ public:
    *         hasn't been allocated up to the supplied scale, return the data
    *         at the lowest allocated scale.
    */
-  int getAtPoint(const Eigen::Vector3f& point_M,
-                 VoxelData&             data,
-                 const int              min_scale = 0) const;
+    int getAtPoint(const Eigen::Vector3f& point_M, VoxelData& data, const int min_scale = 0) const;
 
-  /*! \brief Return the max data at the supplied voxel coordinates and scale.
+    /*! \brief Return the max data at the supplied voxel coordinates and scale.
    *
    * \warning CURRENTLY THE FUNCTION ONLY RETURN THE MAX DATA FOR MULTIRESOFUSION.
    *          For all other implementation the same data as for get is returned.
@@ -210,11 +243,10 @@ public:
    *         allocated up to the supplied scale, return the data at the lowest
    *         allocated scale.
    */
-  int getMax(const int x, const int y, const int z,
-             VoxelData& data,
-             const int  min_scale = 0) const;
+    int
+    getMax(const int x, const int y, const int z, VoxelData& data, const int min_scale = 0) const;
 
-  /*! \brief Return the max data at the supplied voxel coordinates and scale.
+    /*! \brief Return the max data at the supplied voxel coordinates and scale.
    *
    * \warning CURRENTLY THE FUNCTION ONLY RETURN THE MAX DATA FOR MULTIRESOFUSION.
    *          For all other implementation the same data as for get is returned.
@@ -227,11 +259,9 @@ public:
    *         allocated up to the supplied scale, return the data at the lowest
    *         allocated scale.
    */
-  int getMax(const Eigen::Vector3i& voxel_coord,
-             VoxelData&             data,
-             const int              min_scale = 0) const;
+    int getMax(const Eigen::Vector3i& voxel_coord, VoxelData& data, const int min_scale = 0) const;
 
-  /*! \brief Return the max data at the supplied 3D point and scale.
+    /*! \brief Return the max data at the supplied 3D point and scale.
    *
    * \warning CURRENTLY THE FUNCTION ONLY RETURN THE MAX DATA FOR MULTIRESOFUSION.
    *          For all other implementation the same data as for get is returned.
@@ -244,63 +274,62 @@ public:
    *         hasn't been allocated up to the supplied scale, return the data
    *         at the lowest allocated scale.
    */
-  int getMaxAtPoint(const Eigen::Vector3f& point_M,
-                    VoxelData&             data,
-                    const int              min_scale = 0) const;
+    int
+    getMaxAtPoint(const Eigen::Vector3f& point_M, VoxelData& data, const int min_scale = 0) const;
 
-  int getThreshold(const int        x,
-                   const int        y,
-                   const int        z,
-                   const float      threshold,
-                   VoxelData&       t_value,
-                   int&             t_size,
-                   Eigen::Vector3i& t_corner,
-                   bool&            is_node,
-                   VoxelBlockType*& block) const;
+    int getThreshold(const int x,
+                     const int y,
+                     const int z,
+                     const float threshold,
+                     VoxelData& t_value,
+                     int& t_size,
+                     Eigen::Vector3i& t_corner,
+                     bool& is_node,
+                     VoxelBlockType*& block) const;
 
-  int getThreshold(const Eigen::Vector3i& t_coord,
-                   const float            threshold,
-                   VoxelData&             t_value,
-                   int&                   t_size,
-                   Eigen::Vector3i&       t_corner,
-                   bool&                  is_node,
-                   VoxelBlockType*&       block) const;
+    int getThreshold(const Eigen::Vector3i& t_coord,
+                     const float threshold,
+                     VoxelData& t_value,
+                     int& t_size,
+                     Eigen::Vector3i& t_corner,
+                     bool& is_node,
+                     VoxelBlockType*& block) const;
 
-  int getThresholdAtPoint(const Eigen::Vector3f& t_point_M,
-                          const float            threshold,
-                          VoxelData&             t_value,
-                          int&                   t_size,
-                          Eigen::Vector3i&       t_corner,
-                          bool&                  is_node,
-                          VoxelBlockType*&       block) const;
+    int getThresholdAtPoint(const Eigen::Vector3f& t_point_M,
+                            const float threshold,
+                            VoxelData& t_value,
+                            int& t_size,
+                            Eigen::Vector3i& t_corner,
+                            bool& is_node,
+                            VoxelBlockType*& block) const;
 
-  int getThreshold(const int          x,
-                   const int          y,
-                   const int          z,
-                   const float        t_value,
-                   const unsigned int t_size,
-                   VoxelData&         v_data,
-                   int&               v_size,
-                   Eigen::Vector3i&   v_corner,
-                   bool&              is_finest) const;
+    int getThreshold(const int x,
+                     const int y,
+                     const int z,
+                     const float t_value,
+                     const unsigned int t_size,
+                     VoxelData& v_data,
+                     int& v_size,
+                     Eigen::Vector3i& v_corner,
+                     bool& is_finest) const;
 
-  int getThreshold(const Eigen::Vector3i& t_coord,
-                   const float            t_value,
-                   const unsigned int     t_size,
-                   VoxelData&             v_data,
-                   int&                   v_size,
-                   Eigen::Vector3i&       v_corner,
-                   bool&                  is_finest) const;
+    int getThreshold(const Eigen::Vector3i& t_coord,
+                     const float t_value,
+                     const unsigned int t_size,
+                     VoxelData& v_data,
+                     int& v_size,
+                     Eigen::Vector3i& v_corner,
+                     bool& is_finest) const;
 
-  int getThresholdAtPoint(const Eigen::Vector3f& t_point_M,
-                          const float            t_value,
-                          const unsigned int     t_size,
-                          VoxelData&             v_data,
-                          int&                   v_size,
-                          Eigen::Vector3i&       v_corner,
-                          bool&                  is_finest) const;
+    int getThresholdAtPoint(const Eigen::Vector3f& t_point_M,
+                            const float t_value,
+                            const unsigned int t_size,
+                            VoxelData& v_data,
+                            int& v_size,
+                            Eigen::Vector3i& v_corner,
+                            bool& is_finest) const;
 
-  /*! \brief Set the data at the supplied voxel coordinates.
+    /*! \brief Set the data at the supplied voxel coordinates.
    * If the voxel hasn't been allocated, no action is performed.
    *
    * \param[in] x         The voxel x coordinate in the interval [0, size - 1].
@@ -309,9 +338,9 @@ public:
    * \param[in] data      The data to store in the voxel.
    * \param[in] min_scale The data will be stored at the minimum allocated scale up to min_scale.
    */
-  void set(const int x, const int y, const int z, const VoxelData& data, const int min_scale = 0);
+    void set(const int x, const int y, const int z, const VoxelData& data, const int min_scale = 0);
 
-  /*! \brief Set the data at the supplied voxel coordinates.
+    /*! \brief Set the data at the supplied voxel coordinates.
    * If the voxel hasn't been allocated, no action is performed.
    *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
@@ -319,9 +348,9 @@ public:
    * \param[in] data        The data to store in the voxel.
    * \param[in] min_scale   The data will be stored at the minimum allocated scale up to min_scale.
    */
-  void set(const Eigen::Vector3i& voxel_coord, const VoxelData& data, const int min_scale = 0);
+    void set(const Eigen::Vector3i& voxel_coord, const VoxelData& data, const int min_scale = 0);
 
-  /*! \brief Set the data at the supplied 3D point.
+    /*! \brief Set the data at the supplied 3D point.
    * If the voxel hasn't been allocated, no action is performed.
    *
    * \param[in] point_M   The coordinates of the point. Each component must be in
@@ -329,43 +358,43 @@ public:
    * \param[in] data      The data to store in the voxel.
    * \param[in] min_scale The data will be stored at the minimum allocated scale up to min_scale.
    */
-  void setAtPoint(const Eigen::Vector3f& point_M, const VoxelData& data, const int min_scale = 0);
+    void setAtPoint(const Eigen::Vector3f& point_M, const VoxelData& data, const int min_scale = 0);
 
-  /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
+    /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
    * 3D point in metres.
    *
    * \param voxel_coord The voxel coordinates.
    * \return The coordinates of the corresponding 3D point in metres.
    */
-  inline Eigen::Vector3f voxelToPoint(const Eigen::Vector3i& voxel_coord) const;
+    inline Eigen::Vector3f voxelToPoint(const Eigen::Vector3i& voxel_coord) const;
 
-  /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
+    /*! \brief Convert voxel coordinates to the coordinates of the correspoinding
    * 3D point in metres.
    *
    * \param voxel_coord_f The voxel coordinates.
    * \return The coordinates of the corresponding 3D point in metres.
    */
-  inline Eigen::Vector3f voxelFToPoint(const Eigen::Vector3f& voxel_coord_f) const;
+    inline Eigen::Vector3f voxelFToPoint(const Eigen::Vector3f& voxel_coord_f) const;
 
-  /*! \brief Convert 3D point coordinates in metres to the coordinates of the
+    /*! \brief Convert 3D point coordinates in metres to the coordinates of the
    * corresponding voxel.
    *
    * \param point_M The coordinates of the 3D point in metres. Each component must
    *                be in the interval [0, dim).
    * \return The corresponding int voxel coordinates.
    */
-  inline Eigen::Vector3i pointToVoxel(const Eigen::Vector3f& point_M) const;
+    inline Eigen::Vector3i pointToVoxel(const Eigen::Vector3f& point_M) const;
 
-  /*! \brief Convert 3D point coordinates in metres to the coordinates of the
+    /*! \brief Convert 3D point coordinates in metres to the coordinates of the
    * corresponding voxel.
    *
    * \param point_M The coordinates of the 3D point in metres. Each component must
    *                be in the interval [0, dim).
    * \return The corresponding float voxel coordinates.
    */
-  inline Eigen::Vector3f pointToVoxelF(const Eigen::Vector3f& point_M) const;
+    inline Eigen::Vector3f pointToVoxelF(const Eigen::Vector3f& point_M) const;
 
-  /*! \brief Retrieves voxel values for the neighbors of voxel at coordinates
+    /*! \brief Retrieves voxel values for the neighbors of voxel at coordinates
    * (x,y,z)
    * If the safe template variable is true, then proper checks will be used so
    * that neighboring voxels outside the map will have a value of empty at a
@@ -387,10 +416,10 @@ public:
    * \todo The implementation is not yet efficient. A method similar to the one
    * used in interp_gather should be used.
    */
-  template <bool safe>
-  std::array<VoxelData, 6> getFaceNeighbours(const int x, const int y, const int z) const;
+    template<bool safe>
+    std::array<VoxelData, 6> getFaceNeighbours(const int x, const int y, const int z) const;
 
-  /*! \brief Fetch the voxel block which contains voxel (x,y,z)
+    /*! \brief Fetch the voxel block which contains voxel (x,y,z)
    *
    * \param x The x coordinate in interval [0, size - 1]
    * \param y The y coordinate in interval [0, size - 1]
@@ -398,17 +427,17 @@ public:
    *
    * \return The fetched voxel block. If the voxel block is not allocated a nullptr is returned.
    */
-  VoxelBlockType* fetch(const int x, const int y, const int z) const;
+    VoxelBlockType* fetch(const int x, const int y, const int z) const;
 
-  /*! \brief Fetch the voxel block which contains voxel (x,y,z)
+    /*! \brief Fetch the voxel block which contains voxel (x,y,z)
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
    *                        be in the interval [0, size).
    *
    * \return The fetched voxel block. If the voxel block is not allocated a nullptr is returned.
    */
-  VoxelBlockType* fetch(const Eigen::Vector3i& voxel_coord) const;
+    VoxelBlockType* fetch(const Eigen::Vector3i& voxel_coord) const;
 
-  /*! \brief Fetch the node (x,y,z) at depth
+    /*! \brief Fetch the node (x,y,z) at depth
    *
    * \param x     The x coordinate in interval [0, size - 1]
    * \param y     The y coordinate in interval [0, size - 1]
@@ -417,9 +446,9 @@ public:
    *
    * \return The fetched node. If the node at depth is not allocated a nullptr is returned.
    */
-  Node<T>* fetchNode(const int x, const int y, const int z, const int depth) const;
+    Node<T>* fetchNode(const int x, const int y, const int z, const int depth) const;
 
-  /*! \brief Fetch the node (x,y,z) at depth
+    /*! \brief Fetch the node (x,y,z) at depth
    *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
    *                        be in the interval [0, size).
@@ -427,10 +456,9 @@ public:
    *
    * \return The fetched node. If the node at depth is not allocated a nullptr is returned.
    */
-  Node<T>* fetchNode(const Eigen::Vector3i& voxel_coord,
-                     const int              depth) const;
+    Node<T>* fetchNode(const Eigen::Vector3i& voxel_coord, const int depth) const;
 
-  /*! \brief Fetch the node up to min_depth that contains voxel (x,y,z)
+    /*! \brief Fetch the node up to min_depth that contains voxel (x,y,z)
    *
    * \param x         The x coordinate in interval [0, size - 1]
    * \param y         The y coordinate in interval [0, size - 1]
@@ -439,9 +467,9 @@ public:
    *
    * \return The fetched node. If no Nodes are allocated a nullptr is returned.
    */
-  Node<T>* fetchLowestNode(const int x, const int y, const int z, const int min_depth) const;
+    Node<T>* fetchLowestNode(const int x, const int y, const int z, const int min_depth) const;
 
-  /*! \brief Fetch the node up to min_depth that contains voxel (x,y,z)
+    /*! \brief Fetch the node up to min_depth that contains voxel (x,y,z)
    *
    * \param[in] voxel_coord The coordinates of the voxel. Each component must
    *                        be in the interval [0, size).
@@ -449,34 +477,28 @@ public:
    *
    * \return The fetched node. If no Nodes are allocated a nullptr is returned.
    */
-  Node<T>* fetchLowestNode(const Eigen::Vector3i& voxel_coord,
-                           const int              min_depth) const;
+    Node<T>* fetchLowestNode(const Eigen::Vector3i& voxel_coord, const int min_depth) const;
 
-  /*! \brief Insert the octant at (x,y,z). Not thread safe.
+    /*! \brief Insert the octant at (x,y,z). Not thread safe.
    * \param x x coordinate in interval [0, size - 1]
    * \param y y coordinate in interval [0, size - 1]
    * \param z z coordinate in interval [0, size - 1]
    * \param depth target insertion depth
    * \param init_octant optional inital state of inserted node / voxel block
    */
-  Node<T>* insert(const int x,
-                  const int y,
-                  const int z,
-                  const int depth,
-                  Node<T>*  init_octant = nullptr);
+    Node<T>*
+    insert(const int x, const int y, const int z, const int depth, Node<T>* init_octant = nullptr);
 
-  /*! \brief Insert the block (x,y,z) at maximum resolution. Not thread safe.
+    /*! \brief Insert the block (x,y,z) at maximum resolution. Not thread safe.
    * \param x x coordinate in interval [0, size - 1]
    * \param y y coordinate in interval [0, size - 1]
    * \param z z coordinate in interval [0, size - 1]
    * \param init_block optional inital state of inserted voxel block
    */
-  VoxelBlockType* insert(const int        x,
-                         const int        y,
-                         const int        z,
-                         VoxelBlockType*  init_block = nullptr);
+    VoxelBlockType*
+    insert(const int x, const int y, const int z, VoxelBlockType* init_block = nullptr);
 
-  /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
+    /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
    *
    * \param[in] voxel_coord_f The coordinates of the voxel. Each component must
    *                          be in the interval [0, size).
@@ -488,12 +510,12 @@ public:
    *                          point.
    * \return The interpolated value.
    */
-  template <typename ValueSelector>
-  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               ValueSelector          select_value,
-                               const int              min_scale = 0) const;
+    template<typename ValueSelector>
+    std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                                 ValueSelector select_value,
+                                 const int min_scale = 0) const;
 
-  /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
+    /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
    *
    * \param[in]  voxel_coord_f The coordinates of the voxel. Each component
    *                           must be in the interval [0, size).
@@ -507,13 +529,13 @@ public:
    *                           voxels which haven't been integrated into.
    * \return The interpolated value.
    */
-  template <typename ValueSelector>
-  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               ValueSelector          select_value,
-                               const int              min_scale,
-                               bool&                  is_valid) const;
+    template<typename ValueSelector>
+    std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                                 ValueSelector select_value,
+                                 const int min_scale,
+                                 bool& is_valid) const;
 
-  /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
+    /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
    *
    * \param[in] voxel_coord_f      The coordinates of the voxel. Each component
    *                               must be in the interval [0, size).
@@ -527,13 +549,13 @@ public:
    *                               single point.
    * \return The interpolated value.
    */
-  template <typename NodeValueSelector, typename VoxelValueSelector>
-  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               NodeValueSelector      select_node_value,
-                               VoxelValueSelector     select_voxel_value,
-                               const int              min_scale = 0) const;
+    template<typename NodeValueSelector, typename VoxelValueSelector>
+    std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                                 NodeValueSelector select_node_value,
+                                 VoxelValueSelector select_voxel_value,
+                                 const int min_scale = 0) const;
 
-  /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
+    /*! \brief Interpolate a voxel value at the supplied voxel coordinates.
    *
    * \param[in]  voxel_coord_f      The coordinates of the voxel. Each
    *                                component must be in the interval [0,
@@ -550,14 +572,14 @@ public:
    *                                voxels which haven't been integrated into.
    * \return The interpolated value.
    */
-  template <typename NodeValueSelector, typename VoxelValueSelector>
-  std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
-                               NodeValueSelector      select_node_value,
-                               VoxelValueSelector     select_voxel_value,
-                               const int              min_scale,
-                               bool&                  is_valid) const;
+    template<typename NodeValueSelector, typename VoxelValueSelector>
+    std::pair<float, int> interp(const Eigen::Vector3f& voxel_coord_f,
+                                 NodeValueSelector select_node_value,
+                                 VoxelValueSelector select_voxel_value,
+                                 const int min_scale,
+                                 bool& is_valid) const;
 
-  /*! \brief Interpolate a voxel value at the supplied 3D point.
+    /*! \brief Interpolate a voxel value at the supplied 3D point.
    *
    * \param[in] point_M      The coordinates of the point. Each component must
    *                         be in the interval [0, dim).
@@ -569,12 +591,12 @@ public:
    *                         point.
    * \return The interpolated value.
    */
-  template <typename ValueSelector>
-  std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point_M,
-                                      ValueSelector          select_value,
-                                      const int              min_scale = 0) const;
+    template<typename ValueSelector>
+    std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point_M,
+                                        ValueSelector select_value,
+                                        const int min_scale = 0) const;
 
-  /*! \brief Interpolate a voxel value at the supplied 3D point.
+    /*! \brief Interpolate a voxel value at the supplied 3D point.
    *
    * \param[in]  point_M      The coordinates of the point. Each component
    *                          must be in the interval [0, dim).
@@ -585,13 +607,13 @@ public:
    *                          voxels which haven't been integrated into.
    * \return The interpolated value.
    */
-  template <typename ValueSelector>
-  std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point_M,
-                                      ValueSelector          select_value,
-                                      const int              min_scale,
-                                      bool&                  is_valid) const;
+    template<typename ValueSelector>
+    std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point_M,
+                                        ValueSelector select_value,
+                                        const int min_scale,
+                                        bool& is_valid) const;
 
-  /*! \brief Interpolate a voxel value at the supplied 3D point.
+    /*! \brief Interpolate a voxel value at the supplied 3D point.
    *
    * \param[in] point_M            The coordinates of the point. Each component
    *                               must be in the interval [0, dim).
@@ -602,13 +624,13 @@ public:
    * \param[in] min_scale          \TODO Document this
    * \return The interpolated value.
    */
-  template <typename NodeValueSelector, typename VoxelValueSelector>
-  std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point_M,
-                                      NodeValueSelector      select_node_value,
-                                      VoxelValueSelector     select_voxel_value,
-                                      const int              min_scale = 0) const;
+    template<typename NodeValueSelector, typename VoxelValueSelector>
+    std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point_M,
+                                        NodeValueSelector select_node_value,
+                                        VoxelValueSelector select_voxel_value,
+                                        const int min_scale = 0) const;
 
-  /*! \brief Interpolate a voxel value at the supplied 3D point.
+    /*! \brief Interpolate a voxel value at the supplied 3D point.
    *
    * \param[in]  point_M            The coordinates of the point. Each
    *                                component must be in the interval [0, dim).
@@ -621,14 +643,14 @@ public:
    *                                voxels which haven't been integrated into.
    * \return The interpolated value.
    */
-  template <typename NodeValueSelector, typename VoxelValueSelector>
-  std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point_M,
-                                      NodeValueSelector      select_node_value,
-                                      VoxelValueSelector     select_voxel_value,
-                                      const int              min_scale,
-                                      bool&                  is_valid) const;
+    template<typename NodeValueSelector, typename VoxelValueSelector>
+    std::pair<float, int> interpAtPoint(const Eigen::Vector3f& point_M,
+                                        NodeValueSelector select_node_value,
+                                        VoxelValueSelector select_voxel_value,
+                                        const int min_scale,
+                                        bool& is_valid) const;
 
-  /**
+    /**
    * \brief Compute the gradient of a voxel value at the supplied voxel
    * coordinates.
    *
@@ -641,12 +663,12 @@ public:
    *                          can't be computed from a single point.
    * \return The gradient of the selected value.
    */
-  template <typename ValueSelector>
-  Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
-                       ValueSelector          select_value,
-                       const int              min_scale = 1) const;
+    template<typename ValueSelector>
+    Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
+                         ValueSelector select_value,
+                         const int min_scale = 1) const;
 
-  /**
+    /**
    * \brief Compute the gradient of a voxel value at the supplied voxel
    * coordinates.
    *
@@ -662,14 +684,14 @@ public:
    *                            can't be computed from a single point.
    * \return The gradient of the selected value.
    */
-  template <typename ValueSelector, typename ValidChecker>
-  Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
-                       ValueSelector          select_value,
-                       ValidChecker           check_is_valid,
-                       bool&                  is_valid,
-                       const int              min_scale = 1) const;
+    template<typename ValueSelector, typename ValidChecker>
+    Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
+                         ValueSelector select_value,
+                         ValidChecker check_is_valid,
+                         bool& is_valid,
+                         const int min_scale = 1) const;
 
-  /**
+    /**
    * \brief Compute the gradient of a voxel value at the supplied voxel
    * coordinates.
    *
@@ -684,13 +706,13 @@ public:
    *                               can't be computed from a single point.
    * \return The gradient of the selected value.
    */
-  template <typename NodeValueSelector, typename VoxelValueSelector>
-  Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
-                       NodeValueSelector      select_node_value,
-                       VoxelValueSelector     select_voxel_value,
-                       const int              min_scale = 1) const;
+    template<typename NodeValueSelector, typename VoxelValueSelector>
+    Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
+                         NodeValueSelector select_node_value,
+                         VoxelValueSelector select_voxel_value,
+                         const int min_scale = 1) const;
 
-  /**
+    /**
    * \brief Compute the gradient of a voxel value at the supplied voxel
    * coordinates.
    *
@@ -708,15 +730,15 @@ public:
    *                                can't be computed from a single point.
    * \return The gradient of the selected value.
    */
-  template <typename NodeValueSelector, typename VoxelValueSelector, typename ValidChecker>
-  Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
-                       NodeValueSelector      select_node_value,
-                       VoxelValueSelector     select_voxel_value,
-                       ValidChecker           check_is_valid,
-                       bool&                  is_valid,
-                       const int              min_scale = 1) const;
+    template<typename NodeValueSelector, typename VoxelValueSelector, typename ValidChecker>
+    Eigen::Vector3f grad(const Eigen::Vector3f& voxel_coord_f,
+                         NodeValueSelector select_node_value,
+                         VoxelValueSelector select_voxel_value,
+                         ValidChecker check_is_valid,
+                         bool& is_valid,
+                         const int min_scale = 1) const;
 
-  /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
+    /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
    *
    * \param[in] point_M       The coordinates of the 3D point in metres.
    * \param[in] select_value  Lambda value to select the value to compute the
@@ -726,12 +748,12 @@ public:
    *                          can't be computed from a single point.
    * \return The gradient of the selected value.
    */
-  template <typename ValueSelector>
-  Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
-                              ValueSelector          select_value,
-                              const int              min_scale = 1) const;
+    template<typename ValueSelector>
+    Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
+                                ValueSelector select_value,
+                                const int min_scale = 1) const;
 
-  /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
+    /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
    *
    * \param[in]  point_M        The coordinates of the 3D point in metres.
    * \param[in]  select_value   Lambda value to select the value to compute the
@@ -744,14 +766,14 @@ public:
    *                            can't be computed from a single point.
    * \return The gradient of the selected value.
    */
-  template <typename ValueSelector, typename ValidChecker>
-  Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
-                              ValueSelector          select_value,
-                              ValidChecker           check_is_valid,
-                              bool&                  is_valid,
-                              const int              min_scale = 1) const;
+    template<typename ValueSelector, typename ValidChecker>
+    Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
+                                ValueSelector select_value,
+                                ValidChecker check_is_valid,
+                                bool& is_valid,
+                                const int min_scale = 1) const;
 
-  /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
+    /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
    *
    * \param[in]  point_M            The coordinates of the 3D point in metres.
    * \param[in]  select_node_value  Lambda value to select the value to compute
@@ -763,13 +785,13 @@ public:
    *                                can't be computed from a single point.
    * \return The gradient of the selected value.
    */
-  template <typename NodeValueSelector, typename VoxelValueSelector>
-  Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
-                              NodeValueSelector      select_node_value,
-                              VoxelValueSelector     select_voxel_value,
-                              const int              min_scale = 1) const;
+    template<typename NodeValueSelector, typename VoxelValueSelector>
+    Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
+                                NodeValueSelector select_node_value,
+                                VoxelValueSelector select_voxel_value,
+                                const int min_scale = 1) const;
 
-  /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
+    /*! \brief Compute the gradient of a voxel value at the supplied 3D point.
    *
    * \param[in]  point_M            The coordinates of the 3D point in metres.
    * \param[in]  select_node_value  Lambda value to select the value to compute
@@ -784,126 +806,136 @@ public:
    *                                can't be computed from a single point.
    * \return The gradient of the selected value.
    */
-  template <typename NodeValueSelector, typename VoxelValueSelector, typename ValidChecker>
-  Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
-                              NodeValueSelector      select_node_value,
-                              VoxelValueSelector     select_voxel_value,
-                              ValidChecker           check_is_valid,
-                              bool&                  is_valid,
-                              const int              min_scale = 1) const;
+    template<typename NodeValueSelector, typename VoxelValueSelector, typename ValidChecker>
+    Eigen::Vector3f gradAtPoint(const Eigen::Vector3f& point_M,
+                                NodeValueSelector select_node_value,
+                                VoxelValueSelector select_voxel_value,
+                                ValidChecker check_is_valid,
+                                bool& is_valid,
+                                const int min_scale = 1) const;
 
-  /*! \brief Get the list of allocated block. If the active switch is set to
+    /*! \brief Get the list of allocated block. If the active switch is set to
    * true then only the visible blocks are retrieved.
    * \param block_list output vector of allocated blocks
    * \param active boolean switch. Set to true to retrieve visible, allocated
    * blocks, false to retrieve all allocated blocks.
    */
-  void getBlockList(std::vector<VoxelBlockType *>& block_list, bool active);
-  typename T::MemoryPoolType& pool() { return pool_; };
-  const typename T::MemoryPoolType& pool() const { return pool_; };
+    void getBlockList(std::vector<VoxelBlockType*>& block_list, bool active);
+    typename T::MemoryPoolType& pool()
+    {
+        return pool_;
+    };
+    const typename T::MemoryPoolType& pool() const
+    {
+        return pool_;
+    };
 
-  /*! \brief Computes the morton code of the block containing voxel
+    /*! \brief Computes the morton code of the block containing voxel
    * at coordinates (x,y,z)
    * \param x x coordinate in interval [0, size - 1]
    * \param y y coordinate in interval [0, size - 1]
    * \param z z coordinate in interval [0, size - 1]
    */
-  key_t hash(const int x, const int y, const int z) {
-    const int scale = voxel_depth_ - math::log2_const(block_size);
-    return keyops::encode(x, y, z, scale, voxel_depth_);
-  }
+    key_t hash(const int x, const int y, const int z)
+    {
+        const int scale = voxel_depth_ - math::log2_const(block_size);
+        return keyops::encode(x, y, z, scale, voxel_depth_);
+    }
 
-  key_t hash(const int x, const int y, const int z, key_t scale) {
-    return keyops::encode(x, y, z, scale, voxel_depth_);
-  }
+    key_t hash(const int x, const int y, const int z, key_t scale)
+    {
+        return keyops::encode(x, y, z, scale, voxel_depth_);
+    }
 
-  /*! \brief allocate a set of voxel blocks via their positional key
+    /*! \brief allocate a set of voxel blocks via their positional key
    * \param keys collection of voxel block keys to be allocated (i.e. their
    * morton number)
    * \param number of keys in the keys array
    */
-  bool allocate(key_t *keys, int num_elem);
+    bool allocate(key_t* keys, int num_elem);
 
-  void save(const std::string& filename);
-  void load(const std::string& filename);
+    void save(const std::string& filename);
+    void load(const std::string& filename);
 
-  /*! \brief Counts the number of blocks allocated
+    /*! \brief Counts the number of blocks allocated
    * \return number of voxel blocks allocated
    */
-  int blockCount();
+    int blockCount();
 
-  /*! \brief Counts the number of internal nodes
+    /*! \brief Counts the number of internal nodes
    * \return number of internal nodes
    */
-  int nodeCount();
+    int nodeCount();
 
-  void printMemStats(){
-    // memory.printStats();
-  };
+    void printMemStats(){
+        // memory.printStats();
+    };
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-private:
+    private:
+    Node<T>* root_ = nullptr;
+    int size_ = 0;
+    float dim_ = 0.f;
+    float voxel_dim_ = 0.0f;
+    float inverse_voxel_dim_ = 0.0f;
+    int num_levels_ = 0;
+    int voxel_depth_ = 0;
+    int max_block_scale_ = 0;
+    int block_depth_ = 0;
+    typename T::MemoryPoolType pool_;
 
-  Node<T>* root_ = nullptr;
-  int size_ = 0;
-  float dim_ = 0.f;
-  float voxel_dim_ = 0.0f;
-  float inverse_voxel_dim_ = 0.0f;
-  int num_levels_ = 0;
-  int voxel_depth_ = 0;
-  int max_block_scale_ = 0;
-  int block_depth_ = 0;
-  typename T::MemoryPoolType pool_;
+    friend class VoxelBlockRayIterator<T>;
+    friend class node_iterator<T>;
 
-  friend class VoxelBlockRayIterator<T>;
-  friend class node_iterator<T>;
+    // Allocation specific variables
+    std::vector<key_t> keys_at_depth_;
+    int reserved_ = 0;
 
-  // Allocation specific variables
-  std::vector<key_t> keys_at_depth_;
-  int reserved_ = 0;
+    // Private implementation of cached methods
+    int get(const int x,
+            const int y,
+            const int z,
+            VoxelBlockType* cached_block,
+            VoxelData& data,
+            const int min_scale = 0) const;
 
-  // Private implementation of cached methods
-  int get(const int       x,
-          const int       y,
-          const int       z,
-          VoxelBlockType* cached_block,
-          VoxelData&      data,
-          const int       min_scale = 0) const;
+    int get(const Eigen::Vector3i& voxel_coord,
+            VoxelBlockType* cached_block,
+            VoxelData& data,
+            const int min_scale = 0) const;
 
-  int get(const Eigen::Vector3i& voxel_coord,
-          VoxelBlockType*        cached_block,
-          VoxelData&             data,
-          const int              min_scale = 0) const;
+    int getAtPoint(const Eigen::Vector3f& point_M,
+                   VoxelBlockType* cached_block,
+                   VoxelData& data,
+                   const int min_scale = 0) const;
 
-  int getAtPoint(const Eigen::Vector3f& point_M,
-                 VoxelBlockType*        cached_block,
-                 VoxelData&             data,
-                 const int              min_scale = 0) const;
+    template<typename ValuesGetter>
+    Eigen::Vector3f gradImpl(const Eigen::Vector3f& voxel_coord_f,
+                             ValuesGetter get_values,
+                             const int min_scale) const;
 
-  template <typename ValuesGetter>
-  Eigen::Vector3f gradImpl(const Eigen::Vector3f& voxel_coord_f,
-                           ValuesGetter           get_values,
-                           const int              min_scale) const;
+    // Parallel allocation of a given tree depth for a set of input keys.
+    // Pre: depth above target_depth must have been already allocated
+    bool allocate_depth(key_t* keys, int num_tasks, int target_depth);
 
-  // Parallel allocation of a given tree depth for a set of input keys.
-  // Pre: depth above target_depth must have been already allocated
-  bool allocate_depth(key_t * keys, int num_tasks, int target_depth);
+    void reserveBuffers(const int n);
 
-  void reserveBuffers(const int n);
+    // General helpers
 
-  // General helpers
+    int blockCountRecursive(Node<T>*);
+    int nodeCountRecursive(Node<T>*);
+    void getActiveBlockList(Node<T>*, std::vector<VoxelBlockType*>& block_list);
+    void getAllocatedBlockList(Node<T>*, std::vector<VoxelBlockType*>& block_list);
 
-  int blockCountRecursive(Node<T>*);
-  int nodeCountRecursive(Node<T>*);
-  void getActiveBlockList(Node<T>*, std::vector<VoxelBlockType *>& block_list);
-  void getAllocatedBlockList(Node<T>*, std::vector<VoxelBlockType *>& block_list);
-
-  void deleteNode(Node<T>** node);
-  void deallocateTree(){ deleteNode(&root_); }
+    void deleteNode(Node<T>** node);
+    void deallocateTree()
+    {
+        deleteNode(&root_);
+    }
 };
 
-}
+} // namespace se
 
 #include "octree_impl.hpp"
 

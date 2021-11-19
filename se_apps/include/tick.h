@@ -9,22 +9,20 @@
 
  */
 
-#include <sys/time.h>       /* clock_t, clock, CLOCKS_PER_SEC */
+#include <sys/time.h> /* clock_t, clock, CLOCKS_PER_SEC */
 
-inline float tick() {
+inline float tick()
+{
+    static struct timeval t;
 
-	static struct timeval t;
+    struct timeval diff = t;
+    gettimeofday(&t, NULL);
 
-	struct timeval diff = t;
-	gettimeofday(&t, NULL);
-
-	return ((t.tv_sec - diff.tv_sec) * 1000000u + t.tv_usec - diff.tv_usec)
-			/ 1.e6;
-	/*
+    return ((t.tv_sec - diff.tv_sec) * 1000000u + t.tv_usec - diff.tv_usec) / 1.e6;
+    /*
 	 static  clock_t t = clock();
 	 clock_t diff = clock() - t ;
 	 t = clock();
 	 return ((float)diff) / (float) CLOCKS_PER_SEC;
 	 */
 }
-

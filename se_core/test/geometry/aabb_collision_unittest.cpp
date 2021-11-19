@@ -30,92 +30,95 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <gtest/gtest.h>
-
 #include <se/geometry/aabb_collision.hpp>
 #include <se/utils/math_utils.h>
 
-TEST(AABBAABBTest, SquareOverlap) {
-
-  const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
-  const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(3);
-  const Eigen::Vector3i b_coord = Eigen::Vector3i(4, 4, 8);
-  const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(3);
-  int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
-  ASSERT_EQ(overlaps, 1);
+TEST(AABBAABBTest, SquareOverlap)
+{
+    const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
+    const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(3);
+    const Eigen::Vector3i b_coord = Eigen::Vector3i(4, 4, 8);
+    const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(3);
+    int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
+    ASSERT_EQ(overlaps, 1);
 }
 
-TEST(AABBAABBTest, SquareDisjoint1Axis) {
-
-  const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
-  const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(3);
-  const Eigen::Vector3i b_coord = Eigen::Vector3i(4, 4, 1);
-  const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(3);
-  int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
-  ASSERT_EQ(overlaps, 0);
+TEST(AABBAABBTest, SquareDisjoint1Axis)
+{
+    const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
+    const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(3);
+    const Eigen::Vector3i b_coord = Eigen::Vector3i(4, 4, 1);
+    const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(3);
+    int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
+    ASSERT_EQ(overlaps, 0);
 }
 
-TEST(AABBAABBTest, SquareDisjoint2Axis) {
-  /* Disjoint on y and z */
-  const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
-  const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(3);
-  const Eigen::Vector3i b_coord = Eigen::Vector3i(6, 22, 13);
-  const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(10);
+TEST(AABBAABBTest, SquareDisjoint2Axis)
+{
+    /* Disjoint on y and z */
+    const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
+    const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(3);
+    const Eigen::Vector3i b_coord = Eigen::Vector3i(6, 22, 13);
+    const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(10);
 
-  int overlapx = se::geometry::axis_overlap(a_coord.x(), a_size.x(), b_coord.x(), b_size.x());
-  int overlapy = se::geometry::axis_overlap(a_coord.y(), a_size.y(), b_coord.y(), b_size.y());
-  int overlapz = se::geometry::axis_overlap(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
+    int overlapx = se::geometry::axis_overlap(a_coord.x(), a_size.x(), b_coord.x(), b_size.x());
+    int overlapy = se::geometry::axis_overlap(a_coord.y(), a_size.y(), b_coord.y(), b_size.y());
+    int overlapz = se::geometry::axis_overlap(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
 
-  ASSERT_EQ(overlapx, 1);
-  ASSERT_EQ(overlapy, 0);
-  ASSERT_EQ(overlapz, 0);
+    ASSERT_EQ(overlapx, 1);
+    ASSERT_EQ(overlapy, 0);
+    ASSERT_EQ(overlapz, 0);
 
-  int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
-  ASSERT_EQ(overlaps, 0);
+    int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
+    ASSERT_EQ(overlaps, 0);
 }
 
-TEST(AABBAABBTest, SquareDisjoint) {
-  /* Disjoint on x, y and z */
-  const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
-  const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(4);
-  const Eigen::Vector3i b_coord = Eigen::Vector3i(12, 22, 43);
-  const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(10);
+TEST(AABBAABBTest, SquareDisjoint)
+{
+    /* Disjoint on x, y and z */
+    const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
+    const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(4);
+    const Eigen::Vector3i b_coord = Eigen::Vector3i(12, 22, 43);
+    const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(10);
 
-  int overlapx = se::geometry::axis_overlap(a_coord.x(), a_size.x(), b_coord.x(), b_size.x());
-  int overlapy = se::geometry::axis_overlap(a_coord.y(), a_size.y(), b_coord.y(), b_size.y());
-  int overlapz = se::geometry::axis_overlap(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
+    int overlapx = se::geometry::axis_overlap(a_coord.x(), a_size.x(), b_coord.x(), b_size.x());
+    int overlapy = se::geometry::axis_overlap(a_coord.y(), a_size.y(), b_coord.y(), b_size.y());
+    int overlapz = se::geometry::axis_overlap(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
 
-  ASSERT_EQ(overlapx, 0);
-  ASSERT_EQ(overlapy, 0);
-  ASSERT_EQ(overlapz, 0);
+    ASSERT_EQ(overlapx, 0);
+    ASSERT_EQ(overlapy, 0);
+    ASSERT_EQ(overlapz, 0);
 
-  int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
-  ASSERT_EQ(overlaps, 0);
+    int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
+    ASSERT_EQ(overlaps, 0);
 }
 
-TEST(AABBAABBTest, SquareEnclosed) {
-  /* Disjoint on x, y and z */
-  const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
-  const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(10);
-  const Eigen::Vector3i b_coord = Eigen::Vector3i(6, 7, 8);
-  const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(2);
+TEST(AABBAABBTest, SquareEnclosed)
+{
+    /* Disjoint on x, y and z */
+    const Eigen::Vector3i a_coord = Eigen::Vector3i(5, 6, 9);
+    const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(10);
+    const Eigen::Vector3i b_coord = Eigen::Vector3i(6, 7, 8);
+    const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(2);
 
-  int overlapx = se::geometry::axis_overlap(a_coord.x(), a_size.x(), b_coord.x(), b_size.x());
-  int overlapy = se::geometry::axis_overlap(a_coord.y(), a_size.y(), b_coord.y(), b_size.y());
-  int overlapz = se::geometry::axis_overlap(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
+    int overlapx = se::geometry::axis_overlap(a_coord.x(), a_size.x(), b_coord.x(), b_size.x());
+    int overlapy = se::geometry::axis_overlap(a_coord.y(), a_size.y(), b_coord.y(), b_size.y());
+    int overlapz = se::geometry::axis_overlap(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
 
-  ASSERT_EQ(overlapx, 1);
-  ASSERT_EQ(overlapy, 1);
-  ASSERT_EQ(overlapz, 1);
+    ASSERT_EQ(overlapx, 1);
+    ASSERT_EQ(overlapy, 1);
+    ASSERT_EQ(overlapz, 1);
 
-  int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
-  ASSERT_EQ(overlaps, 1);
+    int overlaps = se::geometry::aabb_aabb_collision(a_coord, a_size, b_coord, b_size);
+    ASSERT_EQ(overlaps, 1);
 }
 
-TEST(AABBAABBTest, Inclusion) {
-  const Eigen::Vector3i a_coord = Eigen::Vector3i(2, 1, 3);
-  const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(10);
-  const Eigen::Vector3i b_coord = Eigen::Vector3i(3, 4, 5);
-  const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(2);
-  int included = se::geometry::aabb_aabb_inclusion(a_coord, a_size, b_coord, b_size);
-  ASSERT_EQ(included, 1);
+TEST(AABBAABBTest, Inclusion)
+{
+    const Eigen::Vector3i a_coord = Eigen::Vector3i(2, 1, 3);
+    const Eigen::Vector3i a_size = Eigen::Vector3i::Constant(10);
+    const Eigen::Vector3i b_coord = Eigen::Vector3i(3, 4, 5);
+    const Eigen::Vector3i b_size = Eigen::Vector3i::Constant(2);
+    int included = se::geometry::aabb_aabb_inclusion(a_coord, a_size, b_coord, b_size);
+    ASSERT_EQ(included, 1);
 }

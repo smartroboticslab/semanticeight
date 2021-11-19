@@ -29,15 +29,14 @@
  *
  * */
 
-#include "se/voxel_implementations/OFusion/OFusion.hpp"
-
 #include <algorithm>
 
-#include "se/node.hpp"
-#include "se/projective_functor.hpp"
+#include "OFusion_bspline_lookup.cc"
 #include "se/image/image.hpp"
 #include "se/image_utils.hpp"
-#include "OFusion_bspline_lookup.cc"
+#include "se/node.hpp"
+#include "se/projective_functor.hpp"
+#include "se/voxel_implementations/OFusion/OFusion.hpp"
 
 
 
@@ -46,54 +45,54 @@
  * depth frame.
  */
 struct OFusionUpdate {
-  const SensorImpl& sensor_;
-  float             timestamp_;
+    const SensorImpl& sensor_;
+    float timestamp_;
 
 
-  OFusionUpdate(const SensorImpl&       sensor,
-                float                   timestamp) :
-      sensor_(sensor),
-      timestamp_(timestamp) {};
-
-
-
-  template <typename DataType,
-            template <typename DataT> class VoxelBlockT>
-  void reset(VoxelBlockT<DataType>* /* block */) {}
+    OFusionUpdate(const SensorImpl& sensor, float timestamp) :
+            sensor_(sensor), timestamp_(timestamp){};
 
 
 
-  template <typename DataType,
-            template <typename DataT> class VoxelBlockT>
-  void operator()(VoxelBlockT<DataType>* block, const bool is_visible) {
-    block->active(is_visible);
-  }
+    template<typename DataType, template<typename DataT> class VoxelBlockT>
+    void reset(VoxelBlockT<DataType>* /* block */)
+    {
+    }
 
 
 
-  /**
+    template<typename DataType, template<typename DataT> class VoxelBlockT>
+    void operator()(VoxelBlockT<DataType>* block, const bool is_visible)
+    {
+        block->active(is_visible);
+    }
+
+
+
+    /**
    * Compute the value of the q_cdf spline using a lookup table. This implements
    * equation (7) from \cite VespaRAL18.
    *
    * \param[in] t Where to compute the value of the spline at.
    * \return The value of the spline.
    */
-  inline float ofusion_bspline_memoized(float t) {
-    float value = 0.f;
-    constexpr float inverse_range = 1.f / 6.f;
-    if (t >= -3.0f && t <= 3.0f) {
-      const unsigned int idx
-          = ((t + 3.f) * inverse_range) * (bspline_num_samples - 1) + 0.5f;
-      return bspline_lookup[idx];
-    } else if (t > 3.f) {
-      value = 1.f;
+    inline float ofusion_bspline_memoized(float t)
+    {
+        float value = 0.f;
+        constexpr float inverse_range = 1.f / 6.f;
+        if (t >= -3.0f && t <= 3.0f) {
+            const unsigned int idx = ((t + 3.f) * inverse_range) * (bspline_num_samples - 1) + 0.5f;
+            return bspline_lookup[idx];
+        }
+        else if (t > 3.f) {
+            value = 1.f;
+        }
+        return value;
     }
-    return value;
-  }
 
 
 
-  /**
+    /**
    * Compute the occupancy probability along the ray from the camera. This
    * implements equation (6) from \cite VespaRAL18.
    *
@@ -101,92 +100,94 @@ struct OFusionUpdate {
    * computed. The point is expressed using the ray parametric equation.
    * \return The occupancy probability.
    */
-  inline float ofusion_H(const float val) {
-    const float Q_1 = ofusion_bspline_memoized(val);
-    const float Q_2 = ofusion_bspline_memoized(val - 3);
-    return Q_1 - Q_2 * 0.5f;
-  }
+    inline float ofusion_H(const float val)
+    {
+        const float Q_1 = ofusion_bspline_memoized(val);
+        const float Q_2 = ofusion_bspline_memoized(val - 3);
+        return Q_1 - Q_2 * 0.5f;
+    }
 
 
 
-  /**
+    /**
    * Perform a log-odds update of the occupancy probability. This implements
    * equations (8) and (9) from \cite VespaRAL18.
    */
-  inline float ofusion_update_logs(const float prior,
-                                   const float sample) {
-    return (prior + log2(sample / (1.f - sample)));
-  }
+    inline float ofusion_update_logs(const float prior, const float sample)
+    {
+        return (prior + log2(sample / (1.f - sample)));
+    }
 
 
 
-  /**
+    /**
    * Weight the occupancy by the time since the last update, acting as a
    * forgetting factor. This implements equation (10) from \cite VespaRAL18.
    */
-  inline float ofusion_apply_window(const float occupancy,
-                                    const float,
-                                    const float delta_t,
-                                    const float tau) {
-    float fraction = 1.f / (1.f + (delta_t / tau));
-    fraction = std::max(0.5f, fraction);
-    return occupancy * fraction;
-  }
-
-
-
-  template <typename DataHandlerT>
-  void operator()(DataHandlerT&          handler,
-                  const Eigen::Vector3f& point_C,
-                  const float            depth_value,
-                  const uint32_t         rgba_value,
-                  const se::integration_mask_elem_t fg_value) {
-
-    // Compute the occupancy probability for the current measurement.
-    const float m = sensor_.measurementFromPoint(point_C);
-    const float diff = (m - depth_value);
-    const float sigma = se::math::clamp(OFusion::k_sigma * se::math::sq(m), OFusion::sigma_min, OFusion::sigma_max);
-    float sample = ofusion_H(diff / sigma);
-    if (sample == 0.5f) {
-      return;
+    inline float
+    ofusion_apply_window(const float occupancy, const float, const float delta_t, const float tau)
+    {
+        float fraction = 1.f / (1.f + (delta_t / tau));
+        fraction = std::max(0.5f, fraction);
+        return occupancy * fraction;
     }
-    sample = se::math::clamp(sample, 0.03f, 0.97f);
 
-    auto data = handler.get();
 
-    // Update the occupancy probability.
-    const double delta_t = timestamp_ - data.y;
-    data.x = ofusion_apply_window(data.x, OFusion::surface_boundary, delta_t, OFusion::tau);
-    data.x = ofusion_update_logs(data.x, sample);
-    data.x = se::math::clamp(data.x, OFusion::min_occupancy, OFusion::max_occupancy);
-    data.y = timestamp_;
-    // Update the foreground probability.
-    data.fg = (fg_value + data.fg * data.num) / (data.num + 1);
-    // Update the color.
-    data.r = (se::r_from_rgba(rgba_value) + data.r * data.num) / (data.num + 1);
-    data.g = (se::g_from_rgba(rgba_value) + data.g * data.num) / (data.num + 1);
-    data.b = (se::b_from_rgba(rgba_value) + data.b * data.num) / (data.num + 1);
-    data.num = fminf(data.num + 1, 100);
 
-    handler.set(data);
-  }
+    template<typename DataHandlerT>
+    void operator()(DataHandlerT& handler,
+                    const Eigen::Vector3f& point_C,
+                    const float depth_value,
+                    const uint32_t rgba_value,
+                    const se::integration_mask_elem_t fg_value)
+    {
+        // Compute the occupancy probability for the current measurement.
+        const float m = sensor_.measurementFromPoint(point_C);
+        const float diff = (m - depth_value);
+        const float sigma = se::math::clamp(
+            OFusion::k_sigma * se::math::sq(m), OFusion::sigma_min, OFusion::sigma_max);
+        float sample = ofusion_H(diff / sigma);
+        if (sample == 0.5f) {
+            return;
+        }
+        sample = se::math::clamp(sample, 0.03f, 0.97f);
+
+        auto data = handler.get();
+
+        // Update the occupancy probability.
+        const double delta_t = timestamp_ - data.y;
+        data.x = ofusion_apply_window(data.x, OFusion::surface_boundary, delta_t, OFusion::tau);
+        data.x = ofusion_update_logs(data.x, sample);
+        data.x = se::math::clamp(data.x, OFusion::min_occupancy, OFusion::max_occupancy);
+        data.y = timestamp_;
+        // Update the foreground probability.
+        data.fg = (fg_value + data.fg * data.num) / (data.num + 1);
+        // Update the color.
+        data.r = (se::r_from_rgba(rgba_value) + data.r * data.num) / (data.num + 1);
+        data.g = (se::g_from_rgba(rgba_value) + data.g * data.num) / (data.num + 1);
+        data.b = (se::b_from_rgba(rgba_value) + data.b * data.num) / (data.num + 1);
+        data.num = fminf(data.num + 1, 100);
+
+        handler.set(data);
+    }
 };
 
 
 
-void OFusion::integrate(OctreeType&             map,
+void OFusion::integrate(OctreeType& map,
                         const se::Image<float>& depth_image,
                         const se::Image<uint32_t>& rgba_image,
-                        const cv::Mat&             fg_image,
-                        const Eigen::Matrix4f&  T_CM,
-                        const SensorImpl&       sensor,
-                        const unsigned          frame) {
-  TICKD("integrate")
-  const float timestamp = (1.f / 30.f) * frame;
+                        const cv::Mat& fg_image,
+                        const Eigen::Matrix4f& T_CM,
+                        const SensorImpl& sensor,
+                        const unsigned frame)
+{
+    TICKD("integrate")
+    const float timestamp = (1.f / 30.f) * frame;
 
-  struct OFusionUpdate funct(sensor, timestamp);
+    struct OFusionUpdate funct(sensor, timestamp);
 
-  se::functor::projective_octree(map, map.sample_offset_frac_, T_CM, sensor, depth_image, rgba_image, fg_image, funct);
-  TOCK("integrate")
+    se::functor::projective_octree(
+        map, map.sample_offset_frac_, T_CM, sensor, depth_image, rgba_image, fg_image, funct);
+    TOCK("integrate")
 }
-

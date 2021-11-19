@@ -33,52 +33,58 @@
 
 namespace se {
 namespace algorithms {
-  template <typename T>
-    inline int unique(T* keys, int num_keys){
-      int end = 1;
-      if(num_keys < 2) return end;
-      for (int i = 1; i < num_keys; ++i){
-        if(keys[i] != keys[i-1]){
-          keys[end] = keys[i];
-          ++end;
+template<typename T>
+inline int unique(T* keys, int num_keys)
+{
+    int end = 1;
+    if (num_keys < 2)
+        return end;
+    for (int i = 1; i < num_keys; ++i) {
+        if (keys[i] != keys[i - 1]) {
+            keys[end] = keys[i];
+            ++end;
         }
-      }
-      return end;
     }
-
-  template <typename KeyT>
-    inline int filter_ancestors(KeyT* keys, int num_keys, const int voxel_depth) {
-      if (num_keys < 2) {
-        return num_keys;
-      }
-      int e = 0;
-      for (int i = 0; i < num_keys; ++i){
-        if(descendant(keys[i], keys[e], voxel_depth)){
-          keys[e] = keys[i];
-        } else {
-          /* end does not advance but previous entry is overwritten */
-          keys[++e] = keys[i];
-        }
-      }
-      return e + 1;
-    }
-
-  template <typename KeyT>
-    inline int unique_multiscale(KeyT* keys, int num_keys) {
-      if (num_keys < 2) {
-        return num_keys;
-      }
-      int e = 0;
-      for (int i = 0; i < num_keys; ++i){
-        if(se::keyops::code(keys[i]) != se::keyops::code(keys[e])){
-          keys[++e] = keys[i];
-        } else if(se::keyops::depth(keys[i]) > se::keyops::depth(keys[e])) {
-          /* end does not advance but previous entry is overwritten */
-          keys[e] = keys[i];
-        }
-      }
-      return e + 1;
-    }
+    return end;
 }
+
+template<typename KeyT>
+inline int filter_ancestors(KeyT* keys, int num_keys, const int voxel_depth)
+{
+    if (num_keys < 2) {
+        return num_keys;
+    }
+    int e = 0;
+    for (int i = 0; i < num_keys; ++i) {
+        if (descendant(keys[i], keys[e], voxel_depth)) {
+            keys[e] = keys[i];
+        }
+        else {
+            /* end does not advance but previous entry is overwritten */
+            keys[++e] = keys[i];
+        }
+    }
+    return e + 1;
 }
+
+template<typename KeyT>
+inline int unique_multiscale(KeyT* keys, int num_keys)
+{
+    if (num_keys < 2) {
+        return num_keys;
+    }
+    int e = 0;
+    for (int i = 0; i < num_keys; ++i) {
+        if (se::keyops::code(keys[i]) != se::keyops::code(keys[e])) {
+            keys[++e] = keys[i];
+        }
+        else if (se::keyops::depth(keys[i]) > se::keyops::depth(keys[e])) {
+            /* end does not advance but previous entry is overwritten */
+            keys[e] = keys[i];
+        }
+    }
+    return e + 1;
+}
+} // namespace algorithms
+} // namespace se
 #endif

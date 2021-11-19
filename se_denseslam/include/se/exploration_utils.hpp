@@ -9,23 +9,20 @@
 #include <se/voxel_implementations.hpp>
 
 namespace se {
-  /** Compute the explored volume of an se::Octree. All values are in m^3.
+/** Compute the explored volume of an se::Octree. All values are in m^3.
    */
-  struct ExploredVolume {
+struct ExploredVolume {
     ExploredVolume() = default;
     ExploredVolume(se::Octree<VoxelImpl::VoxelType>& map,
-                   const Eigen::Vector3f&            aabb_min_M = Eigen::Vector3f::Zero(),
-                   const Eigen::Vector3f&            aabb_max_M = Eigen::Vector3f::Zero());
+                   const Eigen::Vector3f& aabb_min_M = Eigen::Vector3f::Zero(),
+                   const Eigen::Vector3f& aabb_max_M = Eigen::Vector3f::Zero());
 
-    float free_volume     = 0.0f;
+    float free_volume = 0.0f;
     float occupied_volume = 0.0f;
     float explored_volume = 0.0f;
-  };
+};
 
-  void freeSphere(se::Octree<VoxelImpl::VoxelType>& map,
-                  const Eigen::Vector3f&            centre,
-                  float                             radius);
+void freeSphere(se::Octree<VoxelImpl::VoxelType>& map, const Eigen::Vector3f& centre, float radius);
 } // namespace se
 
 #endif // __EXPLORATION_UTILS_HPP
-

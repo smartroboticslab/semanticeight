@@ -43,36 +43,41 @@
  * functions/classes.
  */
 struct ExampleVoxelT {
-  /**
+    /**
    * The declaration of the struct stored in each octree voxel. It may contain
    * additional members if desired.
    *
    * \warning The struct name must always be `VoxelData`.
    */
-  struct VoxelData {
-    float x;
-  };
+    struct VoxelData {
+        float x;
+    };
 
 
 
-  /**
+    /**
    * Returns the value stored in newly created voxels.
    *
    * \warning This function declaration is required and the function name must
    * always be `initValue`.
    */
-  static inline VoxelData initData() { return 1.f; }
+    static inline VoxelData initData()
+    {
+        return 1.f;
+    }
 
 
 
-  /**
+    /**
    * Returns a value corresponding to invalid voxels.
    *
    * \warning This function declaration is required and the function name must
    * always be `empty`.
    */
-  static inline VoxelData invalid()     { return 0.f; }
+    static inline VoxelData invalid()
+    {
+        return 0.f;
+    }
 };
 
 #endif
-

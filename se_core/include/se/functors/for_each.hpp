@@ -30,18 +30,18 @@
 #ifndef FOR_EACH_HPP
 #define FOR_EACH_HPP
 namespace se {
-  namespace functor {
-    namespace internal {
-      template <typename T, typename UnaryOp>
-      void parallel_for_each(T& list, UnaryOp op) {
-        const int n = list.size();
+namespace functor {
+namespace internal {
+template<typename T, typename UnaryOp>
+void parallel_for_each(T& list, UnaryOp op)
+{
+    const int n = list.size();
 #pragma omp parallel for
-        for(int i = 0; i < n; ++i) {
-          op(list[i]);
-        }
-      }
+    for (int i = 0; i < n; ++i) {
+        op(list[i]);
     }
-  }
 }
+} // namespace internal
+} // namespace functor
+} // namespace se
 #endif
-

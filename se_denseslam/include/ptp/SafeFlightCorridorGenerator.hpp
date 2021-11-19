@@ -15,40 +15,40 @@
 #ifndef PTP_SAFEFLIGHTCORRIDORGENERATOR_H
 #define PTP_SAFEFLIGHTCORRIDORGENERATOR_H
 
-#include <ompl/base/objectives/PathLengthOptimizationObjective.h>
+#include <ompl/base/Planner.h>
 #include <ompl/base/ScopedState.h>
+#include <ompl/base/StateSpace.h>
+#include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/control/PathControl.h>
+#include <ompl/geometric/PathGeometric.h>
 #include <ompl/geometric/PathSimplifier.h>
+#include <ompl/geometric/SimpleSetup.h>
 #include <ompl/geometric/planners/bitstar/BITstar.h>
 #include <ompl/geometric/planners/rrt/InformedRRTstar.h>
 #include <ompl/geometric/planners/rrt/RRTstar.h>
-#include <ompl/base/Planner.h>
-#include <ompl/base/StateSpace.h>
-#include <ompl/geometric/PathGeometric.h>
-#include <ompl/geometric/SimpleSetup.h>
-#include <ompl/control/PathControl.h>
 #include <ompl/util/Time.h>
+#include <ptp/MotionValidatorOccupancyDense.hpp>
+#include <ptp/OccupancyWorld.hpp>
 #include <ptp/OmplToEigen.hpp>
 #include <ptp/Path.hpp>
-#include <ptp/OccupancyWorld.hpp>
-#include <ptp/common.hpp>
-#include <ptp/MotionValidatorOccupancyDense.hpp>
-#include <ptp/ProbCollisionChecker.hpp>
 #include <ptp/PlanningParameter.hpp>
+#include <ptp/ProbCollisionChecker.hpp>
+#include <ptp/common.hpp>
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 namespace oc = ompl::control;
 
 namespace ptp {
-  enum class PlanningResult {
+enum class PlanningResult {
     OK,
     Partial,
     Failed,
-  };
+};
 
-  class SafeFlightCorridorGenerator {
-  public:
+class SafeFlightCorridorGenerator {
+    public:
     typedef std::shared_ptr<SafeFlightCorridorGenerator> Ptr;
 
     /**
@@ -57,42 +57,53 @@ namespace ptp {
      *              StateSpacePtr:  Representation of a space in which planning can be performed. Topology specific sampling, interpolation and distance are defined.
      *              RealVectorStateSpace: A state space representing R^n. The distance function is the L2 norm.
      */
-    SafeFlightCorridorGenerator(const OccupancyWorld&   ow,
-                                ProbCollisionChecker&   pcc,
-                                const PlanningParameter pp); // QUESTION: Why use const OccupancyWorld::Ptr&
-    SafeFlightCorridorGenerator(); // QUESTION: Why use const OccupancyWorld::Ptr&
+    SafeFlightCorridorGenerator(
+        const OccupancyWorld& ow,
+        ProbCollisionChecker& pcc,
+        const PlanningParameter pp); // QUESTION: Why use const OccupancyWorld::Ptr&
+    SafeFlightCorridorGenerator();   // QUESTION: Why use const OccupancyWorld::Ptr&
 
     /**
      * Set up the planner.
      * @param [in] start Start position for path planning. [m]
      * @param [in] goal Goal position for path planning. [m]
      */
-    bool setupPlanner(const Eigen::Vector3f& start_m,
-                      const Eigen::Vector3f& goal_m);
+    bool setupPlanner(const Eigen::Vector3f& start_m, const Eigen::Vector3f& goal_m);
 
-    Path<kDim>::Ptr getPathNotSimplified() {return path_not_simplified_;}
+    Path<kDim>::Ptr getPathNotSimplified()
+    {
+        return path_not_simplified_;
+    }
 
-      /**
+    /**
      * Plan the global path.
      * @param [in] start Start position for path planning. [m]
      * @param [in] goal Goal position for path planning. [m]
      * @return True if straight line planning was successful.
      *TODO: Instead of Eigen::Vector3f use a trajectory point type/message
      */
-    PlanningResult planPath(const Eigen::Vector3f& start_m,
-                            const Eigen::Vector3f& goal_m);
+    PlanningResult planPath(const Eigen::Vector3f& start_m, const Eigen::Vector3f& goal_m);
 
-    bool start_end_occupied() {return start_end_occupied_;};
-    bool ompl_failed() {return ompl_failed_;};
+    bool start_end_occupied()
+    {
+        return start_end_occupied_;
+    };
+    bool ompl_failed()
+    {
+        return ompl_failed_;
+    };
 
     void prunePath(og::PathGeometric& path);
     void simplifyPath(ompl::geometric::PathGeometric& path);
 
     /** Return the planned path. Its first vertex is always the start position.
      */
-    Path<kDim>::Ptr getPath() { return path_; };
+    Path<kDim>::Ptr getPath()
+    {
+        return path_;
+    };
 
-  private:
+    private:
     /**
      * Set the space boundaries of the ompl planner from the map boundaries.
      * @param [in] min_boundary Lower boundaries in x, y and z of the map.
@@ -123,11 +134,10 @@ namespace ptp {
     float solving_time_;
     bool start_end_occupied_ = false;
     bool ompl_failed_ = false;
-  };
+};
 
-}
+} // namespace ptp
 
 
 
 #endif //PTP_SAFEFLIGHTCORRIDORGENERATOR_H
-

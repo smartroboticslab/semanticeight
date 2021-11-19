@@ -9,11 +9,11 @@
 #include "se/instance_segmentation.hpp"
 
 namespace se {
-  /**
+/**
    * Segmentation data for a single RGB frame. This struct contains multiple
    * InstanceSegmentation structs.
    */
-  struct SegmentationResult {
+struct SegmentationResult {
     int width;
     int height;
 
@@ -160,13 +160,12 @@ namespace se {
     void print(FILE* f = stdout) const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  };
+};
 
 
 
-  std::ostream& operator<<(std::ostream& os, const SegmentationResult& s);
+std::ostream& operator<<(std::ostream& os, const SegmentationResult& s);
 
 } // namespace se
 
 #endif // SEGMENTATION_RESULT_HPP
-

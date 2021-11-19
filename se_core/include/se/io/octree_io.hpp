@@ -6,9 +6,8 @@
 #ifndef __OCTREE_IO_HPP
 #define __OCTREE_IO_HPP
 
-#include <string>
-
 #include <Eigen/Dense>
+#include <string>
 
 #include "se/octree.hpp"
 
@@ -16,7 +15,7 @@
 
 namespace se {
 
-  /**
+/**
    * \brief Save a 3D slice of the octree values as a VTK file.
    *
    * \param[in] octree        The octree to be sliced.
@@ -27,15 +26,15 @@ namespace se {
    * \param[in] min_scale     The minimum scale to select the data from.
    * \return 0 on success, nonzero on error.
    */
-  template <typename VoxelT, typename ValueSelector>
-  int save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
-                              const std::string         filename,
-                              const Eigen::Vector3i&    lower_coord,
-                              const Eigen::Vector3i&    upper_coord,
-                              ValueSelector             select_value,
-                              const int                 min_scale = 0);
+template<typename VoxelT, typename ValueSelector>
+int save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
+                            const std::string filename,
+                            const Eigen::Vector3i& lower_coord,
+                            const Eigen::Vector3i& upper_coord,
+                            ValueSelector select_value,
+                            const int min_scale = 0);
 
-  /**
+/**
    * \brief Save a 3D slice of the octree values as a VTK file.
    *
    * \param[in] octree             The octree to be sliced.
@@ -47,29 +46,29 @@ namespace se {
    * \param[in] min_scale          The minimum scale to select the data from.
    * \return 0 on success, nonzero on error.
    */
-  template <typename VoxelT, typename NodeValueSelector, typename VoxelValueSelector>
-  int save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
-                              const std::string         filename,
-                              const Eigen::Vector3i&    lower_coord,
-                              const Eigen::Vector3i&    upper_coord,
-                              NodeValueSelector         select_node_value,
-                              VoxelValueSelector        select_voxel_value,
-                              const int                 min_scale = 0);
+template<typename VoxelT, typename NodeValueSelector, typename VoxelValueSelector>
+int save_3d_value_slice_vtk(const se::Octree<VoxelT>& octree,
+                            const std::string filename,
+                            const Eigen::Vector3i& lower_coord,
+                            const Eigen::Vector3i& upper_coord,
+                            NodeValueSelector select_node_value,
+                            VoxelValueSelector select_voxel_value,
+                            const int min_scale = 0);
 
-  template <typename VoxelT>
-  int save_3d_scale_slice_vtk(const se::Octree<VoxelT>& octree,
-                              const std::string         filename,
-                              const Eigen::Vector3i&    lower_coord,
-                              const Eigen::Vector3i&    upper_coord,
-                              const int                 min_scale = 0);
+template<typename VoxelT>
+int save_3d_scale_slice_vtk(const se::Octree<VoxelT>& octree,
+                            const std::string filename,
+                            const Eigen::Vector3i& lower_coord,
+                            const Eigen::Vector3i& upper_coord,
+                            const int min_scale = 0);
 
-  template <typename ValueGetter>
-  int save_3d_slice_vtk(const std::string         filename,
-                        const Eigen::Vector3i&    lower_coord,
-                        const Eigen::Vector3i&    upper_coord,
-                        ValueGetter               get_value);
+template<typename ValueGetter>
+int save_3d_slice_vtk(const std::string filename,
+                      const Eigen::Vector3i& lower_coord,
+                      const Eigen::Vector3i& upper_coord,
+                      ValueGetter get_value);
 
-  /**
+/**
    * \brief Save the octree structure as a PLY file.
    *
    * Documentation for the PLY polygon file format available here
@@ -81,11 +80,10 @@ namespace se {
    * \param[in] filename The output filename.
    * \return 0 on success, nonzero on error.
    */
-  template <typename VoxelT>
-  int save_octree_structure_ply(const se::Octree<VoxelT>& octree,
-                                const std::string         filename);
+template<typename VoxelT>
+int save_octree_structure_ply(const se::Octree<VoxelT>& octree, const std::string filename);
 
-}
+} // namespace se
 
 #include "octree_io_impl.hpp"
 

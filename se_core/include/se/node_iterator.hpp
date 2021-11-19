@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef NODE_ITERATOR_H
 #define NODE_ITERATOR_H
-#include "octree.hpp"
 #include "Eigen/Dense"
+#include "octree.hpp"
 
 namespace se {
 template<typename T>
@@ -41,17 +41,16 @@ using VoxelBlockType = typename T::VoxelBlockType;
 /*! \brief Iterate through all the nodes (first Node and then VoxelBlock nodes)
  * of the Octree.
  */
-template <typename T>
+template<typename T>
 class node_iterator {
+    public:
+    node_iterator(const Octree<T>& octree) : octree_(octree)
+    {
+        state_ = BRANCH_NODES;
+        last = 0;
+    };
 
-  public:
-
-  node_iterator(const Octree<T>& octree): octree_(octree){
-    state_ = BRANCH_NODES;
-    last = 0;
-  };
-
-  /*! \brief Get a pointer to the next node in the Octree.
+    /*! \brief Get a pointer to the next node in the Octree.
    * Starting from the root node, each time this function is called will return
    * a pointer to the next non-leaf (Node) node. Once all non-leaf nodes have
    * been iterated through, it will start iterating through the leaf nodes
@@ -60,50 +59,49 @@ class node_iterator {
    * \return A pointer to the next node. Returns nullptr if all nodes have been
    * iterated through.
    */
-  Node<T> *  next() {
-    switch(state_) {
-      case BRANCH_NODES: {
-        const auto &node_buffer = octree_.pool().nodeBuffer();
-        if (last < node_buffer.size()) {
-          Node<T> *n = node_buffer[last++];
-          return n;
-        } else {
-          last = 0;
-          state_ = LEAF_NODES;
-          return next();
+    Node<T>* next()
+    {
+        switch (state_) {
+        case BRANCH_NODES: {
+            const auto& node_buffer = octree_.pool().nodeBuffer();
+            if (last < node_buffer.size()) {
+                Node<T>* n = node_buffer[last++];
+                return n;
+            }
+            else {
+                last = 0;
+                state_ = LEAF_NODES;
+                return next();
+            }
+            break;
         }
-        break;
-      }
-      case LEAF_NODES: {
-        const auto& block_buffer = octree_.pool().blockBuffer();
-        if(last < block_buffer.size()) {
-          VoxelBlockType<T>* n = block_buffer[last++];
-          return n;
-          /* the above int init required due to odr-use of static member */
-        } else {
-          last = 0;
-          state_ = FINISHED;
-          return nullptr;
+        case LEAF_NODES: {
+            const auto& block_buffer = octree_.pool().blockBuffer();
+            if (last < block_buffer.size()) {
+                VoxelBlockType<T>* n = block_buffer[last++];
+                return n;
+                /* the above int init required due to odr-use of static member */
+            }
+            else {
+                last = 0;
+                state_ = FINISHED;
+                return nullptr;
+            }
+            break;
         }
-        break;
-      }
-      case FINISHED: {
+        case FINISHED: {
+            return nullptr;
+        }
+        }
         return nullptr;
-      }
     }
-    return nullptr;
-  }
 
-  private:
-  typedef enum ITER_STATE {
-    BRANCH_NODES,
-    LEAF_NODES,
-    FINISHED
-  } ITER_STATE;
+    private:
+    typedef enum ITER_STATE { BRANCH_NODES, LEAF_NODES, FINISHED } ITER_STATE;
 
-  const Octree<T>& octree_;
-  ITER_STATE state_;
-  size_t last;
+    const Octree<T>& octree_;
+    ITER_STATE state_;
+    size_t last;
 };
-}
+} // namespace se
 #endif

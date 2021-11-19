@@ -9,21 +9,20 @@
 #ifndef __READER_HPP
 #define __READER_HPP
 
-#include "se/config.h"
 #include "reader_base.hpp"
+#include "se/config.h"
 
 
 
 namespace se {
 
-  /** Create the appropriate reader instance based on the configuration.
+/** Create the appropriate reader instance based on the configuration.
    *
    * \param[in] config The pipeline configuration.
    * \return A pointer to an instance of a class derived from Reader.
    */
-  Reader* create_reader(const Configuration& config);
+Reader* create_reader(const Configuration& config);
 
 } // namespace se
 
 #endif
-

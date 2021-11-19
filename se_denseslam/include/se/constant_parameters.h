@@ -23,6 +23,6 @@ constexpr float track_threshold = 0.15f;
 constexpr float delta = 4.0f;
 
 const Eigen::Vector3f light{1, 1, -1.0};
-const Eigen::Vector3f ambient{ 0.1, 0.1, 0.1};
+const Eigen::Vector3f ambient{0.1, 0.1, 0.1};
 
 #endif /* CONSTANT_PARAMETERS_H_ */

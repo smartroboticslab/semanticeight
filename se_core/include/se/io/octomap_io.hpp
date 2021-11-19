@@ -31,17 +31,16 @@
 
 #if defined(SE_OCTOMAP) && SE_OCTOMAP
 
-#include <cstring>
+#    include <cstring>
+#    include <octomap/octomap.h>
 
-#include <octomap/octomap.h>
-
-#include "se/octree.hpp"
+#    include "se/octree.hpp"
 
 
 
 namespace se {
 
-  /*! Convert an se::Octree to an OctoMap.
+/*! Convert an se::Octree to an OctoMap.
    * A lambda function can be used to specify exactly how the se::Octree data
    * is converted to OctoMap data. The signature of the lambda function
    * should be
@@ -73,13 +72,12 @@ namespace se {
    *         `delete` after use. Returns nullptr if octree has not been
    *         properly initialized.
    */
-  template<typename VoxelT, typename FunctionT>
-  octomap::OcTree* to_octomap(const se::Octree<VoxelT>& octree,
-                              const FunctionT           set_node_value);
+template<typename VoxelT, typename FunctionT>
+octomap::OcTree* to_octomap(const se::Octree<VoxelT>& octree, const FunctionT set_node_value);
 
 
 
-  /*! Convert an se::Octree to an OctoMap.
+/*! Convert an se::Octree to an OctoMap.
    * The log-odds occupancy probability of the se::Octree is saved directly in
    * the OctoMap.
    *
@@ -99,12 +97,12 @@ namespace se {
    *         `delete` after use. Returns nullptr if octree has not been
    *         properly initialized.
    */
-  template<typename VoxelT>
-  octomap::OcTree* to_octomap(const se::Octree<VoxelT>& octree);
+template<typename VoxelT>
+octomap::OcTree* to_octomap(const se::Octree<VoxelT>& octree);
 
 
 
-  /*! Convert an se::Octree to an OctoMap.
+/*! Convert an se::Octree to an OctoMap.
    * Only a binary state, occupied or free, is saved in the OctoMap.
    * Voxels are considered occupied if their occupancy probability is
    * greater than 0.5, free if it is smaller than 0.5 and unknown if it
@@ -126,14 +124,13 @@ namespace se {
    *         `delete` after use. Returns nullptr if octree has not been
    *         properly initialized.
    */
-  template<typename VoxelT>
-  octomap::OcTree* to_binary_octomap(const se::Octree<VoxelT>& octree);
+template<typename VoxelT>
+octomap::OcTree* to_binary_octomap(const se::Octree<VoxelT>& octree);
 
 } // namespace se
 
-#include "octomap_io_impl.hpp"
+#    include "octomap_io_impl.hpp"
 
 #endif
 
 #endif
-

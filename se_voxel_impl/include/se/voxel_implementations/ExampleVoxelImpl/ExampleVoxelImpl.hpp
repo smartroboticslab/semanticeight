@@ -31,12 +31,12 @@
 #ifndef __EXAMPLE_VOXEL_IMPL_HPP
 #define __EXAMPLE_VOXEL_IMPL_HPP
 
-#include "se/octree.hpp"
-#include "se/image/image.hpp"
-#include "se/algorithms/meshing.hpp"
-#include "se/sensor_implementation.hpp"
-
 #include <yaml-cpp/yaml.h>
+
+#include "se/algorithms/meshing.hpp"
+#include "se/image/image.hpp"
+#include "se/octree.hpp"
+#include "se/sensor_implementation.hpp"
 
 /**
  * Minimal example of the structure of a potential voxel implementation. All
@@ -49,8 +49,7 @@
  * related functions/classes.
  */
 struct ExampleVoxelImpl {
-
-  /**
+    /**
    * The voxel type used as the template parameter for se::Octree.
    *
    *
@@ -60,8 +59,8 @@ struct ExampleVoxelImpl {
    *
    * \warning The struct name must always be `VoxelType`.
    */
-  struct VoxelType {
-  /**
+    struct VoxelType {
+        /**
    * The declaration of the struct stored in each se::Octree voxel. It may
    * contain additional members if desired. Make sure to also update
    * VoxelType::invalid() and VoxelType::initData() to initialize all data
@@ -69,56 +68,66 @@ struct ExampleVoxelImpl {
    *
    * \warning The struct name must always be `VoxelData`.
    */
-    struct VoxelData {
-      float  x; /**< The value stored in each voxel of the octree. */
+        struct VoxelData {
+            float x; /**< The value stored in each voxel of the octree. */
 
-      // Any other data stored in each voxel go here. Make sure to also update
-      // invalid() and initData() to initialize all data members by returning an
-      // appropriate struct brace initializer.
-    };
+            // Any other data stored in each voxel go here. Make sure to also update
+            // invalid() and initData() to initialize all data members by returning an
+            // appropriate struct brace initializer.
+        };
 
-    /**
+        /**
      * Returns a value corresponding to invalid voxels.
      *
      * \warning The function signature must not be changed.
      */
-    static inline VoxelData invalid()     { return {0.f}; }
+        static inline VoxelData invalid()
+        {
+            return {0.f};
+        }
 
-    /**
+        /**
      * Returns the value stored in newly created voxels.
      *
      * \warning The function signature must not be changed.
      */
-    static inline VoxelData initData() { return {1.f}; }
+        static inline VoxelData initData()
+        {
+            return {1.f};
+        }
 
-    static float selectNodeValue(VoxelData& data) {
-      return data.x;
+        static float selectNodeValue(VoxelData& data)
+        {
+            return data.x;
+        };
+
+        static float selectVoxelValue(VoxelData& data)
+        {
+            return data.x;
+        };
+
+        static bool isInside(VoxelData& data)
+        {
+            return true; // if inside
+        };
+
+        static bool isValid(VoxelData& data)
+        {
+            return true; // if valid
+        };
+
+        using VoxelBlockType = se::VoxelBlockFull<ExampleVoxelImpl::VoxelType>;
+
+        using MemoryPoolType = se::PagedMemoryPool<ExampleVoxelImpl::VoxelType>;
+        template<typename ElemT>
+        using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
     };
 
-    static float selectVoxelValue(VoxelData& data) {
-      return data.x;
-    };
+    using VoxelData = ExampleVoxelImpl::VoxelType::VoxelData;
+    using OctreeType = se::Octree<ExampleVoxelImpl::VoxelType>;
+    using VoxelBlockType = typename ExampleVoxelImpl::VoxelType::VoxelBlockType;
 
-    static bool isInside(VoxelData& data) {
-      return true; // if inside
-    };
-
-    static bool isValid(VoxelData& data) {
-      return true; // if valid
-    };
-
-    using VoxelBlockType = se::VoxelBlockFull<ExampleVoxelImpl::VoxelType>;
-
-    using MemoryPoolType = se::PagedMemoryPool<ExampleVoxelImpl::VoxelType>;
-    template <typename ElemT>
-    using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
-  };
-
-  using VoxelData      = ExampleVoxelImpl::VoxelType::VoxelData;
-  using OctreeType     = se::Octree<ExampleVoxelImpl::VoxelType>;
-  using VoxelBlockType = typename ExampleVoxelImpl::VoxelType::VoxelBlockType;
-
-  /**
+    /**
    * Set to true for TSDF maps, false for occupancy maps.
    *
    * \warning The name of this variable must always be `invert_normals`.
@@ -127,71 +136,72 @@ struct ExampleVoxelImpl {
    * defined in the respective `.cpp` file
    * `se_voxel_impl/src/ExampleVoxelImpl.cpp`.
    */
-  static constexpr bool invert_normals = false;
+    static constexpr bool invert_normals = false;
 
-  // Any other constant parameters required for the implementation go here.
-  // Make sure to also define them in the respective .cpp file
-  // se_voxel_impl/src/ExampleVoxelImpl.cpp.
+    // Any other constant parameters required for the implementation go here.
+    // Make sure to also define them in the respective .cpp file
+    // se_voxel_impl/src/ExampleVoxelImpl.cpp.
 
-  static std::string type() { return "examplevoxelimpl"; }
+    static std::string type()
+    {
+        return "examplevoxelimpl";
+    }
 
-  /**
+    /**
    * Configure the ExampleVoxelImpl parameters
    */
-  static void configure(const float voxel_dim);
-  static void configure(YAML::Node yaml_config, const float voxel_dim);
+    static void configure(const float voxel_dim);
+    static void configure(YAML::Node yaml_config, const float voxel_dim);
 
-  static std::string printConfig();
+    static std::string printConfig();
 
-  /**
+    /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
    * camera pose.
    *
    * \warning The function signature must not be changed.
    */
-  static size_t buildAllocationList(OctreeType&             map,
-                                    const se::Image<float>& depth_image,
-                                    const Eigen::Matrix4f&  T_MC,
-                                    const SensorImpl&       sensor,
-                                    se::key_t*              allocation_list,
-                                    size_t                  reserved);
+    static size_t buildAllocationList(OctreeType& map,
+                                      const se::Image<float>& depth_image,
+                                      const Eigen::Matrix4f& T_MC,
+                                      const SensorImpl& sensor,
+                                      se::key_t* allocation_list,
+                                      size_t reserved);
 
 
 
-  /**
+    /**
    * Integrate a depth image into the map.
    *
    * \warning The function signature must not be changed.
    */
-  static void integrate(OctreeType&             map,
-                        const se::Image<float>& depth_image,
-                        const Eigen::Matrix4f&  T_CM,
-                        const SensorImpl&       sensor,
-                        const unsigned          frame);
+    static void integrate(OctreeType& map,
+                          const se::Image<float>& depth_image,
+                          const Eigen::Matrix4f& T_CM,
+                          const SensorImpl& sensor,
+                          const unsigned frame);
 
 
 
-  /**
+    /**
    * Cast a ray and return the point where the surface was hit.
    *
    * \warning The function signature must not be changed.
    */
-  static Eigen::Vector4f raycast(const OctreeType&      map,
-                                 const Eigen::Vector3f& ray_origin_M,
-                                 const Eigen::Vector3f& ray_dir_M,
-                                 const float            t_near,
-                                 const float            t_far);
+    static Eigen::Vector4f raycast(const OctreeType& map,
+                                   const Eigen::Vector3f& ray_origin_M,
+                                   const Eigen::Vector3f& ray_dir_M,
+                                   const float t_near,
+                                   const float t_far);
 
-  /**
+    /**
    * Create a triangle mesh given the octree.
    *
    * \warning The function signature must not be changed.
    */
-  static void dumpMesh(OctreeType&                map,
-                       std::vector<se::Triangle>& mesh);
+    static void dumpMesh(OctreeType& map, std::vector<se::Triangle>& mesh);
 
-  // Any other static functions required for the implementation go here.
+    // Any other static functions required for the implementation go here.
 };
 
 #endif
-

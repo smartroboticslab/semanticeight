@@ -6,70 +6,71 @@
 #include "se/instance_segmentation.hpp"
 
 namespace se {
-  constexpr size_t InstanceSegmentation::morph_diam_;
-  constexpr float InstanceSegmentation::skip_integration;
-  constexpr float InstanceSegmentation::skip_fg_update;
-  constexpr uint8_t InstanceSegmentation::instance_mask_threshold;
+constexpr size_t InstanceSegmentation::morph_diam_;
+constexpr float InstanceSegmentation::skip_integration;
+constexpr float InstanceSegmentation::skip_fg_update;
+constexpr uint8_t InstanceSegmentation::instance_mask_threshold;
 
-  InstanceSegmentation::InstanceSegmentation()
-    : instance_id(instance_invalid),
-      instance_mask(cv::Mat::zeros(0, 0, se::mask_t))
-  {
-  }
-
-
-
-  InstanceSegmentation::InstanceSegmentation(const int      instance_id,
-                                             const int      class_id,
-                                             const cv::Mat& instance_mask)
-    : instance_id(instance_id),
-      instance_mask(instance_mask),
-      conf(class_id)
-  {
-    cv::threshold(instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
-  }
+InstanceSegmentation::InstanceSegmentation() :
+        instance_id(instance_invalid), instance_mask(cv::Mat::zeros(0, 0, se::mask_t))
+{
+}
 
 
 
-  InstanceSegmentation::InstanceSegmentation(const int                  instance_id,
-                                             const cv::Mat&             instance_mask,
-                                             const DetectionConfidence& confidence)
-    : instance_id(instance_id),
-      instance_mask(instance_mask),
-      conf(confidence) {
-    cv::threshold(instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
-  }
+InstanceSegmentation::InstanceSegmentation(const int instance_id,
+                                           const int class_id,
+                                           const cv::Mat& instance_mask) :
+        instance_id(instance_id), instance_mask(instance_mask), conf(class_id)
+{
+    cv::threshold(
+        instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
+}
 
 
 
-  InstanceSegmentation::InstanceSegmentation(const int                  instance_id,
-                                             const cv::Mat&             instance_mask)
-    : instance_id(instance_id),
-      instance_mask(instance_mask) {
-    cv::threshold(instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
-  }
+InstanceSegmentation::InstanceSegmentation(const int instance_id,
+                                           const cv::Mat& instance_mask,
+                                           const DetectionConfidence& confidence) :
+        instance_id(instance_id), instance_mask(instance_mask), conf(confidence)
+{
+    cv::threshold(
+        instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
+}
 
 
 
-  int InstanceSegmentation::classId() const {
+InstanceSegmentation::InstanceSegmentation(const int instance_id, const cv::Mat& instance_mask) :
+        instance_id(instance_id), instance_mask(instance_mask)
+{
+    cv::threshold(
+        instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
+}
+
+
+
+int InstanceSegmentation::classId() const
+{
     return conf.classId();
-  }
+}
 
 
 
-  float InstanceSegmentation::confidence() const {
+float InstanceSegmentation::confidence() const
+{
     return conf.confidence();
-  }
+}
 
 
 
-  cv::Mat InstanceSegmentation::generateIntegrationMask() const {
+cv::Mat InstanceSegmentation::generateIntegrationMask() const
+{
     cv::Size mask_size = instance_mask.size();
 
     // Perform morphological dilation on the instance mask
     cv::Mat dilated_mask;
-    const cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-        cv::Size(morph_diam_, morph_diam_));
+    const cv::Mat element =
+        cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(morph_diam_, morph_diam_));
     cv::dilate(instance_mask, dilated_mask, element);
 
     // Get the background from the dilated mask (inverse mask)
@@ -99,48 +100,50 @@ namespace se {
 
     // Set all positive parts of the mask to skip_fg_update if this is an undetected instance.
     if (!detected()) {
-      cv::Mat positive_mask = integration_mask > 0.0f;
-      integration_mask.setTo(skip_fg_update, positive_mask);
+        cv::Mat positive_mask = integration_mask > 0.0f;
+        integration_mask.setTo(skip_fg_update, positive_mask);
     }
 
     return integration_mask;
-  }
+}
 
 
 
-  void InstanceSegmentation::resize(const int width, const int height) {
+void InstanceSegmentation::resize(const int width, const int height)
+{
     cv::Mat tmp_image;
     cv::resize(instance_mask, tmp_image, cv::Size(width, height));
     instance_mask = tmp_image.clone();
-  }
+}
 
 
 
-  void InstanceSegmentation::morphologicalRefinement(
-      const size_t element_diameter) {
-    const cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-        cv::Size(element_diameter, element_diameter));
+void InstanceSegmentation::morphologicalRefinement(const size_t element_diameter)
+{
+    const cv::Mat element =
+        cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(element_diameter, element_diameter));
     cv::morphologyEx(instance_mask, instance_mask, cv::MORPH_OPEN, element);
     cv::morphologyEx(instance_mask, instance_mask, cv::MORPH_CLOSE, element);
-  }
+}
 
 
 
-  void InstanceSegmentation::removeDepthOutliers(const cv::Mat& depth) {
+void InstanceSegmentation::removeDepthOutliers(const cv::Mat& depth)
+{
     cv::Scalar mu_cv, stddev_cv;
     cv::meanStdDev(depth, mu_cv, stddev_cv, instance_mask);
     const float stddev = stddev_cv[0];
     // Arbitrary distance threshold in meters.
     if (stddev > 0.5f) {
-      cv::Mat inliers = (depth - mu_cv) <= 3 * stddev_cv;
-      cv::bitwise_and(instance_mask, inliers, instance_mask);
+        cv::Mat inliers = (depth - mu_cv) <= 3 * stddev_cv;
+        cv::bitwise_and(instance_mask, inliers, instance_mask);
     }
-  }
+}
 
 
 
-  int InstanceSegmentation::merge(const InstanceSegmentation& other,
-                                  const float                 overlap_thres) {
+int InstanceSegmentation::merge(const InstanceSegmentation& other, const float overlap_thres)
+{
     // Compute the amount of overlap.
     cv::Mat intersection;
     cv::bitwise_and(instance_mask, other.instance_mask, intersection);
@@ -148,54 +151,59 @@ namespace se {
     const float other_area = cv::countNonZero(other.instance_mask);
     const float ratio = intersection_area / other_area;
     if (ratio > overlap_thres) {
-      // Merge the masks.
-      cv::Mat combined_mask;
-      cv::bitwise_or(instance_mask, other.instance_mask, combined_mask);
-      combined_mask.copyTo(instance_mask);
-      return 1;
-    } else {
-      // Do not merge.
-      return 0;
+        // Merge the masks.
+        cv::Mat combined_mask;
+        cv::bitwise_or(instance_mask, other.instance_mask, combined_mask);
+        combined_mask.copyTo(instance_mask);
+        return 1;
     }
-  }
+    else {
+        // Do not merge.
+        return 0;
+    }
+}
 
 
 
-  bool InstanceSegmentation::detected() const {
+bool InstanceSegmentation::detected() const
+{
     return conf.valid();
-  }
+}
 
 
 
-  void InstanceSegmentation::print(FILE* f) const {
+void InstanceSegmentation::print(FILE* f) const
+{
     const std::string object_type = is_class_stuff(classId()) ? "STUFF" : "THING";
-    fprintf(f, "%3d   %dx%d %5.3f   %3d %3.0f%% %s %s %s",
-        instance_id, instance_mask.cols, instance_mask.rows,
-        cv::countNonZero(instance_mask) / static_cast<float>(instance_mask.total()),
-        classId(), 100.0f * confidence(), (detected() ? "  detected" : "undetected"),
-        object_type.c_str(), class_id_to_str(classId()).c_str());
-  }
+    fprintf(f,
+            "%3d   %dx%d %5.3f   %3d %3.0f%% %s %s %s",
+            instance_id,
+            instance_mask.cols,
+            instance_mask.rows,
+            cv::countNonZero(instance_mask) / static_cast<float>(instance_mask.total()),
+            classId(),
+            100.0f * confidence(),
+            (detected() ? "  detected" : "undetected"),
+            object_type.c_str(),
+            class_id_to_str(classId()).c_str());
+}
 
 
 
-  std::ostream& operator<<(std::ostream& os, const InstanceSegmentation& o) {
-    const std::string object_type
-        = is_class_stuff(o.classId()) ? "STUFF " : "THING ";
+std::ostream& operator<<(std::ostream& os, const InstanceSegmentation& o)
+{
+    const std::string object_type = is_class_stuff(o.classId()) ? "STUFF " : "THING ";
     std::streamsize p = os.precision();
-    const std::ios_base::fmtflags f (os.flags());
-    os << std::setw(3) << o.instance_id << "   "
-        << o.instance_mask.cols << "x" << o.instance_mask.rows << " "
-        << std::setw(5) << std::setprecision(3)
-        << cv::countNonZero(o.instance_mask) / static_cast<float>(o.instance_mask.total()) << "   "
-        << std::setprecision(p)
-        << std::setw(3) << o.classId() << " "
-        << std::setw(3) << std::fixed << std::setprecision(0) << 100.0f * o.confidence() << "% "
-        << std::setprecision(p)
-        << (o.detected() ? "  detected " : "undetected ")
-        << object_type << class_id_to_str(o.classId());
+    const std::ios_base::fmtflags f(os.flags());
+    os << std::setw(3) << o.instance_id << "   " << o.instance_mask.cols << "x"
+       << o.instance_mask.rows << " " << std::setw(5) << std::setprecision(3)
+       << cv::countNonZero(o.instance_mask) / static_cast<float>(o.instance_mask.total()) << "   "
+       << std::setprecision(p) << std::setw(3) << o.classId() << " " << std::setw(3) << std::fixed
+       << std::setprecision(0) << 100.0f * o.confidence() << "% " << std::setprecision(p)
+       << (o.detected() ? "  detected " : "undetected ") << object_type
+       << class_id_to_str(o.classId());
     os.flags(f);
     return os;
-  }
+}
 
 } // namespace se
-

@@ -10,4 +10,3 @@
 typedef se::SE_SENSOR_IMPLEMENTATION SensorImpl;
 
 #endif
-

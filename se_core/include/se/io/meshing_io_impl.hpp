@@ -7,233 +7,233 @@
 #define __MESHING_IO_IMPL_HPP
 
 
-static std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>
-color_fraction_map =
-{
-  {0.40, 0.76, 0.65},
-  {0.99, 0.55, 0.38},
-  {0.55, 0.63, 0.80},
-  {0.91, 0.54, 0.76},
-  {0.65, 0.84, 0.33},
-  {1.00, 0.85, 0.18},
-  {0.89, 0.77, 0.58},
-  {0.70, 0.70, 0.70},
+static std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> color_fraction_map =
+    {
+        {0.40, 0.76, 0.65},
+        {0.99, 0.55, 0.38},
+        {0.55, 0.63, 0.80},
+        {0.91, 0.54, 0.76},
+        {0.65, 0.84, 0.33},
+        {1.00, 0.85, 0.18},
+        {0.89, 0.77, 0.58},
+        {0.70, 0.70, 0.70},
 };
 
 int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
-                      const std::string            filename,
-                      const Eigen::Matrix4f&       T_WM,
-                      const float                  voxel_dim,
-                      const float*                 point_data,
-                      const float*                 cell_data) {
-
-  // Open the file for writing.
-  std::ofstream file (filename.c_str());
-  if (!file.is_open()) {
-    std::cerr << "Unable to write file " << filename << "\n";
-    return 1;
-  }
-
-  std::stringstream ss_points_W;
-  std::stringstream ss_polygons;
-  std::stringstream ss_scale_colors;
-  std::stringstream ss_point_data;
-  std::stringstream ss_cell_data;
-  int point_count = 0;
-  int triangle_count = 0;
-  bool has_point_data = point_data != nullptr;
-  bool has_cell_data = cell_data != nullptr;
-
-  for(unsigned int i = 0; i < mesh.size(); ++i ){
-    const Triangle& triangle_M = mesh[i];
-
-    Eigen::Vector3f vertex_0_W = (T_WM * (voxel_dim * triangle_M.vertexes[0]).homogeneous()).head(3);
-    Eigen::Vector3f vertex_1_W = (T_WM * (voxel_dim * triangle_M.vertexes[1]).homogeneous()).head(3);
-    Eigen::Vector3f vertex_2_W = (T_WM * (voxel_dim * triangle_M.vertexes[2]).homogeneous()).head(3);
-
-    ss_points_W << vertex_0_W.x() << " "
-                << vertex_0_W.y() << " "
-                << vertex_0_W.z() << std::endl;
-
-    ss_points_W << vertex_1_W.x() << " "
-                << vertex_1_W.y() << " "
-                << vertex_1_W.z() << std::endl;
-
-    ss_points_W << vertex_2_W.x() << " "
-                << vertex_2_W.y() << " "
-                << vertex_2_W.z() << std::endl;
-
-    ss_polygons << "3 " << point_count << " " << point_count+1 <<
-                " " << point_count+2 << std::endl;
-
-    const Eigen::Vector3f RGB = color_fraction_map[triangle_M.max_vertex_scale];
-    ss_scale_colors << RGB[0] << " " << RGB[1] << " " << RGB[2] << " " << 1.0 << std::endl;
-
-    if(has_point_data){
-      ss_point_data << point_data[i*3] << std::endl;
-      ss_point_data << point_data[i*3 + 1] << std::endl;
-      ss_point_data << point_data[i*3 + 2] << std::endl;
+                      const std::string filename,
+                      const Eigen::Matrix4f& T_WM,
+                      const float voxel_dim,
+                      const float* point_data,
+                      const float* cell_data)
+{
+    // Open the file for writing.
+    std::ofstream file(filename.c_str());
+    if (!file.is_open()) {
+        std::cerr << "Unable to write file " << filename << "\n";
+        return 1;
     }
 
-    if(has_cell_data){
-      ss_cell_data << cell_data[i] << std::endl;
+    std::stringstream ss_points_W;
+    std::stringstream ss_polygons;
+    std::stringstream ss_scale_colors;
+    std::stringstream ss_point_data;
+    std::stringstream ss_cell_data;
+    int point_count = 0;
+    int triangle_count = 0;
+    bool has_point_data = point_data != nullptr;
+    bool has_cell_data = cell_data != nullptr;
+
+    for (unsigned int i = 0; i < mesh.size(); ++i) {
+        const Triangle& triangle_M = mesh[i];
+
+        Eigen::Vector3f vertex_0_W =
+            (T_WM * (voxel_dim * triangle_M.vertexes[0]).homogeneous()).head(3);
+        Eigen::Vector3f vertex_1_W =
+            (T_WM * (voxel_dim * triangle_M.vertexes[1]).homogeneous()).head(3);
+        Eigen::Vector3f vertex_2_W =
+            (T_WM * (voxel_dim * triangle_M.vertexes[2]).homogeneous()).head(3);
+
+        ss_points_W << vertex_0_W.x() << " " << vertex_0_W.y() << " " << vertex_0_W.z()
+                    << std::endl;
+
+        ss_points_W << vertex_1_W.x() << " " << vertex_1_W.y() << " " << vertex_1_W.z()
+                    << std::endl;
+
+        ss_points_W << vertex_2_W.x() << " " << vertex_2_W.y() << " " << vertex_2_W.z()
+                    << std::endl;
+
+        ss_polygons << "3 " << point_count << " " << point_count + 1 << " " << point_count + 2
+                    << std::endl;
+
+        const Eigen::Vector3f RGB = color_fraction_map[triangle_M.max_vertex_scale];
+        ss_scale_colors << RGB[0] << " " << RGB[1] << " " << RGB[2] << " " << 1.0 << std::endl;
+
+        if (has_point_data) {
+            ss_point_data << point_data[i * 3] << std::endl;
+            ss_point_data << point_data[i * 3 + 1] << std::endl;
+            ss_point_data << point_data[i * 3 + 2] << std::endl;
+        }
+
+        if (has_cell_data) {
+            ss_cell_data << cell_data[i] << std::endl;
+        }
+
+        point_count += 3;
+        triangle_count++;
     }
 
-    point_count +=3;
-    triangle_count++;
-  }
+    file << "# vtk DataFile Version 1.0" << std::endl;
+    file << "vtk mesh generated from KFusion" << std::endl;
+    file << "ASCII" << std::endl;
+    file << "DATASET POLYDATA" << std::endl;
 
-  file << "# vtk DataFile Version 1.0" << std::endl;
-  file << "vtk mesh generated from KFusion" << std::endl;
-  file << "ASCII" << std::endl;
-  file << "DATASET POLYDATA" << std::endl;
+    file << "POINTS " << point_count << " FLOAT" << std::endl;
+    file << ss_points_W.str();
 
-  file << "POINTS " << point_count << " FLOAT" << std::endl;
-  file << ss_points_W.str();
+    file << "POLYGONS " << triangle_count << " " << triangle_count * 4 << std::endl;
+    file << ss_polygons.str() << std::endl;
+    if (has_point_data) {
+        file << "POINT_DATA " << point_count << std::endl;
+        file << "SCALARS vertex_scalars float 1" << std::endl;
+        file << "LOOKUP_TABLE default" << std::endl;
+        file << ss_point_data.str();
+    }
 
-  file << "POLYGONS " << triangle_count << " " << triangle_count * 4 << std::endl;
-  file << ss_polygons.str() << std::endl;
-  if(has_point_data){
-    file << "POINT_DATA " << point_count << std::endl;
-    file << "SCALARS vertex_scalars float 1" << std::endl;
-    file << "LOOKUP_TABLE default" << std::endl;
-    file << ss_point_data.str();
-  }
+    file << "CELL_DATA " << triangle_count << std::endl;
+    file << "COLOR_SCALARS RGBA 4" << std::endl;
+    file << ss_scale_colors.str() << std::endl;
+    if (has_cell_data) {
+        file << "SCALARS cell_scalars float 1" << std::endl;
+        file << "LOOKUP_TABLE default" << std::endl;
+        file << ss_cell_data.str();
+    }
 
-  file << "CELL_DATA " << triangle_count << std::endl;
-  file << "COLOR_SCALARS RGBA 4" << std::endl;
-  file << ss_scale_colors.str() << std::endl;
-  if(has_cell_data){
-    file << "SCALARS cell_scalars float 1" << std::endl;
-    file << "LOOKUP_TABLE default" << std::endl;
-    file << ss_cell_data.str();
-  }
-
-  file.close();
-  return 0;
+    file.close();
+    return 0;
 }
 
 
 
 int se::save_mesh_ply(const std::vector<Triangle>& mesh,
-                      const std::string            filename,
-                      const Eigen::Matrix4f&       T_WM,
-                      const float                  voxel_dim,
-                      const float*                 point_data,
-                      const float*                 cell_data) {
-
-  // Open the file for writing.
-  std::ofstream file (filename.c_str());
-  if (!file.is_open()) {
-    std::cerr << "Unable to write file " << filename << "\n";
-    return 1;
-  }
-
-  const bool has_point_data = point_data != nullptr;
-  const bool has_cell_data = cell_data != nullptr;
-  const size_t num_faces = mesh.size();
-  const size_t num_vertices = 3 * num_faces;
-
-  // Write header
-  file << "ply\n";
-  file << "format ascii 1.0\n";
-  file << "comment Generated by supereight\n";
-  file << "element vertex " << num_vertices << "\n";
-  file << "property float x\n";
-  file << "property float y\n";
-  file << "property float z\n";
-  file << "property uchar red\n";
-  file << "property uchar green\n";
-  file << "property uchar blue\n";
-  if (has_point_data) {
-    file << "property float vertex_value\n";
-  }
-  file << "element face " << num_faces << "\n";
-  file << "property list uchar int vertex_index\n";
-  file << "property uchar red\n";
-  file << "property uchar green\n";
-  file << "property uchar blue\n";
-  if (has_cell_data) {
-    file << "property float face_value\n";
-  }
-  file << "end_header\n";
-  // Write vertices and vertex data
-  for (size_t i = 0; i < num_faces; ++i ) {
-    const Triangle& triangle_M = mesh[i];
-    // Write each triangle vertex
-    for (int v = 0; v < 3; ++v) {
-      const Eigen::Vector3f vertex_W = (T_WM * (voxel_dim * triangle_M.vertexes[v]).homogeneous()).head(3);
-      file << vertex_W.x() << " " << vertex_W.y() << " " << vertex_W.z();
-      file << " " << (int) triangle_M.r[v] << " " << (int) triangle_M.g[v] << " " << (int) triangle_M.b[v];
-      if (has_point_data) {
-        file << " " << point_data[3*i + v] << "\n";
-      } else {
-        file << "\n";
-      }
+                      const std::string filename,
+                      const Eigen::Matrix4f& T_WM,
+                      const float voxel_dim,
+                      const float* point_data,
+                      const float* cell_data)
+{
+    // Open the file for writing.
+    std::ofstream file(filename.c_str());
+    if (!file.is_open()) {
+        std::cerr << "Unable to write file " << filename << "\n";
+        return 1;
     }
-  }
 
-  // Write faces and face data
-  for (size_t i = 0; i < num_faces; ++i ) {
-    file << "3 " << 3*i << " " << 3*i + 1 << " " << 3*i + 2;
-    const Triangle& triangle_M = mesh[i];
-    const Eigen::Vector3i rgb = (255.0f * color_fraction_map[triangle_M.max_vertex_scale]).cast<int>();
-    file << " " << rgb.x() << " " << rgb.y() << " " << rgb.z();
+    const bool has_point_data = point_data != nullptr;
+    const bool has_cell_data = cell_data != nullptr;
+    const size_t num_faces = mesh.size();
+    const size_t num_vertices = 3 * num_faces;
+
+    // Write header
+    file << "ply\n";
+    file << "format ascii 1.0\n";
+    file << "comment Generated by supereight\n";
+    file << "element vertex " << num_vertices << "\n";
+    file << "property float x\n";
+    file << "property float y\n";
+    file << "property float z\n";
+    file << "property uchar red\n";
+    file << "property uchar green\n";
+    file << "property uchar blue\n";
+    if (has_point_data) {
+        file << "property float vertex_value\n";
+    }
+    file << "element face " << num_faces << "\n";
+    file << "property list uchar int vertex_index\n";
+    file << "property uchar red\n";
+    file << "property uchar green\n";
+    file << "property uchar blue\n";
     if (has_cell_data) {
-      file << " " << cell_data[i] << "\n";
-    } else {
-      file << "\n";
+        file << "property float face_value\n";
     }
-  }
+    file << "end_header\n";
+    // Write vertices and vertex data
+    for (size_t i = 0; i < num_faces; ++i) {
+        const Triangle& triangle_M = mesh[i];
+        // Write each triangle vertex
+        for (int v = 0; v < 3; ++v) {
+            const Eigen::Vector3f vertex_W =
+                (T_WM * (voxel_dim * triangle_M.vertexes[v]).homogeneous()).head(3);
+            file << vertex_W.x() << " " << vertex_W.y() << " " << vertex_W.z();
+            file << " " << (int) triangle_M.r[v] << " " << (int) triangle_M.g[v] << " "
+                 << (int) triangle_M.b[v];
+            if (has_point_data) {
+                file << " " << point_data[3 * i + v] << "\n";
+            }
+            else {
+                file << "\n";
+            }
+        }
+    }
 
-  file.close();
-  return 0;
+    // Write faces and face data
+    for (size_t i = 0; i < num_faces; ++i) {
+        file << "3 " << 3 * i << " " << 3 * i + 1 << " " << 3 * i + 2;
+        const Triangle& triangle_M = mesh[i];
+        const Eigen::Vector3i rgb =
+            (255.0f * color_fraction_map[triangle_M.max_vertex_scale]).cast<int>();
+        file << " " << rgb.x() << " " << rgb.y() << " " << rgb.z();
+        if (has_cell_data) {
+            file << " " << cell_data[i] << "\n";
+        }
+        else {
+            file << "\n";
+        }
+    }
+
+    file.close();
+    return 0;
 }
 
 
 
-int se::save_mesh_obj(const std::vector<Triangle>& mesh,
-                      const std::string            filename){
+int se::save_mesh_obj(const std::vector<Triangle>& mesh, const std::string filename)
+{
+    // Open the file for writing.
+    std::ofstream file(filename.c_str());
+    if (!file.is_open()) {
+        std::cerr << "Unable to write file " << filename << "\n";
+        return 1;
+    }
 
-  // Open the file for writing.
-  std::ofstream file (filename.c_str());
-  if (!file.is_open()) {
-    std::cerr << "Unable to write file " << filename << "\n";
-    return 1;
-  }
+    std::stringstream points_M;
+    std::stringstream faces;
+    int point_count = 0;
+    int face_count = 0;
 
-  std::stringstream points_M;
-  std::stringstream faces;
-  int point_count = 0;
-  int face_count = 0;
+    for (unsigned int i = 0; i < mesh.size(); i++) {
+        const Triangle& triangle_M = mesh[i];
+        points_M << "v " << triangle_M.vertexes[0].x() << " " << triangle_M.vertexes[0].y() << " "
+                 << triangle_M.vertexes[0].z() << std::endl;
+        points_M << "v " << triangle_M.vertexes[1].x() << " " << triangle_M.vertexes[1].y() << " "
+                 << triangle_M.vertexes[1].z() << std::endl;
+        points_M << "v " << triangle_M.vertexes[2].x() << " " << triangle_M.vertexes[2].y() << " "
+                 << triangle_M.vertexes[2].z() << std::endl;
 
-  for(unsigned int i = 0; i < mesh.size(); i++){
-    const Triangle& triangle_M = mesh[i];
-    points_M << "v " << triangle_M.vertexes[0].x() << " "
-             << triangle_M.vertexes[0].y() << " "
-             << triangle_M.vertexes[0].z() << std::endl;
-    points_M << "v " << triangle_M.vertexes[1].x() << " "
-             << triangle_M.vertexes[1].y() << " "
-             << triangle_M.vertexes[1].z() << std::endl;
-    points_M << "v " << triangle_M.vertexes[2].x() << " "
-             << triangle_M.vertexes[2].y() << " "
-             << triangle_M.vertexes[2].z() << std::endl;
+        faces << "f " << (face_count * 3) + 1 << " " << (face_count * 3) + 2 << " "
+              << (face_count * 3) + 3 << std::endl;
 
-    faces  << "f " << (face_count*3)+1 << " " << (face_count*3)+2
-           << " " << (face_count*3)+3 << std::endl;
+        point_count += 3;
+        face_count += 1;
+    }
 
-    point_count +=3;
-    face_count += 1;
-  }
+    file << "# OBJ file format with ext .obj" << std::endl;
+    file << "# vertex count = " << point_count << std::endl;
+    file << "# face count = " << face_count << std::endl;
+    file << points_M.str();
+    file << faces.str();
 
-  file << "# OBJ file format with ext .obj" << std::endl;
-  file << "# vertex count = " << point_count << std::endl;
-  file << "# face count = " << face_count << std::endl;
-  file << points_M.str();
-  file << faces.str();
-
-  file.close();
-  return 0;
+    file.close();
+    return 0;
 }
 
 #endif // __MESHING_IO_IMPL_HPP

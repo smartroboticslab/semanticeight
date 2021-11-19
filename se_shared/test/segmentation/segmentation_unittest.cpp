@@ -28,28 +28,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <gtest/gtest.h>
+#include "se/segmentation.hpp"
 
 #include <Eigen/Dense>
+#include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
-
-#include "se/segmentation.hpp"
 
 
 
 class FreeFunctionTesting : public ::testing::Test {
-  protected:
-    virtual void SetUp() {
-      mask_1 = cv::Mat::zeros(mask_size, se::mask_t);
-      mask_2 = cv::Mat::zeros(mask_size, se::mask_t);
+    protected:
+    virtual void SetUp()
+    {
+        mask_1 = cv::Mat::zeros(mask_size, se::mask_t);
+        mask_2 = cv::Mat::zeros(mask_size, se::mask_t);
 
-      // Initialize an instance mask to:
-      // 0 1
-      // 2 3
-      instance_mask = cv::Mat(mask_size, se::instance_mask_t, se::instance_bg);
-      for (int i = 0; i < instance_mask.cols * instance_mask.rows; i++) {
-        instance_mask.at<se::instance_mask_elem_t>(i) = i;
-      }
+        // Initialize an instance mask to:
+        // 0 1
+        // 2 3
+        instance_mask = cv::Mat(mask_size, se::instance_mask_t, se::instance_bg);
+        for (int i = 0; i < instance_mask.cols * instance_mask.rows; i++) {
+            instance_mask.at<se::instance_mask_elem_t>(i) = i;
+        }
     }
 
     const int mask_w = 2;
@@ -62,19 +62,20 @@ class FreeFunctionTesting : public ::testing::Test {
 
 
 
-TEST_F(FreeFunctionTesting, ExtractInstance) {
-  for (int i = 0; i < instance_mask.cols * instance_mask.rows; i++) {
-    // Extract the individual instance mask for each instance ID.
-    const cv::Mat individual_mask = se::extract_instance(instance_mask, i);
+TEST_F(FreeFunctionTesting, ExtractInstance)
+{
+    for (int i = 0; i < instance_mask.cols * instance_mask.rows; i++) {
+        // Extract the individual instance mask for each instance ID.
+        const cv::Mat individual_mask = se::extract_instance(instance_mask, i);
 
-    // Test each pixel of the individual instance mask has the correct value.
-    for (int j = 0; j < individual_mask.cols * individual_mask.rows; j++) {
-      if (j == i) {
-        EXPECT_EQ(individual_mask.at<se::mask_elem_t>(j), 255);
-      } else {
-        EXPECT_EQ(individual_mask.at<se::mask_elem_t>(j), 0);
-      }
+        // Test each pixel of the individual instance mask has the correct value.
+        for (int j = 0; j < individual_mask.cols * individual_mask.rows; j++) {
+            if (j == i) {
+                EXPECT_EQ(individual_mask.at<se::mask_elem_t>(j), 255);
+            }
+            else {
+                EXPECT_EQ(individual_mask.at<se::mask_elem_t>(j), 0);
+            }
+        }
     }
-  }
 }
-

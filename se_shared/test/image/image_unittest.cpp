@@ -29,44 +29,46 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "gtest/gtest.h"
+#include "se/image/image.hpp"
 
 #include <limits>
 #include <random>
 
-#include "se/image/image.hpp"
+#include "gtest/gtest.h"
 
-TEST(ImageTest, Constructor) {
-  const int width  = 640;
-  const int height = 480;
-  const float init_val = std::numeric_limits<float>::lowest();
-  se::Image<float> img(width, height, init_val);
+TEST(ImageTest, Constructor)
+{
+    const int width = 640;
+    const int height = 480;
+    const float init_val = std::numeric_limits<float>::lowest();
+    se::Image<float> img(width, height, init_val);
 
-  for(std::size_t i = 0; i < img.size(); ++i) {
-    ASSERT_EQ(img[i], init_val);
-  } 
+    for (std::size_t i = 0; i < img.size(); ++i) {
+        ASSERT_EQ(img[i], init_val);
+    }
 }
 
-TEST(ImageTest, Accessor) {
-  const int width  = 640;
-  const int height = 480;
-  const float init_val = std::numeric_limits<float>::lowest();
-  se::Image<float> img(width, height, init_val);
+TEST(ImageTest, Accessor)
+{
+    const int width = 640;
+    const int height = 480;
+    const float init_val = std::numeric_limits<float>::lowest();
+    se::Image<float> img(width, height, init_val);
 
-  std::random_device rd{};
-  std::mt19937 gen{rd()};
-  gen.seed(1);
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
+    gen.seed(1);
 
-  // Populate
-  std::normal_distribution<float> dis { 0.f, 1.f };
-  for(std::size_t i = 0; i < img.size(); ++i) {
-    img[i] = dis(gen); 
-  } 
-
-  size_t i = 0;
-  for(int y = 0; y < img.height(); ++y) {
-    for(int x = 0; x < img.width(); ++x) {
-      ASSERT_EQ(img[i++], img(x, y));
+    // Populate
+    std::normal_distribution<float> dis{0.f, 1.f};
+    for (std::size_t i = 0; i < img.size(); ++i) {
+        img[i] = dis(gen);
     }
-  }
+
+    size_t i = 0;
+    for (int y = 0; y < img.height(); ++y) {
+        for (int x = 0; x < img.width(); ++x) {
+            ASSERT_EQ(img[i++], img(x, y));
+        }
+    }
 }

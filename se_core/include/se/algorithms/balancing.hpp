@@ -30,59 +30,60 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #ifndef BALANCING_HPP
 #define BALANCING_HPP
-#include "se/octree.hpp"
-#include "se/node_iterator.hpp"
 #include <Eigen/Dense>
-#include <vector>
 #include <unordered_set>
+#include <vector>
+
+#include "se/node_iterator.hpp"
+#include "se/octree.hpp"
 
 namespace se {
 /*! \brief Enforces 2:1 balance on the tree.
  *  \param octree unbalanced octree to be balanced. 
  *
  * */
-template <typename T>
-void balance(se::Octree<T>& octree) {
-  std::unordered_set<key_t> octants;
-  std::vector<key_t> alloc_buffer;
-  Eigen::Matrix<int, 4, 6> N;
-  se::node_iterator<T> it(octree);
-  int depth = se::math::log2_const(octree.size());
-  while(se::Node<T>* n = it.next()) {
-    int depth = se::keyops::depth(n->code());
-    if(depth == 0) continue; // skip root
-    se::one_neighbourhood(N, se::parent(n->code(), depth),
-        depth); 
-    for(int i = 0; i < 6; ++i) {
-      Eigen::Ref<Eigen::Matrix<int, 4, 1>> coords(N.col(i));
-      key_t key = octree.hash(coords.x(), coords.y(), coords.z(), depth - 1);
-      if(!octree.fetch(coords.x(), coords.y(), coords.z()) && 
-          octants.insert(key).second) {
-        alloc_buffer.push_back(key);
-      }
-    }
-  }
-
-  int last = 0;
-  int end = alloc_buffer.size();
-  while(end - last > 0) {
-    for(; last < end; ++last) {
-      se::one_neighbourhood(N, se::parent(alloc_buffer[last], depth), 
-          depth); 
-      int depth = se::keyops::depth(alloc_buffer[last]);
-      if(depth == 0) continue; // skip root
-      for(int i = 0; i < 6; ++i) {
-        Eigen::Ref<Eigen::Matrix<int, 4, 1>> coords(N.col(i));
-        key_t key = octree.hash(coords.x(), coords.y(), coords.z(), depth - 1);
-        if(!octree.fetch(coords.x(), coords.y(), coords.z()) && 
-            octants.insert(key).second) {
-          alloc_buffer.push_back(key);
+template<typename T>
+void balance(se::Octree<T>& octree)
+{
+    std::unordered_set<key_t> octants;
+    std::vector<key_t> alloc_buffer;
+    Eigen::Matrix<int, 4, 6> N;
+    se::node_iterator<T> it(octree);
+    int depth = se::math::log2_const(octree.size());
+    while (se::Node<T>* n = it.next()) {
+        int depth = se::keyops::depth(n->code());
+        if (depth == 0)
+            continue; // skip root
+        se::one_neighbourhood(N, se::parent(n->code(), depth), depth);
+        for (int i = 0; i < 6; ++i) {
+            Eigen::Ref<Eigen::Matrix<int, 4, 1>> coords(N.col(i));
+            key_t key = octree.hash(coords.x(), coords.y(), coords.z(), depth - 1);
+            if (!octree.fetch(coords.x(), coords.y(), coords.z()) && octants.insert(key).second) {
+                alloc_buffer.push_back(key);
+            }
         }
-      }
     }
-    end = alloc_buffer.size();
-  }
-  octree.allocate(alloc_buffer.data(), alloc_buffer.size());
+
+    int last = 0;
+    int end = alloc_buffer.size();
+    while (end - last > 0) {
+        for (; last < end; ++last) {
+            se::one_neighbourhood(N, se::parent(alloc_buffer[last], depth), depth);
+            int depth = se::keyops::depth(alloc_buffer[last]);
+            if (depth == 0)
+                continue; // skip root
+            for (int i = 0; i < 6; ++i) {
+                Eigen::Ref<Eigen::Matrix<int, 4, 1>> coords(N.col(i));
+                key_t key = octree.hash(coords.x(), coords.y(), coords.z(), depth - 1);
+                if (!octree.fetch(coords.x(), coords.y(), coords.z())
+                    && octants.insert(key).second) {
+                    alloc_buffer.push_back(key);
+                }
+            }
+        }
+        end = alloc_buffer.size();
+    }
+    octree.allocate(alloc_buffer.data(), alloc_buffer.size());
 }
-}
+} // namespace se
 #endif

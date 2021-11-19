@@ -30,16 +30,19 @@
  * */
 
 #include "se/voxel_implementations/TSDF/TSDF.hpp"
+
 #include "se/str_utils.hpp"
 
 
 
-bool TSDF::VoxelType::VoxelData::operator==(const TSDF::VoxelType::VoxelData& other) const {
-  return (x == other.x) && (y == other.y);
+bool TSDF::VoxelType::VoxelData::operator==(const TSDF::VoxelType::VoxelData& other) const
+{
+    return (x == other.x) && (y == other.y);
 }
 
-bool TSDF::VoxelType::VoxelData::operator!=(const TSDF::VoxelType::VoxelData& other) const {
-  return !(*this == other);
+bool TSDF::VoxelType::VoxelData::operator!=(const TSDF::VoxelType::VoxelData& other) const
+{
+    return !(*this == other);
 }
 
 // Initialize static data members.
@@ -48,40 +51,41 @@ float TSDF::mu_factor;
 float TSDF::mu;
 float TSDF::max_weight;
 
-void TSDF::configure(YAML::Node yaml_config, const float voxel_dim) {
-  configure(voxel_dim);
-  if (yaml_config.IsNull()) return;
+void TSDF::configure(YAML::Node yaml_config, const float voxel_dim)
+{
+    configure(voxel_dim);
+    if (yaml_config.IsNull())
+        return;
 
-  if (yaml_config["mu_factor"]) {
-    mu_factor = yaml_config["mu_factor"].as<float>();
+    if (yaml_config["mu_factor"]) {
+        mu_factor = yaml_config["mu_factor"].as<float>();
+        mu = mu_factor * voxel_dim;
+    }
+    if (yaml_config["max_weight"]) {
+        max_weight = yaml_config["max_weight"].as<float>();
+    }
+}
+
+void TSDF::configure(const float voxel_dim)
+{
+    mu_factor = 8;
     mu = mu_factor * voxel_dim;
-  }
-  if (yaml_config["max_weight"]) {
-    max_weight = yaml_config["max_weight"].as<float>();
-  }
+    max_weight = 100;
 }
 
-void TSDF::configure(const float voxel_dim) {
-  mu_factor  = 8;
-  mu         = mu_factor * voxel_dim;
-  max_weight = 100;
+std::string TSDF::printConfig()
+{
+    std::stringstream out;
+    out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
+    out << str_utils::bool_to_pretty_str(TSDF::invert_normals, "Invert normals") << "\n";
+    out << str_utils::value_to_pretty_str(TSDF::mu_factor, "mu factor") << "\n";
+    out << str_utils::value_to_pretty_str(TSDF::mu, "mu") << "\n";
+    out << str_utils::value_to_pretty_str(TSDF::max_weight, "Max weight") << "\n";
+    out << "\n";
+    return out.str();
 }
 
-std::string TSDF::printConfig() {
-
-  std::stringstream out;
-  out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
-  out << str_utils::bool_to_pretty_str(TSDF::invert_normals, "Invert normals") << "\n";
-  out << str_utils::value_to_pretty_str(TSDF::mu_factor,     "mu factor") << "\n";
-  out << str_utils::value_to_pretty_str(TSDF::mu,            "mu") << "\n";
-  out << str_utils::value_to_pretty_str(TSDF::max_weight,    "Max weight") << "\n";
-  out << "\n";
-  return out.str();
-}
-
-void TSDF::dumpMesh(OctreeType&                map,
-                    std::vector<se::Triangle>& mesh,
-                    const bool) {
-
-  se::algorithms::marching_cube(map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh);
+void TSDF::dumpMesh(OctreeType& map, std::vector<se::Triangle>& mesh, const bool)
+{
+    se::algorithms::marching_cube(map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh);
 }

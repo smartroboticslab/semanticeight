@@ -40,31 +40,30 @@
 
 #if defined(__GNUC__)
 // circumvent packaging problems in gcc 4.7.0
-#undef _GLIBCXX_ATOMIC_BUILTINS
-#undef _GLIBCXX_USE_INT128
+#    undef _GLIBCXX_ATOMIC_BUILTINS
+#    undef _GLIBCXX_USE_INT128
 
 // need c headers for __int128 and uint16_t
-#include <limits.h>
+#    include <limits.h>
 #endif
-#include <sys/stat.h>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 #include <iomanip>
-#include <string>
-#include <cmath>
+#include <iostream>
 #include <iterator>
 #include <set>
+#include <string>
+#include <sys/stat.h>
 #include <vector>
 
 // Internal dependencies
-#include "se/utils/math_utils.h"
 #include "se/constant_parameters.h"
+#include "se/utils/math_utils.h"
 
 #define INVALID -2
 
 static const float epsilon = 0.0000001;
 
 #endif
-

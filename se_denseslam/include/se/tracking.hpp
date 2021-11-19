@@ -37,40 +37,39 @@
 #ifndef __TRACKING_HPP
 #define __TRACKING_HPP
 
-#include "se/utils/math_utils.h"
-#include "se/timings.h"
-#include "se/perfstats.h"
 #include "se/commons.h"
 #include "se/image/image.hpp"
 #include "se/image_utils.hpp"
+#include "se/perfstats.h"
 #include "se/sensor_implementation.hpp"
+#include "se/timings.h"
+#include "se/utils/math_utils.h"
 
 
 
 struct TrackData {
-	int result;
-	float error;
-	float J[6];
+    int result;
+    float error;
+    float J[6];
 
-    TrackData()
-      : result(0),
-      error(0.0f),
-      J{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f} {}
+    TrackData() : result(0), error(0.0f), J{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}
+    {
+    }
 };
 
 
 
-void new_reduce(const int              block_index,
-                float*                 output_data,
+void new_reduce(const int block_index,
+                float* output_data,
                 const Eigen::Vector2i& output_res,
-                TrackData*             J_data,
+                TrackData* J_data,
                 const Eigen::Vector2i& J_res);
 
 
 
-void reduceKernel(float*                 output_data,
+void reduceKernel(float* output_data,
                   const Eigen::Vector2i& output_res,
-                  TrackData*             J_data,
+                  TrackData* J_data,
                   const Eigen::Vector2i& J_res);
 
 
@@ -88,30 +87,29 @@ void reduceKernel(float*                 output_data,
  * param[in]  dist_threshold            The maximum abs distance between the input point and the projected surface point.
  * param[in]  normal_threshold          The maximum dot product between the input normal and the projected normal.
  */
-void trackKernel(TrackData*                        output_data,
+void trackKernel(TrackData* output_data,
                  const se::Image<Eigen::Vector3f>& input_point_cloud_C,
                  const se::Image<Eigen::Vector3f>& input_normals_C,
                  const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
                  const se::Image<Eigen::Vector3f>& surface_normals_M,
-                 const Eigen::Matrix4f&            T_MC,
-                 const Eigen::Matrix4f&            T_MC_ref,
-                 const SensorImpl&                 sensor,
-                 const float                       dist_threshold,
-                 const float                       normal_threshold);
+                 const Eigen::Matrix4f& T_MC,
+                 const Eigen::Matrix4f& T_MC_ref,
+                 const SensorImpl& sensor,
+                 const float dist_threshold,
+                 const float normal_threshold);
 
 
 
 bool updatePoseKernel(Eigen::Matrix4f& T_MC,
-                      const float*     reduction_output,
-                      const float      icp_threshold);
+                      const float* reduction_output,
+                      const float icp_threshold);
 
 
 
-bool checkPoseKernel(Eigen::Matrix4f&       T_MC,
-                     Eigen::Matrix4f&       previous_T_MC,
-                     const float*           reduction_output_data,
+bool checkPoseKernel(Eigen::Matrix4f& T_MC,
+                     Eigen::Matrix4f& previous_T_MC,
+                     const float* reduction_output_data,
                      const Eigen::Vector2i& reduction_output_res,
-                     const float            track_threshold);
+                     const float track_threshold);
 
 #endif
-

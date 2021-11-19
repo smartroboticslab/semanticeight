@@ -29,42 +29,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <random>
-
 #include <gtest/gtest.h>
-
+#include <random>
 #include <se/octree_defines.h>
 #include <se/utils/math_utils.h>
 #include <se/utils/morton_utils.hpp>
 
-TEST(MortonCoding, RandomInts) {
+TEST(MortonCoding, RandomInts)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dis(0, 4096);
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<int> dis(0, 4096);
-
-  for(int i = 0; i < 1000; ++i) {
-    const Eigen::Vector3i voxel_coord = {dis(gen), dis(gen), dis(gen)};
-    const se::key_t code = compute_morton(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-    const Eigen::Vector3i decoded_voxel_coord = unpack_morton(code);
-    ASSERT_EQ(decoded_voxel_coord.x(), voxel_coord.x());
-    ASSERT_EQ(decoded_voxel_coord.y(), voxel_coord.y());
-    ASSERT_EQ(decoded_voxel_coord.z(), voxel_coord.z());
-  }
-
-}
-
-TEST(MortonCoding, ExhaustiveTest) {
-
-  for(int z = 2048; z < 4096; ++z)
-    for(int y = 2048; y < 2050; ++y)
-      for(int x = 0; x < 4096; ++x){
-        const Eigen::Vector3i voxel_coord = {x, y, z};
+    for (int i = 0; i < 1000; ++i) {
+        const Eigen::Vector3i voxel_coord = {dis(gen), dis(gen), dis(gen)};
         const se::key_t code = compute_morton(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
         const Eigen::Vector3i decoded_voxel_coord = unpack_morton(code);
         ASSERT_EQ(decoded_voxel_coord.x(), voxel_coord.x());
         ASSERT_EQ(decoded_voxel_coord.y(), voxel_coord.y());
         ASSERT_EQ(decoded_voxel_coord.z(), voxel_coord.z());
-  }
+    }
 }
 
+TEST(MortonCoding, ExhaustiveTest)
+{
+    for (int z = 2048; z < 4096; ++z)
+        for (int y = 2048; y < 2050; ++y)
+            for (int x = 0; x < 4096; ++x) {
+                const Eigen::Vector3i voxel_coord = {x, y, z};
+                const se::key_t code =
+                    compute_morton(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+                const Eigen::Vector3i decoded_voxel_coord = unpack_morton(code);
+                ASSERT_EQ(decoded_voxel_coord.x(), voxel_coord.x());
+                ASSERT_EQ(decoded_voxel_coord.y(), voxel_coord.y());
+                ASSERT_EQ(decoded_voxel_coord.z(), voxel_coord.z());
+            }
+}

@@ -8,9 +8,9 @@
 #ifndef __POINT_CLOUD_IO_HPP
 #define __POINT_CLOUD_IO_HPP
 
+#include <Eigen/Dense>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
 
 #include "se/algorithms/meshing.hpp"
 
@@ -18,7 +18,7 @@
 
 namespace se {
 
-  /**
+/**
    * \brief Save the mesh vertices as a PCD file.
    *
    * Documentation for the PCD file format available here
@@ -29,11 +29,11 @@ namespace se {
    * \param[in] T_WM     The transformation from map to world frame.
    * \return 0 on success, nonzero on error.
    */
-  static int save_point_cloud_pcd(const std::vector<Triangle>& mesh,
-                                  const std::string            filename,
-                                  const Eigen::Matrix4f&       T_WM);
+static int save_point_cloud_pcd(const std::vector<Triangle>& mesh,
+                                const std::string filename,
+                                const Eigen::Matrix4f& T_WM);
 
-  /**
+/**
    * \brief Save the mesh vertices as a PLY file.
    *
    * Documentation for the PLY polygon file format available here
@@ -44,11 +44,11 @@ namespace se {
    * \param[in] T_WM     The transformation from map to world frame.
    * \return 0 on success, nonzero on error.
    */
-  static int save_point_cloud_ply(const std::vector<Triangle>& mesh,
-                                  const std::string            filename,
-                                  const Eigen::Matrix4f&       T_WM);
+static int save_point_cloud_ply(const std::vector<Triangle>& mesh,
+                                const std::string filename,
+                                const Eigen::Matrix4f& T_WM);
 
-  /**
+/**
    * \brief Save the mesh vertices as a VTK file.
    *
    * Documentation for the VTK file format available here
@@ -59,9 +59,9 @@ namespace se {
    * \param[in] T_WM     The transformation from map to world frame.
    * \return 0 on success, nonzero on error.
    */
-  static int save_point_cloud_vtk(const std::vector<Triangle>& mesh,
-                                  const std::string            filename,
-                                  const Eigen::Matrix4f&       T_WM);
+static int save_point_cloud_vtk(const std::vector<Triangle>& mesh,
+                                const std::string filename,
+                                const Eigen::Matrix4f& T_WM);
 
 } // namespace se
 

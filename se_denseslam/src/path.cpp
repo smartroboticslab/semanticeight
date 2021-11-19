@@ -2,39 +2,39 @@
 // SPDX-FileCopyrightText: 2021 Sotiris Papatheodorou
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "se/path.hpp"
+
 #include <fstream>
 #include <iostream>
 
-#include "se/path.hpp"
-
 namespace se {
 
-  int write_path_tsv(const std::string& filename, const Path& path)
-  {
-    std::ofstream f (filename);
+int write_path_tsv(const std::string& filename, const Path& path)
+{
+    std::ofstream f(filename);
     if (!f.is_open()) {
-      std::cerr << "Unable to write file " << filename << "\n";
-      return 1;
+        std::cerr << "Unable to write file " << filename << "\n";
+        return 1;
     }
     f << "tx\tty\ttz\tqx\tqy\tqz\tqw\n";
     for (const auto& pose : path) {
-      const Eigen::Vector3f t = pose.topRightCorner<3,1>();
-      const Eigen::Quaternionf q(pose.topLeftCorner<3,3>());
-      f << t.x() << "\t" << t.y() << "\t" << t.z() << "\t" << q.x() << "\t" << q.y() << "\t" <<
-        q.z() << "\t" << q.w() << "\n";
+        const Eigen::Vector3f t = pose.topRightCorner<3, 1>();
+        const Eigen::Quaternionf q(pose.topLeftCorner<3, 3>());
+        f << t.x() << "\t" << t.y() << "\t" << t.z() << "\t" << q.x() << "\t" << q.y() << "\t"
+          << q.z() << "\t" << q.w() << "\n";
     }
     f.close();
     return 0;
-  }
+}
 
 
 
-  int write_path_ply(const std::string& filename, const Path& path)
-  {
-    std::ofstream f (filename);
+int write_path_ply(const std::string& filename, const Path& path)
+{
+    std::ofstream f(filename);
     if (!f.is_open()) {
-      std::cerr << "Unable to write file " << filename << "\n";
-      return 1;
+        std::cerr << "Unable to write file " << filename << "\n";
+        return 1;
     }
     const size_t num_vertices = path.size();
     const size_t num_edges = num_vertices - 1;
@@ -53,15 +53,14 @@ namespace se {
     f << "property int vertex2\n";
     f << "end_header\n";
     for (const auto& pose : path) {
-      const Eigen::Vector3f& t = pose.topRightCorner<3,1>();
-      f << t.x() << " " << t.y() << " " << t.z() << " 255 0 0\n";
+        const Eigen::Vector3f& t = pose.topRightCorner<3, 1>();
+        f << t.x() << " " << t.y() << " " << t.z() << " 255 0 0\n";
     }
     for (size_t i = 0; i < num_edges; i++) {
-      f << i << " " << i + 1 << "\n";
+        f << i << " " << i + 1 << "\n";
     }
     f.close();
     return 0;
-  }
+}
 
 } // namespace se
-

@@ -8,7 +8,7 @@
 #include <queue>
 
 namespace se {
-  /** Generate a Graphviz diagram in filename showing the structure of the octree.
+/** Generate a Graphviz diagram in filename showing the structure of the octree.
    * Nodes are shown in gray and VoxelBlocks in light blue.
    * A lambda function data_to_str can be used to specify how Node data
    * is converted to an std::string for visualization. The signature of the lambda
@@ -30,12 +30,12 @@ namespace se {
    * \param[in] data_to_str The function used to format VoxelT::VoxelData to std::string.
    * \return             0 on success, non-zero on IO error.
    */
-  template<typename VoxelT, typename FunctionT>
-  int to_graphviz(const se::Octree<VoxelT>& octree,
-                  const std::string&        filename,
-                  const FunctionT           data_to_str);
+template<typename VoxelT, typename FunctionT>
+int to_graphviz(const se::Octree<VoxelT>& octree,
+                const std::string& filename,
+                const FunctionT data_to_str);
 
-  /** Generate a Graphviz diagram in filename showing the data the node.
+/** Generate a Graphviz diagram in filename showing the data the node.
    * All allocated scales are shown for VoxelBlocks.
    * A lambda function data_to_str can be used to specify how Node data
    * is converted to an std::string for visualization similarly to se::to_graphviz.
@@ -49,13 +49,12 @@ namespace se {
    * \param[in] data_to_str The function used to format VoxelT::VoxelData to std::string.
    * \return 0 on success, non-zero on IO error.
    */
-  template<typename VoxelT, typename FunctionT>
-  int to_graphviz(const se::Node<VoxelT>& node,
-                  const std::string&      filename,
-                  const FunctionT         data_to_str);
+template<typename VoxelT, typename FunctionT>
+int to_graphviz(const se::Node<VoxelT>& node,
+                const std::string& filename,
+                const FunctionT data_to_str);
 } // namespace se
 
 #include "graphviz_io_impl.hpp"
 
 #endif // __GRAPHVIZ_IO_HPP
-

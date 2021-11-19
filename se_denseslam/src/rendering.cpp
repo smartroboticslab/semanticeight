@@ -42,92 +42,94 @@
 
 
 
-void renderRGBAKernel(uint32_t*                  output_RGBA_image_data,
-                      const Eigen::Vector2i&     output_RGBA_image_res,
-                      const se::Image<uint32_t>& input_RGBA_image) {
-
-  TICKD("renderRGBAKernel");
-  memcpy(output_RGBA_image_data, input_RGBA_image.data(),
-         output_RGBA_image_res.prod() * sizeof(uint32_t));
-  TOCK("renderRGBAKernel");
+void renderRGBAKernel(uint32_t* output_RGBA_image_data,
+                      const Eigen::Vector2i& output_RGBA_image_res,
+                      const se::Image<uint32_t>& input_RGBA_image)
+{
+    TICKD("renderRGBAKernel");
+    memcpy(output_RGBA_image_data,
+           input_RGBA_image.data(),
+           output_RGBA_image_res.prod() * sizeof(uint32_t));
+    TOCK("renderRGBAKernel");
 }
 
 
 
-void renderDepthKernel(uint32_t*              depth_RGBA_image_data,
-                       float*                 depth_image_data,
+void renderDepthKernel(uint32_t* depth_RGBA_image_data,
+                       float* depth_image_data,
                        const Eigen::Vector2i& depth_RGBA_image_res,
-                       const float            near_plane,
-                       const float            far_plane) {
-
-  TICKD("renderDepthKernel");
-  se::depth_to_rgba(depth_RGBA_image_data, depth_image_data, depth_RGBA_image_res,
-      near_plane, far_plane);
-  TOCK("renderDepthKernel");
+                       const float near_plane,
+                       const float far_plane)
+{
+    TICKD("renderDepthKernel");
+    se::depth_to_rgba(
+        depth_RGBA_image_data, depth_image_data, depth_RGBA_image_res, near_plane, far_plane);
+    TOCK("renderDepthKernel");
 }
 
 
 
-void renderTrackKernel(uint32_t*              tracking_RGBA_image_data,
-                       const TrackData*       tracking_result_data,
-                       const Eigen::Vector2i& tracking_RGBA_image_res) {
-
-  TICKD("renderTrackKernel");
+void renderTrackKernel(uint32_t* tracking_RGBA_image_data,
+                       const TrackData* tracking_result_data,
+                       const Eigen::Vector2i& tracking_RGBA_image_res)
+{
+    TICKD("renderTrackKernel");
 
 #pragma omp parallel for
-  for (int y = 0; y < tracking_RGBA_image_res.y(); y++)
-    for (int x = 0; x < tracking_RGBA_image_res.x(); x++) {
-      const int pixel_idx = x + tracking_RGBA_image_res.x() * y;
-      switch (tracking_result_data[pixel_idx].result) {
-        case 1:
-          // Gray
-          tracking_RGBA_image_data[pixel_idx] = 0xFF808080;
-          break;
-        case -1:
-          // Black
-          tracking_RGBA_image_data[pixel_idx] = 0xFF000000;
-          break;
-        case -2:
-          // Red
-          tracking_RGBA_image_data[pixel_idx] = 0xFF0000FF;
-          break;
-        case -3:
-          // Green
-          tracking_RGBA_image_data[pixel_idx] = 0xFF00FF00;
-          break;
-        case -4:
-          // Blue
-          tracking_RGBA_image_data[pixel_idx] = 0xFFFF0000;
-          break;
-        case -5:
-          // Yellow
-          tracking_RGBA_image_data[pixel_idx] = 0xFF00FFFF;
-          break;
-        default:
-          // Orange
-          tracking_RGBA_image_data[pixel_idx] = 0xFF8080FF;
-          break;
-      }
-    }
-  TOCK("renderTrackKernel");
+    for (int y = 0; y < tracking_RGBA_image_res.y(); y++)
+        for (int x = 0; x < tracking_RGBA_image_res.x(); x++) {
+            const int pixel_idx = x + tracking_RGBA_image_res.x() * y;
+            switch (tracking_result_data[pixel_idx].result) {
+            case 1:
+                // Gray
+                tracking_RGBA_image_data[pixel_idx] = 0xFF808080;
+                break;
+            case -1:
+                // Black
+                tracking_RGBA_image_data[pixel_idx] = 0xFF000000;
+                break;
+            case -2:
+                // Red
+                tracking_RGBA_image_data[pixel_idx] = 0xFF0000FF;
+                break;
+            case -3:
+                // Green
+                tracking_RGBA_image_data[pixel_idx] = 0xFF00FF00;
+                break;
+            case -4:
+                // Blue
+                tracking_RGBA_image_data[pixel_idx] = 0xFFFF0000;
+                break;
+            case -5:
+                // Yellow
+                tracking_RGBA_image_data[pixel_idx] = 0xFF00FFFF;
+                break;
+            default:
+                // Orange
+                tracking_RGBA_image_data[pixel_idx] = 0xFF8080FF;
+                break;
+            }
+        }
+    TOCK("renderTrackKernel");
 }
 
 
 
-inline void printNormals(const se::Image<Eigen::Vector3f>& normals,
-                         const char*                       filename) {
-
-  unsigned char* normal_RGBA_image_data = new unsigned char [normals.width() * normals.height() * 4];
-  for (int y = 0; y < normals.height(); ++y) {
-    for (int x = 0; x < normals.width(); ++x){
-      const Eigen::Vector3f n = normals[x + normals.width() * y];
-      normal_RGBA_image_data[4 * normals.width() * y + 4 * x + 0] = (n.x() / 2 + 0.5) * 255;
-      normal_RGBA_image_data[4 * normals.width() * y + 4 * x + 1] = (n.y() / 2 + 0.5) * 255;
-      normal_RGBA_image_data[4 * normals.width() * y + 4 * x + 2] = (n.z() / 2 + 0.5) * 255;
-      normal_RGBA_image_data[4 * normals.width() * y + 4 * x + 3] = 255;
+inline void printNormals(const se::Image<Eigen::Vector3f>& normals, const char* filename)
+{
+    unsigned char* normal_RGBA_image_data =
+        new unsigned char[normals.width() * normals.height() * 4];
+    for (int y = 0; y < normals.height(); ++y) {
+        for (int x = 0; x < normals.width(); ++x) {
+            const Eigen::Vector3f n = normals[x + normals.width() * y];
+            normal_RGBA_image_data[4 * normals.width() * y + 4 * x + 0] = (n.x() / 2 + 0.5) * 255;
+            normal_RGBA_image_data[4 * normals.width() * y + 4 * x + 1] = (n.y() / 2 + 0.5) * 255;
+            normal_RGBA_image_data[4 * normals.width() * y + 4 * x + 2] = (n.z() / 2 + 0.5) * 255;
+            normal_RGBA_image_data[4 * normals.width() * y + 4 * x + 3] = 255;
+        }
     }
-  }
-  lodepng_encode32_file(std::string(filename).append(".png").c_str(),
-                        normal_RGBA_image_data , normals.width(), normals.height());
+    lodepng_encode32_file(std::string(filename).append(".png").c_str(),
+                          normal_RGBA_image_data,
+                          normals.width(),
+                          normals.height());
 }
-

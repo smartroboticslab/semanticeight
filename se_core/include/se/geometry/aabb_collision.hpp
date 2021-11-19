@@ -29,58 +29,54 @@
 #ifndef AABB_COLLISION_HPP
 #define AABB_COLLISION_HPP
 #include <cmath>
+
 #include "../utils/math_utils.h"
 
 namespace se {
 namespace geometry {
-  inline int axis_overlap(int       a_coord,
-                          const int a_size,
-                          int       b_coord,
-                          const int b_size) {
+inline int axis_overlap(int a_coord, const int a_size, int b_coord, const int b_size)
+{
     /* Half plane intersection test */
     a_coord = a_coord + (a_size / 2);
     b_coord = b_coord + (b_size / 2);
     return (std::abs(b_coord - a_coord) > (a_size + b_size) / 2) ? 0 : 1;
-  }
+}
 
-  inline int axis_overlap(float       a_coord,
-                          const float a_size,
-                          float       b_coord,
-                          const float b_size) {
+inline int axis_overlap(float a_coord, const float a_size, float b_coord, const float b_size)
+{
     /* Half plane intersection test */
     a_coord = a_coord + (a_size / 2);
     b_coord = b_coord + (b_size / 2);
     return (std::fabs(b_coord - a_coord) > (a_size + b_size) / 2) ? 0 : 1;
-  }
+}
 
-  inline int axis_contained(float       a_coord,
-                            const float a_size,
-                            float       b_coord,
-                            const float b_size) {
+inline int axis_contained(float a_coord, const float a_size, float b_coord, const float b_size)
+{
     /* Segment a includes segment b */
     return (a_coord < b_coord) && ((a_coord + a_size) > (b_coord + b_size));
-  }
+}
 
 
-  inline int aabb_aabb_collision(const Eigen::Vector3i a_coord,
-                                 const Eigen::Vector3i a_size,
-                                 const Eigen::Vector3i b_coord,
-                                 const Eigen::Vector3i b_size){
+inline int aabb_aabb_collision(const Eigen::Vector3i a_coord,
+                               const Eigen::Vector3i a_size,
+                               const Eigen::Vector3i b_coord,
+                               const Eigen::Vector3i b_size)
+{
+    return axis_overlap(a_coord.x(), a_size.x(), b_coord.x(), b_size.x())
+        && axis_overlap(a_coord.y(), a_size.y(), b_coord.y(), b_size.y())
+        && axis_overlap(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
+}
 
-    return axis_overlap(a_coord.x(), a_size.x(), b_coord.x(), b_size.x()) &&
-           axis_overlap(a_coord.y(), a_size.y(), b_coord.y(), b_size.y()) &&
-           axis_overlap(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
-  }
-
-  inline int aabb_aabb_inclusion(const Eigen::Vector3i a_coord,
-                                 const Eigen::Vector3i a_size,
-                                 const Eigen::Vector3i b_coord,
-                                 const Eigen::Vector3i b_size){
+inline int aabb_aabb_inclusion(const Eigen::Vector3i a_coord,
+                               const Eigen::Vector3i a_size,
+                               const Eigen::Vector3i b_coord,
+                               const Eigen::Vector3i b_size)
+{
     /* Box a contains box b */
-    return axis_contained(a_coord.x(), a_size.x(), b_coord.x(), b_size.x()) &&
-           axis_contained(a_coord.y(), a_size.y(), b_coord.y(), b_size.y()) &&
-           axis_contained(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
-  }
+    return axis_contained(a_coord.x(), a_size.x(), b_coord.x(), b_size.x())
+        && axis_contained(a_coord.y(), a_size.y(), b_coord.y(), b_size.y())
+        && axis_contained(a_coord.z(), a_size.z(), b_coord.z(), b_size.z());
 }
-}
+} // namespace geometry
+} // namespace se
 #endif

@@ -30,67 +30,75 @@
  * */
 
 #include "se/voxel_implementations/MultiresTSDF/MultiresTSDF.hpp"
+
 #include "se/str_utils.hpp"
 
 
 
-bool MultiresTSDF::VoxelType::VoxelData::operator==(const MultiresTSDF::VoxelType::VoxelData& other) const {
-  return (x == other.x) && (x_last == other.x_last)
-      && (y == other.y) && (delta_y == other.delta_y);
+bool MultiresTSDF::VoxelType::VoxelData::operator==(
+    const MultiresTSDF::VoxelType::VoxelData& other) const
+{
+    return (x == other.x) && (x_last == other.x_last) && (y == other.y)
+        && (delta_y == other.delta_y);
 }
 
-bool MultiresTSDF::VoxelType::VoxelData::operator!=(const MultiresTSDF::VoxelType::VoxelData& other) const {
-  return !(*this == other);
+bool MultiresTSDF::VoxelType::VoxelData::operator!=(
+    const MultiresTSDF::VoxelType::VoxelData& other) const
+{
+    return !(*this == other);
 }
 
 // Initialize static data members.
 constexpr bool MultiresTSDF::invert_normals;
 float MultiresTSDF::mu_factor;
 float MultiresTSDF::mu;
-int   MultiresTSDF::max_weight;
+int MultiresTSDF::max_weight;
 
-void MultiresTSDF::configure(const float voxel_dim) {
-  mu         = 8 * voxel_dim;
-  max_weight = 100;
+void MultiresTSDF::configure(const float voxel_dim)
+{
+    mu = 8 * voxel_dim;
+    max_weight = 100;
 
-  std::cout << str_utils::value_to_pretty_str(mu / voxel_dim, "TSDF mu factor") << "\n";
-  std::cout << str_utils::value_to_pretty_str(mu, "TSDF mu") << "\n";
-  std::cout << str_utils::value_to_pretty_str(max_weight, "Max TSDF weight") << "\n";
-}
-
-void MultiresTSDF::configure(YAML::Node yaml_config, const float voxel_dim) {
-  configure(voxel_dim);
-  if (yaml_config.IsNull()) {
-    return;
-  }
-
-  if (yaml_config["mu_factor"]) {
-    mu_factor = yaml_config["mu_factor"].as<float>();
-    mu = mu_factor * voxel_dim;
-    std::cout << str_utils::value_to_pretty_str(mu_factor, "TSDF mu factor") << "\n";
+    std::cout << str_utils::value_to_pretty_str(mu / voxel_dim, "TSDF mu factor") << "\n";
     std::cout << str_utils::value_to_pretty_str(mu, "TSDF mu") << "\n";
-  }
-  if (yaml_config["max_weight"]) {
-    max_weight = yaml_config["max_weight"].as<float>();
     std::cout << str_utils::value_to_pretty_str(max_weight, "Max TSDF weight") << "\n";
-  }
 }
 
-std::string MultiresTSDF::printConfig() {
+void MultiresTSDF::configure(YAML::Node yaml_config, const float voxel_dim)
+{
+    configure(voxel_dim);
+    if (yaml_config.IsNull()) {
+        return;
+    }
 
-  std::stringstream out;
-  out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
-  out << str_utils::bool_to_pretty_str(MultiresTSDF::invert_normals, "Invert normals") << "\n";
-  out << str_utils::value_to_pretty_str(MultiresTSDF::mu_factor,     "mu factor") << "\n";
-  out << str_utils::value_to_pretty_str(MultiresTSDF::mu,            "mu") << "\n";
-  out << str_utils::value_to_pretty_str(MultiresTSDF::max_weight,    "Max weight") << "\n";
-  out << "\n";
-  return out.str();
+    if (yaml_config["mu_factor"]) {
+        mu_factor = yaml_config["mu_factor"].as<float>();
+        mu = mu_factor * voxel_dim;
+        std::cout << str_utils::value_to_pretty_str(mu_factor, "TSDF mu factor") << "\n";
+        std::cout << str_utils::value_to_pretty_str(mu, "TSDF mu") << "\n";
+    }
+    if (yaml_config["max_weight"]) {
+        max_weight = yaml_config["max_weight"].as<float>();
+        std::cout << str_utils::value_to_pretty_str(max_weight, "Max TSDF weight") << "\n";
+    }
 }
 
-void MultiresTSDF::dumpMesh(OctreeType&                map,
+std::string MultiresTSDF::printConfig()
+{
+    std::stringstream out;
+    out << str_utils::header_to_pretty_str("VOXEL IMPL") << "\n";
+    out << str_utils::bool_to_pretty_str(MultiresTSDF::invert_normals, "Invert normals") << "\n";
+    out << str_utils::value_to_pretty_str(MultiresTSDF::mu_factor, "mu factor") << "\n";
+    out << str_utils::value_to_pretty_str(MultiresTSDF::mu, "mu") << "\n";
+    out << str_utils::value_to_pretty_str(MultiresTSDF::max_weight, "Max weight") << "\n";
+    out << "\n";
+    return out.str();
+}
+
+void MultiresTSDF::dumpMesh(OctreeType& map,
                             std::vector<se::Triangle>& mesh,
-                            const bool                 use_min_scale) {
-
-  se::algorithms::dual_marching_cube(map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh, use_min_scale);
+                            const bool use_min_scale)
+{
+    se::algorithms::dual_marching_cube(
+        map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh, use_min_scale);
 }

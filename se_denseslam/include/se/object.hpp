@@ -6,6 +6,7 @@
 #ifndef __OBJECT_HPP
 #define __OBJECT_HPP
 
+#include <Eigen/Dense>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -14,25 +15,23 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <opencv2/opencv.hpp>
 #include <vector>
 
-#include <Eigen/Dense>
-#include <opencv2/opencv.hpp>
-
-#include "se/commons.h"
-#include "se/perfstats.h"
-#include "se/timings.h"
-#include "se/config.h"
-#include "se/octree.hpp"
-#include "se/image/image.hpp"
-#include "se/segmentation_result.hpp"
-#include "se/sensor_implementation.hpp"
-#include "se/voxel_implementations.hpp"
 #include "se/bounding_volume.hpp"
+#include "se/commons.h"
+#include "se/config.h"
+#include "se/image/image.hpp"
+#include "se/octree.hpp"
+#include "se/perfstats.h"
 #include "se/preprocessing.hpp"
-#include "se/tracking.hpp"
 #include "se/rendering.hpp"
+#include "se/segmentation_result.hpp"
 #include "se/semanticeight_definitions.hpp"
+#include "se/sensor_implementation.hpp"
+#include "se/timings.h"
+#include "se/tracking.hpp"
+#include "se/voxel_implementations.hpp"
 
 
 
@@ -40,7 +39,7 @@
  * Contains the storage and all relevant parameters for a detected object.
  */
 class Object {
-  public:
+    public:
     /**
      * The instance ID of the object. Used to distinguish between different
      * objects with the same semantic class label.
@@ -98,32 +97,36 @@ class Object {
 
 
     Object(const std::shared_ptr<se::Octree<ObjVoxelImpl::VoxelType>> map,
-           const Eigen::Vector2i&                                     image_res,
-           const Eigen::Matrix4f&                                     T_OM,
-           const Eigen::Matrix4f&                                     T_MC,
-           const int                                                  instance_id);
+           const Eigen::Vector2i& image_res,
+           const Eigen::Matrix4f& T_OM,
+           const Eigen::Matrix4f& T_MC,
+           const int instance_id);
 
-    Object(const Eigen::Vector2i&         image_res,
-           const Eigen::Vector3i&         map_size,
-           const Eigen::Vector3f&         map_dim,
-           const Eigen::Matrix4f&         T_OM,
-           const Eigen::Matrix4f&         T_MC,
-           const int                      instance_id);
+    Object(const Eigen::Vector2i& image_res,
+           const Eigen::Vector3i& map_size,
+           const Eigen::Vector3f& map_dim,
+           const Eigen::Matrix4f& T_OM,
+           const Eigen::Matrix4f& T_MC,
+           const int instance_id);
 
-    int classId() const {
-      return conf.classId();
+    int classId() const
+    {
+        return conf.classId();
     }
 
-    float mapDim() const {
-      return map_->dim();
+    float mapDim() const
+    {
+        return map_->dim();
     }
 
-    int mapSize() const {
-      return map_->size();
+    int mapSize() const
+    {
+        return map_->size();
     }
 
-    float voxelDim() const {
-      return map_->voxelDim();
+    float voxelDim() const
+    {
+        return map_->voxelDim();
     }
 
     int minScale() const;
@@ -144,28 +147,27 @@ class Object {
      * \note This function should be very similar to the original supereight
      * DenseSLAMSystem::integrate() function.
      */
-    void integrate(const se::Image<float>&         depth_image,
-                   const se::Image<uint32_t>&      rgba_image,
+    void integrate(const se::Image<float>& depth_image,
+                   const se::Image<uint32_t>& rgba_image,
                    const se::InstanceSegmentation& segmentation,
-                   const Eigen::Matrix4f&          T_MC,
-                   const SensorImpl&               sensor,
-                   const size_t                    frame);
+                   const Eigen::Matrix4f& T_MC,
+                   const SensorImpl& sensor,
+                   const size_t frame);
 
     /**
      * Raycast the volume from view in order to create the vertex and normal
      * maps surface_point_cloud_M_ and surface_normals_M_ respectively.
      */
-    void raycast(const Eigen::Matrix4f& T_MC,
-                 const SensorImpl&      sensor);
+    void raycast(const Eigen::Matrix4f& T_MC, const SensorImpl& sensor);
 
     /**
      * Render the volume of the Object as viewed from render_T_MC.
      */
-    void renderObjectVolume(uint32_t*              output_image_data,
+    void renderObjectVolume(uint32_t* output_image_data,
                             const Eigen::Vector2i& output_image_res,
-                            const SensorImpl&      sensor,
+                            const SensorImpl& sensor,
                             const Eigen::Matrix4f& render_T_MC,
-                            const bool             render_color);
+                            const bool render_color);
 
     void print(FILE* f = stdout) const;
 
@@ -180,4 +182,3 @@ typedef std::shared_ptr<Object> ObjectPtr;
 typedef std::vector<ObjectPtr> Objects;
 
 #endif
-

@@ -5,15 +5,16 @@
 
 #ifndef MESH_IO_H
 #define MESH_IO_H
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include "se/utils/math_utils.h"
 #include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include "se/utils/math_utils.h"
 
 namespace se {
 
-  /**
+/**
    * \brief Save a mesh as a VTK file.
    *
    * Documentation for the VTK file format available here
@@ -33,14 +34,14 @@ namespace se {
    *
    * \return 0 on success, nonzero on error.
    */
-  int save_mesh_vtk(const std::vector<Triangle>& mesh,
-                    const std::string            filename,
-                    const Eigen::Matrix4f&       T_WM = Eigen::Matrix4f::Identity(),
-                    const float                  voxel_dim = 1,
-                    const float*                 point_data = nullptr,
-                    const float*                 cell_data = nullptr);
+int save_mesh_vtk(const std::vector<Triangle>& mesh,
+                  const std::string filename,
+                  const Eigen::Matrix4f& T_WM = Eigen::Matrix4f::Identity(),
+                  const float voxel_dim = 1,
+                  const float* point_data = nullptr,
+                  const float* cell_data = nullptr);
 
-  /**
+/**
    * \brief Save a mesh as a PLY file.
    *
    * Documentation for the PLY file format available here
@@ -60,24 +61,23 @@ namespace se {
    *
    * \return 0 on success, nonzero on error.
    */
-  static int save_mesh_ply(const std::vector<Triangle>& mesh,
-                           const std::string            filename,
-                           const Eigen::Matrix4f&       T_WM = Eigen::Matrix4f::Identity(),
-                           const float                  voxel_dim = 1,
-                           const float*                 point_data = nullptr,
-                           const float*                 cell_data = nullptr);
+static int save_mesh_ply(const std::vector<Triangle>& mesh,
+                         const std::string filename,
+                         const Eigen::Matrix4f& T_WM = Eigen::Matrix4f::Identity(),
+                         const float voxel_dim = 1,
+                         const float* point_data = nullptr,
+                         const float* cell_data = nullptr);
 
-  /**
+/**
    * \brief Save a mesh as a OBJ file.
    *
    * \param[in] mesh     The mesh to be saved.
    * \param[in] filename The output filename.
    * \return 0 on success, nonzero on error.
    */
-  static int save_mesh_obj(const std::vector<Triangle> &mesh,
-                           const std::string filename);
+static int save_mesh_obj(const std::vector<Triangle>& mesh, const std::string filename);
 
-}
+} // namespace se
 
 #include "meshing_io_impl.hpp"
 

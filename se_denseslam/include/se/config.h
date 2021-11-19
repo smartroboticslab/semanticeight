@@ -32,19 +32,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <Eigen/Dense>
 #include <ostream>
 #include <string>
 #include <vector>
 
-#include <Eigen/Dense>
-
-#include "se/utils/math_utils.h"
 #include "se/str_utils.hpp"
+#include "se/utils/math_utils.h"
 
 
 
 namespace se {
-  struct Configuration {
+struct Configuration {
     //
     // Pipeline configuration parameters
     // Command line arguments are parsed in default_parameters.h
@@ -402,173 +401,190 @@ namespace se {
      */
     float solving_time;
 
-    Configuration()
-      : sensor_type(""),
-        voxel_impl_type(""),
-        voxel_impl_yaml(""),
-        sequence_name(""),
-        sequence_type("raw"),
-        sensor_downsampling_factor(1),
-        tracking_rate(1),
-        integration_rate(1),
-        rendering_rate(4),
-        meshing_rate(100),
-        map_size(256, 256, 256),
-        map_dim(2.0f, 2.0f, 2.0f),
-        t_MW_factor(0.5f, 0.5f, 0.5f),
-        pyramid({10, 5, 4}),
-        output_mesh_file(""),
-        enable_structure(false),
-        output_structure_file(""),
-        sequence_path(""),
-        enable_benchmark(false),
-        log_file(""),
-        ground_truth_file(""),
-        enable_ground_truth(true),
-        T_BC(Eigen::Matrix4f::Identity()),
-        init_T_WB(Eigen::Matrix4f::Identity()),
-        sensor_intrinsics(0.0f, 0.0f, 0.0f, 0.0f),
-        left_hand_frame(false),
-        near_plane(0.4f),
-        far_plane(4.0f),
-        fps(0.0f),
-        drop_frames(false),
-        max_frame(-1),
-        icp_threshold(1e-5),
-        enable_meshing(false),
-        enable_render(true),
-        output_render_file(""),
-        render_volume_fullsize(false),
-        bilateral_filter(false),
-        frontier_cluster_min_volume(0.0f),
-        aabb_min_W(0.0f, 0.0f, 0.0f),
-        aabb_max_W(0.0f, 0.0f, 0.0f),
-        // Use some large values because Infs/NaNs will make the limits difficult to convert to some
-        // other frame.
-        sampling_min_W(-10000, -10000, -10000),
-        sampling_max_W(10000, 10000, 10000),
-        enable_exploration(true),
-        num_candidates(10),
-        exploration_weight(0.5f),
-        use_pose_history(true),
-        raycast_width(36),
-        raycast_height(10),
-        linear_velocity(1.0f),
-        angular_velocity(0.1f),
-        delta_t(0.1f),
-        robot_radius(0.3f),
-        safety_radius(0.0f),
-        min_control_point_radius(0.1f),
-        skeleton_sample_precision(0.05f),
-        solving_time(0.1f) {}
+    Configuration() :
+            sensor_type(""),
+            voxel_impl_type(""),
+            voxel_impl_yaml(""),
+            sequence_name(""),
+            sequence_type("raw"),
+            sensor_downsampling_factor(1),
+            tracking_rate(1),
+            integration_rate(1),
+            rendering_rate(4),
+            meshing_rate(100),
+            map_size(256, 256, 256),
+            map_dim(2.0f, 2.0f, 2.0f),
+            t_MW_factor(0.5f, 0.5f, 0.5f),
+            pyramid({10, 5, 4}),
+            output_mesh_file(""),
+            enable_structure(false),
+            output_structure_file(""),
+            sequence_path(""),
+            enable_benchmark(false),
+            log_file(""),
+            ground_truth_file(""),
+            enable_ground_truth(true),
+            T_BC(Eigen::Matrix4f::Identity()),
+            init_T_WB(Eigen::Matrix4f::Identity()),
+            sensor_intrinsics(0.0f, 0.0f, 0.0f, 0.0f),
+            left_hand_frame(false),
+            near_plane(0.4f),
+            far_plane(4.0f),
+            fps(0.0f),
+            drop_frames(false),
+            max_frame(-1),
+            icp_threshold(1e-5),
+            enable_meshing(false),
+            enable_render(true),
+            output_render_file(""),
+            render_volume_fullsize(false),
+            bilateral_filter(false),
+            frontier_cluster_min_volume(0.0f),
+            aabb_min_W(0.0f, 0.0f, 0.0f),
+            aabb_max_W(0.0f, 0.0f, 0.0f),
+            // Use some large values because Infs/NaNs will make the limits difficult to convert to some
+            // other frame.
+            sampling_min_W(-10000, -10000, -10000),
+            sampling_max_W(10000, 10000, 10000),
+            enable_exploration(true),
+            num_candidates(10),
+            exploration_weight(0.5f),
+            use_pose_history(true),
+            raycast_width(36),
+            raycast_height(10),
+            linear_velocity(1.0f),
+            angular_velocity(0.1f),
+            delta_t(0.1f),
+            robot_radius(0.3f),
+            safety_radius(0.0f),
+            min_control_point_radius(0.1f),
+            skeleton_sample_precision(0.05f),
+            solving_time(0.1f)
+    {
+    }
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  };
+};
 } // namespace se
 
 
 
+static std::ostream& operator<<(std::ostream& out, const se::Configuration& config)
+{
+    out << str_utils::header_to_pretty_str("GENERAL") << "\n";
+    out << str_utils::str_to_pretty_str(config.voxel_impl_type, "Voxel impl type") << "\n";
+    out << str_utils::str_to_pretty_str(config.sensor_type, "Sensor type") << "\n";
+    out << "\n";
 
-static std::ostream& operator<<(std::ostream& out, const se::Configuration& config) {
+    out << str_utils::str_to_pretty_str(config.sequence_name, "Sequence name") << "\n";
+    out << str_utils::str_to_pretty_str(config.sequence_type, "Sequence type") << "\n";
+    out << str_utils::str_to_pretty_str(config.sequence_path, "Sequence path") << "\n";
+    out << str_utils::str_to_pretty_str(config.ground_truth_file, "Ground truth file") << "\n";
+    out << str_utils::str_to_pretty_str((config.log_file == "" ? "std::cout" : config.log_file),
+                                        "Log file")
+        << "\n";
+    out << str_utils::bool_to_pretty_str(config.enable_benchmark, "Enable benchmark") << "\n";
+    out << str_utils::bool_to_pretty_str(config.enable_ground_truth, "Enable ground truth") << "\n";
+    out << str_utils::bool_to_pretty_str(config.enable_render, "Enable render") << "\n";
+    if (config.output_render_file != "") {
+        out << str_utils::str_to_pretty_str(config.output_render_file, "Output render file")
+            << "\n";
+    }
+    out << str_utils::bool_to_pretty_str(config.enable_meshing, "Enable meshing") << "\n";
+    if (config.output_mesh_file != "") {
+        out << str_utils::str_to_pretty_str(config.output_mesh_file, "Output mesh file") << "\n";
+    }
+    out << str_utils::bool_to_pretty_str(config.enable_structure, "Enable structure") << "\n";
+    if (config.output_structure_file != "") {
+        out << str_utils::str_to_pretty_str(config.output_structure_file, "Output structure file")
+            << "\n";
+    }
+    out << "\n";
 
-  out << str_utils::header_to_pretty_str("GENERAL") << "\n";
-  out << str_utils::str_to_pretty_str(config.voxel_impl_type,         "Voxel impl type") << "\n";
-  out << str_utils::str_to_pretty_str(config.sensor_type,             "Sensor type") << "\n";
-  out << "\n";
+    out << str_utils::value_to_pretty_str(config.integration_rate, "Integration rate") << "\n";
+    out << str_utils::value_to_pretty_str(config.rendering_rate, "Rendering rate") << "\n";
+    out << str_utils::value_to_pretty_str(config.meshing_rate, "Meshing rate") << "\n";
+    out << str_utils::value_to_pretty_str(config.fps, "FPS") << "\n";
+    out << str_utils::bool_to_pretty_str(config.drop_frames, "Drop frames") << "\n";
+    out << str_utils::value_to_pretty_str(config.max_frame, "Max frame") << "\n";
+    out << "\n";
 
-  out << str_utils::str_to_pretty_str(config.sequence_name,           "Sequence name") << "\n";
-  out << str_utils::str_to_pretty_str(config.sequence_type,           "Sequence type") << "\n";
-  out << str_utils::str_to_pretty_str(config.sequence_path,           "Sequence path") << "\n";
-  out << str_utils::str_to_pretty_str(config.ground_truth_file,       "Ground truth file") << "\n";
-  out << str_utils::str_to_pretty_str((config.log_file == "" ? "std::cout" : config.log_file),
-                                                                      "Log file") << "\n";
-  out << str_utils::bool_to_pretty_str(config.enable_benchmark,       "Enable benchmark") << "\n";
-  out << str_utils::bool_to_pretty_str(config.enable_ground_truth,    "Enable ground truth") << "\n";
-  out << str_utils::bool_to_pretty_str(config.enable_render,          "Enable render"      ) << "\n";
-  if (config.output_render_file != "") {
-    out << str_utils::str_to_pretty_str(config.output_render_file,    "Output render file") << "\n";
-  }
-  out << str_utils::bool_to_pretty_str(config.enable_meshing,         "Enable meshing"     ) << "\n";
-  if (config.output_mesh_file != "") {
-    out << str_utils::str_to_pretty_str(config.output_mesh_file,      "Output mesh file") << "\n";
-  }
-  out << str_utils::bool_to_pretty_str(config.enable_structure,       "Enable structure"     ) << "\n";
-  if (config.output_structure_file != "") {
-    out << str_utils::str_to_pretty_str(config.output_structure_file, "Output structure file") << "\n";
-  }
-  out << "\n";
+    out << str_utils::vector_to_pretty_str(
+        Eigen::VectorXi::Map(config.pyramid.data(), config.pyramid.size()), "ICP pyramid levels")
+        << "\n";
+    out << str_utils::value_to_pretty_str(config.icp_threshold, "ICP threshold") << "\n";
+    out << str_utils::bool_to_pretty_str(config.render_volume_fullsize, "Render volume full-size")
+        << "\n";
+    out << "\n";
 
-  out << str_utils::value_to_pretty_str(config.integration_rate,      "Integration rate") << "\n";
-  out << str_utils::value_to_pretty_str(config.rendering_rate,        "Rendering rate") << "\n";
-  out << str_utils::value_to_pretty_str(config.meshing_rate,          "Meshing rate") << "\n";
-  out << str_utils::value_to_pretty_str(config.fps,                   "FPS") << "\n";
-  out << str_utils::bool_to_pretty_str(config.drop_frames,            "Drop frames") << "\n";
-  out << str_utils::value_to_pretty_str(config.max_frame,             "Max frame") << "\n";
-  out << "\n";
+    out << str_utils::header_to_pretty_str("MAP") << "\n";
+    out << str_utils::volume_to_pretty_str(config.map_size, "Map size", "voxel") << "\n";
+    out << str_utils::volume_to_pretty_str(config.map_dim, "Map dim", "meter") << "\n";
+    out << str_utils::value_to_pretty_str(
+        config.map_dim.x() / config.map_size.x(), "Map res", "meter/voxel")
+        << "\n";
 
-  out << str_utils::vector_to_pretty_str(Eigen::VectorXi::Map(config.pyramid.data(), config.pyramid.size()),
-                                                                      "ICP pyramid levels") << "\n";
-  out << str_utils::value_to_pretty_str(config.icp_threshold,         "ICP threshold") << "\n";
-  out << str_utils::bool_to_pretty_str(config.render_volume_fullsize, "Render volume full-size") << "\n";
-  out << "\n";
+    out << str_utils::vector_to_pretty_str(config.t_MW_factor, "t_MW_factor") << "\n";
+    out << "\n";
 
-  out << str_utils::header_to_pretty_str("MAP") << "\n";
-  out << str_utils::volume_to_pretty_str(config.map_size,             "Map size", "voxel") << "\n";
-  out << str_utils::volume_to_pretty_str(config.map_dim,              "Map dim",  "meter") << "\n";
-  out << str_utils::value_to_pretty_str(config.map_dim.x() / config.map_size.x(),
-                                                                      "Map res", "meter/voxel") << "\n";
+    out << str_utils::header_to_pretty_str("SENSOR") << "\n";
+    out << str_utils::vector_to_pretty_str(
+        config.sensor_intrinsics, "Sensor intrinsics", {"fx", "fy", "cx", "cy"})
+        << "\n";
+    out << str_utils::bool_to_pretty_str(config.left_hand_frame, "Left-handed-coordinate system")
+        << "\n";
+    out << str_utils::value_to_pretty_str(config.sensor_downsampling_factor,
+                                          "Sensor downsampling factor")
+        << "\n";
+    out << str_utils::bool_to_pretty_str(config.bilateral_filter, "Filter depth (bilateral filter)")
+        << "\n";
+    out << str_utils::value_to_pretty_str(config.near_plane, "Near plane", "meters") << "\n";
+    out << str_utils::value_to_pretty_str(config.far_plane, "Far plane", "meters") << "\n";
+    out << "\n";
+    out << str_utils::matrix_to_pretty_str(config.T_BC, "T_BC") << "\n";
+    out << "\n";
+    out << str_utils::matrix_to_pretty_str(config.init_T_WB, "init_T_WB") << "\n";
+    out << "\n";
 
-  out << str_utils::vector_to_pretty_str(config.t_MW_factor,          "t_MW_factor") << "\n";
-  out << "\n";
+    const Eigen::Vector3f t_MW = config.map_dim.x() * config.t_MW_factor;
+    const Eigen::Matrix4f T_MW = se::math::to_transformation(t_MW);
+    const Eigen::Matrix4f init_T_MB = T_MW * config.init_T_WB;
+    const Eigen::Vector3f init_t_MB = se::math::to_translation(init_T_MB);
+    out << str_utils::vector_to_pretty_str(init_t_MB, "init t_MB") << "\n";
+    out << "\n";
 
-  out << str_utils::header_to_pretty_str("SENSOR") << "\n";
-  out << str_utils::vector_to_pretty_str(config.sensor_intrinsics,    "Sensor intrinsics", {"fx", "fy", "cx", "cy"}) << "\n";
-  out << str_utils::bool_to_pretty_str(config.left_hand_frame,        "Left-handed-coordinate system") << "\n";
-  out << str_utils::value_to_pretty_str(config.sensor_downsampling_factor,
-                                                                      "Sensor downsampling factor") << "\n";
-  out << str_utils::bool_to_pretty_str(config.bilateral_filter,       "Filter depth (bilateral filter)") << "\n";
-  out << str_utils::value_to_pretty_str(config.near_plane,            "Near plane", "meters") << "\n";
-  out << str_utils::value_to_pretty_str(config.far_plane,             "Far plane", "meters") << "\n";
-  out << "\n";
-  out << str_utils::matrix_to_pretty_str(config.T_BC,                 "T_BC") << "\n";
-  out << "\n";
-  out << str_utils::matrix_to_pretty_str(config.init_T_WB,            "init_T_WB") << "\n";
-  out << "\n";
+    const Eigen::Vector3f init_t_MB_factor = init_t_MB / config.map_dim.x();
+    out << str_utils::vector_to_pretty_str(init_t_MB_factor, "init t_MB_factor") << "\n";
+    out << "\n";
 
-  const Eigen::Vector3f t_MW = config.map_dim.x() * config.t_MW_factor;
-  const Eigen::Matrix4f T_MW = se::math::to_transformation(t_MW);
-  const Eigen::Matrix4f init_T_MB = T_MW * config.init_T_WB;
-  const Eigen::Vector3f init_t_MB = se::math::to_translation(init_T_MB);
-  out << str_utils::vector_to_pretty_str(init_t_MB,                   "init t_MB") << "\n";
-  out << "\n";
+    // Exploration only ///////////////////////////////////////////////////////
+    out << str_utils::value_to_pretty_str(config.frontier_cluster_min_volume,
+                                          "Frontier cluster min volume")
+        << "\n";
+    out << str_utils::vector_to_pretty_str(config.aabb_min_W, "AABB min_w") << "\n";
+    out << str_utils::vector_to_pretty_str(config.aabb_max_W, "AABB max_w") << "\n";
+    out << str_utils::vector_to_pretty_str(config.sampling_min_W, "Sampling min_w") << "\n";
+    out << str_utils::vector_to_pretty_str(config.sampling_max_W, "Sampling max_w") << "\n";
+    out << str_utils::bool_to_pretty_str(config.enable_exploration, "Enable exploration") << "\n";
+    out << str_utils::value_to_pretty_str(config.num_candidates, "Num candidates") << "\n";
+    out << str_utils::value_to_pretty_str(config.exploration_weight, "Exploration weight") << "\n";
+    out << str_utils::bool_to_pretty_str(config.use_pose_history, "Use pose history") << "\n";
+    out << str_utils::value_to_pretty_str(config.raycast_width, "Raycast width") << "\n";
+    out << str_utils::value_to_pretty_str(config.raycast_height, "Raycast height") << "\n";
+    out << str_utils::value_to_pretty_str(config.linear_velocity, "Linear velocity") << "\n";
+    out << str_utils::value_to_pretty_str(config.angular_velocity, "Angular velocity") << "\n";
+    out << str_utils::value_to_pretty_str(config.delta_t, "Delta t") << "\n";
+    out << str_utils::value_to_pretty_str(config.robot_radius, "Robot radius") << "\n";
+    out << str_utils::value_to_pretty_str(config.safety_radius, "Safety radius") << "\n";
+    out << str_utils::value_to_pretty_str(config.min_control_point_radius,
+                                          "Min control point radius")
+        << "\n";
+    out << str_utils::value_to_pretty_str(config.skeleton_sample_precision,
+                                          "Skeleton sample precision")
+        << "\n";
+    out << str_utils::value_to_pretty_str(config.solving_time, "Solving time") << "\n";
 
-  const Eigen::Vector3f init_t_MB_factor = init_t_MB / config.map_dim.x();
-  out << str_utils::vector_to_pretty_str(init_t_MB_factor,            "init t_MB_factor") << "\n";
-  out << "\n";
-
-  // Exploration only ///////////////////////////////////////////////////////
-  out << str_utils::value_to_pretty_str(config.frontier_cluster_min_volume, "Frontier cluster min volume") << "\n";
-  out << str_utils::vector_to_pretty_str(config.aabb_min_W,               "AABB min_w") << "\n";
-  out << str_utils::vector_to_pretty_str(config.aabb_max_W,               "AABB max_w") << "\n";
-  out << str_utils::vector_to_pretty_str(config.sampling_min_W,               "Sampling min_w") << "\n";
-  out << str_utils::vector_to_pretty_str(config.sampling_max_W,               "Sampling max_w") << "\n";
-  out << str_utils::bool_to_pretty_str(config.enable_exploration,         "Enable exploration") << "\n";
-  out << str_utils::value_to_pretty_str(config.num_candidates,            "Num candidates") << "\n";
-  out << str_utils::value_to_pretty_str(config.exploration_weight,        "Exploration weight") << "\n";
-  out << str_utils::bool_to_pretty_str(config.use_pose_history,           "Use pose history") << "\n";
-  out << str_utils::value_to_pretty_str(config.raycast_width,             "Raycast width") << "\n";
-  out << str_utils::value_to_pretty_str(config.raycast_height,            "Raycast height") << "\n";
-  out << str_utils::value_to_pretty_str(config.linear_velocity,           "Linear velocity") << "\n";
-  out << str_utils::value_to_pretty_str(config.angular_velocity,          "Angular velocity") << "\n";
-  out << str_utils::value_to_pretty_str(config.delta_t,                   "Delta t") << "\n";
-  out << str_utils::value_to_pretty_str(config.robot_radius,              "Robot radius") <<  "\n";
-  out << str_utils::value_to_pretty_str(config.safety_radius,             "Safety radius") << "\n";
-  out << str_utils::value_to_pretty_str(config.min_control_point_radius,  "Min control point radius") << "\n";
-  out << str_utils::value_to_pretty_str(config.skeleton_sample_precision, "Skeleton sample precision") << "\n";
-  out << str_utils::value_to_pretty_str(config.solving_time,              "Solving time") << "\n";
-
-  return out;
+    return out;
 }
 
 #endif
-

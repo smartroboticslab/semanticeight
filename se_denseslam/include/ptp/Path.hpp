@@ -17,20 +17,19 @@
 
 #include <eigen3/Eigen/Dense>
 #include <memory>
-#include <vector>
-
 #include <ptp/Header.hpp>
+#include <vector>
 
 namespace ptp {
 
 /** Struct defining a Path with a Header and a vector of states. */
-template <int TSize>
+template<int TSize>
 struct Path {
-  /** Type definition for smart pointer. */
-  typedef std::shared_ptr<Path<TSize>> Ptr;
+    /** Type definition for smart pointer. */
+    typedef std::shared_ptr<Path<TSize>> Ptr;
 
-  Header header;                    ///> Header holding timestamp and frame_id
-  std::vector<State<TSize>> states; ///> States of the path
+    Header header;                    ///> Header holding timestamp and frame_id
+    std::vector<State<TSize>> states; ///> States of the path
 };
 
 } // namespace ptp

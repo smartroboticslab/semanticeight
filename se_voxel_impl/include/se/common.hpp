@@ -6,8 +6,9 @@
 #define __COMMON_HPP
 
 #include <Eigen/Dense>
-#include "se/octree.hpp"
+
 #include "se/node.hpp"
+#include "se/octree.hpp"
 
 /**
  * \brief Finds the first valid point along a ray starting from (ray_origin_M + t * ray_dir_M). Returns false if no
@@ -26,47 +27,53 @@
  *                                   the input t (ray_origin_M + t * ray_dir_M)
  * \return        is_valid           True if valid point could be found before reaching t_max. False otherwise.
  */
-template <typename FieldType, template <typename FieldT> class OctreeT,
-          typename NodeValueSelector,
-          typename VoxelValueSelector>
+template<typename FieldType,
+         template<typename FieldT>
+         class OctreeT,
+         typename NodeValueSelector,
+         typename VoxelValueSelector>
 bool find_valid_point(const OctreeT<FieldType>& map,
-                      NodeValueSelector         select_node_value,
-                      VoxelValueSelector        select_voxel_value,
-                      const Eigen::Vector3f&    ray_origin_M,
-                      const Eigen::Vector3f&    ray_dir_M,
-                      const float               step_size,
-                      const float               t_max,
-                      float&                    t,
-                      float&                    value,
-                      Eigen::Vector3f&          point_M) {
-  bool is_valid = false;
-  value = 0;
-  typename FieldType::VoxelData peek_data;
+                      NodeValueSelector select_node_value,
+                      VoxelValueSelector select_voxel_value,
+                      const Eigen::Vector3f& ray_origin_M,
+                      const Eigen::Vector3f& ray_dir_M,
+                      const float step_size,
+                      const float t_max,
+                      float& t,
+                      float& value,
+                      Eigen::Vector3f& point_M)
+{
+    bool is_valid = false;
+    value = 0;
+    typename FieldType::VoxelData peek_data;
 
-  Eigen::Vector3f ray_pos_M = ray_origin_M + t * ray_dir_M;
-  if (map.containsPoint(ray_pos_M)) {
-    map.getAtPoint(ray_pos_M, peek_data, 0);
-    if (peek_data.y > 0) {
-      value = map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid).first;
-    }
-  }
-
-  while (!is_valid) {
-    t += step_size;
-    if (t > t_max) {
-      return false;
-    }
-
-    ray_pos_M = ray_origin_M + t * ray_dir_M;
+    Eigen::Vector3f ray_pos_M = ray_origin_M + t * ray_dir_M;
     if (map.containsPoint(ray_pos_M)) {
-      map.getAtPoint(ray_pos_M, peek_data, 0);
-      if (peek_data.y > 0) {
-        value = map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid).first;
-      }
+        map.getAtPoint(ray_pos_M, peek_data, 0);
+        if (peek_data.y > 0) {
+            value = map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid)
+                        .first;
+        }
     }
-  }
-  point_M = ray_pos_M;
-  return true;
+
+    while (!is_valid) {
+        t += step_size;
+        if (t > t_max) {
+            return false;
+        }
+
+        ray_pos_M = ray_origin_M + t * ray_dir_M;
+        if (map.containsPoint(ray_pos_M)) {
+            map.getAtPoint(ray_pos_M, peek_data, 0);
+            if (peek_data.y > 0) {
+                value =
+                    map.interpAtPoint(ray_pos_M, select_node_value, select_voxel_value, 0, is_valid)
+                        .first;
+            }
+        }
+    }
+    point_M = ray_pos_M;
+    return true;
 }
 
 
@@ -87,19 +94,27 @@ bool find_valid_point(const OctreeT<FieldType>& map,
  *                                   the input t (ray_origin_M + t * ray_dir_M)
  * \return        is_valid           True if valid point could be found before reaching t_max. False otherwise.
  */
-template <typename FieldType, template <typename FieldT> class OctreeT,
-          typename ValueSelector>
+template<typename FieldType, template<typename FieldT> class OctreeT, typename ValueSelector>
 bool find_valid_point(const OctreeT<FieldType>& map,
-                      ValueSelector             select_value,
-                      const Eigen::Vector3f&    ray_origin_M,
-                      const Eigen::Vector3f&    ray_dir_M,
-                      const float               step_size,
-                      const float               t_max,
-                      float&                    t,
-                      float&                    value,
-                      Eigen::Vector3f&          point_M) {
-
-  return find_valid_point(map, select_value, select_value, ray_origin_M, ray_dir_M, step_size, t_max, t, value, point_M);
+                      ValueSelector select_value,
+                      const Eigen::Vector3f& ray_origin_M,
+                      const Eigen::Vector3f& ray_dir_M,
+                      const float step_size,
+                      const float t_max,
+                      float& t,
+                      float& value,
+                      Eigen::Vector3f& point_M)
+{
+    return find_valid_point(map,
+                            select_value,
+                            select_value,
+                            ray_origin_M,
+                            ray_dir_M,
+                            step_size,
+                            t_max,
+                            t,
+                            value,
+                            point_M);
 }
 
 #endif //__COMMON_HPP

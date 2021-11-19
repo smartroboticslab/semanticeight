@@ -33,13 +33,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OCTREE_CONFIG_H
 
 #include <cstdint>
+
 #include "utils/math_utils.h"
 
 
 namespace se {
-typedef uint64_t key_t; 
-//   typedef long long int morton_type; 
-}
+typedef uint64_t key_t;
+//   typedef long long int morton_type;
+} // namespace se
 
 #define BLOCK_SIZE 8
 #define MAX_BITS 21
@@ -57,28 +58,12 @@ constexpr se::key_t SCALE_MASK = (1 << (NUM_DIM * se::math::log2_const(BLOCK_SIZ
    }
  *
 */
-constexpr uint64_t MASK[] = {
-  0x7000000000000000,
-  0x7e00000000000000,
-  0x7fc0000000000000,
-  0x7ff8000000000000,
-  0x7fff000000000000,
-  0x7fffe00000000000,
-  0x7ffffc0000000000,
-  0x7fffff8000000000,
-  0x7ffffff000000000,
-  0x7ffffffe00000000,
-  0x7fffffffc0000000,
-  0x7ffffffff8000000,
-  0x7fffffffff000000,
-  0x7fffffffffe00000,
-  0x7ffffffffffc0000,
-  0x7fffffffffff8000,
-  0x7ffffffffffff000,
-  0x7ffffffffffffe00,
-  0x7fffffffffffffc0,
-  0x7ffffffffffffff8,
-  0x7fffffffffffffff
-};
+constexpr uint64_t MASK[] = {0x7000000000000000, 0x7e00000000000000, 0x7fc0000000000000,
+                             0x7ff8000000000000, 0x7fff000000000000, 0x7fffe00000000000,
+                             0x7ffffc0000000000, 0x7fffff8000000000, 0x7ffffff000000000,
+                             0x7ffffffe00000000, 0x7fffffffc0000000, 0x7ffffffff8000000,
+                             0x7fffffffff000000, 0x7fffffffffe00000, 0x7ffffffffffc0000,
+                             0x7fffffffffff8000, 0x7ffffffffffff000, 0x7ffffffffffffe00,
+                             0x7fffffffffffffc0, 0x7ffffffffffffff8, 0x7fffffffffffffff};
 
 #endif

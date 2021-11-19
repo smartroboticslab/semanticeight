@@ -32,10 +32,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MEM_POOL_H
 #define MEM_POOL_H
 
-#include <iostream>
-#include <vector>
 #include <atomic>
+#include <iostream>
 #include <mutex>
+#include <vector>
+
 #include "se/node.hpp"
 #include "se/octant_ops.hpp"
 
@@ -43,355 +44,439 @@ namespace se {
 /*! \brief Manage the memory allocated for Octree nodes.
  */
 
-  template<typename T>
-  using VoxelBlockType = typename T::VoxelBlockType;
+template<typename T>
+using VoxelBlockType = typename T::VoxelBlockType;
 
-  template <typename T>
-  class MemoryPool {
-  public:
-    MemoryPool() {
-      root_ = new se::Node<T>;
-      nodes_updated_ = false;
-      blocks_updated_ = false;
+template<typename T>
+class MemoryPool {
+    public:
+    MemoryPool()
+    {
+        root_ = new se::Node<T>;
+        nodes_updated_ = false;
+        blocks_updated_ = false;
     }
 
-    ~MemoryPool() {
-      deleteNodeRecurse(root_);
+    ~MemoryPool()
+    {
+        deleteNodeRecurse(root_);
     }
 
-    se::Node<T>* root() { return root_; };
-
-    void reserveNodes(const size_t /* n */) { };
-    void reserveBlocks(const size_t /* n */) { };
-
-    se::Node<T>* acquireNode(typename T::VoxelData init_data = T::initData()) {
-      nodes_updated_ = false;
-      return new se::Node<T>(init_data);
+    se::Node<T>* root()
+    {
+        return root_;
     };
 
-    VoxelBlockType<T>* acquireBlock(typename T::VoxelData init_data = T::initData()) {
-      blocks_updated_ = false;
-      return new VoxelBlockType<T>(init_data);
+    void reserveNodes(const size_t /* n */){};
+    void reserveBlocks(const size_t /* n */){};
+
+    se::Node<T>* acquireNode(typename T::VoxelData init_data = T::initData())
+    {
+        nodes_updated_ = false;
+        return new se::Node<T>(init_data);
     };
 
-    se::Node<T>* acquireNode(se::Node<T>* init_node) {
-      nodes_updated_ = false;
-      se::Node<T>* node = new se::Node<T>();
-      *node = *init_node;
-      return node;
+    VoxelBlockType<T>* acquireBlock(typename T::VoxelData init_data = T::initData())
+    {
+        blocks_updated_ = false;
+        return new VoxelBlockType<T>(init_data);
     };
 
-    VoxelBlockType<T>* acquireBlock(VoxelBlockType<T>* init_block) {
-      blocks_updated_ = false;
-      VoxelBlockType<T>* block = new VoxelBlockType<T>();
-      *block = *init_block;
-      return block;
+    se::Node<T>* acquireNode(se::Node<T>* init_node)
+    {
+        nodes_updated_ = false;
+        se::Node<T>* node = new se::Node<T>();
+        *node = *init_node;
+        return node;
     };
 
-    void deleteNode(se::Node<T>* node, size_t max_depth) {
-      nodes_updated_ = false;
-      const unsigned int child_idx = se::child_idx(node->code(),
-                                           se::keyops::depth(node->code()), max_depth);
-      node->parent()->child(child_idx) = nullptr;
-      node->parent()->children_mask(node->parent()->children_mask() & ~(1 << child_idx));
+    VoxelBlockType<T>* acquireBlock(VoxelBlockType<T>* init_block)
+    {
+        blocks_updated_ = false;
+        VoxelBlockType<T>* block = new VoxelBlockType<T>();
+        *block = *init_block;
+        return block;
+    };
 
-      for (int child_idx = 0; child_idx < 8; child_idx++)
-        deleteNodeRecurse(node->child(child_idx));
-      delete(node);
+    void deleteNode(se::Node<T>* node, size_t max_depth)
+    {
+        nodes_updated_ = false;
+        const unsigned int child_idx =
+            se::child_idx(node->code(), se::keyops::depth(node->code()), max_depth);
+        node->parent()->child(child_idx) = nullptr;
+        node->parent()->children_mask(node->parent()->children_mask() & ~(1 << child_idx));
+
+        for (int child_idx = 0; child_idx < 8; child_idx++)
+            deleteNodeRecurse(node->child(child_idx));
+        delete (node);
     }
 
-    void deleteNodeRecurse(se::Node<T>* node) {
-      if (!node) {
-        return;
-      }
-      if (node->isBlock()) {
-        deleteBlockRecurse(dynamic_cast<VoxelBlockType<T>*>(node));
-      } else {
-        for (int child_idx = 0; child_idx < 8; child_idx++) {
-          deleteNodeRecurse(node->child(child_idx));
+    void deleteNodeRecurse(se::Node<T>* node)
+    {
+        if (!node) {
+            return;
         }
-        delete(node);
-      }
-    }
-
-    void deleteBlock(VoxelBlockType<T>* block, size_t max_depth) {
-      blocks_updated_ = false;
-      const unsigned int child_idx = se::child_idx(block->code(),
-                                           se::keyops::depth(block->code()), max_depth);
-      block->parent()->child(child_idx) = NULL;
-      block->parent()->children_mask(block->parent()->children_mask() & ~(1 << child_idx));
-      delete(block);
-    }
-
-    void deleteBlockRecurse(VoxelBlockType<T>* block) {
-      blocks_updated_ = false;
-      delete(block);
-    }
-
-    std::vector<se::Node<T>*>& nodeBuffer() {
-      if (!nodes_updated_)
-        updateBuffer();
-      return node_buffer_;
-    };
-
-    const std::vector<se::Node<T>*>& nodeBuffer() const{
-      if (!nodes_updated_)
-        updateBuffer();
-      return node_buffer_;
-    };
-
-    std::vector<VoxelBlockType<T>*>& blockBuffer() {
-      if (!blocks_updated_)
-        updateBuffer();
-      return block_buffer_;
-    };
-
-    const std::vector<VoxelBlockType<T>*>& blockBuffer() const {
-      if (!blocks_updated_)
-        updateBuffer();
-      return block_buffer_;
-    };
-
-    size_t nodeBufferSize()  {
-      if (!nodes_updated_)
-        updateBuffer();
-      return node_buffer_.size();
-    }
-
-    size_t nodeBufferSize() const {
-      if (!nodes_updated_)
-        updateBuffer();
-      return node_buffer_.size();
-    }
-
-    size_t blockBufferSize() {
-      if (!blocks_updated_)
-        updateBuffer();
-      return block_buffer_.size();
-    }
-
-    size_t blockBufferSize() const {
-      if (!blocks_updated_)
-        updateBuffer();
-      return block_buffer_.size();
-    }
-
-    std::vector<size_t> blockBufferSizeDetailed() {
-      if (!blocks_updated_)
-        updateBuffer();
-      std::vector<size_t> num_blocks_d(VoxelBlockType<T>::max_scale + 1, 0);
-      for (const auto& block: block_buffer_) {
-        int min_scale = block->min_scale();
-        if (min_scale == -1) {
-          continue;
+        if (node->isBlock()) {
+            deleteBlockRecurse(dynamic_cast<VoxelBlockType<T>*>(node));
         }
-        num_blocks_d[min_scale]++;
-      }
-      return num_blocks_d;
-    }
-
-    const std::vector<size_t> blockBufferSizeDetailed() const {
-      if (!blocks_updated_)
-        updateBuffer();
-      std::vector<size_t> num_blocks_d(VoxelBlockType<T>::max_scale + 1, 0);
-      for (const auto& block: block_buffer_) {
-        int min_scale = block->min_scale();
-        if (min_scale == -1) {
-          continue;
+        else {
+            for (int child_idx = 0; child_idx < 8; child_idx++) {
+                deleteNodeRecurse(node->child(child_idx));
+            }
+            delete (node);
         }
-        num_blocks_d[min_scale]++;
-      }
-      return num_blocks_d;
     }
 
-  private:
+    void deleteBlock(VoxelBlockType<T>* block, size_t max_depth)
+    {
+        blocks_updated_ = false;
+        const unsigned int child_idx =
+            se::child_idx(block->code(), se::keyops::depth(block->code()), max_depth);
+        block->parent()->child(child_idx) = NULL;
+        block->parent()->children_mask(block->parent()->children_mask() & ~(1 << child_idx));
+        delete (block);
+    }
+
+    void deleteBlockRecurse(VoxelBlockType<T>* block)
+    {
+        blocks_updated_ = false;
+        delete (block);
+    }
+
+    std::vector<se::Node<T>*>& nodeBuffer()
+    {
+        if (!nodes_updated_)
+            updateBuffer();
+        return node_buffer_;
+    };
+
+    const std::vector<se::Node<T>*>& nodeBuffer() const
+    {
+        if (!nodes_updated_)
+            updateBuffer();
+        return node_buffer_;
+    };
+
+    std::vector<VoxelBlockType<T>*>& blockBuffer()
+    {
+        if (!blocks_updated_)
+            updateBuffer();
+        return block_buffer_;
+    };
+
+    const std::vector<VoxelBlockType<T>*>& blockBuffer() const
+    {
+        if (!blocks_updated_)
+            updateBuffer();
+        return block_buffer_;
+    };
+
+    size_t nodeBufferSize()
+    {
+        if (!nodes_updated_)
+            updateBuffer();
+        return node_buffer_.size();
+    }
+
+    size_t nodeBufferSize() const
+    {
+        if (!nodes_updated_)
+            updateBuffer();
+        return node_buffer_.size();
+    }
+
+    size_t blockBufferSize()
+    {
+        if (!blocks_updated_)
+            updateBuffer();
+        return block_buffer_.size();
+    }
+
+    size_t blockBufferSize() const
+    {
+        if (!blocks_updated_)
+            updateBuffer();
+        return block_buffer_.size();
+    }
+
+    std::vector<size_t> blockBufferSizeDetailed()
+    {
+        if (!blocks_updated_)
+            updateBuffer();
+        std::vector<size_t> num_blocks_d(VoxelBlockType<T>::max_scale + 1, 0);
+        for (const auto& block : block_buffer_) {
+            int min_scale = block->min_scale();
+            if (min_scale == -1) {
+                continue;
+            }
+            num_blocks_d[min_scale]++;
+        }
+        return num_blocks_d;
+    }
+
+    const std::vector<size_t> blockBufferSizeDetailed() const
+    {
+        if (!blocks_updated_)
+            updateBuffer();
+        std::vector<size_t> num_blocks_d(VoxelBlockType<T>::max_scale + 1, 0);
+        for (const auto& block : block_buffer_) {
+            int min_scale = block->min_scale();
+            if (min_scale == -1) {
+                continue;
+            }
+            num_blocks_d[min_scale]++;
+        }
+        return num_blocks_d;
+    }
+
+    private:
     se::Node<T>* root_;
     mutable bool nodes_updated_;
     mutable bool blocks_updated_;
-    mutable std::vector<Node<T>*>           node_buffer_;
+    mutable std::vector<Node<T>*> node_buffer_;
     mutable std::vector<VoxelBlockType<T>*> block_buffer_;
 
-    void updateBuffer() {
-      node_buffer_.clear();
-      if (!blocks_updated_) {
-        block_buffer_.clear();
-      }
-      addNodeRecurse(root_);
-      nodes_updated_ = true;
-      blocks_updated_ = true;
-    }
-
-    void updateBuffer() const {
-      node_buffer_.clear();
-      if (!blocks_updated_) {
-        block_buffer_.clear();
-      }
-      addNodeRecurse(root_);
-      nodes_updated_ = true;
-      blocks_updated_ = true;
-    }
-
-    void addNodeRecurse(se::Node<T>* node) {
-      node_buffer_.push_back(node);
-      for (int child_idx = 0; child_idx < 8; child_idx++) {
-        if (node->child(child_idx)) {
-          if (node->child(child_idx)->isBlock()) {
-            if (!blocks_updated_) {
-              block_buffer_.push_back(static_cast<VoxelBlockType<T>*>(node->child(child_idx)));
-            }
-          } else {
-            addNodeRecurse(node->child(child_idx));
-          }
+    void updateBuffer()
+    {
+        node_buffer_.clear();
+        if (!blocks_updated_) {
+            block_buffer_.clear();
         }
-      }
+        addNodeRecurse(root_);
+        nodes_updated_ = true;
+        blocks_updated_ = true;
     }
 
-    void addNodeRecurse(se::Node<T>* node) const {
-      node_buffer_.push_back(node);
-      for (int child_idx = 0; child_idx < 8; child_idx++) {
-        if (node->child(child_idx)) {
-          if (node->child(child_idx)->isBlock()) {
-            if (!blocks_updated_) {
-              block_buffer_.push_back(static_cast<VoxelBlockType<T>*>(node->child(child_idx)));
-            }
-          } else {
-            addNodeRecurse(node->child(child_idx));
-          }
+    void updateBuffer() const
+    {
+        node_buffer_.clear();
+        if (!blocks_updated_) {
+            block_buffer_.clear();
         }
-      }
+        addNodeRecurse(root_);
+        nodes_updated_ = true;
+        blocks_updated_ = true;
+    }
+
+    void addNodeRecurse(se::Node<T>* node)
+    {
+        node_buffer_.push_back(node);
+        for (int child_idx = 0; child_idx < 8; child_idx++) {
+            if (node->child(child_idx)) {
+                if (node->child(child_idx)->isBlock()) {
+                    if (!blocks_updated_) {
+                        block_buffer_.push_back(
+                            static_cast<VoxelBlockType<T>*>(node->child(child_idx)));
+                    }
+                }
+                else {
+                    addNodeRecurse(node->child(child_idx));
+                }
+            }
+        }
+    }
+
+    void addNodeRecurse(se::Node<T>* node) const
+    {
+        node_buffer_.push_back(node);
+        for (int child_idx = 0; child_idx < 8; child_idx++) {
+            if (node->child(child_idx)) {
+                if (node->child(child_idx)->isBlock()) {
+                    if (!blocks_updated_) {
+                        block_buffer_.push_back(
+                            static_cast<VoxelBlockType<T>*>(node->child(child_idx)));
+                    }
+                }
+                else {
+                    addNodeRecurse(node->child(child_idx));
+                }
+            }
+        }
     }
 
     // Disabling copy-constructor
     MemoryPool(const MemoryPool& m);
-  };
+};
 
-  template <typename ElemType>
-  class PagedMemoryBuffer {
-  public:
-    PagedMemoryBuffer(){
-      current_index_ = 0;
-      num_pages_ = 0;
-      reserved_ = 0;
+template<typename ElemType>
+class PagedMemoryBuffer {
+    public:
+    PagedMemoryBuffer()
+    {
+        current_index_ = 0;
+        num_pages_ = 0;
+        reserved_ = 0;
     }
 
-    ~PagedMemoryBuffer(){
-      for(auto&& i : pages_){
-        delete [] i;
-      }
+    ~PagedMemoryBuffer()
+    {
+        for (auto&& i : pages_) {
+            delete[] i;
+        }
     }
 
-    size_t size() const { return current_index_; };
+    size_t size() const
+    {
+        return current_index_;
+    };
 
-    ElemType* operator[](const size_t i) const {
-      const int page_idx = i / pagesize_;
-      const int ptr_idx = i % pagesize_;
-      return pages_[page_idx] + (ptr_idx);
+    ElemType* operator[](const size_t i) const
+    {
+        const int page_idx = i / pagesize_;
+        const int ptr_idx = i % pagesize_;
+        return pages_[page_idx] + (ptr_idx);
     }
 
-    void reserve(const size_t n){
-      bool requires_realloc = (current_index_ + n) > reserved_;
-      if(requires_realloc) expand(n);
+    void reserve(const size_t n)
+    {
+        bool requires_realloc = (current_index_ + n) > reserved_;
+        if (requires_realloc)
+            expand(n);
     }
 
-    ElemType * acquire(){
-      // Fetch-add returns the value before increment
-      int current = current_index_.fetch_add(1);
-      const int page_idx = current / pagesize_;
-      const int elem_idx = current % pagesize_;
-      ElemType * elem = pages_[page_idx] + (elem_idx);
-      return elem;
+    ElemType* acquire()
+    {
+        // Fetch-add returns the value before increment
+        int current = current_index_.fetch_add(1);
+        const int page_idx = current / pagesize_;
+        const int elem_idx = current % pagesize_;
+        ElemType* elem = pages_[page_idx] + (elem_idx);
+        return elem;
     }
 
-    ElemType * acquire(ElemType* init_elem){
-      // Fetch-add returns the value before increment
-      int current = current_index_.fetch_add(1);
-      const int page_idx = current / pagesize_;
-      const int elem_idx = current % pagesize_;
-      ElemType* elem = pages_[page_idx] + (elem_idx);
-      *elem = *init_elem;
-      return elem;
+    ElemType* acquire(ElemType* init_elem)
+    {
+        // Fetch-add returns the value before increment
+        int current = current_index_.fetch_add(1);
+        const int page_idx = current / pagesize_;
+        const int elem_idx = current % pagesize_;
+        ElemType* elem = pages_[page_idx] + (elem_idx);
+        *elem = *init_elem;
+        return elem;
     }
 
-  private:
+    private:
     size_t reserved_;
     std::atomic<unsigned int> current_index_;
     const int pagesize_ = 1024; // # of blocks per page
     int num_pages_;
-    std::vector<ElemType *> pages_;
+    std::vector<ElemType*> pages_;
 
-    void expand(const size_t n){
-
-      // std::cout << "Allocating " << n << " blocks" << std::endl;
-      const int new_pages = std::ceil(n/pagesize_);
-      for(int p = 0; p <= new_pages; ++p){
-        pages_.push_back(new ElemType[pagesize_]);
-        ++num_pages_;
-        reserved_ += pagesize_;
-      }
-      // std::cout << "Reserved " << reserved_ << " blocks" << std::endl;
+    void expand(const size_t n)
+    {
+        // std::cout << "Allocating " << n << " blocks" << std::endl;
+        const int new_pages = std::ceil(n / pagesize_);
+        for (int p = 0; p <= new_pages; ++p) {
+            pages_.push_back(new ElemType[pagesize_]);
+            ++num_pages_;
+            reserved_ += pagesize_;
+        }
+        // std::cout << "Reserved " << reserved_ << " blocks" << std::endl;
     }
 
     // Disabling copy-constructor
     PagedMemoryBuffer(const PagedMemoryBuffer& m);
-  };
+};
 
-  template <typename T>
-  class PagedMemoryPool {
-  public:
-    PagedMemoryPool() {
-      node_buffer_.reserve(1);
-      root_ = node_buffer_.acquire();
+template<typename T>
+class PagedMemoryPool {
+    public:
+    PagedMemoryPool()
+    {
+        node_buffer_.reserve(1);
+        root_ = node_buffer_.acquire();
     }
 
-    se::Node<T>* root() { return root_; };
+    se::Node<T>* root()
+    {
+        return root_;
+    };
 
-    void reserveNodes(const size_t n) { node_buffer_.reserve(n); };
-    void reserveBlocks(const size_t n) { block_buffer_.reserve(n); };
+    void reserveNodes(const size_t n)
+    {
+        node_buffer_.reserve(n);
+    };
+    void reserveBlocks(const size_t n)
+    {
+        block_buffer_.reserve(n);
+    };
 
-    se::Node<T>*       acquireNode()  { return node_buffer_.acquire(); };
-    VoxelBlockType<T>* acquireBlock() { return block_buffer_.acquire(); };
-    se::Node<T>*       acquireNode(se::Node<T>* node)         { return node_buffer_.acquire(node); };
-    VoxelBlockType<T>* acquireBlock(VoxelBlockType<T>* block) { return block_buffer_.acquire(block); };
+    se::Node<T>* acquireNode()
+    {
+        return node_buffer_.acquire();
+    };
+    VoxelBlockType<T>* acquireBlock()
+    {
+        return block_buffer_.acquire();
+    };
+    se::Node<T>* acquireNode(se::Node<T>* node)
+    {
+        return node_buffer_.acquire(node);
+    };
+    VoxelBlockType<T>* acquireBlock(VoxelBlockType<T>* block)
+    {
+        return block_buffer_.acquire(block);
+    };
 
-    se::PagedMemoryBuffer<se::Node<T>>&       nodeBuffer()  { return node_buffer_; };
-    se::PagedMemoryBuffer<VoxelBlockType<T>>& blockBuffer() { return block_buffer_; };
+    se::PagedMemoryBuffer<se::Node<T>>& nodeBuffer()
+    {
+        return node_buffer_;
+    };
+    se::PagedMemoryBuffer<VoxelBlockType<T>>& blockBuffer()
+    {
+        return block_buffer_;
+    };
 
-    const se::PagedMemoryBuffer<se::Node<T>>&        nodeBuffer() const { return node_buffer_; };
-    const se::PagedMemoryBuffer<VoxelBlockType<T>>& blockBuffer() const { return block_buffer_; };
+    const se::PagedMemoryBuffer<se::Node<T>>& nodeBuffer() const
+    {
+        return node_buffer_;
+    };
+    const se::PagedMemoryBuffer<VoxelBlockType<T>>& blockBuffer() const
+    {
+        return block_buffer_;
+    };
 
-    size_t nodeBufferSize()  { return node_buffer_.size();}
-    size_t blockBufferSize() { return block_buffer_.size();}
-    std::vector<size_t> blockBufferSizeDetailed() {
-      std::vector<size_t> num_blocks(VoxelBlockType<T>::max_scale + 1, 0);
-      for (size_t i = 0; i < block_buffer_.size(); i++) {
-        int min_scale = block_buffer_[i]->min_scale();
-        if (min_scale == -1) {
-          continue;
+    size_t nodeBufferSize()
+    {
+        return node_buffer_.size();
+    }
+    size_t blockBufferSize()
+    {
+        return block_buffer_.size();
+    }
+    std::vector<size_t> blockBufferSizeDetailed()
+    {
+        std::vector<size_t> num_blocks(VoxelBlockType<T>::max_scale + 1, 0);
+        for (size_t i = 0; i < block_buffer_.size(); i++) {
+            int min_scale = block_buffer_[i]->min_scale();
+            if (min_scale == -1) {
+                continue;
+            }
+            num_blocks[min_scale]++;
         }
-        num_blocks[min_scale]++;
-      }
-      return num_blocks;
+        return num_blocks;
     }
 
-    const std::vector<size_t> blockBufferSizeDetailed() const {
-      std::vector<size_t> num_blocks(VoxelBlockType<T>::max_scale + 1, 0);
-      for (size_t i = 0; i < block_buffer_.size(); i++) {
-        int min_scale = block_buffer_[i]->min_scale();
-        if (min_scale == -1) {
-          continue;
+    const std::vector<size_t> blockBufferSizeDetailed() const
+    {
+        std::vector<size_t> num_blocks(VoxelBlockType<T>::max_scale + 1, 0);
+        for (size_t i = 0; i < block_buffer_.size(); i++) {
+            int min_scale = block_buffer_[i]->min_scale();
+            if (min_scale == -1) {
+                continue;
+            }
+            num_blocks[min_scale]++;
         }
-        num_blocks[min_scale]++;
-      }
-      return num_blocks;
+        return num_blocks;
     }
 
-  private:
+    private:
     se::Node<T>* root_;
-    se::PagedMemoryBuffer<se::Node<T>>       node_buffer_;
+    se::PagedMemoryBuffer<se::Node<T>> node_buffer_;
     se::PagedMemoryBuffer<VoxelBlockType<T>> block_buffer_;
 
     // Disabling copy-constructor
     PagedMemoryPool(const PagedMemoryPool& m);
-  };
-}
+};
+} // namespace se
 #endif

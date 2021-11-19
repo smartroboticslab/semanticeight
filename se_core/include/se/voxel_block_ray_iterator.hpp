@@ -30,93 +30,92 @@
 
 #ifndef VOXEL_BLOCK_RAY_ITERATOR_HPP
 #define VOXEL_BLOCK_RAY_ITERATOR_HPP
-#include "octree.hpp"
 #include "Eigen/Dense"
+#include "octree.hpp"
 
 
 
-template <typename T>
+template<typename T>
 class se::VoxelBlockRayIterator {
-  using VoxelBlockType = typename T::VoxelBlockType;
+    using VoxelBlockType = typename T::VoxelBlockType;
 
-  public:
-    VoxelBlockRayIterator(const Octree<T>&       octree,
+    public:
+    VoxelBlockRayIterator(const Octree<T>& octree,
                           const Eigen::Vector3f& ray_origin_M,
                           const Eigen::Vector3f& ray_dir_M,
-                          const float            near_plane,
-                          const float            far_plane)
-        : octree_(octree) {
+                          const float near_plane,
+                          const float far_plane) :
+            octree_(octree)
+    {
+        pos_ = Eigen::Vector3f::Ones();
+        idx_ = 0;
+        parent_ = octree_.root_;
+        child_ = nullptr;
+        scale_exp2_ = 0.5f;
+        scale_ = CAST_STACK_DEPTH - 1;
+        min_scale_ = CAST_STACK_DEPTH - log2(octree_.size_ / Octree<T>::block_size);
+        state_ = INIT;
 
-      pos_ = Eigen::Vector3f::Ones();
-      idx_ = 0;
-      parent_ = octree_.root_;
-      child_ = nullptr;
-      scale_exp2_ = 0.5f;
-      scale_ = CAST_STACK_DEPTH - 1;
-      min_scale_ = CAST_STACK_DEPTH - log2(octree_.size_ / Octree<T>::block_size);
-      state_ = INIT;
+        for (int i = 0; i < CAST_STACK_DEPTH; ++i) {
+            stack_[i] = {0, nullptr, 0.f};
+        }
 
-      for(int i = 0 ; i < CAST_STACK_DEPTH; ++i) {
-        stack_[i] = {0, nullptr, 0.f};
-      }
+        // Ensure all elements of ray_dir_M_ are non-zero.
+        const float epsilon = exp2f(-log2(octree_.size_));
+        ray_dir_M_.x() =
+            fabsf(ray_dir_M.x()) < epsilon ? copysignf(epsilon, ray_dir_M.x()) : ray_dir_M.x();
+        ray_dir_M_.y() =
+            fabsf(ray_dir_M.y()) < epsilon ? copysignf(epsilon, ray_dir_M.y()) : ray_dir_M.y();
+        ray_dir_M_.z() =
+            fabsf(ray_dir_M.z()) < epsilon ? copysignf(epsilon, ray_dir_M.z()) : ray_dir_M.z();
 
-      // Ensure all elements of ray_dir_M_ are non-zero.
-      const float epsilon = exp2f(-log2(octree_.size_));
-      ray_dir_M_.x() = fabsf(ray_dir_M.x()) < epsilon ?
-          copysignf(epsilon, ray_dir_M.x()) : ray_dir_M.x();
-      ray_dir_M_.y() = fabsf(ray_dir_M.y()) < epsilon ?
-          copysignf(epsilon, ray_dir_M.y()) : ray_dir_M.y();
-      ray_dir_M_.z() = fabsf(ray_dir_M.z()) < epsilon ?
-          copysignf(epsilon, ray_dir_M.z()) : ray_dir_M.z();
+        // Scale the origin to be in the interval [1, 2].
+        const Eigen::Vector3f ray_origin = ray_origin_M / octree_.dim_ + Eigen::Vector3f::Ones();
 
-      // Scale the origin to be in the interval [1, 2].
-      const Eigen::Vector3f ray_origin = ray_origin_M / octree_.dim_ +
-          Eigen::Vector3f::Ones();
-
-      // Precompute the ray coefficients.
-      t_coef_ = -1.f * ray_dir_M_.cwiseAbs().cwiseInverse();
-      t_bias_ = t_coef_.cwiseProduct(ray_origin);
+        // Precompute the ray coefficients.
+        t_coef_ = -1.f * ray_dir_M_.cwiseAbs().cwiseInverse();
+        t_bias_ = t_coef_.cwiseProduct(ray_origin);
 
 
-      // Build the octant mask to to mirror the coordinate system such that
-      // each ray component points in negative coordinates. The octree is
-      // assumed to reside at coordinates [1, 2]
-      octant_mask_ = 7;
-      if (ray_dir_M_.x() > 0.0f) {
-        octant_mask_ ^= 1;
-        t_bias_.x() = 3.0f * t_coef_.x() - t_bias_.x();
-      }
-      if (ray_dir_M_.y() > 0.0f) {
-        octant_mask_ ^= 2;
-        t_bias_.y() = 3.0f * t_coef_.y() - t_bias_.y();
-      }
-      if (ray_dir_M_.z() > 0.0f) {
-        octant_mask_ ^= 4;
-        t_bias_.z() = 3.0f * t_coef_.z() - t_bias_.z();
-      }
+        // Build the octant mask to to mirror the coordinate system such that
+        // each ray component points in negative coordinates. The octree is
+        // assumed to reside at coordinates [1, 2]
+        octant_mask_ = 7;
+        if (ray_dir_M_.x() > 0.0f) {
+            octant_mask_ ^= 1;
+            t_bias_.x() = 3.0f * t_coef_.x() - t_bias_.x();
+        }
+        if (ray_dir_M_.y() > 0.0f) {
+            octant_mask_ ^= 2;
+            t_bias_.y() = 3.0f * t_coef_.y() - t_bias_.y();
+        }
+        if (ray_dir_M_.z() > 0.0f) {
+            octant_mask_ ^= 4;
+            t_bias_.z() = 3.0f * t_coef_.z() - t_bias_.z();
+        }
 
-      // Find the min-max t ranges.
-      t_min_init_ = (2.0f * t_coef_ - t_bias_).maxCoeff();
-      t_max_init_ = (t_coef_ - t_bias_).minCoeff();
-      h_ = t_max_init_;
-      t_min_init_ = fmaxf(t_min_init_, near_plane / octree_.dim_);
-      t_max_init_ = fminf(t_max_init_, far_plane / octree_.dim_ );
-      t_min_ = t_min_init_;
-      t_max_ = t_max_init_;
+        // Find the min-max t ranges.
+        t_min_init_ = (2.0f * t_coef_ - t_bias_).maxCoeff();
+        t_max_init_ = (t_coef_ - t_bias_).minCoeff();
+        h_ = t_max_init_;
+        t_min_init_ = fmaxf(t_min_init_, near_plane / octree_.dim_);
+        t_max_init_ = fminf(t_max_init_, far_plane / octree_.dim_);
+        t_min_ = t_min_init_;
+        t_max_ = t_max_init_;
 
-      // Initialise the ray position.
-      if (1.5f * t_coef_.x() - t_bias_.x() > t_min_) {
-        idx_ ^= 1;
-        pos_.x() = 1.5f;
-      }
-      if (1.5f * t_coef_.y() - t_bias_.y() > t_min_) {
-        idx_ ^= 2;
-        pos_.y() = 1.5f;
-      }
-      if (1.5f * t_coef_.z() - t_bias_.z() > t_min_) {
-        idx_ ^= 4;
-        pos_.z() = 1.5f;
-      }
+        // Initialise the ray position.
+        if (1.5f * t_coef_.x() - t_bias_.x() > t_min_) {
+            idx_ ^= 1;
+            pos_.x() = 1.5f;
+        }
+        if (1.5f * t_coef_.y() - t_bias_.y() > t_min_) {
+            idx_ ^= 2;
+            pos_.y() = 1.5f;
+        }
+        if (1.5f * t_coef_.z() - t_bias_.z() > t_min_) {
+            idx_ ^= 4;
+            pos_.z() = 1.5f;
+        }
     };
 
 
@@ -126,32 +125,34 @@ class se::VoxelBlockRayIterator {
      * \return A pointer to an se::VoxelBlock or nullptr if all se::VoxelBlock
      * along the ray have been iterated through.
      */
-    VoxelBlockType* next() {
-
-      if (state_ == ADVANCE) {
-        advance_ray();
-      } else if (state_ == FINISHED) {
-        return nullptr;
-      }
-
-      while (scale_ < CAST_STACK_DEPTH) {
-        t_corner_ = pos_.cwiseProduct(t_coef_) - t_bias_;
-        tc_max_ = fminf(fminf(t_corner_.x(), t_corner_.y()), t_corner_.z());
-
-        child_ = parent_->child(idx_ ^ octant_mask_ ^ 7);
-
-        if (scale_ == min_scale_ && child_ != nullptr){
-          state_ = ADVANCE;
-          return static_cast<VoxelBlockType*>(child_);
-        } else if (child_ != nullptr && t_min_ <= t_max_) {
-          // If the child is valid, descend the tree hierarchy.
-          descend();
-          continue;
+    VoxelBlockType* next()
+    {
+        if (state_ == ADVANCE) {
+            advance_ray();
         }
-        advance_ray();
-      }
-      state_ = FINISHED;
-      return nullptr;
+        else if (state_ == FINISHED) {
+            return nullptr;
+        }
+
+        while (scale_ < CAST_STACK_DEPTH) {
+            t_corner_ = pos_.cwiseProduct(t_coef_) - t_bias_;
+            tc_max_ = fminf(fminf(t_corner_.x(), t_corner_.y()), t_corner_.z());
+
+            child_ = parent_->child(idx_ ^ octant_mask_ ^ 7);
+
+            if (scale_ == min_scale_ && child_ != nullptr) {
+                state_ = ADVANCE;
+                return static_cast<VoxelBlockType*>(child_);
+            }
+            else if (child_ != nullptr && t_min_ <= t_max_) {
+                // If the child is valid, descend the tree hierarchy.
+                descend();
+                continue;
+            }
+            advance_ray();
+        }
+        state_ = FINISHED;
+        return nullptr;
     }
 
 
@@ -161,8 +162,9 @@ class se::VoxelBlockRayIterator {
      *
      * \return The distance in meters.
      */
-    float tmin() const {
-      return t_min_init_ * octree_.dim_;
+    float tmin() const
+    {
+        return t_min_init_ * octree_.dim_;
     }
 
 
@@ -172,8 +174,9 @@ class se::VoxelBlockRayIterator {
      *
      * \return The distance in meters.
      */
-    float tmax() const {
-      return t_max_init_ * octree_.dim_;
+    float tmax() const
+    {
+        return t_max_init_ * octree_.dim_;
     }
 
 
@@ -187,8 +190,9 @@ class se::VoxelBlockRayIterator {
      *
      * \return The distance in meters.
      */
-    float tcmin() const {
-      return t_min_ * octree_.dim_;
+    float tcmin() const
+    {
+        return t_min_ * octree_.dim_;
     }
 
 
@@ -202,26 +206,23 @@ class se::VoxelBlockRayIterator {
      *
      * \return The distance in meters.
      */
-    float tcmax() const {
-      return tc_max_ * octree_.dim_;
+    float tcmax() const
+    {
+        return tc_max_ * octree_.dim_;
     }
 
 
 
-  private:
+    private:
     struct StackEntry {
-      int scale;
-      Node<T>* parent;
-      float t_max;
+        int scale;
+        Node<T>* parent;
+        float t_max;
     };
 
 
 
-    enum STATE {
-      INIT,
-      ADVANCE,
-      FINISHED
-    };
+    enum STATE { INIT, ADVANCE, FINISHED };
 
 
 
@@ -252,123 +253,123 @@ class se::VoxelBlockRayIterator {
 
     /*! \brief Reinterpret the binary representation of a float as an int.
      */
-    static inline int floatAsInt(const float value) {
+    static inline int floatAsInt(const float value)
+    {
+        union float_as_int {
+            float f;
+            int i;
+        };
 
-      union float_as_int {
-        float f;
-        int i;
-      };
-
-      float_as_int u;
-      u.f = value;
-      return u.i;
+        float_as_int u;
+        u.f = value;
+        return u.i;
     }
 
 
 
     /*! \brief Reinterpret the binary representation of an int as a float.
      */
-    static inline float intAsFloat(const int value) {
+    static inline float intAsFloat(const int value)
+    {
+        union int_as_float {
+            int i;
+            float f;
+        };
 
-      union int_as_float {
-        int i;
-        float f;
-      };
-
-      int_as_float u;
-      u.i = value;
-      return u.f;
+        int_as_float u;
+        u.i = value;
+        return u.f;
     }
 
 
 
     /*! \brief Advance the ray.
      */
-    inline void advance_ray() {
+    inline void advance_ray()
+    {
+        const int step_mask = (t_corner_.x() <= tc_max_) | ((t_corner_.y() <= tc_max_) << 1)
+            | ((t_corner_.z() <= tc_max_) << 2);
+        pos_.x() -= scale_exp2_ * bool(step_mask & 1);
+        pos_.y() -= scale_exp2_ * bool(step_mask & 2);
+        pos_.z() -= scale_exp2_ * bool(step_mask & 4);
 
-      const int step_mask = (t_corner_.x() <= tc_max_)
-                         | ((t_corner_.y() <= tc_max_) << 1)
-                         | ((t_corner_.z() <= tc_max_) << 2);
-      pos_.x() -= scale_exp2_ * bool(step_mask & 1);
-      pos_.y() -= scale_exp2_ * bool(step_mask & 2);
-      pos_.z() -= scale_exp2_ * bool(step_mask & 4);
+        t_min_ = tc_max_;
+        idx_ ^= step_mask;
 
-      t_min_ = tc_max_;
-      idx_ ^= step_mask;
+        // POP if bits flips disagree with ray direction
+        if ((idx_ & step_mask) != 0) {
+            // Get the different bits for each component. This is done by xoring
+            // the bit patterns of the new and old pos. This works because the
+            // volume has been scaled between [1, 2]. Still digging why this is the
+            // case.
+            unsigned int differing_bits = 0;
+            if ((step_mask & 1) != 0) {
+                differing_bits |= floatAsInt(pos_.x()) ^ floatAsInt(pos_.x() + scale_exp2_);
+            }
+            if ((step_mask & 2) != 0) {
+                differing_bits |= floatAsInt(pos_.y()) ^ floatAsInt(pos_.y() + scale_exp2_);
+            }
+            if ((step_mask & 4) != 0) {
+                differing_bits |= floatAsInt(pos_.z()) ^ floatAsInt(pos_.z() + scale_exp2_);
+            }
 
-      // POP if bits flips disagree with ray direction
-      if ((idx_ & step_mask) != 0) {
+            // Get the scale at which the two differs. Here's there are different
+            // subtlelties related to how fp are stored.
+            // MIND BLOWN: differing bit (i.e. the MSB) extracted using the
+            // exponent part of the fp representation.
+            scale_ =
+                (floatAsInt((float) differing_bits) >> 23) - 127; // position of the highest bit
+            scale_exp2_ =
+                intAsFloat((scale_ - CAST_STACK_DEPTH + 127) << 23); // exp2f(scale - s_max)
+            const StackEntry& e = stack_[scale_];
+            parent_ = e.parent;
+            t_max_ = e.t_max;
 
-        // Get the different bits for each component. This is done by xoring
-        // the bit patterns of the new and old pos. This works because the
-        // volume has been scaled between [1, 2]. Still digging why this is the
-        // case.
-        unsigned int differing_bits = 0;
-        if ((step_mask & 1) != 0) {
-          differing_bits |= floatAsInt(pos_.x()) ^ floatAsInt(pos_.x() + scale_exp2_);
+            // Round cube position and extract child slot index.
+            const int shx = floatAsInt(pos_.x()) >> scale_;
+            const int shy = floatAsInt(pos_.y()) >> scale_;
+            const int shz = floatAsInt(pos_.z()) >> scale_;
+            pos_.x() = intAsFloat(shx << scale_);
+            pos_.y() = intAsFloat(shy << scale_);
+            pos_.z() = intAsFloat(shz << scale_);
+            idx_ = (shx & 1) | ((shy & 1) << 1) | ((shz & 1) << 2);
+
+            h_ = 0.0f;
+            child_ = nullptr;
         }
-        if ((step_mask & 2) != 0) {
-          differing_bits |= floatAsInt(pos_.y()) ^ floatAsInt(pos_.y() + scale_exp2_);
-        }
-        if ((step_mask & 4) != 0) {
-          differing_bits |= floatAsInt(pos_.z()) ^ floatAsInt(pos_.z() + scale_exp2_);
-        }
-
-        // Get the scale at which the two differs. Here's there are different
-        // subtlelties related to how fp are stored.
-        // MIND BLOWN: differing bit (i.e. the MSB) extracted using the
-        // exponent part of the fp representation.
-        scale_ = (floatAsInt((float)differing_bits) >> 23) - 127; // position of the highest bit
-        scale_exp2_ = intAsFloat((scale_ - CAST_STACK_DEPTH + 127) << 23); // exp2f(scale - s_max)
-        const StackEntry&  e = stack_[scale_];
-        parent_ = e.parent;
-        t_max_ = e.t_max;
-
-        // Round cube position and extract child slot index.
-        const int shx = floatAsInt(pos_.x()) >> scale_;
-        const int shy = floatAsInt(pos_.y()) >> scale_;
-        const int shz = floatAsInt(pos_.z()) >> scale_;
-        pos_.x() = intAsFloat(shx << scale_);
-        pos_.y() = intAsFloat(shy << scale_);
-        pos_.z() = intAsFloat(shz << scale_);
-        idx_  = (shx & 1) | ((shy & 1) << 1) | ((shz & 1) << 2);
-
-        h_ = 0.0f;
-        child_ = nullptr;
-      }
     }
 
 
 
     /*! \brief Descend the hiararchy and compute the next child position.
      */
-    inline void descend() {
-      const float tv_max = fminf(t_max_, tc_max_);
-      const float half = scale_exp2_ * 0.5f;
-      const Eigen::Vector3f t_centre = half * t_coef_ + t_corner_;
+    inline void descend()
+    {
+        const float tv_max = fminf(t_max_, tc_max_);
+        const float half = scale_exp2_ * 0.5f;
+        const Eigen::Vector3f t_centre = half * t_coef_ + t_corner_;
 
-      // Descend to the first child if the resulting t-span is non-empty.
-      if (tc_max_ < h_) {
-        stack_[scale_] = {scale_, parent_, t_max_};
-      }
+        // Descend to the first child if the resulting t-span is non-empty.
+        if (tc_max_ < h_) {
+            stack_[scale_] = {scale_, parent_, t_max_};
+        }
 
-      h_ = tc_max_;
-      parent_ = child_;
+        h_ = tc_max_;
+        parent_ = child_;
 
-      idx_ = 0;
-      scale_--;
-      scale_exp2_ = half;
-      idx_ ^= (t_centre.x() > t_min_) ? 1 : 0;
-      idx_ ^= (t_centre.y() > t_min_) ? 2 : 0;
-      idx_ ^= (t_centre.z() > t_min_) ? 4 : 0;
+        idx_ = 0;
+        scale_--;
+        scale_exp2_ = half;
+        idx_ ^= (t_centre.x() > t_min_) ? 1 : 0;
+        idx_ ^= (t_centre.y() > t_min_) ? 2 : 0;
+        idx_ ^= (t_centre.z() > t_min_) ? 4 : 0;
 
-      pos_.x() += scale_exp2_ * bool(idx_ & 1);
-      pos_.y() += scale_exp2_ * bool(idx_ & 2);
-      pos_.z() += scale_exp2_ * bool(idx_ & 4);
+        pos_.x() += scale_exp2_ * bool(idx_ & 1);
+        pos_.y() += scale_exp2_ * bool(idx_ & 2);
+        pos_.z() += scale_exp2_ * bool(idx_ & 4);
 
-      t_max_ = tv_max;
-      child_ = nullptr;
+        t_max_ = tv_max;
+        child_ = nullptr;
     }
 };
 #endif
-

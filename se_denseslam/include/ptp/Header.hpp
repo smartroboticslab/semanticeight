@@ -20,16 +20,16 @@
 
 namespace ptp {
 
-template <int TSize>
+template<int TSize>
 struct State {
-  Eigen::Matrix<float, TSize, 1> segment_end;
-  float segment_radius = -1;
+    Eigen::Matrix<float, TSize, 1> segment_end;
+    float segment_radius = -1;
 };
 
 /** Struct defining a Header with a timestamp and frame id. */
 struct Header {
-  std::chrono::nanoseconds time_nsec; ///> Timestamp in nanoseconds
-  std::string frame_id;               ///> Frame id
+    std::chrono::nanoseconds time_nsec; ///> Timestamp in nanoseconds
+    std::string frame_id;               ///> Frame id
 };
 
 } // namespace ptp

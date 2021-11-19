@@ -20,7 +20,7 @@
 namespace ptp {
 
 // Default parameter
-static constexpr size_t kDim = 3; /// Dimension for straight line planning
+static constexpr size_t kDim = 3;     /// Dimension for straight line planning
 static constexpr size_t kDimTraj = 3; /// Dimension for trajectory optimization
 
 } // namespace ptp

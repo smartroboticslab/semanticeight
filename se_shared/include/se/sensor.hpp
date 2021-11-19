@@ -4,19 +4,19 @@
 #ifndef __SENSOR_HPP
 #define __SENSOR_HPP
 
+#include <Eigen/Dense>
 #include <cmath>
 
-#include <Eigen/Dense>
-#include "se/image_utils.hpp"
 #include "se/image/image.hpp"
-#include "se/segmentation.hpp"
+#include "se/image_utils.hpp"
 #include "se/projection.hpp"
+#include "se/segmentation.hpp"
 
 
 
 namespace se {
 
-  struct SensorConfig {
+struct SensorConfig {
     // General
     int width = 0;
     int height = 0;
@@ -33,15 +33,14 @@ namespace se {
     Eigen::VectorXf beam_elevation_angles = Eigen::VectorXf(1);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  };
+};
 
 
 
-  struct PinholeCamera {
+struct PinholeCamera {
     PinholeCamera(const SensorConfig& c);
 
-    PinholeCamera(const PinholeCamera& pinhole_camera,
-                  const float          scaling_factor);
+    PinholeCamera(const PinholeCamera& pinhole_camera, const float scaling_factor);
 
     /**
      * \brief Determine the corresponding image value of the projected pixel for a point_C in camera frame.
@@ -61,47 +60,49 @@ namespace se {
      * \return is_valid   Returns true if the projection is successful and false if the projection is unsuccessful
      *                    or the pixel value is invalid.
      */
-    template <typename ValidPredicate>
-    bool projectToPixelValue(const Eigen::Vector3f&  point_C,
+    template<typename ValidPredicate>
+    bool projectToPixelValue(const Eigen::Vector3f& point_C,
                              const se::Image<float>& image,
-                             float&                  image_value,
+                             float& image_value,
                              const se::Image<uint32_t>& rgba_image,
-                             uint32_t&                  rgba_value,
-                             const cv::Mat&           mask,
+                             uint32_t& rgba_value,
+                             const cv::Mat& mask,
                              se::integration_mask_elem_t& mask_value,
-                             ValidPredicate          valid_predicate) const {
-      Eigen::Vector2f pixel_f;
-      if (model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
-        return false;
-      }
-      const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
-      mask_value = mask.at<se::integration_mask_elem_t>(pixel.y(), pixel.x());
-      image_value = image(pixel.x(), pixel.y());
-      rgba_value = rgba_image(pixel.x(), pixel.y());
-      // Return false for invalid depth measurement
-      if (!valid_predicate(image_value, rgba_value, mask_value)) {
-        return false;
-      }
-      return true;
+                             ValidPredicate valid_predicate) const
+    {
+        Eigen::Vector2f pixel_f;
+        if (model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
+            return false;
+        }
+        const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+        mask_value = mask.at<se::integration_mask_elem_t>(pixel.y(), pixel.x());
+        image_value = image(pixel.x(), pixel.y());
+        rgba_value = rgba_image(pixel.x(), pixel.y());
+        // Return false for invalid depth measurement
+        if (!valid_predicate(image_value, rgba_value, mask_value)) {
+            return false;
+        }
+        return true;
     }
 
 
 
-    template <typename ValidPredicate>
-    bool getPixelValue(const Eigen::Vector2f&  pixel_f,
+    template<typename ValidPredicate>
+    bool getPixelValue(const Eigen::Vector2f& pixel_f,
                        const se::Image<float>& image,
-                       float&                  image_value,
-                       ValidPredicate          valid_predicate) const {
-      if (!model.isInImage(pixel_f)) {
-        return false;
-      }
-      Eigen::Vector2i pixel = se::round_pixel(pixel_f);
-      image_value = image(pixel.x(), pixel.y());
-      // Return false for invalid depth measurement
-      if (!valid_predicate(image_value)) {
-        return false;
-      }
-      return true;
+                       float& image_value,
+                       ValidPredicate valid_predicate) const
+    {
+        if (!model.isInImage(pixel_f)) {
+            return false;
+        }
+        Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+        image_value = image(pixel.x(), pixel.y());
+        // Return false for invalid depth measurement
+        if (!valid_predicate(image_value)) {
+            return false;
+        }
+        return true;
     }
 
 
@@ -122,14 +123,14 @@ namespace se {
      * \return The scale that should be used for the integration.
      */
     int computeIntegrationScale(const Eigen::Vector3f& block_centre,
-                                const float            voxel_dim,
-                                const int              last_scale,
-                                const int              min_scale,
-                                const int              max_block_scale) const;
+                                const float voxel_dim,
+                                const int last_scale,
+                                const int min_scale,
+                                const int max_block_scale) const;
 
     int targetIntegrationScale(const Eigen::Vector3f& block_centre,
-                               const float            voxel_dim,
-                               const int              max_block_scale) const;
+                               const float voxel_dim,
+                               const int max_block_scale) const;
 
     /**
      * \brief Return the minimum distance at which measurements are available
@@ -195,8 +196,7 @@ namespace se {
      * offest outwards by the sphere's radius. This is a quick test that in
      * some rare cases may return a sphere as being visible although it isn't.
      */
-    bool sphereInFrustum(const Eigen::Vector3f& center_C,
-                         const float            radius) const;
+    bool sphereInFrustum(const Eigen::Vector3f& center_C, const float radius) const;
 
     /**
      * \brief Test whether a sphere in camera coordinates is inside the camera
@@ -205,15 +205,17 @@ namespace se {
      * The difference from PinholeCamera::sphereInFrustum is that it is assumed
      * that the far plane is at infinity.
      */
-    bool sphereInFrustumInf(const Eigen::Vector3f& center_C,
-                            const float            radius) const;
+    bool sphereInFrustumInf(const Eigen::Vector3f& center_C, const float radius) const;
 
-    static std::string type() { return "pinholecamera"; }
+    static std::string type()
+    {
+        return "pinholecamera";
+    }
 
 
 
     srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
-    bool  left_hand_frame;
+    bool left_hand_frame;
     float near_plane;
     float far_plane;
     float scaled_pixel;
@@ -233,20 +235,20 @@ namespace se {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
-      void computeFrustumVertices();
-      void computeFrustumNormals();
-  };
+    void computeFrustumVertices();
+    void computeFrustumNormals();
+};
 
 
 
-  struct OusterLidar {
+struct OusterLidar {
     OusterLidar(const SensorConfig& c);
 
-    OusterLidar(const OusterLidar& ouster_lidar,
-                const float        scaling_factor);
+    OusterLidar(const OusterLidar& ouster_lidar, const float scaling_factor);
 
-    Eigen::Matrix3f K() const {
-      return Eigen::Matrix3f::Zero();
+    Eigen::Matrix3f K() const
+    {
+        return Eigen::Matrix3f::Zero();
     }
 
     /**
@@ -261,45 +263,47 @@ namespace se {
      * \return is_valid   Returns true if the projection is successful and false if the projection is unsuccessful
      *                    or the depth value is invalid.
      */
-    template <typename ValidPredicate>
-    bool projectToPixelValue(const Eigen::Vector3f&  point_C,
+    template<typename ValidPredicate>
+    bool projectToPixelValue(const Eigen::Vector3f& point_C,
                              const se::Image<float>& image,
-                             float&                  image_value,
+                             float& image_value,
                              const se::Image<uint32_t>& /* rgba_image */,
-                             uint32_t&                  rgba_value,
-                             const cv::Mat&           /* mask */,
+                             uint32_t& rgba_value,
+                             const cv::Mat& /* mask */,
                              se::integration_mask_elem_t& mask_value,
-                             ValidPredicate          valid_predicate) const {
-      Eigen::Vector2f pixel_f;
-      if (model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
-        return false;
-      }
-      const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
-      image_value = image(pixel.x(), pixel.y());
-      // Return false for invalid depth measurement
-      if (!valid_predicate(image_value, rgba_value, mask_value)) {
-        return false;
-      }
-      return true;
+                             ValidPredicate valid_predicate) const
+    {
+        Eigen::Vector2f pixel_f;
+        if (model.project(point_C, &pixel_f) != srl::projection::ProjectionStatus::Successful) {
+            return false;
+        }
+        const Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+        image_value = image(pixel.x(), pixel.y());
+        // Return false for invalid depth measurement
+        if (!valid_predicate(image_value, rgba_value, mask_value)) {
+            return false;
+        }
+        return true;
     }
 
 
 
-    template <typename ValidPredicate>
-    bool getPixelValue(const Eigen::Vector2f&  pixel_f,
+    template<typename ValidPredicate>
+    bool getPixelValue(const Eigen::Vector2f& pixel_f,
                        const se::Image<float>& image,
-                       float&                  image_value,
-                       ValidPredicate          valid_predicate) const {
-      if (!model.isInImage(pixel_f)) {
-        return false;
-      }
-      Eigen::Vector2i pixel = se::round_pixel(pixel_f);
-      image_value = image(pixel.x(), pixel.y());
-      // Return false for invalid depth measurement
-      if (!valid_predicate(image_value)) {
-        return false;
-      }
-      return true;
+                       float& image_value,
+                       ValidPredicate valid_predicate) const
+    {
+        if (!model.isInImage(pixel_f)) {
+            return false;
+        }
+        Eigen::Vector2i pixel = se::round_pixel(pixel_f);
+        image_value = image(pixel.x(), pixel.y());
+        // Return false for invalid depth measurement
+        if (!valid_predicate(image_value)) {
+            return false;
+        }
+        return true;
     }
 
 
@@ -320,14 +324,14 @@ namespace se {
      * \return The scale that should be used for the integration.
      */
     int computeIntegrationScale(const Eigen::Vector3f& block_centre,
-                                const float            voxel_dim,
-                                const int              last_scale,
-                                const int              min_scale,
-                                const int              max_block_scale) const;
+                                const float voxel_dim,
+                                const int last_scale,
+                                const int min_scale,
+                                const int max_block_scale) const;
 
     int targetIntegrationScale(const Eigen::Vector3f& block_centre,
-                               const float            voxel_dim,
-                               const int              max_block_scale) const;
+                               const float voxel_dim,
+                               const int max_block_scale) const;
 
     /**
      * \brief Return the minimum distance at which measurements are available
@@ -394,8 +398,7 @@ namespace se {
      *
      * \todo Describe any issues/assumptions/approximations once implemented.
      */
-    bool sphereInFrustum(const Eigen::Vector3f& center_C,
-                         const float            radius) const;
+    bool sphereInFrustum(const Eigen::Vector3f& center_C, const float radius) const;
 
     /**
      * \brief Test whether a sphere in camera coordinates is inside the sensor
@@ -406,13 +409,15 @@ namespace se {
      * The difference from OusterLidar::sphereInFrustum is that it is assumed
      * that the far plane is at infinity.
      */
-    bool sphereInFrustumInf(const Eigen::Vector3f& center_C,
-                            const float            radius) const;
+    bool sphereInFrustumInf(const Eigen::Vector3f& center_C, const float radius) const;
 
-    static std::string type() { return "ousterlidar"; }
+    static std::string type()
+    {
+        return "ousterlidar";
+    }
 
     srl::projection::OusterLidar model;
-    bool  left_hand_frame;
+    bool left_hand_frame;
     float near_plane;
     float far_plane;
     float min_ray_angle;
@@ -422,9 +427,8 @@ namespace se {
     float vertical_fov;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  };
+};
 
 } // namespace se
 
 #endif
-

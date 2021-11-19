@@ -28,42 +28,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cstdint>
-#include <cstring>
-
-#include <gtest/gtest.h>
+#include "se/depth_utils.hpp"
 
 #include <Eigen/Dense>
+#include <cstdint>
+#include <cstring>
+#include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
-
-#include "se/depth_utils.hpp"
 
 
 
 class DepthImageErrorTest : public ::testing::Test {
-  protected:
-    void SetUp() override {
-      // Initialize the depth images.
-      const float depth_1_vals[img_size] = {0.0f, 0.0f,
-                                            1.0f, 1.5f};
-      const float depth_2_vals[img_size] = {0.0f, 1.0f,
-                                            0.0f, 1.0f};
-      for (size_t p = 0; p < depth_1.size(); ++p) {
-        depth_1[p] = depth_1_vals[p];
-        depth_2[p] = depth_2_vals[p];
-      }
+    protected:
+    void SetUp() override
+    {
+        // Initialize the depth images.
+        const float depth_1_vals[img_size] = {0.0f, 0.0f, 1.0f, 1.5f};
+        const float depth_2_vals[img_size] = {0.0f, 1.0f, 0.0f, 1.0f};
+        for (size_t p = 0; p < depth_1.size(); ++p) {
+            depth_1[p] = depth_1_vals[p];
+            depth_2[p] = depth_2_vals[p];
+        }
 
-      // Initialize the masks.
-      mask_all     = cv::Mat::ones(cv::Size(width, height), CV_8UC1);
-      mask_subset  = cv::Mat::zeros(cv::Size(width, height), CV_8UC1);
-      mask_invalid = cv::Mat::ones(cv::Size(width, height), CV_8UC1);
-      mask_subset.at<uint8_t>(0) = 1;
-      mask_subset.at<uint8_t>(1) = 1;
-      mask_subset.at<uint8_t>(3) = 1;
-      mask_invalid.at<uint8_t>(3) = 0;
+        // Initialize the masks.
+        mask_all = cv::Mat::ones(cv::Size(width, height), CV_8UC1);
+        mask_subset = cv::Mat::zeros(cv::Size(width, height), CV_8UC1);
+        mask_invalid = cv::Mat::ones(cv::Size(width, height), CV_8UC1);
+        mask_subset.at<uint8_t>(0) = 1;
+        mask_subset.at<uint8_t>(1) = 1;
+        mask_subset.at<uint8_t>(3) = 1;
+        mask_invalid.at<uint8_t>(3) = 0;
     }
 
-    static constexpr int width  = 2;
+    static constexpr int width = 2;
     static constexpr int height = 2;
     static constexpr int img_size = width * height;
     se::Image<float> depth_1 = se::Image<float>(width, height, 0.f);
@@ -75,25 +72,27 @@ class DepthImageErrorTest : public ::testing::Test {
 
 
 
-TEST_F(DepthImageErrorTest, ErrorAll) {
-  const float e = depth_image_error(depth_1, depth_2, mask_all);
+TEST_F(DepthImageErrorTest, ErrorAll)
+{
+    const float e = depth_image_error(depth_1, depth_2, mask_all);
 
-  EXPECT_FLOAT_EQ(e, 0.5f * 0.5f);
+    EXPECT_FLOAT_EQ(e, 0.5f * 0.5f);
 }
 
 
 
-TEST_F(DepthImageErrorTest, ErrorSubset) {
-  const float e = depth_image_error(depth_1, depth_2, mask_subset);
+TEST_F(DepthImageErrorTest, ErrorSubset)
+{
+    const float e = depth_image_error(depth_1, depth_2, mask_subset);
 
-  EXPECT_FLOAT_EQ(e, 0.5f * 0.5f);
+    EXPECT_FLOAT_EQ(e, 0.5f * 0.5f);
 }
 
 
 
-TEST_F(DepthImageErrorTest, ErrorInvalid) {
-  const float e = depth_image_error(depth_1, depth_2, mask_invalid);
+TEST_F(DepthImageErrorTest, ErrorInvalid)
+{
+    const float e = depth_image_error(depth_1, depth_2, mask_invalid);
 
-  EXPECT_FLOAT_EQ(e, -1.f);
+    EXPECT_FLOAT_EQ(e, -1.f);
 }
-

@@ -30,146 +30,155 @@
 #ifndef __MULTIRESTSDF_HPP
 #define __MULTIRESTSDF_HPP
 
-#include "se/octree.hpp"
-#include "se/image/image.hpp"
-#include "se/algorithms/meshing.hpp"
-#include "se/sensor_implementation.hpp"
-
 #include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
+
+#include "se/algorithms/meshing.hpp"
+#include "se/image/image.hpp"
+#include "se/octree.hpp"
+#include "se/sensor_implementation.hpp"
 
 /** Kinect Fusion Truncated Signed Distance Function voxel implementation for
  * integration at multiple scales. */
 struct MultiresTSDF {
-
-  /**
+    /**
    * The voxel type used as the template parameter for se::Octree.
    */
-  struct VoxelType {
-    /**
+    struct VoxelType {
+        /**
      * The struct stored in each se::Octree voxel.
      */
-    struct VoxelData {
-      float x; /**< The value of the TSDF. */
-      float x_last;
-      int   y;
-      int   delta_y;
-      float    fg;       // Foreground probability
-      uint16_t fg_count; // Foreground probability update count
-      uint8_t  r;        // Red channel
-      uint8_t  g;        // Green channel
-      uint8_t  b;        // Blue channel
+        struct VoxelData {
+            float x; /**< The value of the TSDF. */
+            float x_last;
+            int y;
+            int delta_y;
+            float fg;          // Foreground probability
+            uint16_t fg_count; // Foreground probability update count
+            uint8_t r;         // Red channel
+            uint8_t g;         // Green channel
+            uint8_t b;         // Blue channel
 
-      bool operator==(const VoxelData& other) const;
-      bool operator!=(const VoxelData& other) const;
+            bool operator==(const VoxelData& other) const;
+            bool operator!=(const VoxelData& other) const;
+        };
+
+        static inline VoxelData invalid()
+        {
+            return {1.f, 1.f, 0, 0, 0.f, 0u, 0u, 0u, 0u};
+        }
+        static inline VoxelData initData()
+        {
+            return {1.f, 1.f, 0, 0, 0.f, 0u, 0u, 0u, 0u};
+        }
+
+        static float selectNodeValue(const VoxelData& /* data */)
+        {
+            return VoxelType::initData().x;
+        };
+
+        static float selectVoxelValue(const VoxelData& data)
+        {
+            return data.x;
+        };
+
+        static bool isInside(const VoxelData& data)
+        {
+            return data.x < 0.f;
+        };
+
+        static bool isValid(const VoxelData& data)
+        {
+            return data.y > 0 && data.fg > 0.5f;
+        };
+
+        using VoxelBlockType = se::VoxelBlockFull<MultiresTSDF::VoxelType>;
+
+        using MemoryPoolType = se::PagedMemoryPool<MultiresTSDF::VoxelType>;
+        template<typename ElemT>
+        using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
     };
 
-    static inline VoxelData invalid()  { return {1.f, 1.f, 0, 0, 0.f, 0u, 0u, 0u, 0u}; }
-    static inline VoxelData initData() { return {1.f, 1.f, 0, 0, 0.f, 0u, 0u, 0u, 0u}; }
+    using VoxelData = MultiresTSDF::VoxelType::VoxelData;
+    using OctreeType = se::Octree<MultiresTSDF::VoxelType>;
+    using VoxelBlockType = typename MultiresTSDF::VoxelType::VoxelBlockType;
 
-    static float selectNodeValue(const VoxelData& /* data */) {
-      return VoxelType::initData().x;
-    };
-
-    static float selectVoxelValue(const VoxelData& data) {
-      return data.x;
-    };
-
-    static bool isInside(const VoxelData& data) {
-      return data.x < 0.f;
-    };
-
-    static bool isValid(const VoxelData& data) {
-      return data.y > 0 && data.fg > 0.5f;
-    };
-
-    using VoxelBlockType = se::VoxelBlockFull<MultiresTSDF::VoxelType>;
-
-    using MemoryPoolType = se::PagedMemoryPool<MultiresTSDF::VoxelType>;
-    template <typename ElemT>
-    using MemoryBufferType = se::PagedMemoryBuffer<ElemT>;
-  };
-
-  using VoxelData      = MultiresTSDF::VoxelType::VoxelData;
-  using OctreeType     = se::Octree<MultiresTSDF::VoxelType>;
-  using VoxelBlockType = typename MultiresTSDF::VoxelType::VoxelBlockType;
-
-  /**
+    /**
    * The normals must be inverted when rendering a TSDF map.
    */
-  static constexpr bool invert_normals = true;
+    static constexpr bool invert_normals = true;
 
-  /**
+    /**
    * The factor the voxel dim is multiplied with to compute mu
    *
    *  <br>\em Default: 8
    */
-  static float mu_factor;
+    static float mu_factor;
 
-  /**
+    /**
    * The MultiresTSDF truncation bound. Values of the MultiresTSDF are assumed to be in the
    * interval ±mu. See Section 3.3 of \cite NewcombeISMAR2011 for more
    * details.
    *  <br>\em Default: 0.1
    */
-  static float mu;
+    static float mu;
 
-  /**
+    /**
    * The maximum value of the weight factor
    * MultiresTSDF::VoxelType::VoxelData::y.
    */
-  static int max_weight;
+    static int max_weight;
 
-  static std::string type() { return "multirestsdf"; }
+    static std::string type()
+    {
+        return "multirestsdf";
+    }
 
-  /**
+    /**
    * Configure the MultiresTSDF parameters
    */
-  static void configure(const float voxel_dim);
-  static void configure(YAML::Node yaml_config, const float voxel_dim);
+    static void configure(const float voxel_dim);
+    static void configure(YAML::Node yaml_config, const float voxel_dim);
 
-  static std::string printConfig();
+    static std::string printConfig();
 
-  /**
+    /**
    * Compute the VoxelBlocks and Nodes that need to be allocated given the
    * camera pose.
    */
-  static size_t buildAllocationList(OctreeType&             map,
-                                    const se::Image<float>& depth_image,
-                                    const Eigen::Matrix4f&  T_MC,
-                                    const SensorImpl&       sensor,
-                                    se::key_t*              allocation_list,
-                                    size_t                  reserved);
+    static size_t buildAllocationList(OctreeType& map,
+                                      const se::Image<float>& depth_image,
+                                      const Eigen::Matrix4f& T_MC,
+                                      const SensorImpl& sensor,
+                                      se::key_t* allocation_list,
+                                      size_t reserved);
 
 
 
-  /**
+    /**
    * Integrate a depth image into the map.
    */
-  static void integrate(OctreeType&             map,
-                        const se::Image<float>& depth_image,
-                        const se::Image<uint32_t>& rgba_image,
-                        const cv::Mat&             fg_image,
-                        const Eigen::Matrix4f&  T_CM,
-                        const SensorImpl&       sensor,
-                        const unsigned          frame);
+    static void integrate(OctreeType& map,
+                          const se::Image<float>& depth_image,
+                          const se::Image<uint32_t>& rgba_image,
+                          const cv::Mat& fg_image,
+                          const Eigen::Matrix4f& T_CM,
+                          const SensorImpl& sensor,
+                          const unsigned frame);
 
 
 
-  /**
+    /**
    * Cast a ray and return the point where the surface was hit.
    */
-  static Eigen::Vector4f raycast(const OctreeType&      map,
-                                 const Eigen::Vector3f& ray_origin_M,
-                                 const Eigen::Vector3f& ray_dir_M,
-                                 const float            t_near,
-                                 const float            t_far);
+    static Eigen::Vector4f raycast(const OctreeType& map,
+                                   const Eigen::Vector3f& ray_origin_M,
+                                   const Eigen::Vector3f& ray_dir_M,
+                                   const float t_near,
+                                   const float t_far);
 
-  static void dumpMesh(OctreeType&                map,
-                       std::vector<se::Triangle>& mesh,
-                       const bool                 use_min_scale = false);
-
+    static void
+    dumpMesh(OctreeType& map, std::vector<se::Triangle>& mesh, const bool use_min_scale = false);
 };
 
 #endif
-

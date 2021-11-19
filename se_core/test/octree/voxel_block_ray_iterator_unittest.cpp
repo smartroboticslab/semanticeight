@@ -28,53 +28,58 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vector>
-
 #include <gtest/gtest.h>
-
 #include <se/octree.hpp>
 #include <se/voxel_block_ray_iterator.hpp>
+#include <vector>
 
 
 
 // Create a voxel trait storing a single float value.
 struct TestVoxelT {
-  typedef float VoxelData;
-  static inline VoxelData invalid(){ return -1.f; }
-  static inline VoxelData initData(){ return 0.f; }
+    typedef float VoxelData;
+    static inline VoxelData invalid()
+    {
+        return -1.f;
+    }
+    static inline VoxelData initData()
+    {
+        return 0.f;
+    }
 
-  using VoxelBlockType = se::VoxelBlockFull<TestVoxelT>;
+    using VoxelBlockType = se::VoxelBlockFull<TestVoxelT>;
 
-  using MemoryPoolType = se::PagedMemoryPool<TestVoxelT>;
-  template <typename BufferT>
-  using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
+    using MemoryPoolType = se::PagedMemoryPool<TestVoxelT>;
+    template<typename BufferT>
+    using MemoryBufferType = se::PagedMemoryBuffer<BufferT>;
 };
 
 
 
 class VoxelBlockRayIteratorTest : public ::testing::Test {
-  protected:
-    virtual void SetUp() {
-      octree_.init(res_, dim_);
+    protected:
+    virtual void SetUp()
+    {
+        octree_.init(res_, dim_);
 
-      ray_origin_M_   = Eigen::Vector3f::Constant(1.5f);
-      ray_dir_M_ = Eigen::Vector3f::Ones().normalized();
+        ray_origin_M_ = Eigen::Vector3f::Constant(1.5f);
+        ray_dir_M_ = Eigen::Vector3f::Ones().normalized();
 
-      // Ensure stepsize is big enough to get distinct blocks
-      const float stepsize = 2 * voxel_dim_ * se::Octree<TestVoxelT>::block_size;
+        // Ensure stepsize is big enough to get distinct blocks
+        const float stepsize = 2 * voxel_dim_ * se::Octree<TestVoxelT>::block_size;
 
-      // Allocate voxel blocks hit by the ray defined by ray_origin_M_ and ray_dir_M_
-      const int num_blocks = 4;
-      float t = 0.6f;
-      for (int i = 0; i < num_blocks; ++i, t += stepsize) {
-        const Eigen::Vector3f ray_pos_M = ray_origin_M_ + t * ray_dir_M_;
-        const Eigen::Vector3i voxel_coord = (ray_pos_M / voxel_dim_).cast<int>();
+        // Allocate voxel blocks hit by the ray defined by ray_origin_M_ and ray_dir_M_
+        const int num_blocks = 4;
+        float t = 0.6f;
+        for (int i = 0; i < num_blocks; ++i, t += stepsize) {
+            const Eigen::Vector3f ray_pos_M = ray_origin_M_ + t * ray_dir_M_;
+            const Eigen::Vector3i voxel_coord = (ray_pos_M / voxel_dim_).cast<int>();
 
-        // Hash to VoxelBlocks
-        const se::key_t key = octree_.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
-        allocation_list_.push_back(key);
-      }
-      octree_.allocate(allocation_list_.data(), allocation_list_.size());
+            // Hash to VoxelBlocks
+            const se::key_t key = octree_.hash(voxel_coord.x(), voxel_coord.y(), voxel_coord.z());
+            allocation_list_.push_back(key);
+        }
+        octree_.allocate(allocation_list_.data(), allocation_list_.size());
     }
 
     se::Octree<TestVoxelT> octree_;
@@ -88,16 +93,15 @@ class VoxelBlockRayIteratorTest : public ::testing::Test {
 
 
 
-TEST_F(VoxelBlockRayIteratorTest, FetchAlongRay) {
-  se::VoxelBlockRayIterator<TestVoxelT> it (octree_, ray_origin_M_, ray_dir_M_,
-      0.4, 4.0f);
-  size_t i = 0;
-  TestVoxelT::VoxelBlockType* current;
-  while ((current = it.next())) {
-    ASSERT_LT(i, allocation_list_.size());
-    ASSERT_EQ(current->code(), allocation_list_[i]);
-    i++;
-  }
-  ASSERT_EQ(i, allocation_list_.size());
+TEST_F(VoxelBlockRayIteratorTest, FetchAlongRay)
+{
+    se::VoxelBlockRayIterator<TestVoxelT> it(octree_, ray_origin_M_, ray_dir_M_, 0.4, 4.0f);
+    size_t i = 0;
+    TestVoxelT::VoxelBlockType* current;
+    while ((current = it.next())) {
+        ASSERT_LT(i, allocation_list_.size());
+        ASSERT_EQ(current->code(), allocation_list_[i]);
+        i++;
+    }
+    ASSERT_EQ(i, allocation_list_.size());
 }
-
