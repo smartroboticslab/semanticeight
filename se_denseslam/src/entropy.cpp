@@ -320,7 +320,8 @@ void frustum_overlap(Image<float>& frustum_overlap_image,
             const Eigen::Matrix4f T_CCn = T_CM * n_T_MC;
             overlap.push_back(fi::frustum_intersection_pc(sensor.frustum_vertices_, T_CCn));
         }
-        frustum_overlap_image[x] = *std::max_element(overlap.begin(), overlap.end());
+        frustum_overlap_image[x] =
+            overlap.empty() ? 0.0f : *std::max_element(overlap.begin(), overlap.end());
     }
 }
 
