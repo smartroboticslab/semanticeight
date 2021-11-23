@@ -76,6 +76,13 @@ class SinglePathExplorationPlanner {
                                            MortonSamplingTree& sampling_tree,
                                            const Eigen::Vector3f& sampling_min_M,
                                            const Eigen::Vector3f& sampling_max_M);
+
+    /** Sample a candidate position by randomly selecting a frontier.
+     */
+    static Eigen::Vector3f sampleCandidate(const OctreePtr map,
+                                           std::deque<se::key_t>& frontiers,
+                                           const Eigen::Vector3f& sampling_min_M,
+                                           const Eigen::Vector3f& sampling_max_M);
 };
 } // namespace se
 

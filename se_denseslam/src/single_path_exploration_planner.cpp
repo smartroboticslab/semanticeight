@@ -182,4 +182,22 @@ Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr ma
     return pos;
 }
 
+
+
+Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
+                                                              std::deque<se::key_t>& frontiers,
+                                                              const Eigen::Vector3f& sampling_min_M,
+                                                              const Eigen::Vector3f& sampling_max_M)
+{
+    std::shuffle(frontiers.begin(), frontiers.end(), std::mt19937{std::random_device{}()});
+    const key_t code = frontiers.back();
+    frontiers.pop_back();
+    // Return the coordinates of the sampled volume's centre
+    const int size = map->depthToSize(keyops::depth(code));
+    Eigen::Vector3f pos = map->voxelDim()
+        * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
+    math::clamp(pos, sampling_min_M, sampling_max_M);
+    return pos;
+}
+
 } // namespace se
