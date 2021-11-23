@@ -20,5 +20,6 @@ add_subdirectory(depth_utils)
 add_subdirectory(entropy)
 add_subdirectory(frustum_intersection)
 add_subdirectory(planning)
+add_subdirectory(pose_grid_history)
 add_subdirectory(preprocessing)
 
