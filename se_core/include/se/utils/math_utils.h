@@ -63,9 +63,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Defining M_PI is a compiler extension, we should not rely on it.
 #ifndef M_PI
 #    define M_PI 3.14159265358979323846
+#    define M_TAU 6.28318530717958647693
 #endif
 #ifndef M_PI_F
 #    define M_PI_F 3.14159265358979323846f
+#    define M_TAU_F 6.28318530717958647693f
 #endif
 
 
