@@ -7,6 +7,8 @@
 
 #include <queue>
 
+#include "se/octree.hpp"
+
 namespace se {
 /** Generate a Graphviz diagram in filename showing the structure of the octree.
    * Nodes are shown in gray and VoxelBlocks in light blue.
