@@ -63,8 +63,6 @@ class SinglePathExplorationPlanner {
     static Eigen::Vector3f sampleCandidate(const OctreePtr map,
                                            std::deque<se::key_t>& frontiers,
                                            const Objects& objects,
-                                           const SensorImpl& sensor,
-                                           const PoseVectorHistory& T_MB_history,
                                            const int sampling_step,
                                            const Eigen::Vector3f& sampling_min_M,
                                            const Eigen::Vector3f& sampling_max_M);

@@ -38,8 +38,6 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(const OctreePtr map,
         //const Eigen::Vector3f candidate_t_MB = sampleCandidate(map,
         //                                                       remaining_frontiers,
         //                                                       objects,
-        //                                                       sensor,
-        //                                                       T_MB_history,
         //                                                       sampling_step,
         //                                                       config_.sampling_min_M,
         //                                                       config_.sampling_max_M);
@@ -134,8 +132,6 @@ Eigen::Vector3f
 SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
                                               std::deque<se::key_t>& frontiers,
                                               const Objects& /*objects*/,
-                                              const SensorImpl& /*sensor*/,
-                                              const PoseVectorHistory& /*T_MB_history*/,
                                               const int sampling_step,
                                               const Eigen::Vector3f& sampling_min_M,
                                               const Eigen::Vector3f& sampling_max_M)
