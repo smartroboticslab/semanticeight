@@ -307,7 +307,7 @@ void raycast_depth(Image<float>& depth_image,
 void frustum_overlap(Image<float>& frustum_overlap_image,
                      const SensorImpl& sensor,
                      const Eigen::Matrix4f& T_MC,
-                     const PoseHistory& T_MC_history)
+                     const PoseVectorHistory& T_MC_history)
 {
     const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
     const se::PoseVector neighbors = T_MC_history.neighbourPoses(T_MC, sensor);

@@ -54,7 +54,7 @@
 #include "se/io/octomap_io.hpp"
 #include "se/octree.hpp"
 #include "se/perfstats.h"
-#include "se/pose_history.hpp"
+#include "se/pose_vector_history.hpp"
 #include "se/segmentation_result.hpp"
 #include "se/sensor_implementation.hpp"
 #include "se/single_path_exploration_planner.hpp"

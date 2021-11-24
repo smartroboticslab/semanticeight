@@ -12,8 +12,8 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(const OctreePtr map,
                                                            const SensorImpl& sensor,
                                                            const Eigen::Matrix4f& T_MB,
                                                            const Eigen::Matrix4f& T_BC,
-                                                           const PoseHistory& T_MB_history,
-                                                           const PoseHistory& T_MC_history,
+                                                           const PoseVectorHistory& T_MB_history,
+                                                           const PoseVectorHistory& T_MC_history,
                                                            const ExplorationConfig& config) :
         config_(config), best_idx_(SIZE_MAX)
 {
@@ -131,14 +131,15 @@ std::vector<CandidateView> SinglePathExplorationPlanner::rejectedViews() const
 
 
 
-Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
-                                                              std::deque<se::key_t>& frontiers,
-                                                              const Objects& /*objects*/,
-                                                              const SensorImpl& /*sensor*/,
-                                                              const PoseHistory& /*T_MB_history*/,
-                                                              const int sampling_step,
-                                                              const Eigen::Vector3f& sampling_min_M,
-                                                              const Eigen::Vector3f& sampling_max_M)
+Eigen::Vector3f
+SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
+                                              std::deque<se::key_t>& frontiers,
+                                              const Objects& /*objects*/,
+                                              const SensorImpl& /*sensor*/,
+                                              const PoseVectorHistory& /*T_MB_history*/,
+                                              const int sampling_step,
+                                              const Eigen::Vector3f& sampling_min_M,
+                                              const Eigen::Vector3f& sampling_max_M)
 {
     // TODO take objects into account
     if (frontiers.empty()) {

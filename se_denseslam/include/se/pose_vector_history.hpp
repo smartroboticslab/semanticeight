@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2021 Sotiris Papatheodorou
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef __POSE_HISTORY_HPP
-#define __POSE_HISTORY_HPP
+#ifndef POSE_VECTOR_HISTORY_HPP
+#define POSE_VECTOR_HISTORY_HPP
 
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -14,11 +14,11 @@
 namespace se {
 typedef std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> PoseVector;
 
-class PoseHistory {
+class PoseVectorHistory {
     public:
     PoseVector poses;
 
-    PoseHistory();
+    PoseVectorHistory();
 
     bool rejectSampledPos(const Eigen::Vector3f& pos, const SensorImpl& sensor) const;
 
@@ -38,4 +38,4 @@ class PoseHistory {
 };
 } // namespace se
 
-#endif // __POSE_HISTORY_HPP
+#endif // POSE_VECTOR_HISTORY_HPP

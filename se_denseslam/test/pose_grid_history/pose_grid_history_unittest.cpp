@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: 2021 Sotiris Papatheodorou
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <gtest/gtest.h>
-
 #include "se/pose_grid_history.hpp"
+
+#include <gtest/gtest.h>
 
 
 

@@ -10,7 +10,7 @@
 
 #include "se/candidate_view.hpp"
 #include "se/morton_sampling_tree.hpp"
-#include "se/pose_history.hpp"
+#include "se/pose_vector_history.hpp"
 
 namespace se {
 struct ExplorationConfig {
@@ -34,8 +34,8 @@ class SinglePathExplorationPlanner {
                                  const SensorImpl& sensor,
                                  const Eigen::Matrix4f& T_MB,
                                  const Eigen::Matrix4f& T_BC,
-                                 const PoseHistory& T_MB_history,
-                                 const PoseHistory& T_MC_history,
+                                 const PoseVectorHistory& T_MB_history,
+                                 const PoseVectorHistory& T_MC_history,
                                  const ExplorationConfig& config);
 
     CandidateView bestView() const;
@@ -65,7 +65,7 @@ class SinglePathExplorationPlanner {
                                            std::deque<se::key_t>& frontiers,
                                            const Objects& objects,
                                            const SensorImpl& sensor,
-                                           const PoseHistory& T_MC_history,
+                                           const PoseVectorHistory& T_MC_history,
                                            const int sampling_step,
                                            const Eigen::Vector3f& sampling_min_M,
                                            const Eigen::Vector3f& sampling_max_M);

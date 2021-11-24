@@ -50,7 +50,7 @@ CandidateView::CandidateView(const OctreePtr& map,
                              const SensorImpl& sensor,
                              const Eigen::Matrix4f& T_MB,
                              const Eigen::Matrix4f& T_BC,
-                             const PoseHistory& T_MC_history,
+                             const PoseVectorHistory& T_MC_history,
                              const CandidateConfig& config) :
         path_length_(-1.0f),
         path_time_(-1.0f),
@@ -139,7 +139,7 @@ const Eigen::Matrix4f& CandidateView::goalT_MB() const
 void CandidateView::computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
                                            const SensorImpl& sensor,
                                            const Eigen::Matrix4f& T_BC,
-                                           const PoseHistory& T_MC_history)
+                                           const PoseVectorHistory& T_MC_history)
 {
     // Raycast and optimize yaw at each intermediate path vertex
     for (size_t i = 1; i < path_MB_.size() - 1; i++) {
@@ -334,7 +334,7 @@ Path CandidateView::getFinalPath(const Path& path_M,
 void CandidateView::entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
                                    const SensorImpl& sensor,
                                    const Eigen::Matrix4f& T_BC,
-                                   const PoseHistory& T_MC_history)
+                                   const PoseVectorHistory& T_MC_history)
 {
     const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC;
     // Raycast at the last path vertex

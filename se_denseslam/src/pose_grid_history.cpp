@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: 2021 Sotiris Papatheodorou
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "se/pose_grid_history.hpp"
+
 #include <algorithm>
 #include <fstream>
 #include <limits>
-
-#include "se/pose_grid_history.hpp"
 
 namespace se {
 

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2021 Sotiris Papatheodorou
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "se/pose_history.hpp"
+#include "se/pose_vector_history.hpp"
 
 #include <algorithm>
 #include <random>
@@ -30,13 +30,13 @@ float normal_pdf(const Eigen::Vector3f& x, const Eigen::Vector3f& mu, const Eige
 
 
 namespace se {
-PoseHistory::PoseHistory() : uniform_(0.0f, 1.0f)
+PoseVectorHistory::PoseVectorHistory() : uniform_(0.0f, 1.0f)
 {
 }
 
 
 
-bool PoseHistory::rejectSampledPos(const Eigen::Vector3f& pos, const SensorImpl& sensor) const
+bool PoseVectorHistory::rejectSampledPos(const Eigen::Vector3f& pos, const SensorImpl& sensor) const
 {
     const float prob = rejectionProbabilityPos(pos, sensor);
     // A random value in the interval [0,1].
@@ -45,15 +45,16 @@ bool PoseHistory::rejectSampledPos(const Eigen::Vector3f& pos, const SensorImpl&
 }
 
 
-bool PoseHistory::rejectSampledPose(const Eigen::Matrix4f& pose, const SensorImpl& sensor) const
+bool PoseVectorHistory::rejectSampledPose(const Eigen::Matrix4f& pose,
+                                          const SensorImpl& sensor) const
 {
-    return PoseHistory::rejectSampledPos(pose.topRightCorner<3, 1>(), sensor);
+    return PoseVectorHistory::rejectSampledPos(pose.topRightCorner<3, 1>(), sensor);
 }
 
 
 
-float PoseHistory::rejectionProbabilityPos(const Eigen::Vector3f& pos,
-                                           const SensorImpl& sensor) const
+float PoseVectorHistory::rejectionProbabilityPos(const Eigen::Vector3f& pos,
+                                                 const SensorImpl& sensor) const
 {
     // Compute the normal distribution parameters.
     const float stddev_xy = sensor.far_plane / 3.0f;
@@ -74,15 +75,16 @@ float PoseHistory::rejectionProbabilityPos(const Eigen::Vector3f& pos,
 
 
 
-float PoseHistory::rejectionProbabilityPose(const Eigen::Matrix4f& pose,
-                                            const SensorImpl& sensor) const
+float PoseVectorHistory::rejectionProbabilityPose(const Eigen::Matrix4f& pose,
+                                                  const SensorImpl& sensor) const
 {
-    return PoseHistory::rejectionProbabilityPos(pose.topRightCorner<3, 1>(), sensor);
+    return PoseVectorHistory::rejectionProbabilityPos(pose.topRightCorner<3, 1>(), sensor);
 }
 
 
 
-PoseVector PoseHistory::neighbourPoses(const Eigen::Matrix4f& pose, const SensorImpl& sensor) const
+PoseVector PoseVectorHistory::neighbourPoses(const Eigen::Matrix4f& pose,
+                                             const SensorImpl& sensor) const
 {
     PoseVector neighbours;
     for (const auto& p : poses) {
