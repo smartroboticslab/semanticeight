@@ -55,7 +55,7 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(const OctreePtr map,
                                  frontiers,
                                  objects,
                                  sensor,
-                                 T_MB_history.poses.back(),
+                                 T_MB,
                                  T_BC,
                                  T_MC_history,
                                  candidate_config);
