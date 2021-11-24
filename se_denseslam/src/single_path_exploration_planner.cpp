@@ -141,7 +141,6 @@ Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr ma
         return Eigen::Vector3f::Constant(NAN);
     }
     Eigen::Vector3f pos;
-    //do {
     // Use the first element as the code of the sample
     const se::key_t code = frontiers.front();
     frontiers.pop_front();
@@ -157,8 +156,6 @@ Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr ma
     pos = map->voxelDim()
         * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
     se::math::clamp(pos, sampling_min_M, sampling_max_M);
-    //} while (T_MB_history.rejectSampledPos(pos, sensor));
-    //} while (!math::is_between(pos, sampling_min_M, sampling_max_M));
     return pos;
 }
 } // namespace se
