@@ -88,7 +88,6 @@ class ExplorationPlanner {
     Eigen::Matrix4f planning_T_MB_;
     // History of fusion poses.
     PoseVectorHistory T_MB_history_;
-    PoseVectorHistory T_MC_history_;
     std::vector<CandidateView> candidate_views_;
     std::vector<CandidateView> rejected_candidate_views_;
     CandidateView goal_view_;

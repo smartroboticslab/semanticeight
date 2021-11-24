@@ -31,7 +31,6 @@ ExplorationPlanner::ExplorationPlanner(const OctreePtr map,
 void ExplorationPlanner::setT_WB(const Eigen::Matrix4f& T_WB)
 {
     T_MB_history_.poses.push_back(T_MW_ * T_WB);
-    T_MC_history_.poses.push_back(T_MB_history_.poses.back() * T_BC_);
 }
 
 
@@ -141,7 +140,6 @@ Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
                                          planning_T_MB_,
                                          T_BC_,
                                          T_MB_history_,
-                                         T_MC_history_,
                                          config_);
     candidate_views_ = planner.views();
     rejected_candidate_views_ = planner.rejectedViews();

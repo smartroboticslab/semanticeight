@@ -307,17 +307,18 @@ void raycast_depth(Image<float>& depth_image,
 void frustum_overlap(Image<float>& frustum_overlap_image,
                      const SensorImpl& sensor,
                      const Eigen::Matrix4f& T_MC,
-                     const PoseVectorHistory& T_MC_history)
+                     const Eigen::Matrix4f& T_BC,
+                     const PoseVectorHistory& T_MB_history)
 {
     const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
-    const se::PoseVector neighbors = T_MC_history.neighbourPoses(T_MC, sensor);
+    const se::PoseVector neighbors = T_MB_history.neighbourPoses(T_MC, sensor);
 #pragma omp parallel for
     for (int x = 0; x < frustum_overlap_image.width(); x++) {
         std::vector<float> overlap;
         overlap.reserve(neighbors.size());
-        for (const auto& n_T_MC : neighbors) {
+        for (const auto& n_T_MB : neighbors) {
             // Convert the neighbor pose to the candidate frame.
-            const Eigen::Matrix4f T_CCn = T_CM * n_T_MC;
+            const Eigen::Matrix4f T_CCn = T_CM * n_T_MB * T_BC;
             overlap.push_back(fi::frustum_intersection_pc(sensor.frustum_vertices_, T_CCn));
         }
         frustum_overlap_image[x] =

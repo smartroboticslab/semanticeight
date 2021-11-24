@@ -35,7 +35,6 @@ class SinglePathExplorationPlanner {
                                  const Eigen::Matrix4f& T_MB,
                                  const Eigen::Matrix4f& T_BC,
                                  const PoseVectorHistory& T_MB_history,
-                                 const PoseVectorHistory& T_MC_history,
                                  const ExplorationConfig& config);
 
     CandidateView bestView() const;
@@ -65,7 +64,7 @@ class SinglePathExplorationPlanner {
                                            std::deque<se::key_t>& frontiers,
                                            const Objects& objects,
                                            const SensorImpl& sensor,
-                                           const PoseVectorHistory& T_MC_history,
+                                           const PoseVectorHistory& T_MB_history,
                                            const int sampling_step,
                                            const Eigen::Vector3f& sampling_min_M,
                                            const Eigen::Vector3f& sampling_max_M);
