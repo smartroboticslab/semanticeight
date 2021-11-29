@@ -21,7 +21,8 @@ ExplorationPlanner::ExplorationPlanner(const OctreePtr map,
         T_MW_(T_MW),
         T_WM_(se::math::to_inverse_transformation(T_MW)),
         T_BC_(T_BC),
-        T_CB_(se::math::to_inverse_transformation(T_BC))
+        T_CB_(se::math::to_inverse_transformation(T_BC)),
+        T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim()))
 {
     ompl::msg::setLogLevel(ompl::msg::LOG_ERROR);
 }
@@ -30,7 +31,9 @@ ExplorationPlanner::ExplorationPlanner(const OctreePtr map,
 
 void ExplorationPlanner::setT_WB(const Eigen::Matrix4f& T_WB)
 {
-    T_MB_history_.poses.push_back(T_MW_ * T_WB);
+    const Eigen::Matrix4f T_MB = T_MW_ * T_WB;
+    T_MB_grid_history_.record(T_MB);
+    T_MB_history_.record(T_MB);
 }
 
 
@@ -139,6 +142,7 @@ Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
                                          sensor,
                                          planning_T_MB_,
                                          T_BC_,
+                                         T_MB_grid_history_,
                                          T_MB_history_,
                                          config_);
     candidate_views_ = planner.views();

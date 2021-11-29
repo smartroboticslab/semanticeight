@@ -6,16 +6,19 @@
 #include "se/single_path_exploration_planner.hpp"
 
 namespace se {
-SinglePathExplorationPlanner::SinglePathExplorationPlanner(const OctreePtr map,
-                                                           const std::vector<se::key_t>& frontiers,
-                                                           const Objects& objects,
-                                                           const SensorImpl& sensor,
-                                                           const Eigen::Matrix4f& T_MB,
-                                                           const Eigen::Matrix4f& T_BC,
-                                                           const PoseVectorHistory& T_MB_history,
-                                                           const ExplorationConfig& config) :
+SinglePathExplorationPlanner::SinglePathExplorationPlanner(
+    const OctreePtr map,
+    const std::vector<se::key_t>& frontiers,
+    const Objects& objects,
+    const SensorImpl& sensor,
+    const Eigen::Matrix4f& T_MB,
+    const Eigen::Matrix4f& T_BC,
+    const PoseGridHistory& T_MB_grid_history,
+    const PoseVectorHistory& /* T_MB_vector_history */,
+    const ExplorationConfig& config) :
         config_(config), best_idx_(SIZE_MAX)
 {
+    const PoseHistory* T_MB_history = &T_MB_grid_history;
     MortonSamplingTree candidate_sampling_tree(frontiers, map->voxelDepth());
     //std::deque<se::key_t> remaining_frontiers(frontiers.begin(), frontiers.end());
     candidates_.reserve(config_.num_candidates);
@@ -43,7 +46,7 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(const OctreePtr map,
         //                                                       config_.sampling_max_M);
         const Eigen::Vector3f candidate_t_MB = sampleCandidate(
             map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
-        if (T_MB_history.rejectSampledPos(candidate_t_MB, sensor)) {
+        if (T_MB_history->rejectPosition(candidate_t_MB, sensor)) {
             rejected_candidates_.emplace_back(candidate_t_MB);
             continue;
         }

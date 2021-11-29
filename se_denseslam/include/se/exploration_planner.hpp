@@ -87,6 +87,7 @@ class ExplorationPlanner {
     // The pose planning the next path will start from.
     Eigen::Matrix4f planning_T_MB_;
     // History of fusion poses.
+    PoseGridHistory T_MB_grid_history_;
     PoseVectorHistory T_MB_history_;
     std::vector<CandidateView> candidate_views_;
     std::vector<CandidateView> rejected_candidate_views_;

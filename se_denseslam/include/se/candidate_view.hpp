@@ -14,7 +14,6 @@
 #include <se/image/image.hpp>
 #include <se/object_utils.hpp>
 #include <se/path.hpp>
-#include <se/pose_vector_history.hpp>
 #include <set>
 
 namespace se {
@@ -57,7 +56,7 @@ class CandidateView {
                   const SensorImpl& sensor,
                   const Eigen::Matrix4f& T_MB,
                   const Eigen::Matrix4f& T_BC,
-                  const PoseVectorHistory& T_MB_history,
+                  const PoseHistory* T_MB_history,
                   const CandidateConfig& config);
 
     bool isValid() const;
@@ -76,7 +75,7 @@ class CandidateView {
     void computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
                                 const SensorImpl& sensor,
                                 const Eigen::Matrix4f& T_BC,
-                                const PoseVectorHistory& T_MB_history);
+                                const PoseHistory* T_MB_history);
 
     Image<uint32_t> renderEntropy(const SensorImpl& sensor, const bool visualize_yaw = true) const;
 
@@ -154,7 +153,7 @@ class CandidateView {
     void entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
                         const SensorImpl& sensor,
                         const Eigen::Matrix4f& T_BC,
-                        const PoseVectorHistory& T_MB_history);
+                        const PoseHistory* T_MB_history);
 
     void computeUtility();
 

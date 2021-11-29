@@ -308,10 +308,10 @@ void frustum_overlap(Image<float>& frustum_overlap_image,
                      const SensorImpl& sensor,
                      const Eigen::Matrix4f& T_MC,
                      const Eigen::Matrix4f& T_BC,
-                     const PoseVectorHistory& T_MB_history)
+                     const PoseHistory* T_MB_history)
 {
     const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
-    const se::PoseVector neighbors = T_MB_history.neighbourPoses(T_MC, sensor);
+    const se::PoseVector neighbors = T_MB_history->neighbourPoses(T_MC, sensor);
 #pragma omp parallel for
     for (int x = 0; x < frustum_overlap_image.width(); x++) {
         std::vector<float> overlap;
