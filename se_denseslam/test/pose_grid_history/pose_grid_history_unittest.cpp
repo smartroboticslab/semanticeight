@@ -10,11 +10,15 @@
 
 class PoseGridTest : public ::testing::Test {
     public:
+    const se::SensorConfig sensor_config_;
+    const se::PinholeCamera sensor_;
     const Eigen::Vector3f dimensions_;
     const Eigen::Vector4f resolution_;
     se::PoseGridHistory grid_;
 
     PoseGridTest() :
+            sensor_config_({640, 480, false, 0.4f, 4.0f, 525.0f, 525.0f, 319.5f, 239.5f}),
+            sensor_(sensor_config_),
             dimensions_(2.0f, 2.0f, 1.0f),
             resolution_(0.5f, 1.0f, 0.5f, 72.0f * se::math::deg_to_rad),
             grid_(dimensions_, resolution_)
@@ -66,10 +70,10 @@ TEST_F(PoseGridTest, increment)
 TEST_F(PoseGridTest, rejectionProbability)
 {
     const Eigen::Vector4f pose(0.0f, 0.0f, 0.0f, 0.0f);
-    EXPECT_FLOAT_EQ(grid_.rejectionProbability(pose.head<3>()), 0.0f);
+    EXPECT_FLOAT_EQ(grid_.rejectionProbability(pose.head<3>(), sensor_), 0.0f);
     for (int i = 0; i < 2; i++) {
         grid_.record(pose);
-        EXPECT_FLOAT_EQ(grid_.rejectionProbability(pose.head<3>()),
+        EXPECT_FLOAT_EQ(grid_.rejectionProbability(pose.head<3>(), sensor_),
                         1.0f / grid_.dimensionsCells().w());
     }
 }

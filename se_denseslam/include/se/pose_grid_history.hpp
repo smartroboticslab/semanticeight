@@ -5,19 +5,17 @@
 #ifndef POSE_GRID_HISTORY_HPP
 #define POSE_GRID_HISTORY_HPP
 
-#include <Eigen/Dense>
-#include <Eigen/StdVector>
 #include <cstdint>
 #include <string>
-#include <vector>
 
+#include "se/pose_history.hpp"
 #include "se/utils/math_utils.h"
 
 namespace se {
 
 /** A dense grid storing the number of poses (x,y,z,yaw) encountered in each cell.
  */
-class PoseGridHistory {
+class PoseGridHistory : public PoseHistory {
     public:
     typedef uint8_t DataType;
     typedef std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f>> XYZYawVector;
@@ -37,7 +35,7 @@ class PoseGridHistory {
 
     DataType get(const Eigen::Matrix4f& pose) const;
 
-    float rejectionProbability(const Eigen::Vector3f& position) const;
+    float rejectionProbability(const Eigen::Vector3f& position, const SensorImpl& sensor) const;
 
     Eigen::Vector3f dimensions() const;
 

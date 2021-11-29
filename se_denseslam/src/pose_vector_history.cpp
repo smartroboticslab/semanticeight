@@ -30,31 +30,29 @@ float normal_pdf(const Eigen::Vector3f& x, const Eigen::Vector3f& mu, const Eige
 
 
 namespace se {
-PoseVectorHistory::PoseVectorHistory() : uniform_(0.0f, 1.0f)
+
+void PoseVectorHistory::record(const Eigen::Vector4f& pose)
 {
+    Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+    T.topRightCorner<3, 1>() = pose.head<3>();
+    T(0, 0) = cos(pose.w());
+    T(0, 1) = -sin(pose.w());
+    T(1, 0) = sin(pose.w());
+    T(1, 1) = cos(pose.w());
+    poses.push_back(T);
 }
 
 
 
-bool PoseVectorHistory::rejectSampledPos(const Eigen::Vector3f& pos, const SensorImpl& sensor) const
+void PoseVectorHistory::record(const Eigen::Matrix4f& pose)
 {
-    const float prob = rejectionProbabilityPos(pos, sensor);
-    // A random value in the interval [0,1].
-    const float sample = uniform_(gen_);
-    return (sample < prob);
-}
-
-
-bool PoseVectorHistory::rejectSampledPose(const Eigen::Matrix4f& pose,
-                                          const SensorImpl& sensor) const
-{
-    return PoseVectorHistory::rejectSampledPos(pose.topRightCorner<3, 1>(), sensor);
+    poses.push_back(pose);
 }
 
 
 
-float PoseVectorHistory::rejectionProbabilityPos(const Eigen::Vector3f& pos,
-                                                 const SensorImpl& sensor) const
+float PoseVectorHistory::rejectionProbability(const Eigen::Vector3f& pos,
+                                              const SensorImpl& sensor) const
 {
     // Compute the normal distribution parameters.
     const float stddev_xy = sensor.far_plane / 3.0f;
@@ -75,10 +73,9 @@ float PoseVectorHistory::rejectionProbabilityPos(const Eigen::Vector3f& pos,
 
 
 
-float PoseVectorHistory::rejectionProbabilityPose(const Eigen::Matrix4f& pose,
-                                                  const SensorImpl& sensor) const
+size_t PoseVectorHistory::size() const
 {
-    return PoseVectorHistory::rejectionProbabilityPos(pose.topRightCorner<3, 1>(), sensor);
+    return poses.size();
 }
 
 
@@ -94,4 +91,5 @@ PoseVector PoseVectorHistory::neighbourPoses(const Eigen::Matrix4f& pose,
     }
     return neighbours;
 }
+
 } // namespace se

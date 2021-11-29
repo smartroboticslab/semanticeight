@@ -57,7 +57,8 @@ PoseGridHistory::DataType PoseGridHistory::get(const Eigen::Matrix4f& pose) cons
 
 
 
-float PoseGridHistory::rejectionProbability(const Eigen::Vector3f& position) const
+float PoseGridHistory::rejectionProbability(const Eigen::Vector3f& position,
+                                            const SensorImpl& /* sensor */) const
 {
     // Count the visited yaw angles for this position.
     float visited_yaw = 0;
