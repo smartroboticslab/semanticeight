@@ -64,6 +64,8 @@ class ExplorationPlanner {
 
     Image<uint32_t> renderMinScale(const SensorImpl& sensor);
 
+    const PoseGridHistory& getPoseGridHistory() const;
+
     /** Write the T_WB history as a PLY file.
        */
     int writePathPLY(const std::string& filename) const;

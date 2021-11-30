@@ -216,6 +216,13 @@ Image<uint32_t> ExplorationPlanner::renderMinScale(const SensorImpl& sensor)
 
 
 
+const PoseGridHistory& ExplorationPlanner::getPoseGridHistory() const
+{
+    return T_MB_grid_history_;
+}
+
+
+
 int ExplorationPlanner::writePathPLY(const std::string& filename) const
 {
     Path history_W(T_MB_history_.poses.size());
