@@ -33,105 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MESHING_HPP
 #include "../octree.hpp"
 #include "edge_tables.hpp"
+#include "mesh_face.hpp"
 
 namespace se {
 
 template<typename T>
 using VoxelBlockType = typename T::VoxelBlockType;
-
-typedef struct Triangle {
-    Eigen::Vector3f vertexes[3];
-    Eigen::Vector3f vnormals[3];
-    Eigen::Vector3f normal;
-    uint8_t r[3];
-    uint8_t g[3];
-    uint8_t b[3];
-    float surface_area;
-    int max_vertex_scale;
-
-    Triangle() : r{0u, 0u, 0u}, g{0u, 0u, 0u}, b{0u, 0u, 0u}
-    {
-        vertexes[0] = Eigen::Vector3f::Constant(0);
-        vertexes[1] = Eigen::Vector3f::Constant(0);
-        vertexes[2] = Eigen::Vector3f::Constant(0);
-        normal = Eigen::Vector3f::Constant(0);
-        surface_area = -1.f;
-        max_vertex_scale = 0;
-    }
-
-    inline bool iszero(const Eigen::Vector3f& v)
-    {
-        return !(v.array() == 0).all();
-    }
-
-    inline bool valid()
-    {
-        return !(iszero(vertexes[0]) && iszero(vertexes[1]) && iszero(vertexes[2]));
-    }
-
-    inline void compute_normal()
-    {
-        normal = (vertexes[1] - vertexes[0]).cross(vertexes[2] - vertexes[1]);
-    }
-
-    inline void compute_boundingbox(Eigen::Vector3f& minV, Eigen::Vector3f& maxV) const
-    {
-        minV = vertexes[0];
-        maxV = vertexes[0];
-        minV = minV.cwiseMin(vertexes[0]);
-        minV = minV.cwiseMin(vertexes[1]);
-        minV = minV.cwiseMin(vertexes[2]);
-        maxV = maxV.cwiseMax(vertexes[0]);
-        maxV = maxV.cwiseMax(vertexes[1]);
-        maxV = maxV.cwiseMax(vertexes[2]);
-    }
-
-    inline float area()
-    {
-        // Use the cached value if available
-        if (surface_area > 0)
-            return surface_area;
-        Eigen::Vector3f a = vertexes[1] - vertexes[0];
-        Eigen::Vector3f b = vertexes[2] - vertexes[1];
-        Eigen::Vector3f v = a.cross(b);
-        surface_area = v.norm() / 2;
-        return surface_area;
-    }
-
-    Eigen::Vector3f* uniform_sample(int num)
-    {
-        Eigen::Vector3f* points = new Eigen::Vector3f[num];
-        for (int i = 0; i < num; ++i) {
-            float u = ((float) rand()) / (float) RAND_MAX;
-            float v = ((float) rand()) / (float) RAND_MAX;
-            if (u + v > 1) {
-                u = 1 - u;
-                v = 1 - v;
-            }
-            float w = 1 - (u + v);
-            points[i] = u * vertexes[0] + v * vertexes[1] + w * vertexes[2];
-        }
-
-        return points;
-    }
-
-    Eigen::Vector3f* uniform_sample(int num, unsigned int& seed) const
-    {
-        Eigen::Vector3f* points = new Eigen::Vector3f[num];
-        for (int i = 0; i < num; ++i) {
-            float u = ((float) rand_r(&seed)) / (float) RAND_MAX;
-            float v = ((float) rand_r(&seed)) / (float) RAND_MAX;
-            if (u + v > 1) {
-                u = 1 - u;
-                v = 1 - v;
-            }
-            float w = 1 - (u + v);
-            points[i] = u * vertexes[0] + v * vertexes[1] + w * vertexes[2];
-        }
-        return points;
-    }
-
-} Triangle;
 
 namespace meshing {
 enum status : uint8_t {
@@ -985,14 +892,11 @@ inline bool checkVertex(const Eigen::Vector3f& vertex_M, const float dim)
 
 } // namespace meshing
 namespace algorithms {
-template<typename FieldType,
-         typename ValueSelector,
-         typename InsidePredicate,
-         typename TriangleType>
+template<typename FieldType, typename ValueSelector, typename InsidePredicate>
 void marching_cube(Octree<FieldType>& map,
                    ValueSelector select_value,
                    InsidePredicate inside,
-                   std::vector<TriangleType>& triangles)
+                   TriangleMesh& triangles)
 {
     using namespace meshing;
     std::vector<VoxelBlockType<FieldType>*> block_list;
@@ -1038,14 +942,11 @@ void marching_cube(Octree<FieldType>& map,
     }
 }
 
-template<typename FieldType,
-         typename ValueSelector,
-         typename InsidePredicate,
-         typename TriangleType>
+template<typename FieldType, typename ValueSelector, typename InsidePredicate>
 void dual_marching_cube(Octree<FieldType>& map,
                         ValueSelector select_value,
                         InsidePredicate inside,
-                        std::vector<TriangleType>& triangles,
+                        TriangleMesh& triangles,
                         bool use_min_scale = false)
 {
     using namespace meshing;

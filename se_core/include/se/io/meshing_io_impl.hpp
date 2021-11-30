@@ -1,30 +1,38 @@
-// SPDX-FileCopyrightText: 2018-2020 Smart Robotics Lab, Imperial College London
-// SPDX-FileCopyrightText: 2016 Emanuele Vespa, ETH Zürich
-// SPDX-FileCopyrightText: 2019-2020 Nils Funk, Imperial College London
-// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * SPDX-FileCopyrightText: 2016-2019 Emanuele Vespa
+ * SPDX-FileCopyrightText: 2018-2021 Smart Robotics Lab, Imperial College London, Technical University of Munich
+ * SPDX-FileCopyrightText: 2019-2021 Nils Funk
+ * SPDX-FileCopyrightText: 2020-2021 Sotiris Papatheodorou
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 
-#ifndef __MESHING_IO_IMPL_HPP
-#define __MESHING_IO_IMPL_HPP
+#ifndef SE_MESHING_IO_IMPL_HPP
+#define SE_MESHING_IO_IMPL_HPP
 
+namespace se {
+namespace colours {
+/**
+ * The colours used for the various integration scales.
+ */
+static const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> scale = {
+    {102, 194, 165},
+    {252, 141, 98},
+    {141, 160, 203},
+    {231, 138, 195},
+    {166, 216, 84},
+    {255, 217, 47},
+    {229, 196, 148},
+    {179, 179, 179}};
+} // namespace colours
 
-static std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> color_fraction_map =
-    {
-        {0.40, 0.76, 0.65},
-        {0.99, 0.55, 0.38},
-        {0.55, 0.63, 0.80},
-        {0.91, 0.54, 0.76},
-        {0.65, 0.84, 0.33},
-        {1.00, 0.85, 0.18},
-        {0.89, 0.77, 0.58},
-        {0.70, 0.70, 0.70},
-};
+namespace io {
 
-int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
-                      const std::string filename,
-                      const Eigen::Matrix4f& T_WM,
-                      const float voxel_dim,
-                      const float* point_data,
-                      const float* cell_data)
+template<typename FaceT>
+int save_mesh_vtk(const Mesh<FaceT>& mesh,
+                  const std::string& filename,
+                  const Eigen::Matrix4f& T_WM,
+                  const float* point_data,
+                  const float* cell_data)
 {
     // Open the file for writing.
     std::ofstream file(filename.c_str());
@@ -33,79 +41,65 @@ int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
         return 1;
     }
 
-    std::stringstream ss_points_W;
-    std::stringstream ss_polygons;
-    std::stringstream ss_scale_colors;
-    std::stringstream ss_point_data;
-    std::stringstream ss_cell_data;
-    int point_count = 0;
-    int triangle_count = 0;
-    bool has_point_data = point_data != nullptr;
-    bool has_cell_data = cell_data != nullptr;
+    const size_t num_faces = mesh.size();
+    const size_t num_vertices = FaceT::num_vertexes * num_faces;
+    const bool has_point_data = point_data != nullptr;
+    const bool has_cell_data = cell_data != nullptr;
 
-    for (unsigned int i = 0; i < mesh.size(); ++i) {
-        const Triangle& triangle_M = mesh[i];
+    // Write the header.
+    file << "# vtk DataFile Version 1.0\n";
+    file << "vtk mesh generated from supereight 2\n";
+    file << "ASCII\n";
+    file << "DATASET POLYDATA\n";
 
-        Eigen::Vector3f vertex_0_W =
-            (T_WM * (voxel_dim * triangle_M.vertexes[0]).homogeneous()).head(3);
-        Eigen::Vector3f vertex_1_W =
-            (T_WM * (voxel_dim * triangle_M.vertexes[1]).homogeneous()).head(3);
-        Eigen::Vector3f vertex_2_W =
-            (T_WM * (voxel_dim * triangle_M.vertexes[2]).homogeneous()).head(3);
-
-        ss_points_W << vertex_0_W.x() << " " << vertex_0_W.y() << " " << vertex_0_W.z()
-                    << std::endl;
-
-        ss_points_W << vertex_1_W.x() << " " << vertex_1_W.y() << " " << vertex_1_W.z()
-                    << std::endl;
-
-        ss_points_W << vertex_2_W.x() << " " << vertex_2_W.y() << " " << vertex_2_W.z()
-                    << std::endl;
-
-        ss_polygons << "3 " << point_count << " " << point_count + 1 << " " << point_count + 2
-                    << std::endl;
-
-        const Eigen::Vector3f RGB = color_fraction_map[triangle_M.max_vertex_scale];
-        ss_scale_colors << RGB[0] << " " << RGB[1] << " " << RGB[2] << " " << 1.0 << std::endl;
-
-        if (has_point_data) {
-            ss_point_data << point_data[i * 3] << std::endl;
-            ss_point_data << point_data[i * 3 + 1] << std::endl;
-            ss_point_data << point_data[i * 3 + 2] << std::endl;
+    // Write the vertices.
+    file << "POINTS " << num_vertices << " FLOAT\n";
+    for (size_t f = 0; f < num_faces; ++f) {
+        for (size_t v = 0; v < FaceT::num_vertexes; ++v) {
+            const Eigen::Vector3f vertex_W =
+                (T_WM * mesh[f].vertexes[v].homogeneous()).template head<3>();
+            file << vertex_W.x() << " " << vertex_W.y() << " " << vertex_W.z() << "\n";
         }
-
-        if (has_cell_data) {
-            ss_cell_data << cell_data[i] << std::endl;
-        }
-
-        point_count += 3;
-        triangle_count++;
     }
 
-    file << "# vtk DataFile Version 1.0" << std::endl;
-    file << "vtk mesh generated from KFusion" << std::endl;
-    file << "ASCII" << std::endl;
-    file << "DATASET POLYDATA" << std::endl;
+    // Write the faces.
+    file << "POLYGONS " << num_faces << " " << num_faces * (1 + FaceT::num_vertexes) << "\n";
+    for (size_t f = 0; f < num_faces; ++f) {
+        file << FaceT::num_vertexes;
+        for (size_t v = 0; v < FaceT::num_vertexes; ++v) {
+            file << " " << FaceT::num_vertexes * f + v;
+        }
+        file << "\n";
+    }
 
-    file << "POINTS " << point_count << " FLOAT" << std::endl;
-    file << ss_points_W.str();
-
-    file << "POLYGONS " << triangle_count << " " << triangle_count * 4 << std::endl;
-    file << ss_polygons.str() << std::endl;
+    // Write the vertex data.
     if (has_point_data) {
-        file << "POINT_DATA " << point_count << std::endl;
-        file << "SCALARS vertex_scalars float 1" << std::endl;
-        file << "LOOKUP_TABLE default" << std::endl;
-        file << ss_point_data.str();
+        file << "POINT_DATA " << num_vertices << "\n";
+        file << "SCALARS vertex_scalars float 1\n";
+        file << "LOOKUP_TABLE default\n";
+        for (size_t f = 0; f < num_faces; ++f) {
+            for (size_t v = 0; v < FaceT::num_vertexes; ++v) {
+                file << point_data[f * FaceT::num_vertexes + v] << "\n";
+            }
+        }
     }
 
-    file << "CELL_DATA " << triangle_count << std::endl;
-    file << "COLOR_SCALARS RGBA 4" << std::endl;
-    file << ss_scale_colors.str() << std::endl;
+    // Write the face scale colours.
+    file << "CELL_DATA " << num_faces << "\n";
+    file << "COLOR_SCALARS RGBA 4\n";
+    for (size_t f = 0; f < num_faces; ++f) {
+        // Colour the triangle depending on its scale.
+        const Eigen::Vector3f RGB = se::colours::scale[mesh[f].max_vertex_scale] / 255.0f;
+        file << RGB[0] << " " << RGB[1] << " " << RGB[2] << " 1\n";
+    }
+
+    // Write the face data.
     if (has_cell_data) {
-        file << "SCALARS cell_scalars float 1" << std::endl;
-        file << "LOOKUP_TABLE default" << std::endl;
-        file << ss_cell_data.str();
+        file << "SCALARS cell_scalars float 1\n";
+        file << "LOOKUP_TABLE default\n";
+        for (size_t f = 0; f < num_faces; ++f) {
+            file << cell_data[f] << "\n";
+        }
     }
 
     file.close();
@@ -114,12 +108,12 @@ int se::save_mesh_vtk(const std::vector<Triangle>& mesh,
 
 
 
-int se::save_mesh_ply(const std::vector<Triangle>& mesh,
-                      const std::string filename,
-                      const Eigen::Matrix4f& T_WM,
-                      const float voxel_dim,
-                      const float* point_data,
-                      const float* cell_data)
+template<typename FaceT>
+int save_mesh_ply(const Mesh<FaceT>& mesh,
+                  const std::string& filename,
+                  const Eigen::Matrix4f& T_WM,
+                  const float* point_data,
+                  const float* cell_data)
 {
     // Open the file for writing.
     std::ofstream file(filename.c_str());
@@ -128,10 +122,10 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
         return 1;
     }
 
+    const size_t num_faces = mesh.size();
+    const size_t num_vertices = FaceT::num_vertexes * num_faces;
     const bool has_point_data = point_data != nullptr;
     const bool has_cell_data = cell_data != nullptr;
-    const size_t num_faces = mesh.size();
-    const size_t num_vertices = 3 * num_faces;
 
     // Write header
     file << "ply\n";
@@ -156,18 +150,17 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
         file << "property float face_value\n";
     }
     file << "end_header\n";
-    // Write vertices and vertex data
-    for (size_t i = 0; i < num_faces; ++i) {
-        const Triangle& triangle_M = mesh[i];
-        // Write each triangle vertex
-        for (int v = 0; v < 3; ++v) {
+
+    // Write the vertices and the vertex data.
+    for (size_t f = 0; f < num_faces; ++f) {
+        for (size_t v = 0; v < FaceT::num_vertexes; ++v) {
             const Eigen::Vector3f vertex_W =
-                (T_WM * (voxel_dim * triangle_M.vertexes[v]).homogeneous()).head(3);
+                (T_WM * mesh[f].vertexes[v].homogeneous()).template head<3>();
             file << vertex_W.x() << " " << vertex_W.y() << " " << vertex_W.z();
-            file << " " << (int) triangle_M.r[v] << " " << (int) triangle_M.g[v] << " "
-                 << (int) triangle_M.b[v];
+            file << " " << static_cast<int>(mesh[f].r[v]) << " " << static_cast<int>(mesh[f].g[v])
+                 << " " << static_cast<int>(mesh[f].b[v]);
             if (has_point_data) {
-                file << " " << point_data[3 * i + v] << "\n";
+                file << " " << point_data[f * FaceT::num_vertexes + v] << "\n";
             }
             else {
                 file << "\n";
@@ -175,15 +168,18 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
         }
     }
 
-    // Write faces and face data
-    for (size_t i = 0; i < num_faces; ++i) {
-        file << "3 " << 3 * i << " " << 3 * i + 1 << " " << 3 * i + 2;
-        const Triangle& triangle_M = mesh[i];
-        const Eigen::Vector3i rgb =
-            (255.0f * color_fraction_map[triangle_M.max_vertex_scale]).cast<int>();
-        file << " " << rgb.x() << " " << rgb.y() << " " << rgb.z();
+    // Write the faces and the face data.
+    for (size_t f = 0; f < num_faces; ++f) {
+        file << FaceT::num_vertexes;
+        for (size_t v = 0; v < FaceT::num_vertexes; ++v) {
+            file << " " << FaceT::num_vertexes * f + v;
+        }
+        // Write the face scale colour.
+        const Eigen::Vector3i RGB =
+            se::colours::scale[mesh[f].max_vertex_scale].template cast<int>();
+        file << " " << RGB[0] << " " << RGB[1] << " " << RGB[2];
         if (has_cell_data) {
-            file << " " << cell_data[i] << "\n";
+            file << " " << cell_data[f] << "\n";
         }
         else {
             file << "\n";
@@ -196,7 +192,8 @@ int se::save_mesh_ply(const std::vector<Triangle>& mesh,
 
 
 
-int se::save_mesh_obj(const std::vector<Triangle>& mesh, const std::string filename)
+template<typename FaceT>
+int save_mesh_obj(const Mesh<FaceT>& mesh, const std::string& filename, const Eigen::Matrix4f& T_WM)
 {
     // Open the file for writing.
     std::ofstream file(filename.c_str());
@@ -205,35 +202,37 @@ int se::save_mesh_obj(const std::vector<Triangle>& mesh, const std::string filen
         return 1;
     }
 
-    std::stringstream points_M;
-    std::stringstream faces;
-    int point_count = 0;
-    int face_count = 0;
+    const size_t num_faces = mesh.size();
+    const size_t num_vertices = FaceT::num_vertexes * num_faces;
 
-    for (unsigned int i = 0; i < mesh.size(); i++) {
-        const Triangle& triangle_M = mesh[i];
-        points_M << "v " << triangle_M.vertexes[0].x() << " " << triangle_M.vertexes[0].y() << " "
-                 << triangle_M.vertexes[0].z() << std::endl;
-        points_M << "v " << triangle_M.vertexes[1].x() << " " << triangle_M.vertexes[1].y() << " "
-                 << triangle_M.vertexes[1].z() << std::endl;
-        points_M << "v " << triangle_M.vertexes[2].x() << " " << triangle_M.vertexes[2].y() << " "
-                 << triangle_M.vertexes[2].z() << std::endl;
+    // Write the header.
+    file << "# OBJ file format with ext .obj" << std::endl;
+    file << "# vertex count = " << num_vertices << std::endl;
+    file << "# face count = " << num_faces << std::endl;
 
-        faces << "f " << (face_count * 3) + 1 << " " << (face_count * 3) + 2 << " "
-              << (face_count * 3) + 3 << std::endl;
-
-        point_count += 3;
-        face_count += 1;
+    // Write the vertices.
+    for (size_t f = 0; f < num_faces; ++f) {
+        for (size_t v = 0; v < FaceT::num_vertexes; ++v) {
+            const Eigen::Vector3f vertex_W =
+                (T_WM * mesh[f].vertexes[v].homogeneous()).template head<3>();
+            file << "v " << vertex_W.x() << " " << vertex_W.y() << " " << vertex_W.z() << "\n";
+        }
     }
 
-    file << "# OBJ file format with ext .obj" << std::endl;
-    file << "# vertex count = " << point_count << std::endl;
-    file << "# face count = " << face_count << std::endl;
-    file << points_M.str();
-    file << faces.str();
+    // Write the faces.
+    for (size_t f = 0; f < num_faces; ++f) {
+        file << "f ";
+        for (size_t v = 0; v < FaceT::num_vertexes; ++v) {
+            file << " " << FaceT::num_vertexes * f + v + 1;
+        }
+        file << "\n";
+    }
 
     file.close();
     return 0;
 }
 
-#endif // __MESHING_IO_IMPL_HPP
+} // namespace io
+} // namespace se
+
+#endif // SE_MESHING_IO_IMPL_HPP

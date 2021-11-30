@@ -396,10 +396,10 @@ void DenseSLAMSystem::dumpMesh(const std::string filename_voxel,
         }
 
         if (str_utils::ends_with(filename_voxel, ".ply")) {
-            save_mesh_ply(mesh, filename_voxel.c_str());
+            se::io::save_mesh_ply(mesh, filename_voxel.c_str());
         }
         else {
-            save_mesh_vtk(mesh, filename_voxel.c_str());
+            se::io::save_mesh_vtk(mesh, filename_voxel.c_str());
         }
     }
 
@@ -409,17 +409,13 @@ void DenseSLAMSystem::dumpMesh(const std::string filename_voxel,
                       << std::endl;
         }
 
+        Eigen::Matrix4f T_WM = se::math::to_inverse_transformation(this->T_MW_);
+        T_WM.topLeftCorner<3, 3>() *= map_->voxelDim();
         if (str_utils::ends_with(filename_meter, ".ply")) {
-            save_mesh_ply(mesh,
-                          filename_meter.c_str(),
-                          se::math::to_inverse_transformation(this->T_MW_),
-                          map_->voxelDim());
+            se::io::save_mesh_ply(mesh, filename_meter.c_str(), T_WM);
         }
         else {
-            save_mesh_vtk(mesh,
-                          filename_meter.c_str(),
-                          se::math::to_inverse_transformation(this->T_MW_),
-                          map_->voxelDim());
+            se::io::save_mesh_vtk(mesh, filename_meter.c_str(), T_WM);
         }
     }
 
@@ -836,7 +832,7 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
         if (print_path) {
             std::cout << "Saving triangle mesh to file :" << f << "\n";
         }
-        save_mesh_ply(mesh, f.c_str(), T_WO, object->voxelDim());
+        se::io::save_mesh_ply(mesh, f.c_str(), T_WO);
     }
 }
 
