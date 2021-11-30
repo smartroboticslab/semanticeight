@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <string>
 
+#include "se/algorithms/mesh_face.hpp"
 #include "se/pose_history.hpp"
 #include "se/utils/math_utils.h"
 
@@ -49,9 +50,9 @@ class PoseGridHistory : public PoseHistory {
 
     XYZYawVector visitedPoses() const;
 
-    bool writeGridMesh(const std::string& filename) const;
+    QuadMesh gridMesh() const;
 
-    bool writeWedgeMesh(const std::string& filename) const;
+    TriangleMesh wedgeMesh() const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
