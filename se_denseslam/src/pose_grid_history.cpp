@@ -199,15 +199,14 @@ TriangleMesh PoseGridHistory::wedgeMesh() const
         static constexpr int wedge_num_vertexes = 6;
         Eigen::Array3f wedge_vertexes[wedge_num_vertexes];
         const Eigen::Array3f half_xy_res(res_.x() / 2, res_.y() / 2, 0);
-        const float half_yaw_res = res_.w() / 2;
         // Bottom centre vertex
         wedge_vertexes[0] = t.head<3>().array() + half_xy_res;
         // Bottom right vertex
-        const float right_yaw = t.w() - half_yaw_res;
+        const float right_yaw = t.w();
         const Eigen::Array3f right_normal(cos(right_yaw), sin(right_yaw), 0);
         wedge_vertexes[1] = wedge_vertexes[0] + half_xy_res * right_normal;
         // Bottom left vertex
-        const float left_yaw = t.w() + half_yaw_res;
+        const float left_yaw = t.w() + res_.w();
         const Eigen::Array3f left_normal(cos(left_yaw), sin(left_yaw), 0);
         wedge_vertexes[2] = wedge_vertexes[0] + half_xy_res * left_normal;
         // The top vertices are just translated along the z axis
@@ -269,7 +268,7 @@ Eigen::Vector4i PoseGridHistory::linearIndexToIndices(const size_t linear_idx) c
 Eigen::Vector4i PoseGridHistory::poseToIndices(const Eigen::Vector4f& pose) const
 {
     // Discretize the pose into cell indices.
-    return (inv_res_.array() * pose.array()).matrix().cast<int>();
+    return (inv_res_.array() * wrapYaw(pose).array()).matrix().cast<int>();
 }
 
 
@@ -295,9 +294,22 @@ Eigen::Vector4f PoseGridHistory::indexToPose(const size_t linear_idx) const
 
 
 
+Eigen::Vector4f PoseGridHistory::wrapYaw(const Eigen::Vector4f& pose)
+{
+    return Eigen::Vector4f(pose.x(), pose.y(), pose.z(), se::math::wrap_angle_2pi(pose.w()));
+}
+
+
+
 float PoseGridHistory::getYaw(const Eigen::Matrix4f& pose)
 {
-    return pose.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).x();
+    // Keep only the rotation around the z axis from the quaternion.
+    // https://stackoverflow.com/questions/5782658/extracting-yaw-from-a-quaternion#5783030
+    Eigen::Quaternionf q(pose.topLeftCorner<3, 3>());
+    q.x() = 0.0f;
+    q.y() = 0.0f;
+    q.normalize();
+    return se::math::wrap_angle_2pi(2 * atan2(q.z(), q.w()));
 }
 
 } // namespace se

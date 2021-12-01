@@ -78,6 +78,8 @@ class PoseGridHistory : public PoseHistory {
 
     Eigen::Vector4f indexToPose(const size_t idx) const;
 
+    static Eigen::Vector4f wrapYaw(const Eigen::Vector4f& pose);
+
     static float getYaw(const Eigen::Matrix4f& pose);
 };
 
