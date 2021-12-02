@@ -157,6 +157,7 @@ VoxelBlock<T>::VoxelBlock(const int current_scale, const int min_scale) :
         current_scale_(current_scale),
         min_scale_(min_scale)
 {
+    this->size_ = BLOCK_SIZE;
 }
 
 template<typename T>
