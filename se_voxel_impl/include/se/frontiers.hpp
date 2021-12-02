@@ -168,15 +168,14 @@ int update_frontier_data(se::Node<T>& node, const se::Octree<T>& octree)
 
 
 
-/** Update the frontier status of all voxels of VoxelBlocks in frontiers.
-   * VoxelBlocks with frontier volume less than min_frontier_volume will be
-   * removed from frontiers. If min_frontier_volume is set to 0, all
-   * frontiers will be kept in frontiers.
-   */
+/** Update the frontier status of all voxels of VoxelBlocks in frontiers. VoxelBlocks with frontier
+ * volume over total volume less than min_frontier_ratio will be removed from frontiers. If
+ * min_frontier_ratio is set to 0, all frontiers will be kept in frontiers.
+ */
 template<typename T>
 void update_frontiers(se::Octree<T>& octree,
                       std::set<se::key_t>& frontiers,
-                      const int min_frontier_volume)
+                      const float min_frontier_ratio)
 {
     std::set<se::key_t> not_frontiers;
     // Remove VoxelBlocks that no longer correspond to frontiers
@@ -191,8 +190,10 @@ void update_frontiers(se::Octree<T>& octree,
         }
         // Update the frontier status of the Node's voxel
         const int frontier_volume = update_frontier_data(*node, octree);
+        const float frontier_ratio =
+            static_cast<float>(frontier_volume) / se::math::cu(node->size());
         // Remove the Node if its frontiers are too small
-        if (frontier_volume == 0 || frontier_volume < min_frontier_volume) {
+        if (frontier_volume == 0 || frontier_ratio < min_frontier_ratio) {
             not_frontiers.insert(code);
         }
     }

@@ -120,8 +120,6 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
     }
 
     const float voxel_dim = map_dim_.x() / map_size_.x();
-    const float voxel_vol = se::math::cu(voxel_dim);
-    frontier_cluster_min_size_ = ceilf(config.frontier_cluster_min_volume / voxel_vol);
     if (has_yaml_voxel_impl_config) {
         VoxelImpl::configure(yaml_voxel_impl_config, voxel_dim);
         ObjVoxelImpl::configure(yaml_voxel_impl_config, se::default_res);
@@ -284,7 +282,7 @@ bool DenseSLAMSystem::integrate(const SensorImpl& sensor, const unsigned frame)
     TOCK("INTEGRATION")
     TICKD("FRONTIERS")
     se::setunion(frontiers_, updated_nodes_);
-    update_frontiers(*map_, frontiers_, frontier_cluster_min_size_);
+    update_frontiers(*map_, frontiers_, config_.frontier_cluster_min_ratio);
     TOCK("FRONTIERS")
     // Update the free/occupied volume.
     se::ExploredVolume ev(*map_, aabb_min_M_, aabb_max_M_);
@@ -860,7 +858,7 @@ void DenseSLAMSystem::freeInitialPosition(const SensorImpl& sensor, const std::s
         freeInitSphere();
     }
     // Update the frontier status
-    update_frontiers(*map_, frontiers_, frontier_cluster_min_size_);
+    update_frontiers(*map_, frontiers_, config_.frontier_cluster_min_ratio);
     // Up-propagate free space to the root
     VoxelImpl::propagateToRoot(*map_);
 }
