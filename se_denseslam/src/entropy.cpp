@@ -146,7 +146,10 @@ float information_gain_along_ray(const Octree<VoxelImpl::VoxelType>& map,
     const float t_step = map.voxelDim();
     for (float t = t_near; t <= t_far; t += t_step) {
         const Eigen::Vector3f point_M = ray_origin_M + t * ray_dir_M;
-        const float l = map.interpAtPoint(point_M, VoxelImpl::VoxelType::threshold).first;
+        //const float l = map.interpAtPoint(point_M, VoxelImpl::VoxelType::threshold).first;
+        VoxelImpl::VoxelType::VoxelData data;
+        map.getAtPoint(point_M, data);
+        const float l = VoxelImpl::VoxelType::threshold(data);
         ray_entropy += entropy(log_odds_to_prob(l));
         if (l > VoxelImpl::surface_boundary) {
             // We have reached occupied space, stop raycasting.
