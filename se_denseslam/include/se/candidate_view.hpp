@@ -93,6 +93,8 @@ class CandidateView {
                                 const Eigen::Matrix4f& T_BC,
                                 const bool visualize_yaw = true) const;
 
+    Image<Eigen::Vector3f> rays(const SensorImpl& sensor, const Eigen::Matrix4f& T_BC) const;
+
     /** ICRA 2020
        */
     static Path addIntermediateTranslation(const Eigen::Matrix4f& segment_start_M,

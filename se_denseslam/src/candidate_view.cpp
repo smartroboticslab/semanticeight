@@ -222,6 +222,14 @@ Image<uint32_t> CandidateView::renderDepth(const Octree<VoxelImpl::VoxelType>& m
 
 
 
+Image<Eigen::Vector3f> CandidateView::rays(const SensorImpl& sensor,
+                                           const Eigen::Matrix4f& T_BC) const
+{
+    return ray_image(entropy_image_.width(), entropy_image_.height(), sensor, T_BC);
+}
+
+
+
 Path CandidateView::addIntermediateTranslation(const Eigen::Matrix4f& segment_start_M,
                                                const Eigen::Matrix4f& segment_end_M,
                                                float delta_t,
