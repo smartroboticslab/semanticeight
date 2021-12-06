@@ -76,7 +76,7 @@ float azimuth_from_index(const int x_idx, const int width, const float hfov)
     const float theta_max = hfov / 2.0f;
     // Image column coordinates increase towards the right but azimuth angle increases towards the
     // left.
-    return theta_max - delta_theta * x_idx;
+    return theta_max - delta_theta * (x_idx + 0.5f);
 }
 
 
@@ -95,7 +95,7 @@ float polar_from_index(int y_idx, int height, float vfov, float pitch_offset)
     const float delta_phi = vfov / height;
     const float phi_min = M_PI_F / 2.0f - vfov / 2.0f + pitch_offset;
     // Both image row coordinates and polar angles increase downwards.
-    return phi_min + delta_phi * y_idx;
+    return phi_min + delta_phi * (y_idx + 0.5f);
 }
 
 
