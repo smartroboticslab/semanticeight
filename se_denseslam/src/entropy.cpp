@@ -213,26 +213,31 @@ std::pair<int, float> max_window(const Image<float>& image,
 
 
 
-Image<Eigen::Vector3f>
-ray_image(const int width, const int height, const SensorImpl& sensor, const float pitch_offset)
+float max_ray_entropy(const float voxel_dim, const float near_plane, const float far_plane)
 {
-    Image<Eigen::Vector3f> rays(width, height);
-#pragma omp parallel for
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            const Eigen::Vector3f ray_M =
-                ray_dir_from_pixel(x, y, width, height, sensor.vertical_fov, pitch_offset);
-            rays(x, y) = ray_M;
-        }
-    }
-    return rays;
+    return 8.0f * sqrtf(3.0f) * (far_plane - near_plane) / voxel_dim;
 }
 
 
 
-float max_ray_entropy(const float voxel_dim, const float near_plane, const float far_plane)
+Image<Eigen::Vector3f>
+ray_image(const int width, const int height, const SensorImpl& sensor, const Eigen::Matrix4f& T_BC)
 {
-    return 8.0f * sqrtf(3.0f) * (far_plane - near_plane) / voxel_dim;
+    // Transformation from the camera body frame Bc (x-forward, z-up) to the camera frame C
+    // (z-forward, x-right).
+    Eigen::Matrix4f T_CBc;
+    T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
+    const Eigen::Matrix4f T_BBc = T_BC * T_CBc;
+    // The pitch angle of the camera relative to the body frame.
+    const float pitch = math::wrap_angle_pi(T_BBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
+    Image<Eigen::Vector3f> rays(width, height);
+#pragma omp parallel for
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            rays(x, y) = ray_dir_from_pixel(x, y, width, height, sensor.vertical_fov, pitch);
+        }
+    }
+    return rays;
 }
 
 
@@ -244,22 +249,15 @@ void raycast_entropy(Image<float>& entropy_image,
                      const Eigen::Matrix4f& T_BC)
 {
     const Eigen::Vector3f& t_MB = T_MB.topRightCorner<3, 1>();
-    // Transformation from the camera body frame Bc (x-forward, z-up) to the camera frame C
-    // (z-forward, x-right).
-    Eigen::Matrix4f T_CBc;
-    T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
-    const Eigen::Matrix4f T_BBc = T_BC * T_CBc;
-    // The pitch angle of the camera relative to the body frame.
-    const float pitch = math::wrap_angle_pi(T_BBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
+    const Image<Eigen::Vector3f> rays =
+        ray_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
 #pragma omp parallel for
     for (int y = 0; y < entropy_image.height(); y++) {
 #pragma omp simd
         for (int x = 0; x < entropy_image.width(); x++) {
-            const Eigen::Vector3f ray_dir_M = ray_dir_from_pixel(
-                x, y, entropy_image.width(), entropy_image.height(), sensor.vertical_fov, pitch);
             // Accumulate the entropy along the ray
             entropy_image(x, y) = information_gain_along_ray(
-                map, t_MB, ray_dir_M, sensor.near_plane, sensor.far_plane);
+                map, t_MB, rays(x, y), sensor.near_plane, sensor.far_plane);
             // Normalize the per-ray entropy in the interval [0-1].
             entropy_image(x, y) /=
                 max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
