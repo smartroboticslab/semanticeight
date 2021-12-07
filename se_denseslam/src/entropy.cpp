@@ -113,7 +113,7 @@ int index_from_azimuth(const float theta, const int width, const float hfov)
     const float theta_max = hfov / 2.0f;
     // Image column coordinates increase towards the right but azimuth angle increases towards the
     // left.
-    return roundf((theta_max - theta) / delta_theta);
+    return roundf((theta_max - theta) / delta_theta - 0.5f);
 }
 
 

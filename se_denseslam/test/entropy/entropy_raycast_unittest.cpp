@@ -175,15 +175,9 @@ TEST_F(EntropyRaycast, rayImage)
     T_BC << 0, -0.09983341664682817, 0.9950041652780257, 0.1155739796873748, -1, 0, 0, 0.055, 0,
         -0.9950041652780257, -0.09983341664682817, -0.02502997417539525, 0, 0, 0, 1;
 
-    Eigen::Matrix4f T_CBc;
-    T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
-    const Eigen::Matrix4f T_BBc = T_BC * T_CBc;
-    const float pitch =
-        se::math::wrap_angle_pi(T_BBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
-
-    se::Image<Eigen::Vector3f> rays_MB = se::ray_image(raycast_width, raycast_height, sensor, 0.0f);
+    se::Image<Eigen::Vector3f> rays_MB = se::ray_image(raycast_width, raycast_height, sensor, T_BC);
     se::Image<Eigen::Vector3f> rays_MBc =
-        se::ray_image(raycast_width, raycast_height, sensor, pitch);
+        se::ray_image(raycast_width, raycast_height, sensor, T_BC);
 
     se::save_point_cloud_pcd(rays_MB, tmp_ + "/rays_MB.pcd", T_MB);
     se::save_point_cloud_pcd(rays_MBc, tmp_ + "/rays_MB_corrected_pitch.pcd", T_MB);
