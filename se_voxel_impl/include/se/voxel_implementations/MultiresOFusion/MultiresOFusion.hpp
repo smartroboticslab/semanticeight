@@ -278,8 +278,9 @@ struct MultiresOFusion {
                                    float,
                                    float t_far);
 
-    static void
-    dumpMesh(OctreeType& map, std::vector<se::Triangle>& mesh, const bool use_min_scale = false);
+    static void dumpMesh(OctreeType& map,
+                         std::vector<se::Triangle>& mesh,
+                         se::meshing::ScaleMode scale_mode = se::meshing::ScaleMode::Current);
 
     static void propagateToRoot(OctreeType& map);
 };

@@ -422,11 +422,11 @@ void DenseSLAMSystem::dumpMesh(const std::string filename_voxel,
 
 
 
-std::vector<se::Triangle> DenseSLAMSystem::triangleMeshV()
+std::vector<se::Triangle> DenseSLAMSystem::triangleMeshV(const se::meshing::ScaleMode scale_mode)
 {
     TICK("triangleMesh")
     std::vector<se::Triangle> mesh;
-    VoxelImpl::dumpMesh(*map_, mesh);
+    VoxelImpl::dumpMesh(*map_, mesh, scale_mode);
     TOCK("triangleMesh")
     return mesh;
 }
@@ -824,7 +824,7 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
 {
     for (const auto& object : objects_) {
         std::vector<se::Triangle> mesh;
-        ObjVoxelImpl::dumpMesh(*(object->map_), mesh, true);
+        ObjVoxelImpl::dumpMesh(*(object->map_), mesh, se::meshing::ScaleMode::Min);
         const std::string f = filename + "_" + std::to_string(object->instance_id) + ".ply";
         Eigen::Matrix4f T_WO = se::math::to_inverse_transformation(object->T_OM_ * T_MW_);
         T_WO.topLeftCorner<3, 3>() *= object->voxelDim();
@@ -837,12 +837,13 @@ void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool pr
 
 
 
-std::vector<std::vector<se::Triangle>> DenseSLAMSystem::objectTriangleMeshesV()
+std::vector<std::vector<se::Triangle>>
+DenseSLAMSystem::objectTriangleMeshesV(const se::meshing::ScaleMode scale_mode)
 {
     std::vector<std::vector<se::Triangle>> meshes(objects_.size());
     for (size_t i = 0; i < objects_.size(); i++) {
         const auto& object = *objects_[i];
-        ObjVoxelImpl::dumpMesh(*object.map_, meshes[i], true);
+        ObjVoxelImpl::dumpMesh(*object.map_, meshes[i], scale_mode);
     }
     return meshes;
 }

@@ -367,7 +367,8 @@ class DenseSLAMSystem {
                   const std::string filename_meter = "",
                   const bool print_path = false);
 
-    std::vector<se::Triangle> triangleMeshV();
+    std::vector<se::Triangle>
+    triangleMeshV(const se::meshing::ScaleMode scale_mode = se::meshing::ScaleMode::Current);
 
     /** \brief Export the octree structure and slices.
      *
@@ -868,7 +869,8 @@ class DenseSLAMSystem {
 
     void dumpObjectMeshes(const std::string filename, const bool print_path);
 
-    std::vector<std::vector<se::Triangle>> objectTriangleMeshesV();
+    std::vector<std::vector<se::Triangle>>
+    objectTriangleMeshesV(const se::meshing::ScaleMode scale_mode = se::meshing::ScaleMode::Min);
 
     Objects getObjectMaps()
     {

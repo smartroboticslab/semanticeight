@@ -23,9 +23,9 @@
 #include "se/config.h"
 #include "se/constant_parameters.h"
 #include "se/filesystem.hpp"
+#include "se/sensor_implementation.hpp"
 #include "se/str_utils.hpp"
 #include "se/utils/math_utils.h"
-#include "se/sensor_implementation.hpp"
 #include "se/voxel_implementations.hpp"
 
 // Put colons after options with arguments

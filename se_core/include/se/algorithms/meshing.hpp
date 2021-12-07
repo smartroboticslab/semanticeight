@@ -47,6 +47,28 @@ enum status : uint8_t {
     INSIDE = 0xFF,  // 255
 };
 
+enum class ScaleMode : int {
+    Min = -2,
+    Current,
+    Scale0,
+    Scale1,
+    Scale2,
+    Scale3,
+};
+
+template<typename VoxelBlockT>
+int scale_mode_to_scale(const ScaleMode scale_mode, const VoxelBlockT& block)
+{
+    switch (scale_mode) {
+    case ScaleMode::Min:
+        return block.min_scale();
+    case ScaleMode::Current:
+        return block.current_scale();
+    default:
+        return std::max(block.current_scale(), static_cast<int>(scale_mode));
+    }
+}
+
 template<typename FieldType, template<typename FieldT> class OctreeT, typename ValueSelector>
 inline Eigen::Vector3f compute_intersection(const OctreeT<FieldType>& map,
                                             ValueSelector select_value,
@@ -337,7 +359,7 @@ inline void gather_dual_data(
     const Eigen::Vector3f& primal_corner_coord_f,
     DataT data[8],
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f,
-    const bool /* use_min_scale = false */)
+    const ScaleMode /* scale_mode = ScaleMode::Current */)
 {
     // In the local case:        actual_dual_offset = actual_dual_scaling * norm_dual_offset_f and
     // dual_corner_coords_f = primal_corner_coord_f + actual_dual_scaling * norm_dual_offset_f
@@ -739,7 +761,7 @@ inline void gather_dual_data(
     DataT data[8],
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f,
     int& dual_max_scale,
-    const bool use_min_scale = false)
+    const ScaleMode scale_mode = ScaleMode::Current)
 {
     const Eigen::Vector3i primal_corner_coord_rel = primal_corner_coord - block->coordinates();
 
@@ -759,8 +781,7 @@ inline void gather_dual_data(
             return;
         }
         VoxelBlockType<FieldType>* block = map.fetch(logical_dual_corner_coord);
-        if (block == nullptr
-            || (use_min_scale ? block->min_scale() : block->current_scale()) <= scale) {
+        if (block == nullptr || scale_mode_to_scale(scale_mode, *block) <= scale) {
             data[0].y = 0.f;
             return;
         }
@@ -773,14 +794,13 @@ inline void gather_dual_data(
             return;
         }
         VoxelBlockType<FieldType>* block = map.fetch(logical_dual_corner_coord);
-        if (block == nullptr
-            || (use_min_scale ? block->min_scale() : block->current_scale()) < scale) {
+        if (block == nullptr || scale_mode_to_scale(scale_mode, *block) < scale) {
             data[0].y = 0.f;
             return;
         }
     }
 
-    const int block_scale = use_min_scale ? block->min_scale() : block->current_scale();
+    const int block_scale = scale_mode_to_scale(scale_mode, *block);
     int stride = 1 << block_scale;
     for (const auto& offset_idx : neighbours[0]) {
         Eigen::Vector3i logical_dual_corner_coord =
@@ -794,8 +814,7 @@ inline void gather_dual_data(
         Eigen::Vector3i logical_dual_corner_coord =
             primal_corner_coord + logical_dual_offset[neighbours[neighbour_idx][0]];
         VoxelBlockType<FieldType>* neighbour = map.fetch(logical_dual_corner_coord);
-        const int neighbour_scale =
-            use_min_scale ? neighbour->min_scale() : neighbour->current_scale();
+        const int neighbour_scale = scale_mode_to_scale(scale_mode, *neighbour);
         int stride = 1 << neighbour_scale;
         dual_max_scale = std::max(neighbour_scale, dual_max_scale);
         for (const auto& offset_idx : neighbours[neighbour_idx]) {
@@ -824,7 +843,7 @@ void compute_dual_index(
     DataT data[8],
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f,
     int& dual_max_scale,
-    const bool use_min_scale = false)
+    ScaleMode scale_mode = ScaleMode::Current)
 {
     const unsigned int block_size = VoxelBlockType<FieldType>::size_li;
     // The local case is independent of the scale.
@@ -850,7 +869,7 @@ void compute_dual_index(
                          primal_corner_coord.cast<float>(),
                          data,
                          dual_corner_coords_f,
-                         use_min_scale);
+                         scale_mode);
     }
     else {
         gather_dual_data(map,
@@ -860,7 +879,7 @@ void compute_dual_index(
                          data,
                          dual_corner_coords_f,
                          dual_max_scale,
-                         use_min_scale);
+                         scale_mode);
     }
 
     // Only compute dual index if all data is valid/observed
@@ -947,7 +966,7 @@ void dual_marching_cube(Octree<FieldType>& map,
                         ValueSelector select_value,
                         InsidePredicate inside,
                         TriangleMesh& triangles,
-                        bool use_min_scale = false)
+                        const meshing::ScaleMode scale_mode = meshing::ScaleMode::Current)
 {
     using namespace meshing;
     std::mutex lck;
@@ -961,7 +980,7 @@ void dual_marching_cube(Octree<FieldType>& map,
 #pragma omp parallel for
     for (size_t i = 0; i < block_list.size(); i++) { ///<< Iterate through all allocated blocks.
         VoxelBlockType<FieldType>* block = static_cast<VoxelBlockType<FieldType>*>(block_list[i]);
-        const int voxel_scale = use_min_scale ? block->min_scale() : block->current_scale();
+        const int voxel_scale = meshing::scale_mode_to_scale(scale_mode, *block);
         const int voxel_stride = 1 << voxel_scale;
         const Eigen::Vector3i& start_coord = block->coordinates();
         const Eigen::Vector3i last_coord =
@@ -983,7 +1002,7 @@ void dual_marching_cube(Octree<FieldType>& map,
                         dual_corner_coords_f(8, Eigen::Vector3f::Constant(0));
                     int dual_max_scale =
                         voxel_scale; ///<< Keep track of the max dual scale of each triangle to colouise the mesh by scale.
-                        ///   Initialise with block scale and update if coarser dual neighbours are fetched.
+                    ///   Initialise with block scale and update if coarser dual neighbours are fetched.
                     meshing::compute_dual_index(map,
                                                 block,
                                                 voxel_scale,
@@ -993,7 +1012,7 @@ void dual_marching_cube(Octree<FieldType>& map,
                                                 data,
                                                 dual_corner_coords_f,
                                                 dual_max_scale,
-                                                use_min_scale);
+                                                scale_mode);
 
                     const int* edges = triTable[edge_pattern_idx];
                     for (unsigned int e = 0; edges[e] != -1 && e < 16; e += 3) {

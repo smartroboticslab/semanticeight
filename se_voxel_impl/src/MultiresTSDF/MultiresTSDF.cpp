@@ -97,8 +97,8 @@ std::string MultiresTSDF::printConfig()
 
 void MultiresTSDF::dumpMesh(OctreeType& map,
                             std::vector<se::Triangle>& mesh,
-                            const bool use_min_scale)
+                            se::meshing::ScaleMode scale_mode)
 {
     se::algorithms::dual_marching_cube(
-        map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh, use_min_scale);
+        map, VoxelType::selectVoxelValue, VoxelType::isInside, mesh, scale_mode);
 }
