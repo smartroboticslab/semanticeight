@@ -143,13 +143,12 @@ std::vector<CandidateView> SinglePathExplorationPlanner::rejectedViews() const
 
 
 
-Eigen::Vector3f
-SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
-                                              std::deque<se::key_t>& frontiers,
-                                              const Objects& /*objects*/,
-                                              const int sampling_step,
-                                              const Eigen::Vector3f& sampling_min_M,
-                                              const Eigen::Vector3f& sampling_max_M)
+Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
+                                                              std::deque<se::key_t>& frontiers,
+                                                              const Objects& /*objects*/,
+                                                              const int sampling_step,
+                                                              const Eigen::Vector3f& sampling_min_M,
+                                                              const Eigen::Vector3f& sampling_max_M)
 {
     // TODO take objects into account
     if (frontiers.empty()) {
