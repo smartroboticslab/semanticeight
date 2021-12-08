@@ -134,18 +134,21 @@ ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov, floa
 
 
 
-float information_gain_along_ray(const Octree<VoxelImpl::VoxelType>& map,
-                                 const Eigen::Vector3f& ray_origin_M,
-                                 const Eigen::Vector3f& ray_dir_M,
-                                 const float t_near,
-                                 const float t_far)
+/** Return the entropy and the point at which raycasting stopped.
+ */
+std::pair<float, Eigen::Vector3f> entropy_along_ray(const Octree<VoxelImpl::VoxelType>& map,
+                                                    const Eigen::Vector3f& ray_origin_M,
+                                                    const Eigen::Vector3f& ray_dir_M,
+                                                    const float t_near,
+                                                    const float t_far)
 {
     static_assert(std::is_same<VoxelImpl, MultiresOFusion>::value,
                   "360 raycasting implemented only for MultiresOFusion");
     float ray_entropy = 0.0f;
+    Eigen::Vector3f point_M = Eigen::Vector3f::Constant(NAN);
     const float t_step = map.voxelDim();
     for (float t = t_near; t <= t_far; t += t_step) {
-        const Eigen::Vector3f point_M = ray_origin_M + t * ray_dir_M;
+        point_M = ray_origin_M + t * ray_dir_M;
         //const float l = map.interpAtPoint(point_M, VoxelImpl::VoxelType::threshold).first;
         VoxelImpl::VoxelType::VoxelData data;
         map.getAtPoint(point_M, data);
@@ -156,7 +159,7 @@ float information_gain_along_ray(const Octree<VoxelImpl::VoxelType>& map,
             break;
         }
     }
-    return ray_entropy;
+    return std::make_pair(ray_entropy, point_M);
 }
 
 
@@ -246,11 +249,16 @@ ray_image(const int width, const int height, const SensorImpl& sensor, const Eig
 
 
 void raycast_entropy(Image<float>& entropy_image,
+                     Image<Eigen::Vector3f>& entropy_hits_M,
                      const Octree<VoxelImpl::VoxelType>& map,
                      const SensorImpl& sensor,
                      const Eigen::Matrix4f& T_MB,
                      const Eigen::Matrix4f& T_BC)
 {
+    if (entropy_hits_M.width() != entropy_image.width()
+        || entropy_hits_M.height() != entropy_image.height()) {
+        entropy_hits_M = Image<Eigen::Vector3f>(entropy_image.width(), entropy_image.height());
+    }
     const Eigen::Vector3f& t_MB = T_MB.topRightCorner<3, 1>();
     const Image<Eigen::Vector3f> rays =
         ray_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
@@ -259,11 +267,12 @@ void raycast_entropy(Image<float>& entropy_image,
 #pragma omp simd
         for (int x = 0; x < entropy_image.width(); x++) {
             // Accumulate the entropy along the ray
-            entropy_image(x, y) = information_gain_along_ray(
-                map, t_MB, rays(x, y), sensor.near_plane, sensor.far_plane);
+            const auto r =
+                entropy_along_ray(map, t_MB, rays(x, y), sensor.near_plane, sensor.far_plane);
             // Normalize the per-ray entropy in the interval [0-1].
-            entropy_image(x, y) /=
-                max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
+            entropy_image(x, y) =
+                r.first / max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
+            entropy_hits_M(x, y) = r.second;
         }
     }
 }

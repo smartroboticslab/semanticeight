@@ -79,21 +79,20 @@ class CandidateView {
 
     Image<uint32_t> renderEntropy(const SensorImpl& sensor, const bool visualize_yaw = true) const;
 
-    Image<uint32_t> renderCurrentEntropy(const Octree<VoxelImpl::VoxelType>& map,
-                                         const SensorImpl& sensor,
-                                         const Eigen::Matrix4f& T_BC,
-                                         const bool visualize_yaw = true) const;
+    Image<uint32_t> renderDepth(const SensorImpl& sensor, const bool visualize_yaw = true) const;
 
     Image<uint32_t> renderMinScale(const Octree<VoxelImpl::VoxelType>& map,
                                    const SensorImpl& sensor,
                                    const Eigen::Matrix4f& T_BC) const;
 
-    Image<uint32_t> renderDepth(const Octree<VoxelImpl::VoxelType>& map,
-                                const SensorImpl& sensor,
-                                const Eigen::Matrix4f& T_BC,
-                                const bool visualize_yaw = true) const;
+    void renderCurrentEntropyDepth(Image<uint32_t>& entropy,
+                                   Image<uint32_t>& depth,
+                                   const Octree<VoxelImpl::VoxelType>& map,
+                                   const SensorImpl& sensor,
+                                   const Eigen::Matrix4f& T_BC,
+                                   const bool visualize_yaw = true) const;
 
-    Image<Eigen::Vector3f> rays(const SensorImpl& sensor, const Eigen::Matrix4f& T_BC) const;
+    Image<Eigen::Vector3f> rays() const;
 
     /** ICRA 2020
        */
@@ -135,6 +134,8 @@ class CandidateView {
     float lod_gain_;
     /** An image containing the information gain produced by the 360 raycasting. */
     Image<float> entropy_image_;
+    /** An image containing the points where entropy raycasting hit. */
+    Image<Eigen::Vector3f> entropy_hits_M_;
     /** An image containing the percentage of frustum overlap with the candidate's neighbors. */
     Image<float> frustum_overlap_image_;
     /** An image containing the minimum integration scale for each raycasted object. */
@@ -189,6 +190,12 @@ class CandidateView {
                                             const SensorImpl& sensor,
                                             const float yaw_M,
                                             const bool visualize_yaw = true);
+
+    static Image<uint32_t> visualizeDepth(const Image<Eigen::Vector3f>& hits_M,
+                                          const SensorImpl& sensor,
+                                          const Eigen::Matrix4f& T_MB,
+                                          const float yaw_M,
+                                          const bool visualize_yaw = true);
 };
 } // namespace se
 

@@ -193,18 +193,12 @@ size_t ExplorationPlanner::goalViewIndex() const
 
 
 
-Image<uint32_t> ExplorationPlanner::renderCurrentEntropy(const SensorImpl& sensor,
-                                                         const bool visualize_yaw)
+void ExplorationPlanner::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
+                                                   Image<uint32_t>& depth,
+                                                   const SensorImpl& sensor,
+                                                   const bool visualize_yaw)
 {
-    return goal_view_.renderCurrentEntropy(*map_, sensor, T_BC_, visualize_yaw);
-}
-
-
-
-Image<uint32_t> ExplorationPlanner::renderCurrentEntropyDepth(const SensorImpl& sensor,
-                                                              const bool visualize_yaw)
-{
-    return goal_view_.renderDepth(*map_, sensor, T_BC_, visualize_yaw);
+    goal_view_.renderCurrentEntropyDepth(entropy, depth, *map_, sensor, T_BC_, visualize_yaw);
 }
 
 

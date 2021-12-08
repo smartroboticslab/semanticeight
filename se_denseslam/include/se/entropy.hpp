@@ -20,30 +20,17 @@ namespace se {
  */
 float max_ray_entropy(const float voxel_dim, const float near_plane, const float far_plane);
 
-Image<Eigen::Vector3f>
-ray_image(const int width, const int height, const SensorImpl& sensor, const Eigen::Matrix4f& T_BC);
-
 /** \brief Perform a 360 degree raycasting using a spherical camera model at t_MC computing the
  * map entropy. The size of entropy_image determines the number of rays cast. Frame B is
  * x-forward, z-up. The raycasting is performed from the origin of the body frame instead of the
  * origin of the camera frame. This approximation works well enough if they are close.
  */
 void raycast_entropy(Image<float>& entropy_image,
+                     Image<Eigen::Vector3f>& entropy_hits_M,
                      const Octree<VoxelImpl::VoxelType>& map,
                      const SensorImpl& sensor,
                      const Eigen::Matrix4f& T_MB,
                      const Eigen::Matrix4f& T_BC);
-
-/** \brief Perform a 360 degree raycasting using a spherical camera model at t_MC computing the
- * depth along rays from t_MC. The size of depth_image determines the number of rays cast. Frame B
- * is x-forward, z-up.
- * \note Typically used only for visualization and debugging.
- */
-void raycast_depth(Image<float>& depth_image,
-                   const Octree<VoxelImpl::VoxelType>& map,
-                   const SensorImpl& sensor,
-                   const Eigen::Matrix4f& T_MB,
-                   const Eigen::Matrix4f& T_BC);
 
 void frustum_overlap(Image<float>& frustum_overlap_image,
                      const SensorImpl& sensor,

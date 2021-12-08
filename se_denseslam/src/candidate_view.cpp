@@ -27,6 +27,7 @@ CandidateView::CandidateView() :
         entropy_(-1.0f),
         lod_gain_(-1.0f),
         entropy_image_(1, 1),
+        entropy_hits_M_(1, 1),
         frustum_overlap_image_(1, 1),
         min_scale_image_(1, 1),
         utility_(-1.0f)
@@ -57,6 +58,7 @@ CandidateView::CandidateView(const OctreePtr& map,
         entropy_(-1.0f),
         lod_gain_(-1.0f),
         entropy_image_(config.raycast_width, config.raycast_height),
+        entropy_hits_M_(config.raycast_width, config.raycast_height),
         frustum_overlap_image_(config.raycast_width, 1, 0.0f),
         min_scale_image_(1, 1),
         utility_(-1.0f),
@@ -145,8 +147,9 @@ void CandidateView::computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& m
     for (size_t i = 1; i < path_MB_.size() - 1; i++) {
         const Eigen::Matrix4f T_MC = path_MB_[i] * T_BC;
         Image<float> entropy_image(entropy_image_.width(), entropy_image_.height());
+        Image<Eigen::Vector3f> entropy_hits(entropy_hits_M_.width(), entropy_hits_M_.height());
         Image<float> frustum_overlap_image(entropy_image_.width(), 1, 0.0f);
-        raycast_entropy(entropy_image, map, sensor, path_MB_[i], T_BC);
+        raycast_entropy(entropy_image, entropy_hits, map, sensor, path_MB_[i], T_BC);
         if (config_.use_pose_history) {
             frustum_overlap(frustum_overlap_image, sensor, T_MC, T_BC, T_MB_history);
         }
@@ -168,16 +171,14 @@ Image<uint32_t> CandidateView::renderEntropy(const SensorImpl& sensor,
 
 
 
-Image<uint32_t> CandidateView::renderCurrentEntropy(const Octree<VoxelImpl::VoxelType>& map,
-                                                    const SensorImpl& sensor,
-                                                    const Eigen::Matrix4f& T_BC,
-                                                    const bool visualize_yaw) const
+Image<uint32_t> CandidateView::renderDepth(const SensorImpl& sensor, const bool visualize_yaw) const
 {
-    Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
-    T_MB.topRightCorner<3, 1>() = config_.planner_config.goal_t_MB_;
-    Image<float> entropy(entropy_image_.width(), entropy_image_.height());
-    raycast_entropy(entropy, map, sensor, T_MB, T_BC);
-    return visualizeEntropy(entropy, sensor, yaw_M_, visualize_yaw);
+    if (path_MB_.empty()) {
+        return Image<uint32_t>(entropy_hits_M_.width(), entropy_hits_M_.height(), 0);
+    }
+    else {
+        return visualizeDepth(entropy_hits_M_, sensor, goalT_MB(), yaw_M_, visualize_yaw);
+    }
 }
 
 
@@ -199,33 +200,32 @@ Image<uint32_t> CandidateView::renderMinScale(const Octree<VoxelImpl::VoxelType>
 
 
 
-Image<uint32_t> CandidateView::renderDepth(const Octree<VoxelImpl::VoxelType>& map,
-                                           const SensorImpl& sensor,
-                                           const Eigen::Matrix4f& T_BC,
-                                           const bool visualize_yaw) const
+void CandidateView::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
+                                              Image<uint32_t>& depth,
+                                              const Octree<VoxelImpl::VoxelType>& map,
+                                              const SensorImpl& sensor,
+                                              const Eigen::Matrix4f& T_BC,
+                                              const bool visualize_yaw) const
 {
-    const Eigen::Vector2i res(entropy_image_.width(), entropy_image_.height());
     Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
-    T_MB.topRightCorner<3, 1>() = config_.planner_config.goal_t_MB_;
-    // Raycast to get the depth
-    Image<float> depth(res.x(), res.y());
-    raycast_depth(depth, map, sensor, T_MB, T_BC);
-    // Render to a colour image
-    Image<uint32_t> depth_render(res.x(), res.y());
-    se::depth_to_rgba(depth_render.data(), depth.data(), res, sensor.near_plane, sensor.far_plane);
-    // Visualize the optimal yaw
-    if (visualize_yaw) {
-        overlay_yaw(depth_render, yaw_M_, sensor);
+    if (path_MB_.empty()) {
+        T_MB.topRightCorner<3, 1>() = config_.planner_config.goal_t_MB_;
     }
-    return depth_render;
+    else {
+        T_MB.topRightCorner<3, 1>() = path_MB_.back().topRightCorner<3, 1>();
+    }
+    Image<float> raw_entropy(entropy_image_.width(), entropy_image_.height());
+    Image<Eigen::Vector3f> entropy_hits(entropy_image_.width(), entropy_image_.height());
+    raycast_entropy(raw_entropy, entropy_hits, map, sensor, T_MB, T_BC);
+    entropy = visualizeEntropy(raw_entropy, sensor, yaw_M_, visualize_yaw);
+    depth = visualizeDepth(entropy_hits, sensor, T_MB, yaw_M_, visualize_yaw);
 }
 
 
 
-Image<Eigen::Vector3f> CandidateView::rays(const SensorImpl& sensor,
-                                           const Eigen::Matrix4f& T_BC) const
+Image<Eigen::Vector3f> CandidateView::rays() const
 {
-    return ray_image(entropy_image_.width(), entropy_image_.height(), sensor, T_BC);
+    return entropy_hits_M_;
 }
 
 
@@ -348,7 +348,7 @@ void CandidateView::entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
 {
     const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC;
     // Raycast at the last path vertex
-    raycast_entropy(entropy_image_, map, sensor, path_MB_.back(), T_BC);
+    raycast_entropy(entropy_image_, entropy_hits_M_, map, sensor, path_MB_.back(), T_BC);
     if (config_.use_pose_history) {
         frustum_overlap(frustum_overlap_image_, sensor, T_MC, T_BC, T_MB_history);
     }
@@ -516,4 +516,33 @@ Image<uint32_t> CandidateView::visualizeEntropy(const Image<float>& entropy,
     }
     return entropy_render;
 }
+
+
+
+Image<uint32_t> CandidateView::visualizeDepth(const Image<Eigen::Vector3f>& hits_M,
+                                              const SensorImpl& sensor,
+                                              const Eigen::Matrix4f& T_MB,
+                                              const float yaw_M,
+                                              const bool visualize_yaw)
+{
+    const Eigen::Vector2i res(hits_M.width(), hits_M.height());
+    const Eigen::Matrix4f T_BM = se::math::to_inverse_transformation(T_MB);
+    // Convert the point cloud to depth along the ray
+    Image<float> depth(res.x(), res.y(), 0.0f);
+#pragma omp parallel for
+    for (size_t i = 0; i < depth.size(); i++) {
+        // Decrease the depth by a bit so that hits at the far plane are shown as invalid.
+        // TODO SEM make this offset as big as the voxel dimensions.
+        depth[i] = (T_BM * hits_M[i].homogeneous()).head<3>().norm() + 0.1f;
+    }
+    // Render to a colour image
+    Image<uint32_t> depth_render(res.x(), res.y());
+    se::depth_to_rgba(depth_render.data(), depth.data(), res, sensor.near_plane, sensor.far_plane);
+    // Visualize the optimal yaw
+    if (visualize_yaw) {
+        overlay_yaw(depth_render, yaw_M, sensor);
+    }
+    return depth_render;
+}
+
 } // namespace se
