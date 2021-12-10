@@ -153,7 +153,8 @@ void CandidateView::computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& m
         if (config_.use_pose_history) {
             frustum_overlap(frustum_overlap_image, sensor, T_MC, T_BC, T_MB_history);
         }
-        const std::pair<float, float> r = optimal_yaw(entropy_image, frustum_overlap_image, sensor);
+        const std::pair<float, float> r = optimal_yaw(
+            entropy_image, entropy_hits, frustum_overlap_image, sensor, path_MB_[i], T_BC);
         path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(r.first);
     }
     //yawBeforeMoving(path_MB_);
@@ -352,7 +353,8 @@ void CandidateView::entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
     if (config_.use_pose_history) {
         frustum_overlap(frustum_overlap_image_, sensor, T_MC, T_BC, T_MB_history);
     }
-    const std::pair<float, float> r = optimal_yaw(entropy_image_, frustum_overlap_image_, sensor);
+    const std::pair<float, float> r = optimal_yaw(
+        entropy_image_, entropy_hits_M_, frustum_overlap_image_, sensor, path_MB_.back(), T_BC);
     yaw_M_ = r.first;
     entropy_ = r.second;
 }

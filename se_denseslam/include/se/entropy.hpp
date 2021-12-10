@@ -42,8 +42,11 @@ void frustum_overlap(Image<float>& frustum_overlap_image,
  * \return The yaw angle (first) and the respective entropy (second).
  */
 std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
+                                    const Image<Eigen::Vector3f>& entropy_hits_M,
                                     const Image<float>& frustum_overlap_image,
-                                    const SensorImpl& sensor);
+                                    const SensorImpl& sensor,
+                                    const Eigen::Matrix4f& T_MB,
+                                    const Eigen::Matrix4f& T_BC);
 
 /** \brief Overlay the sensor FOV at yaw_M on the image.
  * \note Typically used only for visualization and debugging.
