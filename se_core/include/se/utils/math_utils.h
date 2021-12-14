@@ -457,6 +457,19 @@ inline float roll_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f
 
 
 
+inline Eigen::Matrix3f yaw_to_rotm(const float yaw)
+{
+    Eigen::Matrix3f C = Eigen::Matrix3f::Zero();
+    C(0, 0) = cos(yaw);
+    C(0, 1) = -sin(yaw);
+    C(1, 0) = sin(yaw);
+    C(1, 1) = cos(yaw);
+    C(2, 2) = 1.0f;
+    return C;
+}
+
+
+
 template<typename T, int Rows>
 bool is_between(const Eigen::Matrix<T, Rows, 1>& x,
                 const Eigen::Matrix<T, Rows, 1>& min_x,
