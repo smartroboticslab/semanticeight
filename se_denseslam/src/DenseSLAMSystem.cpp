@@ -1101,7 +1101,9 @@ void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor)
         std::abort();
     }
     // Compute the cylinder parameters and increase the height by some percentage
-    const float height = 3.0f * 2.0f * (config_.robot_radius + config_.safety_radius);
+    constexpr float min_radius = 0.5f;
+    const float height =
+        std::max(3.0f * 2.0f * (config_.robot_radius + config_.safety_radius), min_radius);
     const float radius = std::max(height, (height / 2.0f) / tan(sensor.vertical_fov / 2.0f));
     const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
     // Compute the cylinder's AABB corners in metres and voxels
@@ -1165,7 +1167,9 @@ void DenseSLAMSystem::freeInitSphere()
     // Compute the sphere parameters
     const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
     // 2.4 because the same ratio was used in the ICRA 2020 paper.
-    const float radius_M = 2.4f * (config_.robot_radius + config_.safety_radius);
+    constexpr float min_radius = 0.5f;
+    const float radius_M =
+        std::max(2.4f * (config_.robot_radius + config_.safety_radius), min_radius);
     // Compute the cylinder's AABB corners in metres and voxels
     const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f(radius_M, radius_M, radius_M);
     const Eigen::Vector3f aabb_max_M = centre_M + Eigen::Vector3f(radius_M, radius_M, radius_M);
