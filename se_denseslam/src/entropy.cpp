@@ -219,18 +219,21 @@ std::vector<float> sum_windows(const std::vector<float>& column_sums, const int 
 
 
 std::vector<float> sum_windows(const Image<float>& entropy_image,
-                               const Image<Eigen::Vector3f>& entropy_hits_M,
+                               const Image<Eigen::Vector3f>& /* entropy_hits_M */,
                                const Image<float>& frustum_overlap_image,
                                const SensorImpl& sensor,
                                const Eigen::Matrix4f& T_MB,
                                const Eigen::Matrix4f& T_BC)
 {
+    const Image<Eigen::Vector3f> rays_B =
+        ray_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
     const float window_percentage = sensor.horizontal_fov / M_TAU_F;
-    // Even if the window width takes an extra column into account, the pointInFrustum() test will
+    // Even if the window width takes an extra column into account, the rayInFrustum() test will
     // reject it.
     const int window_width = window_percentage * entropy_image.width() + 0.5f;
     std::vector<float> window_sums(entropy_image.width(), 0.0f);
     for (size_t w = 0; w < window_sums.size(); w++) {
+        int n = 0;
         // The window's yaw is the azimuth angle of its middle column
         const float theta = azimuth_from_index(w, entropy_image.width(), M_TAU_F);
         const float yaw_M = theta - sensor.horizontal_fov / 2.0f;
@@ -240,12 +243,15 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
         for (int y = 0; y < entropy_image.height(); y++) {
             for (int i = 0; i < window_width; i++) {
                 const int x = (w + i) % entropy_image.width();
-                const Eigen::Vector3f hit_C = (T_CM * entropy_hits_M(x, y).homogeneous()).head<3>();
-                if (sensor.pointInFrustum(hit_C)) {
+                const Eigen::Vector3f ray_C = (T_CM * T_MB * rays_B(x, y).homogeneous()).head<3>();
+                if (sensor.rayInFrustum(ray_C)) {
                     window_sums[w] += entropy_image(x, y) * (1.0f - frustum_overlap_image[x]);
+                    n++;
                 }
             }
         }
+        // Normalize the entropy in the interval [0-1] using the number of rays in the window.
+        window_sums[w] /= n;
     }
     return window_sums;
 }
@@ -384,11 +390,7 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
     const float theta = azimuth_from_index(best_idx, entropy_image.width(), M_TAU_F);
     // The window's yaw is the azimuth angle of its middle column
     const float best_yaw_M = theta - sensor.horizontal_fov / 2.0f;
-    // Normalize the entropy in the interval [0-1] using the window size.
-    const float window_percentage = sensor.horizontal_fov / M_TAU_F;
-    const int window_width = window_percentage * entropy_image.width() + 0.5f;
-    // TODO SEM normalize in max_window
-    const float best_entropy = r.second / (window_width * entropy_image.height());
+    const float best_entropy = r.second;
     return std::make_pair(best_yaw_M, best_entropy);
 }
 
