@@ -118,9 +118,9 @@ int index_from_azimuth(const float theta, const int width, const float hfov)
 
 
 
-/** \brieaf Compute the ray direction in the map frame M (x-forward, z-up) for a pixel x,y of an
-   * image width x height when performing a 360-degree raycast with the supplied verical_fov.
-   */
+/** \brieaf Compute the ray direction in the body frame B (x-forward, z-up) for a pixel x,y of an
+ * image width x height when performing a 360-degree raycast with the supplied verical_fov.
+ */
 Eigen::Vector3f
 ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov, float pitch_offset)
 {
@@ -129,6 +129,31 @@ ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov, floa
     const float phi = polar_from_index(y, height, vertical_fov, pitch_offset);
     // Convert spherical coordinates to cartesian coordinates assuming a radius of 1.
     return Eigen::Vector3f(sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
+}
+
+
+
+/** \brieaf Compute the ray directions in the body frame B (x-forward, z-up) for all pixels of an
+ * image width x height.
+ */
+Image<Eigen::Vector3f>
+ray_image(const int width, const int height, const SensorImpl& sensor, const Eigen::Matrix4f& T_BC)
+{
+    // Transformation from the camera body frame Bc (x-forward, z-up) to the camera frame C
+    // (z-forward, x-right).
+    Eigen::Matrix4f T_CBc;
+    T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
+    const Eigen::Matrix4f T_BBc = T_BC * T_CBc;
+    // The pitch angle of the camera relative to the body frame.
+    const float pitch = math::wrap_angle_pi(T_BBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
+    Image<Eigen::Vector3f> rays(width, height);
+#pragma omp parallel for
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            rays(x, y) = ray_dir_from_pixel(x, y, width, height, sensor.vertical_fov, pitch);
+        }
+    }
+    return rays;
 }
 
 
@@ -285,28 +310,6 @@ float max_ray_entropy(const float voxel_dim, const float near_plane, const float
 {
     // This is the number of voxels and the max entropy since the max entropy per-voxel is 1.
     return BLOCK_SIZE * sqrtf(3.0f) * (far_plane - near_plane) / voxel_dim;
-}
-
-
-
-Image<Eigen::Vector3f>
-ray_image(const int width, const int height, const SensorImpl& sensor, const Eigen::Matrix4f& T_BC)
-{
-    // Transformation from the camera body frame Bc (x-forward, z-up) to the camera frame C
-    // (z-forward, x-right).
-    Eigen::Matrix4f T_CBc;
-    T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
-    const Eigen::Matrix4f T_BBc = T_BC * T_CBc;
-    // The pitch angle of the camera relative to the body frame.
-    const float pitch = math::wrap_angle_pi(T_BBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
-    Image<Eigen::Vector3f> rays(width, height);
-#pragma omp parallel for
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            rays(x, y) = ray_dir_from_pixel(x, y, width, height, sensor.vertical_fov, pitch);
-        }
-    }
-    return rays;
 }
 
 
