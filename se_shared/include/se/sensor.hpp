@@ -207,6 +207,15 @@ struct PinholeCamera {
      */
     bool sphereInFrustumInf(const Eigen::Vector3f& center_C, const float radius) const;
 
+    /**
+     * \brief Test whether a 3D ray in camera coordinates is inside the
+     * camera frustum.
+     *
+     * The difference from PinholeCamera::pointInFrustum is that it is assumed
+     * that the near plane is at 0 and the far plane is at infinity.
+     */
+    bool rayInFrustum(const Eigen::Vector3f& ray_C) const;
+
     static std::string type()
     {
         return "pinholecamera";

@@ -237,6 +237,21 @@ bool se::PinholeCamera::sphereInFrustumInf(const Eigen::Vector3f& center_C,
     return true;
 }
 
+bool se::PinholeCamera::rayInFrustum(const Eigen::Vector3f& ray_C) const
+{
+    // Skip the near and far plane normals
+    for (size_t i = 0; i < num_frustum_normals_ - 2; ++i) {
+        // Compute the signed distance between the point and the plane
+        const float distance = ray_C.homogeneous().dot(frustum_normals_.col(i));
+        if (distance < 0.0f) {
+            // A negative distance means that the point is located on the opposite
+            // halfspace than the one the plane normal is pointing towards
+            return false;
+        }
+    }
+    return true;
+}
+
 void se::PinholeCamera::computeFrustumVertices()
 {
     Eigen::Vector3f point_C;
