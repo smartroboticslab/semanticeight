@@ -71,7 +71,7 @@ float azimuth_from_index(const int x_idx, const int width, const float hfov)
     assert(0 <= x_idx);
     assert(x_idx < width);
     assert(0 < hfov);
-    assert(hfov <= 2.0f * M_PI_F);
+    assert(hfov <= M_TAU_F);
     const float delta_theta = hfov / width;
     const float theta_max = hfov / 2.0f;
     // Image column coordinates increase towards the right but azimuth angle increases towards the
@@ -125,7 +125,7 @@ Eigen::Vector3f
 ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov, float pitch_offset)
 {
     // Compute the spherical coordinates of the ray.
-    const float theta = azimuth_from_index(x, width, 2.0f * M_PI_F);
+    const float theta = azimuth_from_index(x, width, M_TAU_F);
     const float phi = polar_from_index(y, height, vertical_fov, pitch_offset);
     // Convert spherical coordinates to cartesian coordinates assuming a radius of 1.
     const Eigen::Vector3f ray_dir_M(sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
@@ -221,7 +221,8 @@ std::pair<int, float> max_window(const Image<float>& image,
 
 float max_ray_entropy(const float voxel_dim, const float near_plane, const float far_plane)
 {
-    return 8.0f * sqrtf(3.0f) * (far_plane - near_plane) / voxel_dim;
+    // This is the number of voxels and the max entropy since the max entropy per-voxel is 1.
+    return BLOCK_SIZE * sqrtf(3.0f) * (far_plane - near_plane) / voxel_dim;
 }
 
 
@@ -343,12 +344,12 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
                                     const SensorImpl& sensor)
 {
     // Use a sliding window to compute the yaw angle that results in the maximum entropy
-    const float window_percentage = sensor.horizontal_fov / (2.0f * M_PI_F);
+    const float window_percentage = sensor.horizontal_fov / M_TAU_F;
     const int window_width = window_percentage * entropy_image.width() + 0.5f;
     const std::pair<int, float> r = max_window(entropy_image, frustum_overlap_image, window_width);
     // Azimuth angle of the left edge of the window
     const int best_idx = r.first;
-    const float theta = azimuth_from_index(best_idx, entropy_image.width(), 2.0f * M_PI_F);
+    const float theta = azimuth_from_index(best_idx, entropy_image.width(), M_TAU_F);
     // The window's yaw is the azimuth angle of its middle column
     const float best_yaw_M = theta - sensor.horizontal_fov / 2.0f;
     // Normalize the entropy in the interval [0-1] using the window size.
@@ -362,9 +363,9 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
 {
     // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle
     const int x_min =
-        index_from_azimuth(yaw_M + sensor.horizontal_fov / 2.0f, image.width(), 2.0f * M_PI_F);
+        index_from_azimuth(yaw_M + sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
     const int x_max =
-        index_from_azimuth(yaw_M - sensor.horizontal_fov / 2.0f, image.width(), 2.0f * M_PI_F);
+        index_from_azimuth(yaw_M - sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
     // Draw the FOV rectangle on the image
     const uint32_t fov_color = 0xFF0000FF;
 #pragma omp parallel for
@@ -389,7 +390,7 @@ int write_entropy(const std::string& filename,
                   const SensorImpl& sensor)
 {
     const Image<float> frustum_overlap_image(entropy_image.width(), entropy_image.height(), 0.0f);
-    const float window_percentage = sensor.horizontal_fov / (2.0f * M_PI_F);
+    const float window_percentage = sensor.horizontal_fov / M_TAU_F;
     const int window_width = window_percentage * entropy_image.width() + 0.5f;
     const std::vector<float> column_sums = sum_columns(entropy_image, frustum_overlap_image);
     const std::vector<float> window_sums = sum_windows(column_sums, window_width);
