@@ -82,7 +82,6 @@ class Object {
     Eigen::Matrix4f T_OM_;
     Eigen::Matrix4f T_MO_;
     std::shared_ptr<se::Octree<ObjVoxelImpl::VoxelType>> map_;
-    std::vector<se::key_t> allocation_list_;
 
     /**
      * A solid that contains all the vertices of this volume. Used for efficient raycasting. The

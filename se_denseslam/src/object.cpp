@@ -118,7 +118,8 @@ void Object::integrate(const se::Image<float>& depth_image,
     const int num_vox_per_pix =
         map_->dim() / ((se::VoxelBlock<ObjVoxelImpl::VoxelType>::size_li) * voxel_size);
     const size_t total = num_vox_per_pix * depth_image.width() * depth_image.height();
-    allocation_list_.reserve(total);
+    std::vector<se::key_t> allocation_list;
+    allocation_list.reserve(total);
 
 
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
@@ -129,7 +130,7 @@ void Object::integrate(const se::Image<float>& depth_image,
 
     const Eigen::Matrix4f& T_OC = T_OM_ * T_MC;
     const size_t allocated = ObjVoxelImpl::buildAllocationList(
-        *map_, depth_image, T_OC, sensor, allocation_list_.data(), allocation_list_.capacity());
+        *map_, depth_image, T_OC, sensor, allocation_list.data(), allocation_list.capacity());
 
 
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
@@ -138,7 +139,7 @@ void Object::integrate(const se::Image<float>& depth_image,
 #endif
 
     // Allocate the required octants.
-    map_->allocate(allocation_list_.data(), allocated);
+    map_->allocate(allocation_list.data(), allocated);
 
     // Update the map
     ObjVoxelImpl::integrate(*map_,
