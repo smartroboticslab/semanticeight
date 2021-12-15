@@ -11,6 +11,15 @@ frame_number() {
 	printf '%s\n' "$1" | sed -E 's/^.*([[:digit:]]{5}).png/\1/' | bc
 }
 
+null_if_not_file() {
+	f=$(cat)
+	if [ -f "$f" ]; then
+		printf '%s\n' "$f"
+	else
+		printf 'null:\n'
+	fi
+}
+
 
 
 if [ "$#" -ne 1 ]; then
@@ -25,16 +34,16 @@ depth_renders=$(find "$dir" -name '*depth_*.png' | sort -n)
 mkdir -p "$out_dir"
 
 for depth in $depth_renders; do
-	rgba=$(printf '%s\n' "$depth" | sed 's/depth/rgba/')
-	segm=$(printf '%s\n' "$depth" | sed 's/depth/segm/')
-	instance=$(printf '%s\n' "$depth" | sed 's/depth/instance/')
-	class=$(printf '%s\n' "$depth" | sed 's/depth/class/')
-	raycast=$(printf '%s\n' "$depth" | sed 's/depth/raycast/')
-	volume=$(printf '%s\n' "$depth" | sed 's/depth/volume/')
-	volume_aabb=$(printf '%s\n' "$depth" | sed 's/depth/volume_aabb/')
-	volume_color=$(printf '%s\n' "$depth" | sed 's/depth/volume_color/')
-	volume_scale=$(printf '%s\n' "$depth" | sed 's/depth/volume_scale/')
-	volume_min_scale=$(printf '%s\n' "$depth" | sed 's/depth/volume_min_scale/')
+	rgba=$(printf '%s\n' "$depth" | sed 's/depth/rgba/' | null_if_not_file)
+	segm=$(printf '%s\n' "$depth" | sed 's/depth/segm/' | null_if_not_file)
+	instance=$(printf '%s\n' "$depth" | sed 's/depth/instance/' | null_if_not_file)
+	class=$(printf '%s\n' "$depth" | sed 's/depth/class/' | null_if_not_file)
+	raycast=$(printf '%s\n' "$depth" | sed 's/depth/raycast/' | null_if_not_file)
+	volume=$(printf '%s\n' "$depth" | sed 's/depth/volume/' | null_if_not_file)
+	volume_aabb=$(printf '%s\n' "$depth" | sed 's/depth/volume_aabb/' | null_if_not_file)
+	volume_color=$(printf '%s\n' "$depth" | sed 's/depth/volume_color/' | null_if_not_file)
+	volume_scale=$(printf '%s\n' "$depth" | sed 's/depth/volume_scale/' | null_if_not_file)
+	volume_min_scale=$(printf '%s\n' "$depth" | sed 's/depth/volume_min_scale/' | null_if_not_file)
 
 	n=$(frame_number "$depth")
 	out="$out_dir/render_$(printf '%05d' "$n").png"
