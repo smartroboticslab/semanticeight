@@ -245,7 +245,9 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
                 const int x = (w + i) % entropy_image.width();
                 const Eigen::Vector3f ray_C = (T_CM * T_MB * rays_B(x, y).homogeneous()).head<3>();
                 if (sensor.rayInFrustum(ray_C)) {
-                    window_sums[w] += entropy_image(x, y) * (1.0f - frustum_overlap_image[x]);
+                    if (frustum_overlap_image[x] < 1e-6f) {
+                        window_sums[w] += entropy_image(x, y);
+                    }
                     n++;
                 }
             }
