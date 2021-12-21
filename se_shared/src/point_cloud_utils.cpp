@@ -8,7 +8,7 @@
 
 
 
-int se::save_point_cloud_pcd(se::Image<Eigen::Vector3f>& point_cloud,
+int se::save_point_cloud_pcd(const se::Image<Eigen::Vector3f>& point_cloud,
                              const std::string& filename,
                              const Eigen::Matrix4f& T_WC)
 {
@@ -48,7 +48,7 @@ int se::save_point_cloud_pcd(se::Image<Eigen::Vector3f>& point_cloud,
 
 
 
-int se::save_point_cloud_ply(se::Image<Eigen::Vector3f>& point_cloud,
+int se::save_point_cloud_ply(const se::Image<Eigen::Vector3f>& point_cloud,
                              const std::string& filename,
                              const Eigen::Matrix4f& T_WC)
 {
@@ -80,7 +80,7 @@ int se::save_point_cloud_ply(se::Image<Eigen::Vector3f>& point_cloud,
 
 
 
-int se::save_point_cloud_vtk(se::Image<Eigen::Vector3f>& point_cloud,
+int se::save_point_cloud_vtk(const se::Image<Eigen::Vector3f>& point_cloud,
                              const std::string& filename,
                              const Eigen::Matrix4f& T_WC)
 {

@@ -24,7 +24,7 @@ namespace se {
    * \param[in] T_WC        The pose from which the point cloud was observed.
    * \return 0 on success, nonzero on error.
    */
-int save_point_cloud_pcd(se::Image<Eigen::Vector3f>& point_cloud,
+int save_point_cloud_pcd(const se::Image<Eigen::Vector3f>& point_cloud,
                          const std::string& filename,
                          const Eigen::Matrix4f& T_WC);
 
@@ -39,7 +39,7 @@ int save_point_cloud_pcd(se::Image<Eigen::Vector3f>& point_cloud,
    * \param[in] T_WC        The pose from which the point cloud was observed.
    * \return 0 on success, nonzero on error.
    */
-int save_point_cloud_ply(se::Image<Eigen::Vector3f>& point_cloud,
+int save_point_cloud_ply(const se::Image<Eigen::Vector3f>& point_cloud,
                          const std::string& filename,
                          const Eigen::Matrix4f& T_WC);
 
@@ -54,7 +54,7 @@ int save_point_cloud_ply(se::Image<Eigen::Vector3f>& point_cloud,
    * \param[in] T_WC        The pose from which the point cloud was observed.
    * \return 0 on success, nonzero on error.
    */
-int save_point_cloud_vtk(se::Image<Eigen::Vector3f>& point_cloud,
+int save_point_cloud_vtk(const se::Image<Eigen::Vector3f>& point_cloud,
                          const std::string& filename,
                          const Eigen::Matrix4f& T_WC);
 
