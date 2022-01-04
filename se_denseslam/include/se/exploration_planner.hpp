@@ -39,12 +39,13 @@ class ExplorationPlanner {
     bool goalT_WB(Eigen::Matrix4f& T_WB) const;
 
     /** This is only added as a hack to get the ICRA 2020 exploration to work.
-       */
+     */
     void popGoalT_WB();
 
     /** Call the exploration planner and return the resulting camera path in the world frame.
-       * The returned path is a series of T_WB.
-       */
+     * The returned path is a series of T_WB. The first T_WB is the same as the one returned by
+     * se::ExplorationPlanner::getPlanningT_WB().
+     */
     Path computeNextPath_WB(const std::set<key_t>& frontiers,
                             const Objects& objects,
                             const SensorImpl& sensor);
