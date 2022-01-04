@@ -722,12 +722,11 @@ int processAll(se::Reader* reader,
         std::stringstream output_mesh_meter_file_ss;
         output_mesh_meter_file_ss << config->output_mesh_file << "/mesh_" << std::setw(5)
                                   << std::setfill('0') << frame << ".ply";
-        pipeline->dumpMesh("", output_mesh_meter_file_ss.str().c_str(), !config->enable_benchmark);
+        pipeline->saveMesh(output_mesh_meter_file_ss.str());
         std::stringstream output_mesh_object_file_ss;
         output_mesh_object_file_ss << config->output_mesh_file << "/mesh_" << std::setw(5)
                                    << std::setfill('0') << frame << "_object";
-        pipeline->dumpObjectMeshes(output_mesh_object_file_ss.str().c_str(),
-                                   !config->enable_benchmark);
+        pipeline->saveObjectMeshes(output_mesh_object_file_ss.str());
     }
 
     //  ===  SAVE OCTREE STRUCTURE AND SLICE ===

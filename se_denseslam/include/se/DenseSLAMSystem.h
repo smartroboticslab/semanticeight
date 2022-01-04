@@ -353,19 +353,18 @@ class DenseSLAMSystem {
      */
     bool raycast(const SensorImpl& sensor);
 
-    /** \brief Export a mesh of the current state of the map.
+    /**
+     * \brief Extract the mesh from the map using a marching cube algorithm and save it to a file.
      *
-     * \param[in] filename_voxel   The name of the file where the mesh in voxel units and map frame will be saved.
-     *                             A PLY mesh will be saved if it ends in `.ply`,
-     *                             otherwise a VTK mesh will be saved. Set "" to not save.
-     * \param[in] filename_meter   The name of the file where the mesh in meter units and world frame will be saved.
-     *                             A PLY mesh will be saved if it ends in `.ply`,
-     *                             otherwise a VTK mesh will be saved. Set "" to not save.
-     * \param[in] print_path Print the filename to stdout before saving.
+     * \param[in] filename The file where the mesh will be saved. The file format will be selected
+     *                     based on the file extension. Allowed file extensions are `.ply`, `.vtk` and
+     *                     `.obj`.
+     * \param[in] T_WM     Transformation from the world frame where the mesh is generated to the world
+     *                     frame. Defaults to identity.
+     * \return Zero on success and non-zero on error.
      */
-    void dumpMesh(const std::string filename_voxel,
-                  const std::string filename_meter = "",
-                  const bool print_path = false);
+    int saveMesh(const std::string& filename,
+                 const Eigen::Matrix4f& T_FW = Eigen::Matrix4f::Identity()) const;
 
     std::vector<se::Triangle>
     triangleMeshV(const se::meshing::ScaleMode scale_mode = se::meshing::ScaleMode::Current);
@@ -867,7 +866,8 @@ class DenseSLAMSystem {
      */
     void renderRaycast(uint32_t* output_image_data, const Eigen::Vector2i& output_image_res);
 
-    void dumpObjectMeshes(const std::string filename, const bool print_path);
+    void saveObjectMeshes(const std::string& filename,
+                          const Eigen::Matrix4f& T_FW = Eigen::Matrix4f::Identity()) const;
 
     std::vector<std::vector<se::Triangle>>
     objectTriangleMeshesV(const se::meshing::ScaleMode scale_mode = se::meshing::ScaleMode::Min);

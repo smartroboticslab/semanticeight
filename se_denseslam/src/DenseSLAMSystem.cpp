@@ -378,46 +378,28 @@ void DenseSLAMSystem::renderRGBA(uint32_t* output_RGBA_image_data,
 
 
 
-void DenseSLAMSystem::dumpMesh(const std::string filename_voxel,
-                               const std::string filename_meter,
-                               const bool print_path)
+int DenseSLAMSystem::saveMesh(const std::string& filename, const Eigen::Matrix4f& T_FW) const
 {
-    TICK("dumpMesh")
-
-    std::vector<se::Triangle> mesh;
+    TICK("saveMesh")
+    se::TriangleMesh mesh;
     VoxelImpl::dumpMesh(*map_, mesh);
-
-    if (filename_voxel != "") {
-        if (print_path) {
-            std::cout << "Saving triangle mesh in map frame to file [voxel]:" << filename_voxel
-                      << std::endl;
-        }
-
-        if (str_utils::ends_with(filename_voxel, ".ply")) {
-            se::io::save_mesh_ply(mesh, filename_voxel.c_str());
-        }
-        else {
-            se::io::save_mesh_vtk(mesh, filename_voxel.c_str());
-        }
+    // Scale voxels to meters.
+    Eigen::Matrix4f T_FM = T_FW * T_WM_;
+    T_FM.topLeftCorner<3, 3>() *= map_->voxelDim();
+    if (str_utils::ends_with(filename, ".ply")) {
+        return se::io::save_mesh_ply(mesh, filename, T_FM);
     }
-
-    if (filename_meter != "") {
-        if (print_path) {
-            std::cout << "Saving triangle mesh in world frame to file [meter]:" << filename_meter
-                      << std::endl;
-        }
-
-        Eigen::Matrix4f T_WM = se::math::to_inverse_transformation(this->T_MW_);
-        T_WM.topLeftCorner<3, 3>() *= map_->voxelDim();
-        if (str_utils::ends_with(filename_meter, ".ply")) {
-            se::io::save_mesh_ply(mesh, filename_meter.c_str(), T_WM);
-        }
-        else {
-            se::io::save_mesh_vtk(mesh, filename_meter.c_str(), T_WM);
-        }
+    else if (str_utils::ends_with(filename, ".vtk")) {
+        return se::io::save_mesh_vtk(mesh, filename, T_FM);
     }
-
-    TOCK("dumpMesh")
+    else if (str_utils::ends_with(filename, ".obj")) {
+        return se::io::save_mesh_obj(mesh, filename, T_FM);
+    }
+    else {
+        std::cerr << "Error saving mesh: unknown file extension in " << filename << "\n";
+        return 2;
+    }
+    TOCK("saveMesh")
 }
 
 
@@ -820,18 +802,17 @@ void DenseSLAMSystem::renderRaycast(uint32_t* output_image_data,
 
 
 
-void DenseSLAMSystem::dumpObjectMeshes(const std::string filename, const bool print_path)
+void DenseSLAMSystem::saveObjectMeshes(const std::string& filename,
+                                       const Eigen::Matrix4f& T_FW) const
 {
     for (const auto& object : objects_) {
         std::vector<se::Triangle> mesh;
         ObjVoxelImpl::dumpMesh(*(object->map_), mesh, se::meshing::ScaleMode::Min);
+        // Scale voxels to meters.
+        Eigen::Matrix4f T_FO = T_FW * se::math::to_inverse_transformation(object->T_OM_ * T_MW_);
+        T_FO.topLeftCorner<3, 3>() *= object->voxelDim();
         const std::string f = filename + "_" + std::to_string(object->instance_id) + ".ply";
-        Eigen::Matrix4f T_WO = se::math::to_inverse_transformation(object->T_OM_ * T_MW_);
-        T_WO.topLeftCorner<3, 3>() *= object->voxelDim();
-        if (print_path) {
-            std::cout << "Saving triangle mesh to file :" << f << "\n";
-        }
-        se::io::save_mesh_ply(mesh, f.c_str(), T_WO);
+        se::io::save_mesh_ply(mesh, f, T_FO);
     }
 }
 
