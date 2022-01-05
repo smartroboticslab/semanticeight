@@ -109,6 +109,26 @@ cv::Mat InstanceSegmentation::generateIntegrationMask() const
 
 
 
+cv::Mat InstanceSegmentation::generateIntegrationMask(const cv::Mat& raycasted_object_mask) const
+{
+    // Get the normal integration mask.
+    cv::Mat integration_mask = generateIntegrationMask();
+
+    const se::integration_mask_elem_t base_value = (classId() == se::class_bg ? 0.0f : 1.0f);
+    const se::integration_mask_elem_t complementaty_value = 1.0f - base_value;
+
+    // Decrease the probability in undetected parts of the object.
+    cv::Mat inverse_instance_mask;
+    cv::bitwise_not(instance_mask, inverse_instance_mask);
+    cv::Mat undetected_mask;
+    cv::bitwise_and(raycasted_object_mask, inverse_instance_mask, undetected_mask);
+    integration_mask.setTo(cv::Scalar(complementaty_value), undetected_mask);
+
+    return integration_mask;
+}
+
+
+
 void InstanceSegmentation::resize(const int width, const int height)
 {
     cv::Mat tmp_image;

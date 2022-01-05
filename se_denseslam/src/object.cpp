@@ -101,12 +101,13 @@ bool Object::finished() const
 void Object::integrate(const se::Image<float>& depth_image,
                        const se::Image<uint32_t>& rgba_image,
                        const se::InstanceSegmentation& segmentation,
+                       const cv::Mat& raycasted_object_mask,
                        const Eigen::Matrix4f& T_MC,
                        const SensorImpl& sensor,
                        const size_t frame)
 {
     // Create the integration mask.
-    cv::Mat mask = segmentation.generateIntegrationMask();
+    cv::Mat mask = segmentation.generateIntegrationMask(raycasted_object_mask);
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
     std::cout << __func__ << " in: "
               << "   RGB " << rgba_image.width() << "x" << rgba_image.height() << "   Depth "

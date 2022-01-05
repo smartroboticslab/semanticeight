@@ -71,6 +71,8 @@ struct InstanceSegmentation {
      */
     cv::Mat generateIntegrationMask() const;
 
+    cv::Mat generateIntegrationMask(const cv::Mat& raycasted_object_mask) const;
+
     /** Changes the resolution of the mask to the one supplied.
      */
     void resize(const int width, const int height);

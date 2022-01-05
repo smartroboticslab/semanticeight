@@ -591,7 +591,15 @@ bool DenseSLAMSystem::integrateObjects(const SensorImpl& sensor, const size_t fr
     for (auto& object_detection : processed_segmentation_.object_instances) {
         const int object_instance = object_detection.instance_id;
         Object& object = *(objects_[object_instance]);
-        object.integrate(depth_image_, rgba_image_, object_detection, T_MC_, sensor, frame);
+        const cv::Mat raycasted_object_mask =
+            se::extract_instance(raycasted_instance_mask_, object.instance_id);
+        object.integrate(depth_image_,
+                         rgba_image_,
+                         object_detection,
+                         raycasted_object_mask,
+                         T_MC_,
+                         sensor,
+                         frame);
 
 #if SE_BOUNDING_VOLUME != SE_BV_NONE
         // Update the bounding volume from the new measurement.

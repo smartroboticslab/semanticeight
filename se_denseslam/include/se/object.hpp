@@ -149,6 +149,7 @@ class Object {
     void integrate(const se::Image<float>& depth_image,
                    const se::Image<uint32_t>& rgba_image,
                    const se::InstanceSegmentation& segmentation,
+                   const cv::Mat& raycasted_object_mask,
                    const Eigen::Matrix4f& T_MC,
                    const SensorImpl& sensor,
                    const size_t frame);
