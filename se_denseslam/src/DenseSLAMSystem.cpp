@@ -819,8 +819,9 @@ void DenseSLAMSystem::saveObjectMeshes(const std::string& filename,
         // Scale voxels to meters.
         Eigen::Matrix4f T_FO = T_FW * se::math::to_inverse_transformation(object->T_OM_ * T_MW_);
         T_FO.topLeftCorner<3, 3>() *= object->voxelDim();
-        const std::string f = filename + "_" + std::to_string(object->instance_id) + ".ply";
-        se::io::save_mesh_ply(mesh, f, T_FO);
+        std::stringstream f;
+        f << filename << "_" << std::setw(3) << std::setfill('0') << object->instance_id << ".ply";
+        se::io::save_mesh_ply(mesh, f.str(), T_FO);
     }
 }
 
