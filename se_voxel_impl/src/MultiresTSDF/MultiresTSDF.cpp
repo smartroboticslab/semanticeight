@@ -56,7 +56,7 @@ int MultiresTSDF::max_weight;
 
 void MultiresTSDF::configure(const float voxel_dim)
 {
-    mu = 8 * voxel_dim;
+    mu = 2 * voxel_dim;
     max_weight = 100;
 
     std::cout << str_utils::value_to_pretty_str(mu / voxel_dim, "TSDF mu factor") << "\n";
