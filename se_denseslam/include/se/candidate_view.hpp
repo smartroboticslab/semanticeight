@@ -180,6 +180,10 @@ class CandidateView {
 
     static void yawWhileMoving(Path& path, float velocity_linear, float velocity_angular);
 
+    /** \brief Zero-out the roll and pitch angles for all poses in the path.
+     */
+    static void zeroRollPitch(Path& path_MB);
+
     /** \brief Compute the time required to complete the path by moving with the constant
        * velocities provided. The yaw time takes into account the intermmediate yaw values, not just
        * the start and and yaw angles.

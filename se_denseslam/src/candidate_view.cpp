@@ -92,6 +92,7 @@ CandidateView::CandidateView(const OctreePtr& map,
     // Raycast to compute the optimal yaw angle.
     entropyRaycast(*map, sensor, T_BC, T_MB_history);
     path_MB_.back().topLeftCorner<3, 3>() = yawToC_MB(yaw_M_);
+    zeroRollPitch(path_MB_);
     // Get the LoD gain of the objects.
     const SensorImpl raycasting_sensor(sensor, 0.5f);
     lod_gain_ = lod_gain_raycasting(
@@ -472,6 +473,19 @@ void CandidateView::yawWhileMoving(Path& path, float velocity_linear, float velo
         }
     }
     path = new_path;
+}
+
+
+
+void CandidateView::zeroRollPitch(Path& path_MB)
+{
+    for (auto& T_MB : path_MB) {
+        Eigen::Quaternionf q_MB(T_MB.topLeftCorner<3, 3>());
+        q_MB.x() = 0.0f;
+        q_MB.y() = 0.0f;
+        q_MB.normalize();
+        T_MB.topLeftCorner<3, 3>() = q_MB.toRotationMatrix();
+    }
 }
 
 
