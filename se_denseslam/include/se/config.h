@@ -558,7 +558,7 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
 
     // Exploration only ///////////////////////////////////////////////////////
     out << str_utils::value_to_pretty_str(config.frontier_cluster_min_ratio,
-                                          "Frontier cluster min volume")
+                                          "Frontier cluster min ratio")
         << "\n";
     out << str_utils::vector_to_pretty_str(config.aabb_min_W, "AABB min_w") << "\n";
     out << str_utils::vector_to_pretty_str(config.aabb_max_W, "AABB max_w") << "\n";
