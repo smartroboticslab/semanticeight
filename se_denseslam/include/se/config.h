@@ -465,7 +465,6 @@ struct Configuration {
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
-} // namespace se
 
 
 
@@ -586,5 +585,7 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
 
     return out;
 }
+
+} // namespace se
 
 #endif
