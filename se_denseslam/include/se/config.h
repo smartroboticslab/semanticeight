@@ -197,7 +197,7 @@ struct Configuration {
      * Configuration::enable_benchmark argument is a directory
      * (--enable-benchmark=/PATH/TO/DIR)
      */
-    std::string log_file;
+    std::string log_path;
 
     /**
      * The path to a text file containing the ground truth poses T_WC. Each
@@ -421,7 +421,7 @@ struct Configuration {
             output_structure_file(""),
             sequence_path(""),
             enable_benchmark(false),
-            log_file(""),
+            log_path(""),
             ground_truth_file(""),
             enable_ground_truth(true),
             T_BC(Eigen::Matrix4f::Identity()),
@@ -480,7 +480,7 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
     out << str_utils::str_to_pretty_str(config.sequence_type, "Sequence type") << "\n";
     out << str_utils::str_to_pretty_str(config.sequence_path, "Sequence path") << "\n";
     out << str_utils::str_to_pretty_str(config.ground_truth_file, "Ground truth file") << "\n";
-    out << str_utils::str_to_pretty_str((config.log_file == "" ? "std::cout" : config.log_file),
+    out << str_utils::str_to_pretty_str((config.log_path == "" ? "std::cout" : config.log_path),
                                         "Log file")
         << "\n";
     out << str_utils::bool_to_pretty_str(config.enable_benchmark, "Enable benchmark") << "\n";

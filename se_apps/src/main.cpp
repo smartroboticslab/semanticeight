@@ -360,9 +360,8 @@ int main(int argc, char** argv)
     }
 
     //  =========  PRINT CONFIGURATION  =========
-    //  config.log_file = "";
-    if (config.log_file != "") {
-        log_file_stream.open(config.log_file.c_str());
+    if (config.log_path != "") {
+        log_file_stream.open(config.log_path.c_str());
         log_stream = &log_file_stream;
     }
     log_stream->setf(std::ios::fixed, std::ios::floatfield);
@@ -767,7 +766,7 @@ int processAll(se::Reader* reader,
             }
         }
 
-        if (config->log_file != "") {
+        if (config->log_path != "") {
             se::perfstats.writeToFilestream();
         }
         else {
