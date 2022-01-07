@@ -360,6 +360,7 @@ int main(int argc, char** argv)
     }
 
     //  =========  PRINT CONFIGURATION  =========
+    generate_log_file(config);
     if (config.log_path != "") {
         log_file_stream.open(config.log_path.c_str());
         log_stream = &log_file_stream;

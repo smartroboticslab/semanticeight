@@ -906,7 +906,6 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
     }
 
     // Autogenerate filename if only a directory is provided
-    generate_log_file(config);
     //generate_render_file(config);
     //generate_mesh_file(config);
     generate_structure_file(config);
