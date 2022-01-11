@@ -67,13 +67,17 @@ class ExplorationPlanner {
 
     const PoseGridHistory& getPoseGridHistory() const;
 
-    /** Write the T_WB history as a PLY file.
-       */
-    int writePathPLY(const std::string& filename) const;
+    /** Write the T_WB history as a PLY file. Optionally transform from the world frame W to some
+     * other frame F.
+     */
+    int writePathPLY(const std::string& filename,
+                     const Eigen::Matrix4f& T_FW = Eigen::Matrix4f::Identity()) const;
 
-    /** Write the T_WB history as a TSV file.
-       */
-    int writePathTSV(const std::string& filename) const;
+    /** Write the T_WB history as a TSV file. Optionally transform from the world frame W to some
+     * other frame F.
+     */
+    int writePathTSV(const std::string& filename,
+                     const Eigen::Matrix4f& T_FW = Eigen::Matrix4f::Identity()) const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:

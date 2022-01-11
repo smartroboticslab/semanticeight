@@ -217,25 +217,27 @@ const PoseGridHistory& ExplorationPlanner::getPoseGridHistory() const
 
 
 
-int ExplorationPlanner::writePathPLY(const std::string& filename) const
+int ExplorationPlanner::writePathPLY(const std::string& filename, const Eigen::Matrix4f& T_FW) const
 {
+    const Eigen::Matrix4f T_FM = T_FW * T_WM_;
     Path history_W(T_MB_history_.poses.size());
     std::transform(T_MB_history_.poses.begin(),
                    T_MB_history_.poses.end(),
                    history_W.begin(),
-                   [&](const Eigen::Matrix4f& T_MB) { return T_WM_ * T_MB; });
+                   [&](const Eigen::Matrix4f& T_MB) { return T_FM * T_MB; });
     return write_path_ply(filename, history_W);
 }
 
 
 
-int ExplorationPlanner::writePathTSV(const std::string& filename) const
+int ExplorationPlanner::writePathTSV(const std::string& filename, const Eigen::Matrix4f& T_FW) const
 {
+    const Eigen::Matrix4f T_FM = T_FW * T_WM_;
     Path history_W(T_MB_history_.poses.size());
     std::transform(T_MB_history_.poses.begin(),
                    T_MB_history_.poses.end(),
                    history_W.begin(),
-                   [&](const Eigen::Matrix4f& T_MB) { return T_WM_ * T_MB; });
+                   [&](const Eigen::Matrix4f& T_MB) { return T_FM * T_MB; });
     return write_path_tsv(filename, history_W);
 }
 } // namespace se
