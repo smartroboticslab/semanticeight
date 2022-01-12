@@ -122,6 +122,10 @@ class CandidateView {
                              float velocity_angular,
                              float resolution);
 
+    /** The position initially desired for the candidate. The actual position can be different due
+     * to partial path planning.
+     */
+    Eigen::Vector3f desired_t_MB_;
     /** The optimal yaw angle with respect to the information gain. */
     float yaw_M_;
     /** The length of the path in metres. */

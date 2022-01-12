@@ -22,6 +22,7 @@ int window_width(int w, float hfov)
 
 namespace se {
 CandidateView::CandidateView() :
+        desired_t_MB_(NAN, NAN, NAN),
         path_length_(-1.0f),
         path_time_(-1.0f),
         entropy_(-1.0f),
@@ -38,6 +39,7 @@ CandidateView::CandidateView() :
 
 CandidateView::CandidateView(const Eigen::Vector3f& t_MB) : CandidateView::CandidateView()
 {
+    desired_t_MB_ = t_MB;
     path_MB_.push_back(Eigen::Matrix4f::Identity());
     path_MB_.back().topRightCorner<3, 1>() = t_MB;
 }
@@ -53,6 +55,7 @@ CandidateView::CandidateView(const OctreePtr& map,
                              const Eigen::Matrix4f& T_BC,
                              const PoseHistory* T_MB_history,
                              const CandidateConfig& config) :
+        desired_t_MB_(config_.planner_config.goal_t_MB_),
         path_length_(-1.0f),
         path_time_(-1.0f),
         entropy_(-1.0f),
