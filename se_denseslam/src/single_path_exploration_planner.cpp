@@ -19,8 +19,8 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         config_(config), best_idx_(SIZE_MAX)
 {
     const PoseHistory* T_MB_history = &T_MB_grid_history;
-    MortonSamplingTree candidate_sampling_tree(frontiers, map->voxelDepth());
-    //std::deque<se::key_t> remaining_frontiers(frontiers.begin(), frontiers.end());
+    //MortonSamplingTree candidate_sampling_tree(frontiers, map->voxelDepth());
+    std::deque<se::key_t> remaining_frontiers(frontiers.begin(), frontiers.end());
     candidates_.reserve(config_.num_candidates);
     config_.candidate_config.planner_config.start_t_MB_ = T_MB.topRightCorner<3, 1>();
     // Create the planner map.
@@ -47,8 +47,8 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     const size_t max_failed = 5 * config_.num_candidates;
     //const int sampling_step = std::ceil(remaining_frontiers.size() / config_.num_candidates);
     while (candidates_.size() < static_cast<size_t>(config_.num_candidates)
-           && rejected_candidates_.size() <= max_failed && !candidate_sampling_tree.empty()) {
-        //   && rejected_candidates_.size() <= max_failed && !remaining_frontiers.empty()) {
+           //&& rejected_candidates_.size() <= max_failed && !candidate_sampling_tree.empty()) {
+           && rejected_candidates_.size() <= max_failed && !remaining_frontiers.empty()) {
         // Sample a point
         //const Eigen::Vector3f candidate_t_MB = sampleCandidate(map,
         //                                                       remaining_frontiers,
@@ -56,8 +56,10 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         //                                                       sampling_step,
         //                                                       config_.sampling_min_M,
         //                                                       config_.sampling_max_M);
+        //const Eigen::Vector3f candidate_t_MB = sampleCandidate(
+        //    map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
         const Eigen::Vector3f candidate_t_MB = sampleCandidate(
-            map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
+            map, remaining_frontiers, config_.sampling_min_M, config_.sampling_max_M);
         if (T_MB_history->rejectPosition(candidate_t_MB, sensor)) {
             rejected_candidates_.emplace_back(candidate_t_MB);
             continue;
