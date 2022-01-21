@@ -176,8 +176,8 @@ class DenseSLAMSystem {
     // Exploration only ///////////////////////////////////////////////////////
     std::set<se::key_t> updated_nodes_;
     std::set<se::key_t> frontiers_;
-    Eigen::Vector3f aabb_min_M_;
-    Eigen::Vector3f aabb_max_M_;
+    const Eigen::Vector3f aabb_min_M_;
+    const Eigen::Vector3f aabb_max_M_;
 
 
 

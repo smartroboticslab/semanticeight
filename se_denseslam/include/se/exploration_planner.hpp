@@ -87,10 +87,10 @@ class ExplorationPlanner {
 
     const OctreePtr map_;
     const ExplorationConfig config_;
-    Eigen::Matrix4f T_MW_;
-    Eigen::Matrix4f T_WM_;
-    Eigen::Matrix4f T_BC_;
-    Eigen::Matrix4f T_CB_;
+    const Eigen::Matrix4f T_MW_;
+    const Eigen::Matrix4f T_WM_;
+    const Eigen::Matrix4f T_BC_;
+    const Eigen::Matrix4f T_CB_;
     // The pose planning the next path will start from.
     Eigen::Matrix4f planning_T_MB_;
     // History of fusion poses.

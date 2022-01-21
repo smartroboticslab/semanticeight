@@ -107,7 +107,9 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
         object_surface_point_cloud_M_(image_res_.x(), image_res_.y()),
         object_surface_normals_M_(image_res_.x(), image_res_.y()),
         object_scale_image_(image_res_.x(), image_res_.y(), -1),
-        object_min_scale_image_(image_res_.x(), image_res_.y(), -1)
+        object_min_scale_image_(image_res_.x(), image_res_.y(), -1),
+        aabb_min_M_((T_MW * config.aabb_min_W.homogeneous()).head<3>()),
+        aabb_max_M_((T_MW * config.aabb_max_W.homogeneous()).head<3>())
 {
     bool has_yaml_voxel_impl_config = false;
     YAML::Node yaml_voxel_impl_config = YAML::Load("");
@@ -157,10 +159,6 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
     raycasted_instance_mask_ = cv::Mat(
         cv::Size(image_res_.x(), image_res_.y()), se::instance_mask_t, cv::Scalar(se::instance_bg));
     occlusion_mask_ = cv::Mat(cv::Size(image_res_.x(), image_res_.y()), se::mask_t, cv::Scalar(0));
-
-    // Exploration-only /////////////////////////////////////////////////////
-    aabb_min_M_ = (T_MW_ * config_.aabb_min_W.homogeneous()).head<3>();
-    aabb_max_M_ = (T_MW_ * config_.aabb_max_W.homogeneous()).head<3>();
 }
 
 
