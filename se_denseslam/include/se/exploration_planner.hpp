@@ -67,6 +67,12 @@ class ExplorationPlanner {
 
     const PoseGridHistory& getPoseGridHistory() const;
 
+    /** Return the edge vertices of the sampling AABB in the map frame in an order that can be
+     * directly passed to rviz as a LINE_LIST.
+     */
+    const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>&
+    samplingAABBEdgesM() const;
+
     /** Write the T_WB history as a PLY file. Optionally transform from the world frame W to some
      * other frame F.
      */
@@ -87,6 +93,8 @@ class ExplorationPlanner {
 
     const OctreePtr map_;
     const ExplorationConfig config_;
+    const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>
+        sampling_aabb_edges_M_;
     const Eigen::Matrix4f T_MW_;
     const Eigen::Matrix4f T_WM_;
     const Eigen::Matrix4f T_BC_;

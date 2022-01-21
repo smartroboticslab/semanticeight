@@ -4,6 +4,7 @@
 
 #include "se/exploration_planner.hpp"
 
+#include "se/bounding_volume.hpp"
 #include "se/exploration_utils.hpp"
 
 namespace se {
@@ -18,6 +19,7 @@ ExplorationPlanner::ExplorationPlanner(const OctreePtr map,
                                        const ExplorationConfig& config) :
         map_(map),
         config_(config),
+        sampling_aabb_edges_M_(se::AABB(config.sampling_min_M, config.sampling_max_M).edges()),
         T_MW_(T_MW),
         T_WM_(se::math::to_inverse_transformation(T_MW)),
         T_BC_(T_BC),
@@ -213,6 +215,14 @@ Image<uint32_t> ExplorationPlanner::renderMinScale(const SensorImpl& sensor)
 const PoseGridHistory& ExplorationPlanner::getPoseGridHistory() const
 {
     return T_MB_grid_history_;
+}
+
+
+
+const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>&
+ExplorationPlanner::samplingAABBEdgesM() const
+{
+    return sampling_aabb_edges_M_;
 }
 
 
