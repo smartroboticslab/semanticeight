@@ -178,6 +178,7 @@ class DenseSLAMSystem {
     std::set<se::key_t> frontiers_;
     const Eigen::Vector3f aabb_min_M_;
     const Eigen::Vector3f aabb_max_M_;
+    const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> aabb_edges_M_;
 
 
 
@@ -888,6 +889,9 @@ class DenseSLAMSystem {
     {
         return frontiers_;
     }
+
+    const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>&
+    environmentAABBEdgesM() const;
 
     std::vector<se::Volume<VoxelImpl::VoxelType>> frontierVolumes() const;
 

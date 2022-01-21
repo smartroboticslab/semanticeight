@@ -109,7 +109,8 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
         object_scale_image_(image_res_.x(), image_res_.y(), -1),
         object_min_scale_image_(image_res_.x(), image_res_.y(), -1),
         aabb_min_M_((T_MW * config.aabb_min_W.homogeneous()).head<3>()),
-        aabb_max_M_((T_MW * config.aabb_max_W.homogeneous()).head<3>())
+        aabb_max_M_((T_MW * config.aabb_max_W.homogeneous()).head<3>()),
+        aabb_edges_M_(se::AABB(aabb_min_M_, aabb_max_M_).edges())
 {
     bool has_yaml_voxel_impl_config = false;
     YAML::Node yaml_voxel_impl_config = YAML::Load("");
@@ -851,6 +852,14 @@ void DenseSLAMSystem::freeInitialPosition(const SensorImpl& sensor, const std::s
     update_frontiers(*map_, frontiers_, config_.frontier_cluster_min_ratio);
     // Up-propagate free space to the root
     VoxelImpl::propagateToRoot(*map_);
+}
+
+
+
+const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>&
+DenseSLAMSystem::environmentAABBEdgesM() const
+{
+    return aabb_edges_M_;
 }
 
 
