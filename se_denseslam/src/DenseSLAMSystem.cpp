@@ -535,7 +535,7 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame)
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
     printf("trackObjects in:   Number of current objects: %zu\n", objects_.size());
 #endif
-    updateValidDepthMask(depth_image_);
+    updateValidDepthMask(depth_image_, sensor);
 
     // Save the resulting masks in processed_segmentation_
     processed_segmentation_ = se::SegmentationResult(input_segmentation_);
@@ -1047,12 +1047,14 @@ void DenseSLAMSystem::generateObjects(se::SegmentationResult& masks, const Senso
 
 
 
-void DenseSLAMSystem::updateValidDepthMask(const se::Image<float>& depth)
+void DenseSLAMSystem::updateValidDepthMask(const se::Image<float>& depth, const SensorImpl& sensor)
 {
 #pragma omp parallel for
     for (int y = 0; y < depth.height(); y++) {
         for (int x = 0; x < depth.width(); x++) {
-            if (depth[x + y * depth.width()] != 0.f) {
+            const float d = depth[x + y * depth.width()];
+            if (d != 0.0f && !isnan(d) && !isinf(d) && d >= sensor.near_plane
+                && d <= sensor.far_plane) {
                 valid_depth_mask_.at<se::mask_elem_t>(y, x) = 255;
             }
             else {

@@ -225,7 +225,11 @@ class DenseSLAMSystem {
      */
     void generateObjects(se::SegmentationResult& masks, const SensorImpl& sensor);
 
-    void updateValidDepthMask(const se::Image<float>& depth);
+    /**
+     * Update DenseSLAMSystem::valid_depth_mask_ to contain 255 at pixels with valid depth
+     * measurements within the near and far planes and 0 everywhere else.
+     */
+    void updateValidDepthMask(const se::Image<float>& depth, const SensorImpl& sensor);
 
     void generateUndetectedInstances(se::SegmentationResult& detections);
 
