@@ -61,6 +61,8 @@ void use_coco_classes();
 
 void use_matterport3d_classes();
 
+void use_replica_classes();
+
 void set_thing(const std::string& class_name);
 
 void set_stuff(const std::string& class_name);
