@@ -400,25 +400,86 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
 
 void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& sensor)
 {
-    // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle
+    // Resize the image to 720xSOMETHING to allow having nicer visualizations.
+    {
+        cv::Mat image_cv(cv::Size(image.width(), image.height()), CV_8UC4, image.data());
+        const int w = 720;
+        const int h = w * static_cast<float>(image.height()) / image.width() + 0.5f;
+        Image<uint32_t> out_image(w, h);
+        cv::Mat out_image_cv(cv::Size(w, h), CV_8UC4, out_image.data());
+        cv::resize(image_cv, out_image_cv, out_image_cv.size(), 0.0, 0.0, cv::INTER_NEAREST);
+        image = out_image;
+    }
+
+    // Visualize the FOV rectangle.
+    const int w = image.width();
+    const int h = image.height();
+    cv::Mat image_cv(cv::Size(w, h), CV_8UC4, image.data());
+    const cv::Scalar fov_color = cv::Scalar(255, 0, 0, 128);
+    const int line_thickness = 2 * w / 360;
+    // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle.
     const int x_min =
         index_from_azimuth(yaw_M + sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
     const int x_max =
         index_from_azimuth(yaw_M - sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
-    // Draw the FOV rectangle on the image
-    constexpr uint32_t fov_color = 0xFF0000FF;
-#pragma omp parallel for
-    for (int x = x_min; x <= x_max; x++) {
-        image(x % image.width(), 0) = se::blend(image(x % image.width(), 0), fov_color, 0.5f);
-        image(x % image.width(), image.height() - 1) =
-            se::blend(image(x % image.width(), image.height() - 1), fov_color, 0.5f);
+    // Draw the vertical lines.
+    cv::line(image_cv, cv::Point(x_min % w, 0), cv::Point(x_min % w, h), fov_color, line_thickness);
+    cv::line(image_cv, cv::Point(x_max % w, 0), cv::Point(x_max % w, h), fov_color, line_thickness);
+    // Draw the horizontal lines.
+    if (0 <= x_min && x_max < w) {
+        cv::line(
+            image_cv, cv::Point(x_min % w, 0), cv::Point(x_max % w, 0), fov_color, line_thickness);
+        cv::line(
+            image_cv, cv::Point(x_min % w, h), cv::Point(x_max % w, h), fov_color, line_thickness);
     }
-#pragma omp parallel for
-    for (int y = 1; y < image.height() - 1; y++) {
-        image(x_min % image.width(), y) =
-            se::blend(image(x_min % image.width(), y), fov_color, 0.5f);
-        image(x_max % image.width(), y) =
-            se::blend(image(x_max % image.width(), y), fov_color, 0.5f);
+    else {
+        cv::line(image_cv, cv::Point(x_min % w, 0), cv::Point(w - 1, 0), fov_color, line_thickness);
+        cv::line(image_cv, cv::Point(0, 0), cv::Point(x_max % w, 0), fov_color, line_thickness);
+        cv::line(image_cv, cv::Point(x_min % w, h), cv::Point(w - 1, h), fov_color, line_thickness);
+        cv::line(image_cv, cv::Point(0, h), cv::Point(x_max % w, h), fov_color, line_thickness);
+    }
+
+    // Show the yaw angle major and minor tick marks.
+    const cv::Scalar tick_color = cv::Scalar(255, 255, 255, 128);
+    const int major_tick_thickness = 2 * w / 360;
+    const int minor_tick_thickness = 1 * w / 360;
+    for (float t = 0.0f; t <= 1.0f; t += 0.25f) {
+        const int x = t * (w - 1);
+        cv::line(image_cv,
+                 cv::Point(x, h - 1),
+                 cv::Point(x, h - 1 - 0.04 * h),
+                 tick_color,
+                 major_tick_thickness);
+    }
+    for (float t = 0.125f; t < 1.0f; t += 0.125f) {
+        const int x = t * (w - 1);
+        cv::line(image_cv,
+                 cv::Point(x, h - 1),
+                 cv::Point(x, h - 1 - 0.02 * h),
+                 tick_color,
+                 minor_tick_thickness);
+    }
+
+    // Draw the angle labels.
+    constexpr auto font = cv::FONT_HERSHEY_SIMPLEX;
+    const int thickness = 1 * w / 360;
+    std::map<float, std::string> labels{
+        {M_PI_F / 2.0f, "90"}, {0.0f, "0"}, {-M_PI_F / 2.0f, "-90 "}};
+    for (const auto& [angle, label] : labels) {
+        // Get the dimensions of the resulting text box for a scale of 1.
+        int baseline = 0;
+        cv::Size text_size = cv::getTextSize(label, font, 1.0, thickness, &baseline);
+        // Compute the scale so that the text height is 2% of the image height.
+        const double scale = h / 10.0 / text_size.height;
+        // Scale the baseline.
+        baseline = scale * (baseline + thickness);
+        // Get the actual text size.
+        text_size = cv::getTextSize(label, font, scale, thickness, &baseline);
+        // Center the text above the angle tick mark.
+        const int x = index_from_azimuth(angle, w, M_TAU_F);
+        cv::Point text_pos(x - text_size.width / 2, h - 1 - baseline);
+        cv::putText(
+            image_cv, label, text_pos, font, scale, cv::Scalar(255, 255, 255, 128), thickness);
     }
 }
 
