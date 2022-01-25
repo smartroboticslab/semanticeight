@@ -545,21 +545,10 @@ void SegmentationResult::removeInvalid()
 
 
 
-void SegmentationResult::removeInvalidDepth(const cv::Mat& valid_depth_mask)
+void SegmentationResult::filterInvalidDepth(const cv::Mat& valid_depth_mask)
 {
-    // Loop over all detected instances in reverse to make multiple removals
-    // faster.
-    for (int i = object_instances.size() - 1; i >= 0; --i) {
-        cv::Mat mask_intersection;
-        cv::bitwise_and(object_instances[i].instance_mask, valid_depth_mask, mask_intersection);
-        if (cv::countNonZero(mask_intersection) == 0) {
-#if SE_VERBOSE >= SE_VERBOSE_NORMAL
-            printf("Removed ");
-            (object_instances.begin() + i)->print();
-            printf(" due to invalid depth\n");
-#endif
-            object_instances.erase(object_instances.begin() + i);
-        }
+    for (auto& instance : object_instances) {
+        cv::bitwise_and(instance.instance_mask, valid_depth_mask, instance.instance_mask);
     }
 }
 

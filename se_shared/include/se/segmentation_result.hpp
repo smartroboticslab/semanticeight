@@ -142,10 +142,9 @@ struct SegmentationResult {
     void removeInvalid();
 
     /**
-     * Remove all object instances whose respective depth measurements are all
-     * invalid.
+     * Filter the object masks to remove pixels where the depth measurements are invalid.
      */
-    void removeInvalidDepth(const cv::Mat& valid_depth_mask);
+    void filterInvalidDepth(const cv::Mat& valid_depth_mask);
 
     /**
      * Remove all object instances whose detected class confidence is below
