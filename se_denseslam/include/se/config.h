@@ -401,6 +401,26 @@ struct Configuration {
      */
     float solving_time;
 
+    /** The threshold in meters to consider a goal x or y coordinate reached.
+     * <br>\em Default: 0.2
+     */
+    float goal_xy_threshold;
+
+    /** The threshold in meters to consider a goal z coordinate reached.
+     * <br>\em Default: 0.2
+     */
+    float goal_z_threshold;
+
+    /** The threshold in radians to consider a goal roll or pitch angle reached.
+     * <br>\em Default: 10 * math::deg_to_rad
+     */
+    float goal_roll_pitch_threshold;
+
+    /** The threshold in radians to consider a goal yaw angle reached.
+     * <br>\em Default: 5 * math::deg_to_rad
+     */
+    float goal_yaw_threshold;
+
     Configuration() :
             sensor_type(""),
             voxel_impl_type(""),
@@ -459,7 +479,11 @@ struct Configuration {
             safety_radius(0.0f),
             min_control_point_radius(0.1f),
             skeleton_sample_precision(0.05f),
-            solving_time(0.1f)
+            solving_time(0.1f),
+            goal_xy_threshold(0.2f),
+            goal_z_threshold(0.2f),
+            goal_roll_pitch_threshold(10.0f * math::deg_to_rad),
+            goal_yaw_threshold(5.0f * math::deg_to_rad)
     {
     }
 
@@ -580,6 +604,10 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
                                           "Skeleton sample precision")
         << "\n";
     out << str_utils::value_to_pretty_str(config.solving_time, "Solving time") << "\n";
+    out << str_utils::value_to_pretty_str(config.goal_xy_threshold, "Goal X, Y threshold") << "\n";
+    out << str_utils::value_to_pretty_str(config.goal_z_threshold, "Goal Z threshold") << "\n";
+    out << str_utils::value_to_pretty_str(config.goal_roll_pitch_threshold, "Goal roll, pitch threshold") << "\n";
+    out << str_utils::value_to_pretty_str(config.goal_yaw_threshold, "Goal yaw threshold") << "\n";
 
     return out;
 }

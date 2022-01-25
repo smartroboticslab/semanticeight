@@ -8,11 +8,6 @@
 #include "se/exploration_utils.hpp"
 
 namespace se {
-constexpr float ExplorationPlanner::goal_xy_threshold_;
-constexpr float ExplorationPlanner::goal_z_threshold_;
-constexpr float ExplorationPlanner::goal_yaw_threshold_;
-constexpr float ExplorationPlanner::goal_roll_pitch_threshold_;
-
 ExplorationPlanner::ExplorationPlanner(const OctreePtr map,
                                        const Eigen::Matrix4f& T_MW,
                                        const Eigen::Matrix4f& T_BC,
@@ -91,19 +86,19 @@ bool ExplorationPlanner::goalReached()
     const Eigen::Matrix4f& current_T_MB = T_MB_history_.poses.back();
     const Eigen::Matrix4f& goal_T_MB = goal_path_T_MB_.front();
     const Eigen::Vector3f pos_error = math::position_error(goal_T_MB, current_T_MB);
-    if (pos_error.head<2>().norm() > goal_xy_threshold_) {
+    if (pos_error.head<2>().norm() > config_.goal_xy_threshold) {
         return false;
     }
-    if (pos_error.tail<1>().norm() > goal_z_threshold_) {
+    if (pos_error.tail<1>().norm() > config_.goal_z_threshold) {
         return false;
     }
-    if (fabsf(math::yaw_error(goal_T_MB, current_T_MB)) > goal_yaw_threshold_) {
+    if (fabsf(math::yaw_error(goal_T_MB, current_T_MB)) > config_.goal_yaw_threshold) {
         return false;
     }
-    if (fabsf(math::pitch_error(goal_T_MB, current_T_MB)) > goal_roll_pitch_threshold_) {
+    if (fabsf(math::pitch_error(goal_T_MB, current_T_MB)) > config_.goal_roll_pitch_threshold) {
         return false;
     }
-    if (fabsf(math::roll_error(goal_T_MB, current_T_MB)) > goal_roll_pitch_threshold_) {
+    if (fabsf(math::roll_error(goal_T_MB, current_T_MB)) > config_.goal_roll_pitch_threshold) {
         return false;
     }
     // Remove the reached pose from the goal path.

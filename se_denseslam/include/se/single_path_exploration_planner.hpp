@@ -18,6 +18,10 @@ struct ExplorationConfig {
     int num_candidates;
     Eigen::Vector3f sampling_min_M;
     Eigen::Vector3f sampling_max_M;
+    float goal_xy_threshold;
+    float goal_z_threshold;
+    float goal_roll_pitch_threshold;
+    float goal_yaw_threshold;
     CandidateConfig candidate_config;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

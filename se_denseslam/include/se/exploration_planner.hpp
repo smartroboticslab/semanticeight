@@ -109,11 +109,6 @@ class ExplorationPlanner {
     CandidateView goal_view_;
     size_t goal_view_idx_;
     PathQueue goal_path_T_MB_;
-
-    static constexpr float goal_xy_threshold_ = 0.2f;
-    static constexpr float goal_z_threshold_ = 0.2f;
-    static constexpr float goal_yaw_threshold_ = math::deg_to_rad * 5.0f;
-    static constexpr float goal_roll_pitch_threshold_ = math::deg_to_rad * 10.0f;
 };
 } // namespace se
 

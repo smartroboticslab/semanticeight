@@ -707,6 +707,23 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
             if (has_yaml_exploration_config && yaml_exploration_config["solving_time"]) {
                 config.solving_time = yaml_exploration_config["solving_time"].as<float>();
             }
+            // Goal X, Y threshold
+            if (has_yaml_exploration_config && yaml_exploration_config["goal_xy_threshold"]) {
+                config.goal_xy_threshold = yaml_exploration_config["goal_xy_threshold"].as<float>();
+            }
+            // Goal Z threshold
+            if (has_yaml_exploration_config && yaml_exploration_config["goal_z_threshold"]) {
+                config.goal_z_threshold = yaml_exploration_config["goal_z_threshold"].as<float>();
+            }
+            // Goal roll, pitch threshold
+            if (has_yaml_exploration_config && yaml_exploration_config["goal_roll_pitch_threshold"]) {
+                config.goal_roll_pitch_threshold = yaml_exploration_config["goal_roll_pitch_threshold"].as<float>();
+            }
+            // Goal yaw threshold
+            if (has_yaml_exploration_config && yaml_exploration_config["goal_yaw_threshold"]) {
+                config.goal_yaw_threshold =
+                    yaml_exploration_config["goal_yaw_threshold"].as<float>();
+            }
         }
     }
 
