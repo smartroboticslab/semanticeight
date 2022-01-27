@@ -42,89 +42,53 @@ namespace oc = ompl::control;
 
 namespace ptp {
 enum class PlanningResult {
-    OK,
+    Success,
     Partial,
     Failed,
+    StartOccupied,
+    GoalOccupied,
 };
 
 class SafeFlightCorridorGenerator {
     public:
-    SafeFlightCorridorGenerator(std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map,
-                                const PlanningParameter pp);
-
-    /**
-     * Set up the planner.
-     * @param [in] start Start position for path planning. [m]
-     * @param [in] goal Goal position for path planning. [m]
-     */
-    bool setupPlanner(const Eigen::Vector3f& start_m, const Eigen::Vector3f& goal_m);
-
-    Path<kDim>::Ptr getPathNotSimplified()
-    {
-        return path_not_simplified_;
-    }
-
+    SafeFlightCorridorGenerator(const std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map,
+                                const PlanningParameter& pp);
     /**
      * Plan the global path.
      * @param [in] start Start position for path planning. [m]
      * @param [in] goal Goal position for path planning. [m]
      * @return True if straight line planning was successful.
-     *TODO: Instead of Eigen::Vector3f use a trajectory point type/message
      */
     PlanningResult planPath(const Eigen::Vector3f& start_m, const Eigen::Vector3f& goal_m);
 
-    bool start_end_occupied()
-    {
-        return start_end_occupied_;
-    };
-    bool ompl_failed()
-    {
-        return ompl_failed_;
-    };
-
-    void prunePath(og::PathGeometric& path);
-    void simplifyPath(ompl::geometric::PathGeometric& path);
-
     /** Return the planned path. Its first vertex is always the start position.
      */
-    Path<kDim>::Ptr getPath()
-    {
-        return path_;
-    };
+    Path<kDim>::Ptr getPath() const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
-    /**
-     * Set the space boundaries of the ompl planner from the map boundaries.
-     * @param [in] min_boundary Lower boundaries in x, y and z of the map.
-     * @param [in] max_boundary Upper boundaries in x, y and z of the map.
-     * @param [out] space The ompl space to set the boundaries.
-     */
-
-    void setSpaceBoundaries(const Eigen::Vector3f& min_boundary,
-                            const Eigen::Vector3f& max_boundary,
-                            ompl::base::StateSpacePtr space);
-
+    void updateSpaceBoundaries();
+    void setupPlanner(const Eigen::Vector3f& start_m, const Eigen::Vector3f& goal_m);
+    void prunePath(og::PathGeometric& path);
+    void simplifyPath(ompl::geometric::PathGeometric& path);
     void reduceToControlPointCorridorRadius(Path<kDim>::Ptr path_m);
 
-    ompl::base::StateSpacePtr space_ = nullptr;
-    ompl::base::SpaceInformationPtr si_ = nullptr;
-    ompl::base::ProblemDefinitionPtr pdef_ = nullptr;
-    ompl::base::PlannerPtr optimizingPlanner_ = nullptr;
+    const std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map_;
+    const OccupancyWorld ow_;
+    const ProbCollisionChecker pcc_;
 
-    Path<kDim>::Ptr path_ = nullptr;
-    Path<kDim>::Ptr path_not_simplified_ = nullptr;
+    const float flight_corridor_radius_reduction_;
+    const float min_flight_corridor_radius_;
+    const float robot_radius_;
+    const float solving_time_;
 
-    OccupancyWorld ow_;
-    ProbCollisionChecker pcc_;
-    PlanningParameter pp_;
-    float min_flight_corridor_radius_;
-    float robot_radius_;
-    float flight_corridor_radius_reduction_;
-    float solving_time_;
-    bool start_end_occupied_ = false;
-    bool ompl_failed_ = false;
+    ompl::base::StateSpacePtr space_;
+    ompl::base::SpaceInformationPtr si_;
+    ompl::base::ProblemDefinitionPtr pdef_;
+    ompl::base::PlannerPtr optimizingPlanner_;
+
+    Path<kDim>::Ptr path_;
 };
 
 } // namespace ptp

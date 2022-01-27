@@ -46,7 +46,7 @@ namespace ptp {
 class MotionValidatorOccupancyDense : public ompl::base::MotionValidator {
     public:
     MotionValidatorOccupancyDense(const ompl::base::SpaceInformationPtr& si,
-                                  ProbCollisionChecker* pcc,
+                                  const ProbCollisionChecker& pcc,
                                   const double min_flight_corridor_radius) :
             ompl::base::MotionValidator(si),
             pcc_(pcc),
@@ -73,7 +73,7 @@ class MotionValidatorOccupancyDense : public ompl::base::MotionValidator {
         const Eigen::Vector3f start = OmplToEigen::convertState(*s1);
         const Eigen::Vector3f ending = OmplToEigen::convertState(*s2);
 
-        if (pcc_->checkSegmentFlightCorridor(start, ending, min_flight_corridor_radius_)) {
+        if (pcc_.checkSegmentFlightCorridor(start, ending, min_flight_corridor_radius_)) {
             return true;
         }
 
@@ -104,7 +104,7 @@ class MotionValidatorOccupancyDense : public ompl::base::MotionValidator {
             const Eigen::Vector3f start = OmplToEigen::convertState(*test_prev);
             const Eigen::Vector3f ending = OmplToEigen::convertState(*test);
 
-            if (!pcc_->checkSegmentFlightCorridor(start, ending, min_flight_corridor_radius_)) {
+            if (!pcc_.checkSegmentFlightCorridor(start, ending, min_flight_corridor_radius_)) {
                 lastValid.second = (double) (j - 1) / (double) nd;
                 if (lastValid.first != nullptr)
                     stateSpace_->interpolate(s1, s2, lastValid.second, lastValid.first);
@@ -122,7 +122,7 @@ class MotionValidatorOccupancyDense : public ompl::base::MotionValidator {
     }
 
     private:
-    ProbCollisionChecker* pcc_;
+    const ProbCollisionChecker& pcc_;
     float min_flight_corridor_radius_;
     ob::StateSpace* stateSpace_;
 };

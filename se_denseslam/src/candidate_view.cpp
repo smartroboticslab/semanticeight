@@ -74,8 +74,9 @@ CandidateView::CandidateView(const OctreePtr& map,
     }
     else {
         // Plan a path to the goal
-        if (planner.planPath(config_.planner_config.start_t_MB_, config_.planner_config.goal_t_MB_)
-            == ptp::PlanningResult::Failed) {
+        const auto status =
+            planner.planPath(config_.planner_config.start_t_MB_, config_.planner_config.goal_t_MB_);
+        if (status != ptp::PlanningResult::Success && status != ptp::PlanningResult::Partial) {
             // Could not plan a path. Add the attempted goal point to the path for visualization
             path_MB_.push_back(Eigen::Matrix4f::Identity());
             path_MB_.back().topRightCorner<3, 1>() = config_.planner_config.goal_t_MB_;
