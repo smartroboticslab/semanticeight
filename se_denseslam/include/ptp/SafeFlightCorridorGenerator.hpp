@@ -49,19 +49,8 @@ enum class PlanningResult {
 
 class SafeFlightCorridorGenerator {
     public:
-    typedef std::shared_ptr<SafeFlightCorridorGenerator> Ptr;
-
-    /**
-     * @param [in] ow Map
-     * @param ss_ SimplePlanner: Create the set of classes typically needed to solve a geometric problem
-     *              StateSpacePtr:  Representation of a space in which planning can be performed. Topology specific sampling, interpolation and distance are defined.
-     *              RealVectorStateSpace: A state space representing R^n. The distance function is the L2 norm.
-     */
-    SafeFlightCorridorGenerator(
-        const OccupancyWorld& ow,
-        ProbCollisionChecker& pcc,
-        const PlanningParameter pp); // QUESTION: Why use const OccupancyWorld::Ptr&
-    SafeFlightCorridorGenerator();   // QUESTION: Why use const OccupancyWorld::Ptr&
+    SafeFlightCorridorGenerator(std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map,
+                                const PlanningParameter pp);
 
     /**
      * Set up the planner.
@@ -102,6 +91,8 @@ class SafeFlightCorridorGenerator {
     {
         return path_;
     };
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
     /**

@@ -24,10 +24,7 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     candidates_.reserve(config_.num_candidates);
     config_.candidate_config.planner_config.start_t_MB_ = T_MB.topRightCorner<3, 1>();
     // Create a single planner for allcandidates.
-    const ptp::PlanningParameter planner_config(config_.candidate_config.planner_config);
-    ptp::OccupancyWorld world(map);
-    ptp::ProbCollisionChecker collision_checker(world, planner_config);
-    ptp::SafeFlightCorridorGenerator planner(world, collision_checker, planner_config);
+    ptp::SafeFlightCorridorGenerator planner(map, config_.candidate_config.planner_config);
     // Add the current pose to the candidates
     if (T_MB_history->rejectPosition(T_MB.topRightCorner<3, 1>(), sensor)) {
         rejected_candidates_.emplace_back(T_MB.topRightCorner<3, 1>());
