@@ -18,14 +18,16 @@
 
 namespace ptp {
 
-ProbCollisionChecker::ProbCollisionChecker(ptp::OccupancyWorld& ow, PlanningParameter pp) :
-        threshold_(-20.f), ow_(ow), octree_(ow.getMap()), pp_(pp), res_(ow.getMapResolution())
+ProbCollisionChecker::ProbCollisionChecker(const ptp::OccupancyWorld& ow,
+                                           const PlanningParameter& pp) :
+        ow_(ow), pp_(pp), res_(ow.getMapResolution())
 {
 }
 
-bool ProbCollisionChecker::checkData(const MultiresOFusion::VoxelType::VoxelData& data, bool finest)
+bool ProbCollisionChecker::checkData(const MultiresOFusion::VoxelType::VoxelData& data,
+                                     const bool finest) const
 {
-    if (data.x * data.y < threshold_ && (data.observed || (finest && data.y > 0))) {
+    if (data.x * data.y < free_threshold_ && (data.observed || (finest && data.y > 0))) {
         return true;
     }
     return false;
@@ -33,17 +35,16 @@ bool ProbCollisionChecker::checkData(const MultiresOFusion::VoxelType::VoxelData
 
 
 
-bool ProbCollisionChecker::checkPoint(const Eigen::Vector3f& point_M)
+bool ProbCollisionChecker::checkPoint(const Eigen::Vector3f& point_M) const
 {
-    Eigen::Vector3i voxel_coord = (point_M / res_).cast<int>();
-    return ow_.isFree(voxel_coord, threshold_);
+    return ow_.isFreeAtPoint(point_M, free_threshold_);
 }
 
 
 
 bool ProbCollisionChecker::checkLine(const Eigen::Vector3f& start_point_M,
                                      const Eigen::Vector3f& connection_m,
-                                     const int num_subpos)
+                                     const int num_subpos) const
 {
     Eigen::Vector3f point_M = start_point_M;
     if (!checkPoint(point_M)) {
@@ -116,7 +117,8 @@ static const Eigen::Matrix<float, 3, 8> sphere_d_sceleton_offset = 0.577
           .finished();
 
 
-bool ProbCollisionChecker::checkSphereSkeleton(const Eigen::Vector3f& point_M, const float radius_m)
+bool ProbCollisionChecker::checkSphereSkeleton(const Eigen::Vector3f& point_M,
+                                               const float radius_m) const
 {
     //=======================//
     // CHECK SPHERE SKELETON //
@@ -149,7 +151,7 @@ bool ProbCollisionChecker::checkSphereSkeleton(const Eigen::Vector3f& point_M, c
 
 bool ProbCollisionChecker::checkCylinderSkeleton(const Eigen::Vector3f& start_point_M,
                                                  const Eigen::Vector3f& end_point_M,
-                                                 const float radius_m)
+                                                 const float radius_m) const
 {
     //=========================//
     // CHECK CYLINDER SKELETON //
@@ -228,7 +230,7 @@ bool ProbCollisionChecker::checkCylinderSkeleton(const Eigen::Vector3f& start_po
 
 bool ProbCollisionChecker::checkCorridorSkeleton(const Eigen::Vector3f& start_point_M,
                                                  const Eigen::Vector3f& end_point_M,
-                                                 const float radius_m)
+                                                 const float radius_m) const
 {
     //=========================//
     // CHECK CORRIDOR SKELETON //
@@ -317,7 +319,7 @@ bool ProbCollisionChecker::checkCorridorSkeleton(const Eigen::Vector3f& start_po
 
 bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner,
                                      const int node_size,
-                                     bool& abort)
+                                     bool& abort) const
 {
     MultiresOFusion::VoxelType::VoxelData volume_data;
     Eigen::Vector3i volume_corner = Eigen::Vector3i(0, 0, 0);
@@ -327,14 +329,14 @@ bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner,
     ow_.getMap()->getThreshold(node_corner.x(),
                                node_corner.y(),
                                node_corner.z(),
-                               threshold_,
+                               free_threshold_,
                                node_size,
                                volume_data,
                                volume_size,
                                volume_corner,
                                is_finest);
 
-    if (!volume_data.observed || volume_data.x * volume_data.y >= threshold_) {
+    if (!volume_data.observed || volume_data.x * volume_data.y >= free_threshold_) {
         abort = (is_finest || (node_size == 1));
         return false;
     }
@@ -344,7 +346,7 @@ bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner,
 
 
 
-bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner, const int node_size)
+bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner, const int node_size) const
 {
     MultiresOFusion::VoxelType::VoxelData volume_data;
     int volume_size = 0;
@@ -354,14 +356,14 @@ bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner, const i
     ow_.getMap()->getThreshold(node_corner.x(),
                                node_corner.y(),
                                node_corner.z(),
-                               threshold_,
+                               free_threshold_,
                                node_size,
                                volume_data,
                                volume_size,
                                volume_corner,
                                is_finest);
 
-    if (!volume_data.observed || volume_data.x * volume_data.y >= threshold_) {
+    if (!volume_data.observed || volume_data.x * volume_data.y >= free_threshold_) {
         return false;
     }
 
@@ -373,7 +375,7 @@ bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner, const i
 bool ProbCollisionChecker::checkInSphereFree(const Eigen::Vector3i& node_corner_min,
                                              const int node_size,
                                              const Eigen::Vector3f& point_M,
-                                             const float radius_m)
+                                             const float radius_m) const
 {
     for (int i = 0; i < 8; i++) {
         Eigen::Vector3i node_corner = node_corner_min
@@ -430,7 +432,7 @@ bool ProbCollisionChecker::checkNodeInSphereFree(
     const Eigen::Vector3i& parent_coord,
     const int node_size,
     const Eigen::Vector3f& point_M,
-    const float radius_m)
+    const float radius_m) const
 {
     for (int i = 0; i < 8; i++) {
         if (checkData(parent_node->childData(i))) { //< If free continue;
@@ -510,7 +512,7 @@ bool ProbCollisionChecker::checkBlockInSphereFree(
     const Eigen::Vector3i& parent_coord,
     const int node_size,
     const Eigen::Vector3f& point_M,
-    const float radius_m)
+    const float radius_m) const
 {
     for (int i = 0; i < 8; i++) {
         const Eigen::Vector3i node_rel_step = Eigen::Vector3i::Constant(node_size).cwiseProduct(
@@ -576,7 +578,7 @@ bool ProbCollisionChecker::checkBlockInSphereFree(
 
 //
 
-bool ProbCollisionChecker::checkSphere(const Eigen::Vector3f& point_M, const float radius_m)
+bool ProbCollisionChecker::checkSphere(const Eigen::Vector3f& point_M, const float radius_m) const
 {
     //====================//
     // CHECK SPHERE DENSE //
@@ -631,7 +633,7 @@ bool ProbCollisionChecker::checkCenterInCylinder(const Eigen::Vector3f& center_v
                                                  const Eigen::Vector3f& start_point_M,
                                                  const Eigen::Vector3f& end_point_M,
                                                  const Eigen::Vector3f& axis,
-                                                 const float radius_m)
+                                                 const float radius_m) const
 {
     //    /**
     //     * Calculates the euclidean distance from a point to a line segment.
@@ -694,7 +696,7 @@ bool ProbCollisionChecker::checkCornerInCylinder(const Eigen::Vector3i& corner_v
                                                  const Eigen::Vector3f& start_point_M,
                                                  const Eigen::Vector3f& end_point_M,
                                                  const Eigen::Vector3f& axis,
-                                                 const float radius_m)
+                                                 const float radius_m) const
 {
     //    /**
     //     * Calculates the euclidean distance from a point to a line segment.
@@ -751,7 +753,7 @@ bool ProbCollisionChecker::checkInCylinderFree(const Eigen::Vector3i& node_corne
                                                const Eigen::Vector3f& start_point_M,
                                                const Eigen::Vector3f& end_point_M,
                                                const Eigen::Vector3f& axis,
-                                               const float radius_m)
+                                               const float radius_m) const
 {
     for (int i = 0; i < 8; i++) {
         Eigen::Vector3i node_corner = node_corner_min
@@ -827,7 +829,7 @@ bool ProbCollisionChecker::checkNodeInCylinderFree(
     const Eigen::Vector3f& start_point_M,
     const Eigen::Vector3f& end_point_M,
     const Eigen::Vector3f& axis,
-    const float radius_m)
+    const float radius_m) const
 {
     for (int i = 0; i < 8; i++) {
         if (checkData(parent_node->childData(i))) { //< If free continue;
@@ -920,7 +922,7 @@ bool ProbCollisionChecker::checkBlockInCylinderFree(
     const Eigen::Vector3f& start_point_M,
     const Eigen::Vector3f& end_point_M,
     const Eigen::Vector3f& axis,
-    const float radius_m)
+    const float radius_m) const
 {
     for (int i = 0; i < 8; i++) {
         const Eigen::Vector3i node_rel_step = Eigen::Vector3i::Constant(node_size).cwiseProduct(
@@ -1017,7 +1019,7 @@ inline void removeDuplicates(std::vector<Eigen::Vector3i>& con)
 
 bool ProbCollisionChecker::checkSegmentFlightCorridor(const Eigen::Vector3f& start_point_M,
                                                       const Eigen::Vector3f& end_point_M,
-                                                      const float radius_m)
+                                                      const float radius_m) const
 {
     /**
      * Check if the start and end position are in the allocated map
