@@ -47,7 +47,7 @@ CandidateView::CandidateView(const Eigen::Vector3f& t_MB) : CandidateView::Candi
 
 
 CandidateView::CandidateView(const OctreePtr& map,
-                             ptp::OccupancyWorld& ptp_map,
+                             ptp::SafeFlightCorridorGenerator& planner,
                              const std::vector<se::key_t>& /*frontiers*/,
                              const Objects& objects,
                              const SensorImpl& sensor,
@@ -67,10 +67,6 @@ CandidateView::CandidateView(const OctreePtr& map,
         utility_(-1.0f),
         config_(config)
 {
-    // Set-up the planner
-    const ptp::PlanningParameter planner_config(config_.planner_config);
-    ptp::ProbCollisionChecker planner_collision_checker(ptp_map, planner_config);
-    ptp::SafeFlightCorridorGenerator planner(ptp_map, planner_collision_checker, planner_config);
     if (config_.planner_config.start_t_MB_.isApprox(config_.planner_config.goal_t_MB_)) {
         // No need to do path planning if start and goal positions are the same
         path_MB_.push_back(T_MB);

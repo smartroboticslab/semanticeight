@@ -6,9 +6,6 @@
 #ifndef __CANDIDATE_VIEW_HPP
 #define __CANDIDATE_VIEW_HPP
 
-#include <ptp/OccupancyWorld.hpp>
-#include <ptp/PlanningParameter.hpp>
-#include <ptp/ProbCollisionChecker.hpp>
 #include <ptp/SafeFlightCorridorGenerator.hpp>
 #include <se/entropy.hpp>
 #include <se/image/image.hpp>
@@ -50,7 +47,7 @@ class CandidateView {
     /** \brief Create a CandidateView and compute its utility.
        */
     CandidateView(const OctreePtr& map,
-                  ptp::OccupancyWorld& ptp_map,
+                  ptp::SafeFlightCorridorGenerator& planner,
                   const std::vector<se::key_t>& frontiers,
                   const Objects& objects,
                   const SensorImpl& sensor,
