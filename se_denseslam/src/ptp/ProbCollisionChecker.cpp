@@ -20,7 +20,7 @@ namespace ptp {
 
 ProbCollisionChecker::ProbCollisionChecker(const ptp::OccupancyWorld& ow,
                                            const PlanningParameter& pp) :
-        ow_(ow), pp_(pp), res_(ow.getMapResolution())
+        ow_(ow), pp_(pp), res_(ow.getMap().voxelDim())
 {
 }
 
@@ -326,15 +326,15 @@ bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner,
     int volume_size = 0;
     bool is_finest = false;
 
-    ow_.getMap()->getThreshold(node_corner.x(),
-                               node_corner.y(),
-                               node_corner.z(),
-                               free_threshold_,
-                               node_size,
-                               volume_data,
-                               volume_size,
-                               volume_corner,
-                               is_finest);
+    ow_.getMap().getThreshold(node_corner.x(),
+                              node_corner.y(),
+                              node_corner.z(),
+                              free_threshold_,
+                              node_size,
+                              volume_data,
+                              volume_size,
+                              volume_corner,
+                              is_finest);
 
     if (!volume_data.observed || volume_data.x * volume_data.y >= free_threshold_) {
         abort = (is_finest || (node_size == 1));
@@ -353,15 +353,15 @@ bool ProbCollisionChecker::checkNode(const Eigen::Vector3i& node_corner, const i
     Eigen::Vector3i volume_corner = Eigen::Vector3i(0, 0, 0);
     bool is_finest = false;
 
-    ow_.getMap()->getThreshold(node_corner.x(),
-                               node_corner.y(),
-                               node_corner.z(),
-                               free_threshold_,
-                               node_size,
-                               volume_data,
-                               volume_size,
-                               volume_corner,
-                               is_finest);
+    ow_.getMap().getThreshold(node_corner.x(),
+                              node_corner.y(),
+                              node_corner.z(),
+                              free_threshold_,
+                              node_size,
+                              volume_data,
+                              volume_size,
+                              volume_corner,
+                              is_finest);
 
     if (!volume_data.observed || volume_data.x * volume_data.y >= free_threshold_) {
         return false;

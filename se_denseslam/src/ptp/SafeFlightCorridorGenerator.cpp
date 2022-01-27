@@ -18,7 +18,7 @@ namespace ptp {
 SafeFlightCorridorGenerator::SafeFlightCorridorGenerator(
     std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map,
     const PlanningParameter pp) :
-        ow_(map), pcc_(ow_, pp), pp_(pp), solving_time_(pp.solving_time_)
+        ow_(*map), pcc_(ow_, pp), pp_(pp), solving_time_(pp.solving_time_)
 {
     min_flight_corridor_radius_ =
         pp.robot_radius_ + pp.safety_radius_ + pp.min_control_point_radius_;

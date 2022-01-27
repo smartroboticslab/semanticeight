@@ -28,10 +28,9 @@
 namespace ptp {
 class OccupancyWorld {
     public:
-    OccupancyWorld(std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> octree);
+    OccupancyWorld(const se::Octree<VoxelImpl::VoxelType>& map);
 
-    std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> getMap() const;
-    float getMapResolution() const;
+    const se::Octree<VoxelImpl::VoxelType>& getMap() const;
 
     void getMapBounds(Eigen::Vector3f& map_bounds_min_v, Eigen::Vector3f& map_bounds_max_v) const;
     void getMapBoundsMeter(Eigen::Vector3f& map_bounds_min_m,
@@ -49,10 +48,9 @@ class OccupancyWorld {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
-    const std::shared_ptr<se::Octree<MultiresOFusion::VoxelType>> octree_;
-    const float res_;
-    Eigen::Vector3f map_bounds_max_;
+    const se::Octree<MultiresOFusion::VoxelType>& map_;
     Eigen::Vector3f map_bounds_min_;
+    Eigen::Vector3f map_bounds_max_;
 
     void updateMapBounds();
 };
