@@ -24,8 +24,7 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     candidates_.reserve(config_.num_candidates);
     config_.candidate_config.planner_config.start_t_MB_ = T_MB.topRightCorner<3, 1>();
     // Create the planner map.
-    ptp::OccupancyWorld planner_world;
-    planner_world.setOctree(map);
+    ptp::OccupancyWorld planner_world(map);
     // Add the current pose to the candidates
     if (T_MB_history->rejectPosition(T_MB.topRightCorner<3, 1>(), sensor)) {
         rejected_candidates_.emplace_back(T_MB.topRightCorner<3, 1>());

@@ -14,89 +14,47 @@
 #ifndef OCCUPANCYWORLD_HPP
 #define OCCUPANCYWORLD_HPP
 
-#include <bitset>
-#include <boost/foreach.hpp>
-#include <boost/range/combine.hpp>
-#include <eigen3/Eigen/Dense>
-#include <fstream>
-#include <iostream>
-#include <map>
+#include <Eigen/Dense>
 #include <memory>
-#include <octomap/octomap.h>
 #include <ptp/Header.hpp>
 #include <ptp/Path.hpp>
 #include <ptp/common.hpp>
 #include <se/node.hpp>
 #include <se/node_iterator.hpp>
 #include <se/octree.hpp>
-#include <string.h>
 
 #include "se/voxel_implementations.hpp"
 
 namespace ptp {
 class OccupancyWorld {
     public:
-    typedef std::shared_ptr<OccupancyWorld> Ptr;
+    OccupancyWorld(std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> octree);
 
-    OccupancyWorld();
-    ~OccupancyWorld()
-    {
-    }
+    std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> getMap() const;
+    float getMapResolution() const;
 
-    class Color {
-        public:
-        Color() : r(255), g(255), b(255)
-        {
-        }
-        Color(uint8_t _r, uint8_t _g, uint8_t _b) : r(_r), g(_g), b(_b)
-        {
-        }
-        inline bool operator==(const Color& other) const
-        {
-            return (r == other.r && g == other.g && b == other.b);
-        }
-        inline bool operator!=(const Color& other) const
-        {
-            return (r != other.r || g != other.g || b != other.b);
-        }
-        uint8_t r, g, b;
-    };
+    void getMapBounds(Eigen::Vector3f& map_bounds_min_v, Eigen::Vector3f& map_bounds_max_v) const;
+    void getMapBoundsMeter(Eigen::Vector3f& map_bounds_min_m,
+                           Eigen::Vector3f& map_bounds_max_m) const;
 
-    /**
-     * Supereight I/O:
-     * - loading and saving maps with or without multilevel resolution
-     * - set and get octree
-     * - get octree root
-     * - get voxel occupancy
-     */
-    void readSupereight(const std::string& filename);
-    void setOctree(std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> octree);
-    std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> getMap()
-    {
-        return octree_;
-    } //TODO: Change to getOctree()
-    bool isFree(const Eigen::Vector3i& voxel_coord, float threshold = 0);
-    bool isFreeAtPoint(const Eigen::Vector3f& point_M, float threshold = 0);
+    bool inMapBounds(const Eigen::Vector3f& voxel_coord) const;
+    bool inMapBoundsMeter(const Eigen::Vector3f& point_M) const;
 
-    /*
-     * OccupancyWold I/O
-     */
+    bool isFree(const Eigen::Vector3i& voxel_coord, const float threshold = 0) const;
+    bool isFreeAtPoint(const Eigen::Vector3f& point_M, const float threshold = 0) const;
+
     se::Node<MultiresOFusion::VoxelType>* getNode(const Eigen::Vector3i& node_coord,
-                                                  const int node_size);
-    bool getMapBounds(Eigen::Vector3f& map_bounds_min_v, Eigen::Vector3f& map_bounds_max_v);
-    bool getMapBoundsMeter(Eigen::Vector3f& map_bounds_min_m, Eigen::Vector3f& map_bounds_max_m);
-    bool inMapBounds(const Eigen::Vector3f& voxel_coord);
-    bool inMapBoundsMeter(const Eigen::Vector3f& point_M);
-    float getMapResolution();
+                                                  const int node_size) const;
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
+    const std::shared_ptr<se::Octree<MultiresOFusion::VoxelType>> octree_;
+    const float res_;
+    Eigen::Vector3f map_bounds_max_;
+    Eigen::Vector3f map_bounds_min_;
+
     void updateMapBounds();
-
-    Eigen::Vector3f map_bounds_max_ = Eigen::Vector3f(-1, -1, -1);
-    Eigen::Vector3f map_bounds_min_ = Eigen::Vector3f(-1, -1, -1);
-
-    float res_;
-    std::shared_ptr<se::Octree<MultiresOFusion::VoxelType>> octree_ = nullptr;
 };
 } // namespace ptp
 
