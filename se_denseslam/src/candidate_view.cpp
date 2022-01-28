@@ -168,18 +168,23 @@ void CandidateView::computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& m
 Image<uint32_t> CandidateView::renderEntropy(const SensorImpl& sensor,
                                              const bool visualize_yaw) const
 {
-    return visualizeEntropy(entropy_image_, sensor, yaw_M_, visualize_yaw);
+    if (isValid()) {
+        return visualizeEntropy(entropy_image_, sensor, yaw_M_, visualize_yaw);
+    }
+    else {
+        return Image<uint32_t>(entropy_image_.width(), entropy_image_.height(), 0xFF0000FF);
+    }
 }
 
 
 
 Image<uint32_t> CandidateView::renderDepth(const SensorImpl& sensor, const bool visualize_yaw) const
 {
-    if (path_MB_.empty()) {
-        return Image<uint32_t>(entropy_hits_M_.width(), entropy_hits_M_.height(), 0);
+    if (isValid()) {
+        return visualizeDepth(entropy_hits_M_, sensor, goalT_MB(), yaw_M_, visualize_yaw);
     }
     else {
-        return visualizeDepth(entropy_hits_M_, sensor, goalT_MB(), yaw_M_, visualize_yaw);
+        return Image<uint32_t>(entropy_hits_M_.width(), entropy_hits_M_.height(), 0xFF000000);
     }
 }
 
@@ -219,8 +224,8 @@ void CandidateView::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
     Image<float> raw_entropy(entropy_image_.width(), entropy_image_.height());
     Image<Eigen::Vector3f> entropy_hits(entropy_image_.width(), entropy_image_.height());
     raycast_entropy(raw_entropy, entropy_hits, map, sensor, T_MB, T_BC);
-    entropy = visualizeEntropy(raw_entropy, sensor, yaw_M_, visualize_yaw);
-    depth = visualizeDepth(entropy_hits, sensor, T_MB, yaw_M_, visualize_yaw);
+    entropy = visualizeEntropy(raw_entropy, sensor, yaw_M_, visualize_yaw && isValid());
+    depth = visualizeDepth(entropy_hits, sensor, T_MB, yaw_M_, visualize_yaw && isValid());
 }
 
 
