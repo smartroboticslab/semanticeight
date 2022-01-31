@@ -8,6 +8,7 @@
 #define __SYSTEM_INFO_HPP
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 
@@ -25,6 +26,7 @@ namespace se {
    */
 static inline size_t ram_usage_self()
 {
+    size_t usage = 0;
 #ifdef __linux__
     // Open the status file in the /proc pseudo-filesystem for the current
     // process
@@ -34,7 +36,6 @@ static inline size_t ram_usage_self()
     }
 
     // Read the file line-by-line
-    size_t usage = 0;
     char line[512];
     while (fgets(line, sizeof(line), file) != NULL) {
         // Find the line containing the virtual memory resident set size or the
