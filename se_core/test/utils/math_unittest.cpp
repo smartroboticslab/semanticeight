@@ -285,3 +285,11 @@ TEST(MathUtils, is_between)
     EXPECT_FALSE(se::math::is_between(
         Eigen::Vector3f(2, -1, 5.5), Eigen::Vector3f(-1, 0, 5), Eigen::Vector3f(3, 8, 6)));
 }
+
+TEST(MathUtils, rotm_and_yaw)
+{
+    for (float y = -M_TAU_F; y <= M_TAU_F; y += M_TAU_F / 16.0f) {
+        EXPECT_FLOAT_EQ(se::math::wrap_angle_pi(y),
+                        se::math::rotm_to_yaw(se::math::yaw_to_rotm(se::math::wrap_angle_pi(y))));
+    }
+}

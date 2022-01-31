@@ -470,6 +470,13 @@ inline Eigen::Matrix3f yaw_to_rotm(const float yaw)
 
 
 
+inline float rotm_to_yaw(const Eigen::Matrix3f& C)
+{
+    return atan2f(C(1,0), C(0,0));;
+}
+
+
+
 template<typename T, int Rows>
 bool is_between(const Eigen::Matrix<T, Rows, 1>& x,
                 const Eigen::Matrix<T, Rows, 1>& min_x,
