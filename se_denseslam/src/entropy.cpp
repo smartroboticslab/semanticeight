@@ -341,6 +341,54 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
 
 
 
+Image<uint32_t> visualize_entropy(const Image<float>& entropy,
+                                  const SensorImpl& sensor,
+                                  const float yaw_M,
+                                  const bool visualize_yaw)
+{
+    Image<uint32_t> entropy_render(entropy.width(), entropy.height());
+    for (size_t i = 0; i < entropy.size(); ++i) {
+        // Scale and clamp the entropy for visualization since its values are typically too low.
+        const uint8_t e = se::math::clamp(
+            UINT8_MAX * (6.0f * entropy[i]) + 0.5f, 0.0f, static_cast<float>(UINT8_MAX));
+        entropy_render[i] = se::pack_rgba(e, e, e, 0xFF);
+    }
+    if (visualize_yaw) {
+        overlay_yaw(entropy_render, yaw_M, sensor);
+    }
+    return entropy_render;
+}
+
+
+
+Image<uint32_t> visualize_depth(const Image<Eigen::Vector3f>& entropy_hits_M,
+                                const SensorImpl& sensor,
+                                const Eigen::Matrix4f& T_MB,
+                                const float yaw_M,
+                                const bool visualize_yaw)
+{
+    const Eigen::Vector2i res(entropy_hits_M.width(), entropy_hits_M.height());
+    const Eigen::Matrix4f T_BM = se::math::to_inverse_transformation(T_MB);
+    // Convert the point cloud to depth along the ray
+    Image<float> depth(res.x(), res.y(), 0.0f);
+#pragma omp parallel for
+    for (size_t i = 0; i < depth.size(); i++) {
+        // Decrease the depth by a bit so that hits at the far plane are shown as invalid.
+        // TODO SEM make this offset as big as the voxel dimensions.
+        depth[i] = (T_BM * entropy_hits_M[i].homogeneous()).head<3>().norm() + 0.1f;
+    }
+    // Render to a colour image
+    Image<uint32_t> depth_render(res.x(), res.y());
+    se::depth_to_rgba(depth_render.data(), depth.data(), res, sensor.near_plane, sensor.far_plane);
+    // Visualize the optimal yaw
+    if (visualize_yaw) {
+        overlay_yaw(depth_render, yaw_M, sensor);
+    }
+    return depth_render;
+}
+
+
+
 void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& sensor)
 {
     // Resize the image to 720xSOMETHING to allow having nicer visualizations.

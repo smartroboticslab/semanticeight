@@ -48,6 +48,17 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
                                     const Eigen::Matrix4f& T_MB,
                                     const Eigen::Matrix4f& T_BC);
 
+Image<uint32_t> visualize_entropy(const Image<float>& entropy,
+                                  const SensorImpl& sensor,
+                                  const float yaw_M,
+                                  const bool visualize_yaw = true);
+
+Image<uint32_t> visualize_depth(const Image<Eigen::Vector3f>& entropy_hits_M,
+                                const SensorImpl& sensor,
+                                const Eigen::Matrix4f& T_MB,
+                                const float yaw_M,
+                                const bool visualize_yaw = true);
+
 /** \brief Overlay the sensor FOV at yaw_M on the image.
  * \note Typically used only for visualization and debugging.
  */

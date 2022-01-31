@@ -169,7 +169,7 @@ Image<uint32_t> CandidateView::renderEntropy(const SensorImpl& sensor,
                                              const bool visualize_yaw) const
 {
     if (isValid()) {
-        return visualizeEntropy(entropy_image_, sensor, yaw_M_, visualize_yaw);
+        return visualize_entropy(entropy_image_, sensor, yaw_M_, visualize_yaw);
     }
     else {
         return Image<uint32_t>(entropy_image_.width(), entropy_image_.height(), 0xFF0000FF);
@@ -181,7 +181,7 @@ Image<uint32_t> CandidateView::renderEntropy(const SensorImpl& sensor,
 Image<uint32_t> CandidateView::renderDepth(const SensorImpl& sensor, const bool visualize_yaw) const
 {
     if (isValid()) {
-        return visualizeDepth(entropy_hits_M_, sensor, goalT_MB(), yaw_M_, visualize_yaw);
+        return visualize_depth(entropy_hits_M_, sensor, goalT_MB(), yaw_M_, visualize_yaw);
     }
     else {
         return Image<uint32_t>(entropy_hits_M_.width(), entropy_hits_M_.height(), 0xFF000000);
@@ -224,8 +224,8 @@ void CandidateView::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
     Image<float> raw_entropy(entropy_image_.width(), entropy_image_.height());
     Image<Eigen::Vector3f> entropy_hits(entropy_image_.width(), entropy_image_.height());
     raycast_entropy(raw_entropy, entropy_hits, map, sensor, T_MB, T_BC);
-    entropy = visualizeEntropy(raw_entropy, sensor, yaw_M_, visualize_yaw && isValid());
-    depth = visualizeDepth(entropy_hits, sensor, T_MB, yaw_M_, visualize_yaw && isValid());
+    entropy = visualize_entropy(raw_entropy, sensor, yaw_M_, visualize_yaw && isValid());
+    depth = visualize_depth(entropy_hits, sensor, T_MB, yaw_M_, visualize_yaw && isValid());
 }
 
 
@@ -516,54 +516,6 @@ float CandidateView::pathTime(const Path& path, float velocity_linear, float vel
     const float t_rot = yaw_diff / velocity_angular;
     const float t = std::max(t_tran, t_rot);
     return (std::fabs(t) > 10.0f * FLT_EPSILON) ? t : NAN;
-}
-
-
-
-Image<uint32_t> CandidateView::visualizeEntropy(const Image<float>& entropy,
-                                                const SensorImpl& sensor,
-                                                const float yaw_M,
-                                                const bool visualize_yaw)
-{
-    Image<uint32_t> entropy_render(entropy.width(), entropy.height());
-    for (size_t i = 0; i < entropy.size(); ++i) {
-        // Scale and clamp the entropy for visualization since its values are typically too low.
-        const uint8_t e = se::math::clamp(
-            UINT8_MAX * (6.0f * entropy[i]) + 0.5f, 0.0f, static_cast<float>(UINT8_MAX));
-        entropy_render[i] = se::pack_rgba(e, e, e, 0xFF);
-    }
-    if (visualize_yaw) {
-        overlay_yaw(entropy_render, yaw_M, sensor);
-    }
-    return entropy_render;
-}
-
-
-
-Image<uint32_t> CandidateView::visualizeDepth(const Image<Eigen::Vector3f>& hits_M,
-                                              const SensorImpl& sensor,
-                                              const Eigen::Matrix4f& T_MB,
-                                              const float yaw_M,
-                                              const bool visualize_yaw)
-{
-    const Eigen::Vector2i res(hits_M.width(), hits_M.height());
-    const Eigen::Matrix4f T_BM = se::math::to_inverse_transformation(T_MB);
-    // Convert the point cloud to depth along the ray
-    Image<float> depth(res.x(), res.y(), 0.0f);
-#pragma omp parallel for
-    for (size_t i = 0; i < depth.size(); i++) {
-        // Decrease the depth by a bit so that hits at the far plane are shown as invalid.
-        // TODO SEM make this offset as big as the voxel dimensions.
-        depth[i] = (T_BM * hits_M[i].homogeneous()).head<3>().norm() + 0.1f;
-    }
-    // Render to a colour image
-    Image<uint32_t> depth_render(res.x(), res.y());
-    se::depth_to_rgba(depth_render.data(), depth.data(), res, sensor.near_plane, sensor.far_plane);
-    // Visualize the optimal yaw
-    if (visualize_yaw) {
-        overlay_yaw(depth_render, yaw_M, sensor);
-    }
-    return depth_render;
 }
 
 } // namespace se

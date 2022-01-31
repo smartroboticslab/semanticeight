@@ -190,17 +190,6 @@ class CandidateView {
        * the start and and yaw angles.
        */
     static float pathTime(const Path& path, float velocity_linear, float velocity_angular);
-
-    static Image<uint32_t> visualizeEntropy(const Image<float>& entropy,
-                                            const SensorImpl& sensor,
-                                            const float yaw_M,
-                                            const bool visualize_yaw = true);
-
-    static Image<uint32_t> visualizeDepth(const Image<Eigen::Vector3f>& hits_M,
-                                          const SensorImpl& sensor,
-                                          const Eigen::Matrix4f& T_MB,
-                                          const float yaw_M,
-                                          const bool visualize_yaw = true);
 };
 } // namespace se
 
