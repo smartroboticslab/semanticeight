@@ -474,4 +474,20 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
     }
 }
 
+void render_pose_entropy_depth(Image<uint32_t>& entropy,
+                               Image<uint32_t>& depth,
+                               const Octree<VoxelImpl::VoxelType>& map,
+                               const SensorImpl& sensor,
+                               const Eigen::Matrix4f& T_MB,
+                               const Eigen::Matrix4f& T_BC,
+                               const bool visualize_yaw)
+{
+    Image<float> raw_entropy(entropy.width(), entropy.height());
+    Image<Eigen::Vector3f> entropy_hits(entropy.width(), entropy.height());
+    raycast_entropy(raw_entropy, entropy_hits, map, sensor, T_MB, T_BC);
+    const float yaw_M = se::math::rotm_to_yaw(T_MB.topLeftCorner<3, 3>());
+    entropy = visualize_entropy(raw_entropy, sensor, yaw_M, visualize_yaw);
+    depth = visualize_depth(entropy_hits, sensor, T_MB, yaw_M, visualize_yaw);
+}
+
 } // namespace se

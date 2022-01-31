@@ -64,6 +64,14 @@ Image<uint32_t> visualize_depth(const Image<Eigen::Vector3f>& entropy_hits_M,
  */
 void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& sensor);
 
+void render_pose_entropy_depth(Image<uint32_t>& entropy,
+                               Image<uint32_t>& depth,
+                               const Octree<VoxelImpl::VoxelType>& map,
+                               const SensorImpl& sensor,
+                               const Eigen::Matrix4f& T_MB,
+                               const Eigen::Matrix4f& T_BC,
+                               const bool visualize_yaw = true);
+
 } // namespace se
 
 #endif // __INFORMATION_GAIN_HPP
