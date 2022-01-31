@@ -53,14 +53,6 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
  */
 void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& sensor);
 
-
-
-/** Write the entropy values in a txt file.
- * \note DEBUG
- */
-int write_entropy(const std::string& filename,
-                  const Image<float>& entropy_image,
-                  const SensorImpl& sensor);
 } // namespace se
 
 #endif // __INFORMATION_GAIN_HPP

@@ -187,36 +187,6 @@ std::pair<float, Eigen::Vector3f> entropy_along_ray(const Octree<VoxelImpl::Voxe
 }
 
 
-// Deprecated
-std::vector<float> sum_columns(const Image<float>& entropy_image,
-                               const Image<float>& frustum_overlap_image)
-{
-    std::vector<float> column_sums(entropy_image.width(), 0.0f);
-    // Don't add an omp parallel for here
-    for (int y = 0; y < entropy_image.height(); y++) {
-        for (int x = 0; x < entropy_image.width(); x++) {
-            column_sums[x] += entropy_image(x, y) * (1.0f - frustum_overlap_image[x]);
-        }
-    }
-    return column_sums;
-}
-
-
-
-// Deprecated
-std::vector<float> sum_windows(const std::vector<float>& column_sums, const int window_width)
-{
-    std::vector<float> window_sums(column_sums.size(), 0.0f);
-    for (size_t x = 0; x < column_sums.size(); x++) {
-        // Accumulate the values inside the window with wrap-around
-        for (int i = 0; i < window_width; i++) {
-            window_sums[x] += column_sums[(x + i) % column_sums.size()];
-        }
-    }
-    return window_sums;
-}
-
-
 
 std::vector<float> sum_windows(const Image<float>& entropy_image,
                                const Image<Eigen::Vector3f>& /* entropy_hits_M */,
@@ -256,33 +226,6 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
         window_sums[w] /= n;
     }
     return window_sums;
-}
-
-
-
-/** Find the window that contains the maximum sum of pixel values from image.
- * \deprecated
- * \return The column index of the leftmost edge of the window and its sum or -1 and -INFINITY if
- *         the image width is 0.
- */
-std::pair<int, float> max_window(const Image<float>& image,
-                                 const Image<float>& frustum_overlap_image,
-                                 const int window_width)
-{
-    float max_sum = -INFINITY;
-    int max_idx = -1;
-    // Sum all columns in the image to speed up subsequent computations. The window is applied to
-    // all rows so this way we'll only do window_width - 1 additions for each window instead of
-    // (window_width - 1) * entropy_image.height().
-    const std::vector<float> column_sums = sum_columns(image, frustum_overlap_image);
-    const std::vector<float> window_sums = sum_windows(column_sums, window_width);
-    // Find the window with the maximum sum
-    const auto max_it = std::max_element(window_sums.begin(), window_sums.end());
-    if (max_it != window_sums.end()) {
-        max_sum = *max_it;
-        max_idx = std::distance(window_sums.begin(), max_it);
-    }
-    return std::make_pair(max_idx, max_sum);
 }
 
 
@@ -483,59 +426,4 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
     }
 }
 
-
-
-int write_entropy(const std::string& filename,
-                  const Image<float>& entropy_image,
-                  const SensorImpl& sensor)
-{
-    const Image<float> frustum_overlap_image(entropy_image.width(), entropy_image.height(), 0.0f);
-    const float window_percentage = sensor.horizontal_fov / M_TAU_F;
-    const int window_width = window_percentage * entropy_image.width() + 0.5f;
-    const std::vector<float> column_sums = sum_columns(entropy_image, frustum_overlap_image);
-    const std::vector<float> window_sums = sum_windows(column_sums, window_width);
-    const std::pair<int, float> r = max_window(entropy_image, frustum_overlap_image, window_width);
-
-    // Open the file for writing.
-    FILE* fp;
-    if (!(fp = fopen(filename.c_str(), "w"))) {
-        std::cerr << "Unable to write file " << filename << "\n";
-        return 1;
-    }
-    // Write the image data
-    for (int y = 0; y < entropy_image.height(); y++) {
-        for (int x = 0; x < entropy_image.width(); x++) {
-            fprintf(fp, "%9.3f", entropy_image(x, y));
-            // Do not add a whitespace after the last element of a row.
-            if (x < entropy_image.width() - 1) {
-                fprintf(fp, " ");
-            }
-        }
-        // Add a newline at the end of each row.
-        fprintf(fp, "\n");
-    }
-    // Write the column sums
-    fprintf(fp, "column-sums\n");
-    for (int x = 0; x < entropy_image.width(); x++) {
-        fprintf(fp, "%9.3f", column_sums[x]);
-        if (x < entropy_image.width() - 1) {
-            fprintf(fp, " ");
-        }
-    }
-    fprintf(fp, "\n");
-    // Write the window sums
-    fprintf(fp, "window-sums-%d\n", window_width);
-    for (int x = 0; x < entropy_image.width(); x++) {
-        fprintf(fp, "%9.3f", window_sums[x]);
-        if (x < entropy_image.width() - 1) {
-            fprintf(fp, " ");
-        }
-    }
-    fprintf(fp, "\n");
-    // Write the best window
-    fprintf(fp, "max-window:     %d\n", r.first);
-    fprintf(fp, "max-window-sum: %.3f\n", r.second);
-    fclose(fp);
-    return 0;
-}
 } // namespace se
