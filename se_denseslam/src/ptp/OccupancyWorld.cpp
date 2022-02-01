@@ -52,13 +52,9 @@ bool OccupancyWorld::inMapBoundsMeter(const Eigen::Vector3f& point_M) const
 
 bool OccupancyWorld::isFree(const Eigen::Vector3i& voxel_coord, const float threshold) const
 {
-    // TODO: change to getMax()
     MultiresOFusion::VoxelType::VoxelData value;
-    map_.get(voxel_coord, value);
-    if (value.x * value.y < threshold && value.observed == true) {
-        return true;
-    }
-    return false;
+    map_.getMax(voxel_coord, value);
+    return (value.observed == true && MultiresOFusion::VoxelType::threshold(value) < threshold);
 }
 
 bool OccupancyWorld::isFreeAtPoint(const Eigen::Vector3f& point_M, const float threshold) const

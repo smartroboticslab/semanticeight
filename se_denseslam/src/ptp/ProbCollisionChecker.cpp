@@ -413,7 +413,7 @@ bool ProbCollisionChecker::checkInSphereFree(const Eigen::Vector3i& node_corner_
         }
 
         for (auto const& test_position : test_positions) {
-            if (!ow_.isFree(test_position)) {
+            if (!ow_.isFree(test_position, free_threshold_)) {
                 return false;
             }
         }
@@ -477,7 +477,7 @@ bool ProbCollisionChecker::checkNodeInSphereFree(
 
         // TODO: Try without!
         for (auto const& test_position : test_positions) {
-            if (!ow_.isFree(test_position)) ///< Check if one of the contained corners is occupied.
+            if (!ow_.isFree(test_position, free_threshold_)) ///< Check if one of the contained corners is occupied.
                 return false;
         }
 
@@ -559,7 +559,7 @@ bool ProbCollisionChecker::checkBlockInSphereFree(
 
         // TODO: Try without!
         for (auto const& test_position : test_positions) {
-            if (!ow_.isFree(test_position)) ///< Check if one of the contained corners is occupied.
+            if (!ow_.isFree(test_position, free_threshold_)) ///< Check if one of the contained corners is occupied.
                 return false;
         }
 
@@ -806,7 +806,7 @@ bool ProbCollisionChecker::checkInCylinderFree(const Eigen::Vector3i& node_corne
         }
 
         for (auto const& test_position : test_positions) {
-            if (!ow_.isFree(test_position)) ///< Check if one of the contained corners is occupied.
+            if (!ow_.isFree(test_position, free_threshold_)) ///< Check if one of the contained corners is occupied.
                 return false;
         }
 
@@ -882,7 +882,7 @@ bool ProbCollisionChecker::checkNodeInCylinderFree(
 
         // TODO: Try without!
         for (auto const& test_position : test_positions) {
-            if (!ow_.isFree(test_position)) ///< Check if one of the contained corners is occupied.
+            if (!ow_.isFree(test_position, free_threshold_)) ///< Check if one of the contained corners is occupied.
                 return false;
         }
 
@@ -978,7 +978,7 @@ bool ProbCollisionChecker::checkBlockInCylinderFree(
 
         // TODO: Try without!
         for (auto const& test_position : test_positions) {
-            if (!ow_.isFree(test_position)) ///< Check if one of the contained corners is occupied.
+            if (!ow_.isFree(test_position, free_threshold_)) ///< Check if one of the contained corners is occupied.
                 return false;
         }
 
