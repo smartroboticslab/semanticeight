@@ -484,6 +484,20 @@ bool is_between(const Eigen::Matrix<T, Rows, 1>& x,
 {
     return (min_x.array() <= x.array()).all() && (x.array() <= max_x.array()).all();
 }
+
+
+
+template<typename T>
+void increment_clamp(T& current_value, T increment, T upper_bound)
+{
+    // Avoid overflow. Assumes the subtraction doesn't cause an underflow.
+    if (upper_bound - increment > current_value) {
+        current_value += increment;
+    } else {
+        current_value = upper_bound;
+    }
+}
+
 } // namespace math
 } // namespace se
 #endif
