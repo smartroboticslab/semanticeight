@@ -41,7 +41,7 @@
 /** Kinect Fusion Truncated Signed Distance Function voxel implementation for
  * integration at multiple scales. */
 struct MultiresTSDF {
-    typedef int weight_t;
+    typedef uint8_t weight_t;
 
     /**
      * The voxel type used as the template parameter for se::Octree.
@@ -67,11 +67,11 @@ struct MultiresTSDF {
 
         static inline VoxelData invalid()
         {
-            return {1.f, 1.f, 0, 0, 0.f, 0, 0u, 0u, 0u};
+            return {1.f, 1.f, 0u, 0u, 0.f, 0u, 0u, 0u, 0u};
         }
         static inline VoxelData initData()
         {
-            return {1.f, 1.f, 0, 0, 0.f, 0, 0u, 0u, 0u};
+            return {1.f, 1.f, 0u, 0u, 0.f, 0u, 0u, 0u, 0u};
         }
 
         static float selectNodeValue(const VoxelData& /* data */)

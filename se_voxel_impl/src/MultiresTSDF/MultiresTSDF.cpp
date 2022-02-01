@@ -61,7 +61,8 @@ void MultiresTSDF::configure(const float voxel_dim)
 
     std::cout << str_utils::value_to_pretty_str(mu / voxel_dim, "TSDF mu factor") << "\n";
     std::cout << str_utils::value_to_pretty_str(mu, "TSDF mu") << "\n";
-    std::cout << str_utils::value_to_pretty_str(max_weight, "Max TSDF weight") << "\n";
+    std::cout << str_utils::value_to_pretty_str(static_cast<int>(max_weight), "Max TSDF weight")
+              << "\n";
 }
 
 void MultiresTSDF::configure(YAML::Node yaml_config, const float voxel_dim)
@@ -78,8 +79,9 @@ void MultiresTSDF::configure(YAML::Node yaml_config, const float voxel_dim)
         std::cout << str_utils::value_to_pretty_str(mu, "TSDF mu") << "\n";
     }
     if (yaml_config["max_weight"]) {
-        max_weight = yaml_config["max_weight"].as<float>();
-        std::cout << str_utils::value_to_pretty_str(max_weight, "Max TSDF weight") << "\n";
+        max_weight = yaml_config["max_weight"].as<weight_t>();
+        std::cout << str_utils::value_to_pretty_str(static_cast<int>(max_weight), "Max TSDF weight")
+                  << "\n";
     }
 }
 
