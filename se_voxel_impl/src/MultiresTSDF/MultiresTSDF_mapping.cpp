@@ -107,7 +107,7 @@ struct MultiresTSDFUpdate {
                                     VoxelData child_data = block->data(
                                         voxel_coord + Eigen::Vector3i(i, j, k), voxel_scale);
                                     if (child_data.y != 0) {
-                                        mean += child_data.x;
+                                        mean += child_data.getTsdf();
                                         weight += child_data.y;
                                         fg += child_data.getFg();
                                         fg_count += child_data.fg_count;
@@ -129,8 +129,8 @@ struct MultiresTSDFUpdate {
                             r /= sample_count;
                             g /= sample_count;
                             b /= sample_count;
-                            voxel_data.x = mean;
-                            voxel_data.x_last = mean;
+                            voxel_data.setTsdf(mean);
+                            voxel_data.setTsdfLast(mean);
                             voxel_data.y = weight + 0.5f;
                             voxel_data.setFg(fg);
                             voxel_data.fg_count = fg_count + 0.5f;
@@ -167,7 +167,7 @@ struct MultiresTSDFUpdate {
         for (int child_idx = 0; child_idx < 8; ++child_idx) {
             const VoxelData& child_data = node->childData(child_idx);
             if (child_data.y != 0) {
-                mean += child_data.x;
+                mean += child_data.getTsdf();
                 weight += child_data.y;
                 fg += child_data.getFg();
                 fg_count += child_data.fg_count;
@@ -189,8 +189,8 @@ struct MultiresTSDFUpdate {
             r /= sample_count;
             g /= sample_count;
             b /= sample_count;
-            node_data.x = mean;
-            node_data.x_last = mean;
+            node_data.setTsdf(mean);
+            node_data.setTsdfLast(mean);
             node_data.y = weight + 0.5f;
             node_data.setFg(fg);
             node_data.fg_count = fg_count + 0.5f;
@@ -225,7 +225,7 @@ struct MultiresTSDFUpdate {
                     for (int x = 0; x < block_size; x += stride) {
                         const Eigen::Vector3i parent_coord = block_coord + Eigen::Vector3i(x, y, z);
                         VoxelData parent_data = block->data(parent_coord, voxel_scale);
-                        float delta_x = parent_data.x - parent_data.x_last;
+                        float delta_x = parent_data.getTsdf() - parent_data.getTsdfLast();
                         const int half_stride = stride / 2;
                         for (int k = 0; k < stride; k += half_stride) {
                             for (int j = 0; j < stride; j += half_stride) {
@@ -239,7 +239,7 @@ struct MultiresTSDFUpdate {
                                         const Eigen::Vector3f voxel_sample_coord_f =
                                             se::get_sample_coord(
                                                 voxel_coord, stride, map.sample_offset_frac_);
-                                        voxel_data.x =
+                                        voxel_data.setTsdf(
                                             se::math::clamp(map.interp(voxel_sample_coord_f,
                                                                        VoxelType::selectNodeValue,
                                                                        VoxelType::selectVoxelValue,
@@ -247,9 +247,9 @@ struct MultiresTSDFUpdate {
                                                                        is_valid)
                                                                 .first,
                                                             -1.f,
-                                                            1.f);
+                                                            1.f));
                                         voxel_data.y = is_valid ? parent_data.y : 0;
-                                        voxel_data.x_last = voxel_data.x;
+                                        voxel_data.setTsdfLast(voxel_data.getTsdf());
                                         voxel_data.delta_y = 0;
                                         // TODO SEM maybe interpolate here too?
                                         voxel_data.setFg(parent_data.getFg());
@@ -259,7 +259,8 @@ struct MultiresTSDFUpdate {
                                         voxel_data.b = parent_data.b;
                                     }
                                     else {
-                                        voxel_data.x = std::max(voxel_data.x + delta_x, -1.f);
+                                        voxel_data.setTsdfLast(
+                                            std::max(voxel_data.getTsdf() + delta_x, -1.f));
                                         se::math::increment_clamp(voxel_data.y,
                                                                   parent_data.delta_y,
                                                                   MultiresTSDF::max_weight);
@@ -276,7 +277,7 @@ struct MultiresTSDFUpdate {
                                 }
                             }
                         }
-                        parent_data.x_last = parent_data.x;
+                        parent_data.setTsdfLast(parent_data.getTsdf());
                         parent_data.delta_y = 0;
                         block->setData(parent_coord, voxel_scale, parent_data);
                     }
@@ -306,7 +307,7 @@ struct MultiresTSDFUpdate {
                 for (unsigned int x = 0; x < block_size; x += parent_stride) {
                     const Eigen::Vector3i parent_coord = block_coord + Eigen::Vector3i(x, y, z);
                     VoxelData parent_data = block->data(parent_coord, parent_scale);
-                    float delta_x = parent_data.x - parent_data.x_last;
+                    float delta_x = parent_data.getTsdf() - parent_data.getTsdfLast();
                     for (int k = 0; k < parent_stride; k += voxel_stride) {
                         for (int j = 0; j < parent_stride; j += voxel_stride) {
                             for (int i = 0; i < parent_stride; i += voxel_stride) {
@@ -317,7 +318,7 @@ struct MultiresTSDFUpdate {
                                     voxel_coord, voxel_stride, sample_offset_frac_);
                                 if (voxel_data.y == 0) {
                                     bool is_valid;
-                                    voxel_data.x =
+                                    voxel_data.setTsdf(
                                         se::math::clamp(map_.interp(voxel_sample_coord_f,
                                                                     VoxelType::selectNodeValue,
                                                                     VoxelType::selectVoxelValue,
@@ -325,9 +326,9 @@ struct MultiresTSDFUpdate {
                                                                     is_valid)
                                                             .first,
                                                         -1.f,
-                                                        1.f);
+                                                        1.f));
                                     voxel_data.y = is_valid ? parent_data.y : 0;
-                                    voxel_data.x_last = voxel_data.x;
+                                    voxel_data.setTsdfLast(voxel_data.getTsdf());
                                     voxel_data.delta_y = 0;
                                     // TODO SEM maybe interpolate here too?
                                     voxel_data.setFg(parent_data.getFg());
@@ -337,8 +338,8 @@ struct MultiresTSDFUpdate {
                                     voxel_data.b = parent_data.b;
                                 }
                                 else {
-                                    voxel_data.x =
-                                        se::math::clamp(voxel_data.x + delta_x, -1.f, 1.f);
+                                    voxel_data.setTsdf(
+                                        se::math::clamp(voxel_data.getTsdf() + delta_x, -1.f, 1.f));
                                     se::math::increment_clamp(voxel_data.y,
                                                               parent_data.delta_y,
                                                               MultiresTSDF::max_weight);
@@ -390,12 +391,12 @@ struct MultiresTSDFUpdate {
                                 if (sdf_value > -MultiresTSDF::mu * (1 << voxel_scale)) {
                                     const float tsdf_value =
                                         fminf(1.f, sdf_value / MultiresTSDF::mu);
-                                    voxel_data.x = se::math::clamp(
-                                        (static_cast<float>(voxel_data.y) * voxel_data.x
+                                    voxel_data.setTsdf(se::math::clamp(
+                                        (static_cast<float>(voxel_data.y) * voxel_data.getTsdf()
                                          + tsdf_value)
                                             / (static_cast<float>(voxel_data.y) + 1.f),
                                         -1.f,
-                                        1.f);
+                                        1.f));
                                     // Update the foreground probability.
                                     if (fg_value != se::InstanceSegmentation::skip_fg_update) {
                                         voxel_data.setFg(
@@ -429,7 +430,7 @@ struct MultiresTSDFUpdate {
                             }
                         }
                     }
-                    parent_data.x_last = parent_data.x;
+                    parent_data.setTsdfLast(parent_data.getTsdf());
                     parent_data.delta_y = 0;
                     block->setData(parent_coord, parent_scale, parent_data);
                 }
@@ -505,11 +506,11 @@ struct MultiresTSDFUpdate {
                     if (sdf_value > -MultiresTSDF::mu * (1 << scale)) {
                         const float tsdf_value = fminf(1.f, sdf_value / MultiresTSDF::mu);
                         VoxelData voxel_data = block->data(voxel_coord, scale);
-                        voxel_data.x = se::math::clamp(
-                            (static_cast<float>(voxel_data.y) * voxel_data.x + tsdf_value)
+                        voxel_data.setTsdf(se::math::clamp(
+                            (static_cast<float>(voxel_data.y) * voxel_data.getTsdf() + tsdf_value)
                                 / (static_cast<float>(voxel_data.y) + 1.f),
                             -1.f,
-                            1.f);
+                            1.f));
                         // Update the foreground probability.
                         if (fg_value != se::InstanceSegmentation::skip_fg_update) {
                             voxel_data.setFg((fg_value + voxel_data.getFg() * voxel_data.fg_count)

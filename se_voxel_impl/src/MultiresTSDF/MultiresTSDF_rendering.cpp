@@ -103,7 +103,7 @@ Eigen::Vector4f MultiresTSDF::raycast(const OctreeType& map,
                 }
                 continue;
             }
-            value_tt = data.x;
+            value_tt = data.getTsdf();
             point_M_tt = ray_pos_M;
             if (value_tt <= 0.1) {
                 bool is_valid = false;

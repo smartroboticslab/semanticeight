@@ -41,6 +41,7 @@
 /** Kinect Fusion Truncated Signed Distance Function voxel implementation for
  * integration at multiple scales. */
 struct MultiresTSDF {
+    typedef int16_t tsdf_t;
     typedef uint8_t weight_t;
     typedef uint8_t fg_t;
 
@@ -52,8 +53,8 @@ struct MultiresTSDF {
          * The struct stored in each se::Octree voxel.
          */
         struct VoxelData {
-            float x; /**< The value of the TSDF. */
-            float x_last;
+            tsdf_t x; /**< The value of the TSDF. */
+            tsdf_t x_last;
             weight_t y;
             weight_t delta_y;
             fg_t fg;           // Foreground probability
@@ -64,6 +65,26 @@ struct MultiresTSDF {
 
             bool operator==(const VoxelData& other) const;
             bool operator!=(const VoxelData& other) const;
+
+            inline float getTsdf() const
+            {
+                return x / static_cast<float>(std::numeric_limits<tsdf_t>::max());
+            }
+
+            inline void setTsdf(float tsdf)
+            {
+                x = tsdf * static_cast<float>(std::numeric_limits<tsdf_t>::max());
+            }
+
+            inline float getTsdfLast() const
+            {
+                return x / static_cast<float>(std::numeric_limits<tsdf_t>::max());
+            }
+
+            inline void setTsdfLast(float tsdf)
+            {
+                x = tsdf * static_cast<float>(std::numeric_limits<tsdf_t>::max());
+            }
 
             inline float getFg() const
             {
@@ -78,26 +99,42 @@ struct MultiresTSDF {
 
         static inline VoxelData invalid()
         {
-            return {1.f, 1.f, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
+            return {std::numeric_limits<tsdf_t>::max(),
+                    std::numeric_limits<tsdf_t>::max(),
+                    0u,
+                    0u,
+                    0u,
+                    0u,
+                    0u,
+                    0u,
+                    0u};
         }
         static inline VoxelData initData()
         {
-            return {1.f, 1.f, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
+            return {std::numeric_limits<tsdf_t>::max(),
+                    std::numeric_limits<tsdf_t>::max(),
+                    0u,
+                    0u,
+                    0u,
+                    0u,
+                    0u,
+                    0u,
+                    0u};
         }
 
         static float selectNodeValue(const VoxelData& /* data */)
         {
-            return VoxelType::initData().x;
+            return VoxelType::initData().getTsdf();
         };
 
         static float selectVoxelValue(const VoxelData& data)
         {
-            return data.x;
+            return data.getTsdf();
         };
 
         static bool isInside(const VoxelData& data)
         {
-            return data.x < 0.f;
+            return data.x < static_cast<tsdf_t>(0);
         };
 
         static bool isValid(const VoxelData& data)
