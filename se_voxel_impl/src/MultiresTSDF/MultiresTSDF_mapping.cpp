@@ -260,13 +260,14 @@ struct MultiresTSDFUpdate {
                                     }
                                     else {
                                         voxel_data.x = std::max(voxel_data.x + delta_x, -1.f);
-                                        voxel_data.y = fminf(voxel_data.y + parent_data.delta_y,
-                                                             MultiresTSDF::max_weight);
+                                        se::math::increment_clamp(voxel_data.y,
+                                                                  parent_data.delta_y,
+                                                                  MultiresTSDF::max_weight);
                                         voxel_data.delta_y = parent_data.delta_y;
                                         voxel_data.fg = parent_data.fg;
-                                        voxel_data.fg_count =
-                                            fminf(voxel_data.fg_count + parent_data.fg_count,
-                                                  MultiresTSDF::max_weight);
+                                        se::math::increment_clamp(voxel_data.fg_count,
+                                                                  parent_data.fg_count,
+                                                                  MultiresTSDF::max_weight);
                                         voxel_data.r = parent_data.r;
                                         voxel_data.g = parent_data.g;
                                         voxel_data.b = parent_data.b;
@@ -338,13 +339,14 @@ struct MultiresTSDFUpdate {
                                 else {
                                     voxel_data.x =
                                         se::math::clamp(voxel_data.x + delta_x, -1.f, 1.f);
-                                    voxel_data.y = fminf(voxel_data.y + parent_data.delta_y,
-                                                         MultiresTSDF::max_weight);
+                                    se::math::increment_clamp(voxel_data.y,
+                                                              parent_data.delta_y,
+                                                              MultiresTSDF::max_weight);
                                     voxel_data.delta_y = parent_data.delta_y;
                                     voxel_data.fg = parent_data.fg;
-                                    voxel_data.fg_count =
-                                        fminf(voxel_data.fg_count + parent_data.fg_count,
-                                              MultiresTSDF::max_weight);
+                                    se::math::increment_clamp(voxel_data.fg_count,
+                                                              parent_data.fg_count,
+                                                              MultiresTSDF::max_weight);
                                     voxel_data.r = parent_data.r;
                                     voxel_data.g = parent_data.g;
                                     voxel_data.b = parent_data.b;
@@ -399,8 +401,10 @@ struct MultiresTSDFUpdate {
                                         voxel_data.fg =
                                             (fg_value + voxel_data.fg * voxel_data.fg_count)
                                             / (voxel_data.fg_count + 1);
-                                        voxel_data.fg_count = fminf(voxel_data.fg_count + 1,
-                                                                    MultiresTSDF::max_weight);
+                                        se::math::increment_clamp(
+                                            voxel_data.fg_count,
+                                            static_cast<MultiresTSDF::weight_t>(1),
+                                            MultiresTSDF::max_weight);
                                     }
                                     // Update the color.
                                     voxel_data.r =
@@ -412,9 +416,14 @@ struct MultiresTSDFUpdate {
                                     voxel_data.b =
                                         (se::b_from_rgba(rgba_value) + voxel_data.b * voxel_data.y)
                                         / (voxel_data.y + 1);
-                                    voxel_data.y =
-                                        fminf(voxel_data.y + 1, MultiresTSDF::max_weight);
-                                    voxel_data.delta_y++;
+                                    se::math::increment_clamp(
+                                        voxel_data.y,
+                                        static_cast<MultiresTSDF::weight_t>(1),
+                                        MultiresTSDF::max_weight);
+                                    se::math::increment_clamp(
+                                        voxel_data.delta_y,
+                                        static_cast<MultiresTSDF::weight_t>(1),
+                                        MultiresTSDF::max_weight);
                                 }
                                 block->setData(voxel_coord, voxel_scale, voxel_data);
                             }
@@ -505,8 +514,9 @@ struct MultiresTSDFUpdate {
                         if (fg_value != se::InstanceSegmentation::skip_fg_update) {
                             voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.fg_count)
                                 / (voxel_data.fg_count + 1);
-                            voxel_data.fg_count =
-                                fminf(voxel_data.fg_count + 1, MultiresTSDF::max_weight);
+                            se::math::increment_clamp(voxel_data.fg_count,
+                                                      static_cast<MultiresTSDF::weight_t>(1),
+                                                      MultiresTSDF::max_weight);
                         }
                         // Update the color.
                         voxel_data.r = (se::r_from_rgba(rgba_value) + voxel_data.r * voxel_data.y)
@@ -515,8 +525,13 @@ struct MultiresTSDFUpdate {
                             / (voxel_data.y + 1);
                         voxel_data.b = (se::b_from_rgba(rgba_value) + voxel_data.b * voxel_data.y)
                             / (voxel_data.y + 1);
-                        voxel_data.y = fminf(voxel_data.y + 1, MultiresTSDF::max_weight);
-                        voxel_data.delta_y++;
+                        se::math::increment_clamp(voxel_data.y,
+                                                  static_cast<MultiresTSDF::weight_t>(1),
+                                                  MultiresTSDF::max_weight);
+                        se::math::increment_clamp(
+                            voxel_data.delta_y,
+                            static_cast<MultiresTSDF::MultiresTSDF::weight_t>(1),
+                            MultiresTSDF::max_weight);
                         block->setData(voxel_coord, scale, voxel_data);
                     }
                 }

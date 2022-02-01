@@ -41,20 +41,22 @@
 /** Kinect Fusion Truncated Signed Distance Function voxel implementation for
  * integration at multiple scales. */
 struct MultiresTSDF {
+    typedef int weight_t;
+
     /**
-   * The voxel type used as the template parameter for se::Octree.
-   */
+     * The voxel type used as the template parameter for se::Octree.
+     */
     struct VoxelType {
         /**
-     * The struct stored in each se::Octree voxel.
-     */
+         * The struct stored in each se::Octree voxel.
+         */
         struct VoxelData {
             float x; /**< The value of the TSDF. */
             float x_last;
-            int y;
-            int delta_y;
+            weight_t y;
+            weight_t delta_y;
             float fg;          // Foreground probability
-            uint16_t fg_count; // Foreground probability update count
+            weight_t fg_count; // Foreground probability update count
             uint8_t r;         // Red channel
             uint8_t g;         // Green channel
             uint8_t b;         // Blue channel
@@ -65,11 +67,11 @@ struct MultiresTSDF {
 
         static inline VoxelData invalid()
         {
-            return {1.f, 1.f, 0, 0, 0.f, 0u, 0u, 0u, 0u};
+            return {1.f, 1.f, 0, 0, 0.f, 0, 0u, 0u, 0u};
         }
         static inline VoxelData initData()
         {
-            return {1.f, 1.f, 0, 0, 0.f, 0u, 0u, 0u, 0u};
+            return {1.f, 1.f, 0, 0, 0.f, 0, 0u, 0u, 0u};
         }
 
         static float selectNodeValue(const VoxelData& /* data */)
@@ -127,7 +129,7 @@ struct MultiresTSDF {
    * The maximum value of the weight factor
    * MultiresTSDF::VoxelType::VoxelData::y.
    */
-    static int max_weight;
+    static weight_t max_weight;
 
     static std::string type()
     {

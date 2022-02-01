@@ -52,7 +52,7 @@ bool MultiresTSDF::VoxelType::VoxelData::operator!=(
 constexpr bool MultiresTSDF::invert_normals;
 float MultiresTSDF::mu_factor;
 float MultiresTSDF::mu;
-int MultiresTSDF::max_weight;
+MultiresTSDF::weight_t MultiresTSDF::max_weight;
 
 void MultiresTSDF::configure(const float voxel_dim)
 {
