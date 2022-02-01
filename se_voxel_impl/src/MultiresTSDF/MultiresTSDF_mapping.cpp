@@ -131,12 +131,12 @@ struct MultiresTSDFUpdate {
                             b /= sample_count;
                             voxel_data.x = mean;
                             voxel_data.x_last = mean;
-                            voxel_data.y = ceil(weight);
-                            voxel_data.fg = ceil(fg);
-                            voxel_data.fg_count = ceil(fg_count);
-                            voxel_data.r = ceil(r);
-                            voxel_data.g = ceil(g);
-                            voxel_data.b = ceil(b);
+                            voxel_data.y = weight + 0.5f;
+                            voxel_data.fg = ceilf(fg);
+                            voxel_data.fg_count = fg_count + 0.5f;
+                            voxel_data.r = r + 0.5f;
+                            voxel_data.g = g + 0.5f;
+                            voxel_data.b = b + 0.5f;
                         }
                         else {
                             voxel_data = VoxelType::initData();
@@ -191,12 +191,12 @@ struct MultiresTSDFUpdate {
             b /= sample_count;
             node_data.x = mean;
             node_data.x_last = mean;
-            node_data.y = ceil(weight);
-            node_data.fg = ceil(fg);
-            node_data.fg_count = ceil(fg_count);
-            node_data.r = ceil(r);
-            node_data.g = ceil(g);
-            node_data.b = ceil(b);
+            node_data.y = weight + 0.5f;
+            node_data.fg = ceilf(fg);
+            node_data.fg_count = fg_count + 0.5f;
+            node_data.r = r + 0.5f;
+            node_data.g = g + 0.5f;
+            node_data.b = b + 0.5f;
             node_data.delta_y = 0;
         }
         node->timestamp(timestamp);
