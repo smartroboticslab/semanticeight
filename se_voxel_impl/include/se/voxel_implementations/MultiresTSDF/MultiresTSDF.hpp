@@ -42,6 +42,7 @@
  * integration at multiple scales. */
 struct MultiresTSDF {
     typedef uint8_t weight_t;
+    typedef uint8_t fg_t;
 
     /**
      * The voxel type used as the template parameter for se::Octree.
@@ -55,7 +56,7 @@ struct MultiresTSDF {
             float x_last;
             weight_t y;
             weight_t delta_y;
-            float fg;          // Foreground probability
+            fg_t fg;           // Foreground probability
             weight_t fg_count; // Foreground probability update count
             uint8_t r;         // Red channel
             uint8_t g;         // Green channel
@@ -63,15 +64,25 @@ struct MultiresTSDF {
 
             bool operator==(const VoxelData& other) const;
             bool operator!=(const VoxelData& other) const;
+
+            inline float getFg() const
+            {
+                return fg / static_cast<float>(std::numeric_limits<fg_t>::max());
+            }
+
+            inline void setFg(float fg_prob)
+            {
+                fg = fg_prob * std::numeric_limits<fg_t>::max();
+            }
         };
 
         static inline VoxelData invalid()
         {
-            return {1.f, 1.f, 0u, 0u, 0.f, 0u, 0u, 0u, 0u};
+            return {1.f, 1.f, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
         }
         static inline VoxelData initData()
         {
-            return {1.f, 1.f, 0u, 0u, 0.f, 0u, 0u, 0u, 0u};
+            return {1.f, 1.f, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
         }
 
         static float selectNodeValue(const VoxelData& /* data */)
@@ -91,7 +102,7 @@ struct MultiresTSDF {
 
         static bool isValid(const VoxelData& data)
         {
-            return data.y > 0 && data.fg > 0.5f;
+            return data.y > 0 && data.fg > std::numeric_limits<fg_t>::max() / 2;
         };
 
         using VoxelBlockType = se::VoxelBlockFull<MultiresTSDF::VoxelType>;

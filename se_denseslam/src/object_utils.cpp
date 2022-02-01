@@ -141,10 +141,11 @@ std::vector<float> object_lod_gain_raycasting(const Objects& objects,
                         continue;
                     }
                     // Compute the foreground probability
-                    float fg_prob = object.map_
-                                        ->interpAtPoint(hit_O.head<3>(),
-                                                        [](const auto& data) { return data.fg; })
-                                        .first;
+                    float fg_prob =
+                        object.map_
+                            ->interpAtPoint(hit_O.head<3>(),
+                                            [](const auto& data) { return data.getFg(); })
+                            .first;
                     // Compute the complement of the probability if this is the
                     // background. This allows comparing it with the foreground
                     // probabilities of objects as it becomes a "valid hit" probability.
@@ -278,10 +279,11 @@ float lod_gain_raycasting(const Objects& objects,
                         continue;
                     }
                     // Compute the foreground probability
-                    float fg_prob = object.map_
-                                        ->interpAtPoint(hit_O.head<3>(),
-                                                        [](const auto& data) { return data.fg; })
-                                        .first;
+                    float fg_prob =
+                        object.map_
+                            ->interpAtPoint(hit_O.head<3>(),
+                                            [](const auto& data) { return data.getFg(); })
+                            .first;
                     // Compute the complement of the probability if this is the
                     // background. This allows comparing it with the foreground
                     // probabilities of objects as it becomes a "valid hit" probability.

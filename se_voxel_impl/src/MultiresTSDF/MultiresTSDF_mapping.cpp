@@ -109,7 +109,7 @@ struct MultiresTSDFUpdate {
                                     if (child_data.y != 0) {
                                         mean += child_data.x;
                                         weight += child_data.y;
-                                        fg += child_data.fg;
+                                        fg += child_data.getFg();
                                         fg_count += child_data.fg_count;
                                         r += child_data.r;
                                         g += child_data.g;
@@ -132,7 +132,7 @@ struct MultiresTSDFUpdate {
                             voxel_data.x = mean;
                             voxel_data.x_last = mean;
                             voxel_data.y = weight + 0.5f;
-                            voxel_data.fg = fg;
+                            voxel_data.setFg(fg);
                             voxel_data.fg_count = fg_count + 0.5f;
                             voxel_data.r = r + 0.5f;
                             voxel_data.g = g + 0.5f;
@@ -169,7 +169,7 @@ struct MultiresTSDFUpdate {
             if (child_data.y != 0) {
                 mean += child_data.x;
                 weight += child_data.y;
-                fg += child_data.fg;
+                fg += child_data.getFg();
                 fg_count += child_data.fg_count;
                 r += child_data.r;
                 g += child_data.g;
@@ -192,7 +192,7 @@ struct MultiresTSDFUpdate {
             node_data.x = mean;
             node_data.x_last = mean;
             node_data.y = weight + 0.5f;
-            node_data.fg = fg;
+            node_data.setFg(fg);
             node_data.fg_count = fg_count + 0.5f;
             node_data.r = r + 0.5f;
             node_data.g = g + 0.5f;
@@ -252,7 +252,7 @@ struct MultiresTSDFUpdate {
                                         voxel_data.x_last = voxel_data.x;
                                         voxel_data.delta_y = 0;
                                         // TODO SEM maybe interpolate here too?
-                                        voxel_data.fg = parent_data.fg;
+                                        voxel_data.setFg(parent_data.getFg());
                                         voxel_data.fg_count = is_valid ? parent_data.fg_count : 0;
                                         voxel_data.r = parent_data.r;
                                         voxel_data.g = parent_data.g;
@@ -264,7 +264,7 @@ struct MultiresTSDFUpdate {
                                                                   parent_data.delta_y,
                                                                   MultiresTSDF::max_weight);
                                         voxel_data.delta_y = parent_data.delta_y;
-                                        voxel_data.fg = parent_data.fg;
+                                        voxel_data.setFg(parent_data.getFg());
                                         se::math::increment_clamp(voxel_data.fg_count,
                                                                   parent_data.fg_count,
                                                                   MultiresTSDF::max_weight);
@@ -330,7 +330,7 @@ struct MultiresTSDFUpdate {
                                     voxel_data.x_last = voxel_data.x;
                                     voxel_data.delta_y = 0;
                                     // TODO SEM maybe interpolate here too?
-                                    voxel_data.fg = parent_data.fg;
+                                    voxel_data.setFg(parent_data.getFg());
                                     voxel_data.fg_count = is_valid ? parent_data.fg_count : 0;
                                     voxel_data.r = parent_data.r;
                                     voxel_data.g = parent_data.g;
@@ -343,7 +343,7 @@ struct MultiresTSDFUpdate {
                                                               parent_data.delta_y,
                                                               MultiresTSDF::max_weight);
                                     voxel_data.delta_y = parent_data.delta_y;
-                                    voxel_data.fg = parent_data.fg;
+                                    voxel_data.setFg(parent_data.getFg());
                                     se::math::increment_clamp(voxel_data.fg_count,
                                                               parent_data.fg_count,
                                                               MultiresTSDF::max_weight);
@@ -398,9 +398,9 @@ struct MultiresTSDFUpdate {
                                         1.f);
                                     // Update the foreground probability.
                                     if (fg_value != se::InstanceSegmentation::skip_fg_update) {
-                                        voxel_data.fg =
-                                            (fg_value + voxel_data.fg * voxel_data.fg_count)
-                                            / (voxel_data.fg_count + 1);
+                                        voxel_data.setFg(
+                                            (fg_value + voxel_data.getFg() * voxel_data.fg_count)
+                                            / (voxel_data.fg_count + 1));
                                         se::math::increment_clamp(
                                             voxel_data.fg_count,
                                             static_cast<MultiresTSDF::weight_t>(1),
@@ -512,8 +512,8 @@ struct MultiresTSDFUpdate {
                             1.f);
                         // Update the foreground probability.
                         if (fg_value != se::InstanceSegmentation::skip_fg_update) {
-                            voxel_data.fg = (fg_value + voxel_data.fg * voxel_data.fg_count)
-                                / (voxel_data.fg_count + 1);
+                            voxel_data.setFg((fg_value + voxel_data.getFg() * voxel_data.fg_count)
+                                             / (voxel_data.fg_count + 1));
                             se::math::increment_clamp(voxel_data.fg_count,
                                                       static_cast<MultiresTSDF::weight_t>(1),
                                                       MultiresTSDF::max_weight);

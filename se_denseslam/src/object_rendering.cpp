@@ -105,10 +105,11 @@ void raycastObjectListKernel(const Objects& objects,
                         continue;
                     }
                     // Compute the foreground probability
-                    float fg_prob = object.map_
-                                        ->interpAtPoint(surface_intersection_O.head<3>(),
-                                                        [](const auto& data) { return data.fg; })
-                                        .first;
+                    float fg_prob =
+                        object.map_
+                            ->interpAtPoint(surface_intersection_O.head<3>(),
+                                            [](const auto& data) { return data.getFg(); })
+                            .first;
                     // Compute the complement of the probability if this is the
                     // background. This allows comparing it with the foreground
                     // probabilities of objects as it becomes a "valid hit" probability.
@@ -311,7 +312,7 @@ void renderObjectListKernel(uint32_t* output_image_data,
                             const float interp_fg =
                                 object.map_
                                     ->interpAtPoint(point_O,
-                                                    [](const auto& data) { return data.fg; })
+                                                    [](const auto& data) { return data.getFg(); })
                                     .first;
                             if (0.0f <= interp_fg && interp_fg <= 1.0f) {
                                 col = (dir + ambient_M)
