@@ -132,7 +132,7 @@ struct MultiresTSDFUpdate {
                             voxel_data.x = mean;
                             voxel_data.x_last = mean;
                             voxel_data.y = weight + 0.5f;
-                            voxel_data.fg = ceilf(fg);
+                            voxel_data.fg = fg;
                             voxel_data.fg_count = fg_count + 0.5f;
                             voxel_data.r = r + 0.5f;
                             voxel_data.g = g + 0.5f;
@@ -192,7 +192,7 @@ struct MultiresTSDFUpdate {
             node_data.x = mean;
             node_data.x_last = mean;
             node_data.y = weight + 0.5f;
-            node_data.fg = ceilf(fg);
+            node_data.fg = fg;
             node_data.fg_count = fg_count + 0.5f;
             node_data.r = r + 0.5f;
             node_data.g = g + 0.5f;
