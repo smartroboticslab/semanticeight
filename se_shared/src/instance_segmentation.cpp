@@ -65,45 +65,17 @@ float InstanceSegmentation::confidence() const
 
 cv::Mat InstanceSegmentation::generateIntegrationMask() const
 {
-    cv::Size mask_size = instance_mask.size();
-
-    // Perform morphological dilation on the instance mask
-    cv::Mat dilated_mask;
-    const cv::Mat element =
-        cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(morph_diam_, morph_diam_));
-    cv::dilate(instance_mask, dilated_mask, element);
-
-    // Get the background from the dilated mask (inverse mask)
-    cv::Mat bg_from_dilated;
-    cv::bitwise_not(dilated_mask, bg_from_dilated);
-
-    // Difference between dilated and original mask
-    cv::Mat dilation_diff = dilated_mask - instance_mask;
-
-    // Initialize the generalized instance mask with the foreground probability
-    // value that characterizes the object. 1 for normal objects and 0 for
-    // background objects.
+    // Initialize the integration mask to "don't integrate".
+    cv::Mat integration_mask =
+        cv::Mat(instance_mask.size(), se::integration_mask_t, cv::Scalar(skip_integration));
     const se::integration_mask_elem_t base_value = (classId() == se::class_bg ? 0.0f : 1.0f);
-    cv::Mat integration_mask = cv::Mat(mask_size, se::integration_mask_t, cv::Scalar(base_value));
-
-    // Set regions that should not be fused to skip_integration. These are the regions not contained
-    // in the inverse of the dilated mask.
-    cv::Mat dont_fuse = cv::Mat(mask_size, se::integration_mask_t, skip_integration);
-    dont_fuse.copyTo(integration_mask, bg_from_dilated);
-
-    // Set regions that should be not be considered as part of the object.
-    // These are the regions in the difference between the original and dilated
-    // masks.
-    const se::integration_mask_elem_t complementaty_value = 1.0f - base_value;
-    cv::Mat bg = cv::Mat(mask_size, se::integration_mask_t, cv::Scalar(complementaty_value));
-    bg.copyTo(integration_mask, dilation_diff);
-
+    // Update parts of the integration mask covered by the instance mask.
+    integration_mask.setTo(cv::Scalar(base_value), instance_mask);
     // Set all positive parts of the mask to skip_fg_update if this is an undetected instance.
     if (!detected()) {
         cv::Mat positive_mask = integration_mask > 0.0f;
         integration_mask.setTo(skip_fg_update, positive_mask);
     }
-
     return integration_mask;
 }
 
