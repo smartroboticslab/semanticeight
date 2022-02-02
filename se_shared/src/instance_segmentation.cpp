@@ -132,7 +132,7 @@ cv::Mat InstanceSegmentation::generateIntegrationMask(const cv::Mat& raycasted_o
 void InstanceSegmentation::resize(const int width, const int height)
 {
     cv::Mat tmp_image;
-    cv::resize(instance_mask, tmp_image, cv::Size(width, height));
+    cv::resize(instance_mask, tmp_image, cv::Size(width, height), cv::INTER_NEAREST);
     instance_mask = tmp_image.clone();
 }
 

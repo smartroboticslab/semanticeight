@@ -112,4 +112,17 @@ void downsampleImageKernel(const uint32_t* input_RGBA,
                            const Eigen::Vector2i& input_res,
                            se::Image<uint32_t>& output_RGBA);
 
+
+
+template<typename T>
+void downsampleNearestNeighborKernel(const T* input_data,
+                                     const Eigen::Vector2i& input_res,
+                                     se::Image<T>& output)
+{
+    constexpr int type = std::is_same_v<T, float> ? CV_32FC1 : CV_8UC4;
+    cv::Mat in(cv::Size(input_res.x(), input_res.y()), type, const_cast<T*>(input_data));
+    cv::Mat out(cv::Size(output.width(), output.height()), type, output.data());
+    cv::resize(in, out, out.size(), 0.0, 0.0, cv::INTER_NEAREST);
+}
+
 #endif

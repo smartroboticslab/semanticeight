@@ -169,7 +169,8 @@ bool DenseSLAMSystem::preprocessDepth(const float* input_depth_image_data,
                                       const bool filter_depth)
 {
     TICKD("preprocessDepth")
-    downsampleDepthKernel(input_depth_image_data, input_depth_image_res, depth_image_);
+    //downsampleDepthKernel(input_depth_image_data, input_depth_image_res, depth_image_);
+    downsampleNearestNeighborKernel(input_depth_image_data, input_depth_image_res, depth_image_);
 
     if (filter_depth) {
         bilateralFilterKernel(
@@ -190,7 +191,8 @@ bool DenseSLAMSystem::preprocessColor(const uint32_t* input_RGBA_image_data,
                                       const Eigen::Vector2i& input_RGBA_image_res)
 {
     TICKD("preprocessColor")
-    downsampleImageKernel(input_RGBA_image_data, input_RGBA_image_res, rgba_image_);
+    //downsampleImageKernel(input_RGBA_image_data, input_RGBA_image_res, rgba_image_);
+    downsampleNearestNeighborKernel(input_RGBA_image_data, input_RGBA_image_res, rgba_image_);
     TOCK("preprocessColor")
     return true;
 }
