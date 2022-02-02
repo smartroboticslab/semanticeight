@@ -26,7 +26,8 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     // Create a single planner for allcandidates.
     ptp::SafeFlightCorridorGenerator planner(map, config_.candidate_config.planner_config);
     // Add the current pose to the candidates
-    if (T_MB_history->rejectPosition(T_MB.topRightCorner<3, 1>(), sensor)) {
+    if (config_.candidate_config.use_pose_history
+        && T_MB_history->rejectPosition(T_MB.topRightCorner<3, 1>(), sensor)) {
         rejected_candidates_.emplace_back(T_MB.topRightCorner<3, 1>());
     }
     else {
@@ -52,7 +53,8 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         //    map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
         const Eigen::Vector3f candidate_t_MB = sampleCandidate(
             map, remaining_frontiers, config_.sampling_min_M, config_.sampling_max_M);
-        if (T_MB_history->rejectPosition(candidate_t_MB, sensor)) {
+        if (config_.candidate_config.use_pose_history
+            && T_MB_history->rejectPosition(candidate_t_MB, sensor)) {
             rejected_candidates_.emplace_back(candidate_t_MB);
             continue;
         }
