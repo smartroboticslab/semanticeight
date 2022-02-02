@@ -394,11 +394,9 @@ int DenseSLAMSystem::saveMesh(const std::string& filename, const Eigen::Matrix4f
     else if (str_utils::ends_with(filename, ".obj")) {
         return se::io::save_mesh_obj(mesh, filename, T_FM);
     }
-    else {
-        std::cerr << "Error saving mesh: unknown file extension in " << filename << "\n";
-        return 2;
-    }
     TOCK("saveMesh")
+    std::cerr << "Error saving mesh: unknown file extension in " << filename << "\n";
+    return 2;
 }
 
 
