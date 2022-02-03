@@ -387,14 +387,15 @@ int DenseSLAMSystem::saveMesh(const std::string& filename, const Eigen::Matrix4f
     // Scale voxels to meters.
     Eigen::Matrix4f T_FM = T_FW * T_WM_;
     T_FM.topLeftCorner<3, 3>() *= map_->voxelDim();
+    const std::string metadata = "voxel resolution: " + std::to_string(map_->voxelDim()) + " m";
     if (str_utils::ends_with(filename, ".ply")) {
-        return se::io::save_mesh_ply(mesh, filename, T_FM);
+        return se::io::save_mesh_ply(mesh, filename, T_FM, metadata);
     }
     else if (str_utils::ends_with(filename, ".vtk")) {
-        return se::io::save_mesh_vtk(mesh, filename, T_FM);
+        return se::io::save_mesh_vtk(mesh, filename, T_FM, metadata);
     }
     else if (str_utils::ends_with(filename, ".obj")) {
-        return se::io::save_mesh_obj(mesh, filename, T_FM);
+        return se::io::save_mesh_obj(mesh, filename, T_FM, metadata);
     }
     TOCK("saveMesh")
     std::cerr << "Error saving mesh: unknown file extension in " << filename << "\n";
@@ -820,7 +821,9 @@ void DenseSLAMSystem::saveObjectMeshes(const std::string& filename,
         T_FO.topLeftCorner<3, 3>() *= object->voxelDim();
         std::stringstream f;
         f << filename << "_" << std::setw(3) << std::setfill('0') << object->instance_id << ".ply";
-        se::io::save_mesh_ply(mesh, f.str(), T_FO);
+        const std::string metadata =
+            "voxel resolution: " + std::to_string(object->voxelDim()) + " m";
+        se::io::save_mesh_ply(mesh, f.str(), T_FO, metadata);
     }
 }
 
