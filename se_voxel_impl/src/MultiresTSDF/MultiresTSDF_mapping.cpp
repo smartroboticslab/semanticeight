@@ -251,8 +251,17 @@ struct MultiresTSDFUpdate {
                                         voxel_data.y = is_valid ? parent_data.y : 0;
                                         voxel_data.setTsdfLast(voxel_data.getTsdf());
                                         voxel_data.delta_y = 0;
-                                        // TODO SEM maybe interpolate here too?
-                                        voxel_data.setFg(parent_data.getFg());
+                                        voxel_data.setFg(
+                                            map.interp(
+                                                   voxel_sample_coord_f,
+                                                   [](const auto&) {
+                                                       return MultiresTSDF::VoxelType::initData()
+                                                           .getFg();
+                                                   },
+                                                   [](const auto& x) { return x.getFg(); },
+                                                   voxel_scale - 1,
+                                                   is_valid)
+                                                .first);
                                         voxel_data.fg_count = is_valid ? parent_data.fg_count : 0;
                                         voxel_data.r = parent_data.r;
                                         voxel_data.g = parent_data.g;
@@ -330,8 +339,17 @@ struct MultiresTSDFUpdate {
                                     voxel_data.y = is_valid ? parent_data.y : 0;
                                     voxel_data.setTsdfLast(voxel_data.getTsdf());
                                     voxel_data.delta_y = 0;
-                                    // TODO SEM maybe interpolate here too?
-                                    voxel_data.setFg(parent_data.getFg());
+                                    voxel_data.setFg(
+                                        map_.interp(
+                                                voxel_sample_coord_f,
+                                                [](const auto&) {
+                                                    return MultiresTSDF::VoxelType::initData()
+                                                        .getFg();
+                                                },
+                                                [](const auto& x) { return x.getFg(); },
+                                                voxel_scale - 1,
+                                                is_valid)
+                                            .first);
                                     voxel_data.fg_count = is_valid ? parent_data.fg_count : 0;
                                     voxel_data.r = parent_data.r;
                                     voxel_data.g = parent_data.g;
