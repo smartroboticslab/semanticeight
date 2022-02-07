@@ -821,9 +821,12 @@ void DenseSLAMSystem::saveObjectMeshes(const std::string& filename,
         T_FO.topLeftCorner<3, 3>() *= object->voxelDim();
         std::stringstream f;
         f << filename << "_" << std::setw(3) << std::setfill('0') << object->instance_id << ".ply";
-        const std::string metadata =
-            "voxel resolution: " + std::to_string(object->voxelDim()) + " m";
-        se::io::save_mesh_ply(mesh, f.str(), T_FO, metadata);
+        std::stringstream metadata_ss;
+        metadata_ss << "class: " << se::class_id_to_str(object->conf.classId()) << "\n"
+                    << "class ID: " << object->conf.classId() << "\n"
+                    << "instance ID: " << object->instance_id << "\n"
+                    << "voxel resolution: " << object->voxelDim() << " m";
+        se::io::save_mesh_ply(mesh, f.str(), T_FO, metadata_ss.str());
     }
 }
 
