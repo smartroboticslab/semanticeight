@@ -244,6 +244,14 @@ TriangleMesh PoseGridHistory::wedgeMesh() const
 
 size_t PoseGridHistory::indicesToLinearIndex(const Eigen::Vector4i& indices) const
 {
+    assert((0 <= indices.x() && "The x index is non-negative"));
+    assert((0 <= indices.y() && "The y index is non-negative"));
+    assert((0 <= indices.z() && "The z index is non-negative"));
+    assert((0 <= indices.w() && "The yaw index is non-negative"));
+    assert((indices.x() < size_.x() && "The x index isn't greater than the size"));
+    assert((indices.y() < size_.y() && "The y index isn't greater than the size"));
+    assert((indices.z() < size_.z() && "The z index isn't greater than the size"));
+    assert((indices.w() < size_.w() && "The yaw index isn't greater than the size"));
     // https://en.wikipedia.org/wiki/Row-major_order#Address_calculation_in_general
     // Row-major order allows for faster iteration over the yaw angles for a single position.
     return indices[3] + size_[3] * (indices[2] + size_[2] * (indices[1] + size_[1] * indices[0]));
@@ -253,6 +261,8 @@ size_t PoseGridHistory::indicesToLinearIndex(const Eigen::Vector4i& indices) con
 
 Eigen::Vector4i PoseGridHistory::linearIndexToIndices(const size_t linear_idx) const
 {
+    assert((0 <= linear_idx && "The linear index is non-negative"));
+    assert((linear_idx < num_cells_ && "The linear index isn't greater than the size"));
     Eigen::Vector4i indices;
     size_t tmp = linear_idx;
     for (int i = 3; i > 0; i--) {
@@ -267,6 +277,12 @@ Eigen::Vector4i PoseGridHistory::linearIndexToIndices(const size_t linear_idx) c
 
 Eigen::Vector4i PoseGridHistory::poseToIndices(const Eigen::Vector4f& pose) const
 {
+    assert((0.0f <= pose.x() && "The x coordinate is non-negative"));
+    assert((0.0f <= pose.y() && "The y coordinate is non-negative"));
+    assert((0.0f <= pose.z() && "The z coordinate is non-negative"));
+    assert((pose.x() < dim_.x() && "The x coordinate is smaller than the upper bound"));
+    assert((pose.y() < dim_.y() && "The y coordinate is smaller than the upper bound"));
+    assert((pose.z() < dim_.z() && "The z coordinate is smaller than the upper bound"));
     // Discretize the pose into cell indices.
     return (inv_res_.array() * wrapYaw(pose).array()).matrix().cast<int>();
 }
@@ -275,6 +291,14 @@ Eigen::Vector4i PoseGridHistory::poseToIndices(const Eigen::Vector4f& pose) cons
 
 Eigen::Vector4f PoseGridHistory::indicesToPose(const Eigen::Vector4i& indices) const
 {
+    assert((0 <= indices.x() && "The x index is non-negative"));
+    assert((0 <= indices.y() && "The y index is non-negative"));
+    assert((0 <= indices.z() && "The z index is non-negative"));
+    assert((0 <= indices.w() && "The yaw index is non-negative"));
+    assert((indices.x() < size_.x() && "The x index isn't greater than the size"));
+    assert((indices.y() < size_.y() && "The y index isn't greater than the size"));
+    assert((indices.z() < size_.z() && "The z index isn't greater than the size"));
+    assert((indices.w() < size_.w() && "The yaw index isn't greater than the size"));
     return (res_.array() * indices.array().cast<float>()).matrix();
 }
 
