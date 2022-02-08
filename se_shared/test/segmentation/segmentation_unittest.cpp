@@ -38,25 +38,19 @@
 
 class FreeFunctionTesting : public ::testing::Test {
     protected:
-    virtual void SetUp()
+    FreeFunctionTesting() :
+            instance_mask(cv::Size(mask_w, mask_h), se::instance_mask_t, se::instance_bg)
     {
-        mask_1 = cv::Mat::zeros(mask_size, se::mask_t);
-        mask_2 = cv::Mat::zeros(mask_size, se::mask_t);
-
-        // Initialize an instance mask to:
+        // Initialize the instance mask to:
         // 0 1
         // 2 3
-        instance_mask = cv::Mat(mask_size, se::instance_mask_t, se::instance_bg);
         for (int i = 0; i < instance_mask.cols * instance_mask.rows; i++) {
             instance_mask.at<se::instance_mask_elem_t>(i) = i;
         }
     }
 
-    const int mask_w = 2;
-    const int mask_h = 2;
-    const cv::Size mask_size = cv::Size(mask_w, mask_h);
-    cv::Mat mask_1;
-    cv::Mat mask_2;
+    static constexpr int mask_w = 2;
+    static constexpr int mask_h = 2;
     cv::Mat instance_mask;
 };
 

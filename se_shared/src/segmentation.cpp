@@ -5,6 +5,8 @@
 
 #include "se/segmentation.hpp"
 
+#include <execution>
+
 namespace se {
 // The names of the 41 Matterport3D semantic classes plus the background. Everything but "chair" is stuff.
 const std::vector<std::string> matterport3d_class_names{"background", "wall",
@@ -574,19 +576,13 @@ float notIoU(const cv::Mat& mask1, const cv::Mat& mask2)
 
 cv::Mat extract_instance(const cv::Mat& instance_mask, const se::instance_mask_elem_t instance_id)
 {
-    // Create a copy of the original mask.
-    cv::Mat individual_mask;
-    instance_mask.copyTo(individual_mask);
-
+    cv::Mat individual_mask(instance_mask.rows, instance_mask.cols, se::mask_t);
     // Set all elements matching the instance ID to 255 and all others to 0.
-    const auto match_id = [instance_id](se::instance_mask_elem_t& pixel, const int*) {
-        pixel = (pixel == instance_id) ? 255 : 0;
-    };
-    individual_mask.forEach<se::instance_mask_elem_t>(match_id);
-
-    // Convert from se::instance_mask_t to se::mask_t.
-    individual_mask.convertTo(individual_mask, se::mask_t);
-
+    std::transform(std::execution::par_unseq,
+                   instance_mask.begin<se::instance_mask_elem_t>(),
+                   instance_mask.end<se::instance_mask_elem_t>(),
+                   individual_mask.begin<se::mask_elem_t>(),
+                   [instance_id](const auto& value) { return (value == instance_id) ? 255 : 0; });
     return individual_mask;
 }
 
