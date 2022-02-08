@@ -10,6 +10,7 @@ add_library(${LIB_NAME} STATIC
   "src/str_utils.cpp"
   "src/point_cloud_utils.cpp"
   "src/stats.cpp"
+  "src/semantic_classes.cpp"
   "src/segmentation.cpp"
   "src/detection_confidence.cpp"
   "src/instance_segmentation.cpp"

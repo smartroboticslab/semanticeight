@@ -23,4 +23,5 @@ add_subdirectory(bounding_volume)
 add_subdirectory(image)
 add_subdirectory(image_utils)
 add_subdirectory(segmentation)
+add_subdirectory(semantic_classes)
 
