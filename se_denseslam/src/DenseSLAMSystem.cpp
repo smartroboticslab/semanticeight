@@ -125,11 +125,11 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
     const float voxel_dim = map_dim_.x() / map_size_.x();
     if (has_yaml_voxel_impl_config) {
         VoxelImpl::configure(yaml_voxel_impl_config, voxel_dim);
-        ObjVoxelImpl::configure(yaml_voxel_impl_config, se::default_res);
+        ObjVoxelImpl::configure(yaml_voxel_impl_config, se::SemanticClass::default_res);
     }
     else {
         VoxelImpl::configure(voxel_dim);
-        ObjVoxelImpl::configure(se::default_res);
+        ObjVoxelImpl::configure(se::SemanticClass::default_res);
     }
 
     // Initialize the Gaussian for the bilateral filter
@@ -822,7 +822,7 @@ void DenseSLAMSystem::saveObjectMeshes(const std::string& filename,
         std::stringstream f;
         f << filename << "_" << std::setw(3) << std::setfill('0') << object->instance_id << ".ply";
         std::stringstream metadata_ss;
-        metadata_ss << "class: " << se::class_id_to_str(object->conf.classId()) << "\n"
+        metadata_ss << "class: " << se::semantic_classes.name(object->conf.classId()) << "\n"
                     << "class ID: " << object->conf.classId() << "\n"
                     << "instance ID: " << object->instance_id << "\n"
                     << "voxel resolution: " << object->voxelDim() << " m";
@@ -921,22 +921,23 @@ void DenseSLAMSystem::computeNewObjectParameters(Eigen::Matrix4f& T_OM,
 #endif
 
     // Select the map size depending on the object class.
-    if (se::is_class_stuff(class_id)) {
-        // "Stuff" should have the same resolution as the background.
-        map_size = objects_[0]->mapSize();
-    }
-    else {
-        // For "things" compute the volume size to achieve a voxel size of se::class_res[class_id].
+    if (se::semantic_classes.enabled(class_id)) {
+        // For "things" compute the volume size to achieve a voxel size of
+        // se::semantic_classes.res(class_id).
         if (map_dim == 0.0f) {
             map_size = 0;
         }
         else {
-            const float size_f = map_dim / se::class_res[class_id];
+            const float size_f = map_dim / se::semantic_classes.res(class_id);
             // Round up to the nearest power of 2.
             map_size = 2 << static_cast<int>(ceil(log2(size_f)));
             // Saturate to 2048 voxels.
             map_size = std::min(map_size, 2048);
         }
+    }
+    else {
+        // "Stuff" should have the same resolution as the background.
+        map_size = objects_[0]->mapSize();
     }
 
     // Put the origin of the Object frame at the corner of the object map. t_OM
@@ -1004,7 +1005,7 @@ void DenseSLAMSystem::generateObjects(se::SegmentationResult& masks, const Senso
         const cv::Mat& mask = object_detection.instance_mask;
         const int& class_id = object_detection.classId();
 
-        if ((class_id == se::class_bg) || (class_id == 255))
+        if ((class_id == se::semantic_classes.backgroundId()) || (class_id == 255))
             continue;
 
         // Determine the new object volume size and pose.

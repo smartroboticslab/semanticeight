@@ -170,6 +170,10 @@ int main(int argc, char** argv)
     instance_render = new uint32_t[image_res.x() * image_res.y()];
     raycast_render = new uint32_t[image_res.x() * image_res.y()];
 
+    // Setup semantic classes
+    se::semantic_classes = se::SemanticClasses::coco_classes();
+    se::semantic_classes.setEnabled("book");
+
     const Eigen::VectorXf elevation_angles = (Eigen::VectorXf(64) << 17.744,
                                               17.12,
                                               16.536,

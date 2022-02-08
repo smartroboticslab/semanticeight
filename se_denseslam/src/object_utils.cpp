@@ -130,10 +130,10 @@ std::vector<float> object_lod_gain_raycasting(const Objects& objects,
                     float hit_distance = (t_OC - hit_O.head<3>()).norm();
                     // Slightly increase the hit distance for the background and "stuff"
                     // so that the foreground has priority
-                    if (object.classId() == se::class_bg) {
+                    if (object.classId() == se::semantic_classes.backgroundId()) {
                         hit_distance += object.voxelDim();
                     }
-                    else if (se::is_class_stuff(object.classId())) {
+                    else if (!se::semantic_classes.enabled(object.classId())) {
                         hit_distance += 0.5f * object.voxelDim();
                     }
                     // Skip hits further than the closest hit
@@ -149,7 +149,7 @@ std::vector<float> object_lod_gain_raycasting(const Objects& objects,
                     // Compute the complement of the probability if this is the
                     // background. This allows comparing it with the foreground
                     // probabilities of objects as it becomes a "valid hit" probability.
-                    if (object.classId() == se::class_bg) {
+                    if (object.classId() == se::semantic_classes.backgroundId()) {
                         fg_prob = 1.0f - fg_prob;
                     }
                     // Skip hits with low foreground probability, i.e. belonging to the
@@ -268,10 +268,10 @@ float lod_gain_raycasting(const Objects& objects,
                     float hit_distance = (t_OC - hit_O.head<3>()).norm();
                     // Slightly increase the hit distance for the background and "stuff"
                     // so that the foreground has priority
-                    if (object.classId() == se::class_bg) {
+                    if (object.classId() == se::semantic_classes.backgroundId()) {
                         hit_distance += object.voxelDim();
                     }
-                    else if (se::is_class_stuff(object.classId())) {
+                    else if (!se::semantic_classes.enabled(object.classId())) {
                         hit_distance += 0.5f * object.voxelDim();
                     }
                     // Skip hits further than the closest hit
@@ -287,7 +287,7 @@ float lod_gain_raycasting(const Objects& objects,
                     // Compute the complement of the probability if this is the
                     // background. This allows comparing it with the foreground
                     // probabilities of objects as it becomes a "valid hit" probability.
-                    if (object.classId() == se::class_bg) {
+                    if (object.classId() == se::semantic_classes.backgroundId()) {
                         fg_prob = 1.0f - fg_prob;
                     }
                     // Skip hits with low foreground probability, i.e. belonging to the

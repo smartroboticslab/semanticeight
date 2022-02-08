@@ -180,8 +180,8 @@ bool read_all_confs(const std::string& filename, se::VecDetectionConfidence& all
             return false;
         }
         // Test for correct number of classes
-        if (all_probs_npy.shape[1] != se::class_names.size() - 1) {
-            std::cerr << "Error: The number of classes must be " << se::class_names.size() - 1
+        if (all_probs_npy.shape[1] != se::semantic_classes.size() - 1) {
+            std::cerr << "Error: The number of classes must be " << se::semantic_classes.size() - 1
                       << ", not " << all_probs_npy.shape[1] << std::endl;
             return false;
         }
@@ -194,7 +194,7 @@ bool read_all_confs(const std::string& filename, se::VecDetectionConfidence& all
         numpy_confidence_t* current_probs_npy = all_probs_npy.data<numpy_confidence_t>();
         for (size_t i = 0; i < num_objects; ++i) {
             all_probs[i] = se::DetectionConfidence(current_probs_npy);
-            current_probs_npy += (se::class_names.size() - 1);
+            current_probs_npy += (se::semantic_classes.size() - 1);
 #if SE_VERBOSE >= SE_VERBOSE_DETAILED
             printf("%5.3f ", all_probs[i].confidence());
 #endif
@@ -392,7 +392,8 @@ void SegmentationResult::generateBackgroundInstance()
     }
 
     // Add the background object to the object map
-    object_instances.push_back(InstanceSegmentation(se::instance_new, se::class_bg, bg_mask));
+    object_instances.push_back(
+        InstanceSegmentation(se::instance_new, se::semantic_classes.backgroundId(), bg_mask));
 }
 
 
@@ -417,7 +418,7 @@ cv::Mat SegmentationResult::instanceMask() const
 
 cv::Mat SegmentationResult::classMask() const
 {
-    cv::Mat mask(cv::Size(width, height), se::class_mask_t, se::class_bg);
+    cv::Mat mask(cv::Size(width, height), se::class_mask_t, se::semantic_classes.backgroundId());
 
     if (object_instances.size() > 0) {
         for (const auto& inst : object_instances) {
@@ -514,7 +515,7 @@ void SegmentationResult::removeStuff()
     // Loop over all detected instances in reverse to make multiple removals
     // faster.
     for (int i = object_instances.size() - 1; i >= 0; --i) {
-        if (is_class_stuff(object_instances[i].classId())) {
+        if (!semantic_classes.enabled(object_instances[i].classId())) {
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
             printf("Removed ");
             (object_instances.begin() + i)->print();

@@ -50,8 +50,14 @@ class SemanticClasses {
 
     const std::map<int, SemanticClass>& classes() const;
 
+    /** Return an instance containing the 80 COCO semantic classes plus the background.
+     */
     static SemanticClasses coco_classes();
+    /** Return an instance containing the 41 Matterport3D semantic classes plus the background.
+     */
     static SemanticClasses matterport3d_classes();
+    /** Return an instance containing the 101 Replica semantic classes plus the background.
+     */
     static SemanticClasses replica_classes();
 
     private:

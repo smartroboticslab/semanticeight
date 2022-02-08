@@ -91,10 +91,10 @@ void raycastObjectListKernel(const Objects& objects,
                     float hit_distance = (t_OC - surface_intersection_O.head<3>()).norm();
                     // Slightly increase the hit distance for the background and "stuff"
                     // so that the foreground has priority
-                    if (class_id == se::class_bg) {
+                    if (class_id == se::semantic_classes.backgroundId()) {
                         hit_distance += object.voxelDim();
                     }
-                    else if (se::is_class_stuff(class_id)) {
+                    else if (!se::semantic_classes.enabled(class_id)) {
                         hit_distance += 0.5f * object.voxelDim();
                     }
                     // Skip hits further than the closest hit
@@ -113,7 +113,7 @@ void raycastObjectListKernel(const Objects& objects,
                     // Compute the complement of the probability if this is the
                     // background. This allows comparing it with the foreground
                     // probabilities of objects as it becomes a "valid hit" probability.
-                    if (class_id == se::class_bg) {
+                    if (class_id == se::semantic_classes.backgroundId()) {
                         fg_prob = 1.0f - fg_prob;
                     }
                     // Skip hits with low foreground probability, i.e. belonging to the
@@ -272,7 +272,7 @@ void renderObjectListKernel(uint32_t* output_image_data,
                             break;
                         case RenderMode::ClassID: {
                             const int class_id = object.classId();
-                            if (class_id == se::class_bg) {
+                            if (class_id == se::semantic_classes.backgroundId()) {
                                 // No color for background.
                                 col = dir + ambient_M;
                             }

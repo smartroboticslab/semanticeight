@@ -14,9 +14,9 @@ SemanticClasses::SemanticClasses(const std::vector<SemanticClass>& classes)
     for (const auto& c : classes) {
         classes_[c.id] = c;
     }
-    classes_[invalid_id_] = {invalid_id_, "invalid"};
     background_id_ = classes_.empty() ? 0 : classes_.at(id("background")).id;
     invalid_id_ = background_id_ - 1;
+    classes_[invalid_id_] = {invalid_id_, "invalid"};
 }
 
 

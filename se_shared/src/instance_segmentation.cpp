@@ -68,7 +68,8 @@ cv::Mat InstanceSegmentation::generateIntegrationMask() const
     // Initialize the integration mask to "don't integrate".
     cv::Mat integration_mask =
         cv::Mat(instance_mask.size(), se::integration_mask_t, cv::Scalar(skip_integration));
-    const se::integration_mask_elem_t base_value = (classId() == se::class_bg ? 0.0f : 1.0f);
+    const se::integration_mask_elem_t base_value =
+        (classId() == se::semantic_classes.backgroundId() ? 0.0f : 1.0f);
     // Update parts of the integration mask covered by the instance mask.
     integration_mask.setTo(cv::Scalar(base_value), instance_mask);
     // Set all positive parts of the mask to skip_fg_update if this is an undetected instance.
@@ -86,7 +87,8 @@ cv::Mat InstanceSegmentation::generateIntegrationMask(const cv::Mat& raycasted_o
     // Get the normal integration mask.
     cv::Mat integration_mask = generateIntegrationMask();
 
-    const se::integration_mask_elem_t base_value = (classId() == se::class_bg ? 0.0f : 1.0f);
+    const se::integration_mask_elem_t base_value =
+        (classId() == se::semantic_classes.backgroundId() ? 0.0f : 1.0f);
     const se::integration_mask_elem_t complementaty_value = 1.0f - base_value;
 
     // Decrease the probability in undetected parts of the object.
@@ -166,7 +168,7 @@ bool InstanceSegmentation::detected() const
 
 void InstanceSegmentation::print(FILE* f) const
 {
-    const std::string object_type = is_class_stuff(classId()) ? "STUFF" : "THING";
+    const std::string object_type = semantic_classes.enabled(classId()) ? "THING" : "STUFF";
     fprintf(f,
             "%3d   %dx%d %5.3f   %3d %3.0f%% %s %s %s",
             instance_id,
@@ -177,14 +179,14 @@ void InstanceSegmentation::print(FILE* f) const
             100.0f * confidence(),
             (detected() ? "  detected" : "undetected"),
             object_type.c_str(),
-            class_id_to_str(classId()).c_str());
+            semantic_classes.name(classId()).c_str());
 }
 
 
 
 std::ostream& operator<<(std::ostream& os, const InstanceSegmentation& o)
 {
-    const std::string object_type = is_class_stuff(o.classId()) ? "STUFF " : "THING ";
+    const std::string object_type = semantic_classes.enabled(o.classId()) ? "THING " : "STUFF ";
     std::streamsize p = os.precision();
     const std::ios_base::fmtflags f(os.flags());
     os << std::setw(3) << o.instance_id << "   " << o.instance_mask.cols << "x"
@@ -193,7 +195,7 @@ std::ostream& operator<<(std::ostream& os, const InstanceSegmentation& o)
        << std::setprecision(p) << std::setw(3) << o.classId() << " " << std::setw(3) << std::fixed
        << std::setprecision(0) << 100.0f * o.confidence() << "% " << std::setprecision(p)
        << (o.detected() ? "  detected " : "undetected ") << object_type
-       << class_id_to_str(o.classId());
+       << semantic_classes.name(o.classId());
     os.flags(f);
     return os;
 }

@@ -156,7 +156,7 @@ se::SegmentationResult geometric_segmentation(const se::Image<float>& depth,
             cv::Mat element = cv::getStructuringElement(
                 cv::MORPH_ELLIPSE, cv::Size(geom_dilute_size, geom_dilute_size));
             cv::dilate(maskImage, maskImage, element);
-            InstanceSegmentation geo_seg(label_id, se::class_invalid, maskImage);
+            InstanceSegmentation geo_seg(label_id, se::semantic_classes.invalidId(), maskImage);
             geometric_segmentation.object_instances.push_back(geo_seg);
         }
     }

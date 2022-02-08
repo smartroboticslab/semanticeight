@@ -232,7 +232,7 @@ void Object::print(FILE* f) const
     fprintf(f,
             "Object %3d, %8s (%d) %3.0f%%, scales",
             instance_id,
-            se::class_id_to_str(classId()).c_str(),
+            se::semantic_classes.name(classId()).c_str(),
             classId(),
             100.0f * conf.confidence());
     // Show detailed information about the minimum scales of the allocated VoxelBlocks.
@@ -253,7 +253,7 @@ std::ostream& operator<<(std::ostream& os, const Object& o)
        << ", "
        // The longest class name has 16 characters (chest_of_drawers) but we'll likely not need larger
        // than 8 characters (backpack).
-       << std::setw(8) << se::class_id_to_str(o.classId()) << " (" << o.classId() << ") "
+       << std::setw(8) << se::semantic_classes.name(o.classId()) << " (" << o.classId() << ") "
        << std::setw(3) << std::fixed << std::setprecision(0) << 100.0f * o.conf.confidence()
        << "%, scales";
     // Show detailed information about the minimum scales of the allocated VoxelBlocks.

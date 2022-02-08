@@ -100,10 +100,10 @@ struct SegmentationResult {
     /**
      * Create a mask containing the object class for each pixel. Its type is
      * se::class_mask_t. The values of the mask are as follows:
-     * - se::class_invalid invalid object detection
-     * - se::class_bg      background
-     * - 1+            object with the number corresponding to the object
-     *                 class
+     * - se::semantic_classes.invalidId()      invalid object detection
+     * - se::semantic_classes.backgroundId()   background
+     * - 1+                                    object with the number corresponding to the object
+     *                                         class
      */
     cv::Mat classMask() const;
 
