@@ -602,7 +602,7 @@ std::string class_id_to_str(const int class_id)
 
 bool is_class_stuff(const int class_id)
 {
-    return stuff_class_names.count(class_id_to_str(class_id));
+    return class_id < 0 || stuff_class_names.count(class_id_to_str(class_id));
 }
 
 void print_classes()
