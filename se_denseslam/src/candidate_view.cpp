@@ -85,8 +85,8 @@ CandidateView::CandidateView(const OctreePtr& map,
         path_MB_ = convertPath(planner.getPath());
         // The first path vertex should have the same position as the current pose but a unit
         // orientation. Set it to exactly the current pose.
-        assert(("The first path position is the current position",
-                path_MB_.front().topRightCorner<3, 1>().isApprox(T_MB.topRightCorner<3, 1>())));
+        assert((path_MB_.front().topRightCorner<3, 1>().isApprox(T_MB.topRightCorner<3, 1>())
+                && "The first path position is the current position"));
         path_MB_.front() = T_MB;
     }
     // Raycast to compute the optimal yaw angle.
