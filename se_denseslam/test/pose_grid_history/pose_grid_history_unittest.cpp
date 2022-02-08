@@ -109,7 +109,7 @@ TEST_F(PoseGridTest, recordOld)
     EXPECT_EQ(grid_.get(base_pose), 3);
 
     // Record a pose in some other cell.
-    T << 0, -1, 0, 2, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1;
+    T << 0, -1, 0, 1.99, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1;
     EXPECT_EQ(grid_.get(T), 0);
     grid_.record(T);
     EXPECT_EQ(grid_.get(T), 1);
