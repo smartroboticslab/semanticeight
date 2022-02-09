@@ -1092,7 +1092,8 @@ void DenseSLAMSystem::generateUndetectedInstances(se::SegmentationResult& detect
     for (const auto& undetected_id : undetected_objects) {
         const cv::Mat undetected_mask =
             se::extract_instance(raycasted_instance_mask_, undetected_id);
-        const se::InstanceSegmentation undetected_instance(undetected_id, undetected_mask);
+        const se::InstanceSegmentation undetected_instance(
+            undetected_id, objects_[undetected_id]->conf, undetected_mask, false);
         detections.object_instances.push_back(undetected_instance);
     }
 }

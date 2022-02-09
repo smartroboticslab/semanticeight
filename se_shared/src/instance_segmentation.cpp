@@ -6,13 +6,17 @@
 #include "se/instance_segmentation.hpp"
 
 namespace se {
-constexpr size_t InstanceSegmentation::morph_diam_;
+constexpr size_t InstanceSegmentation::morph_diam;
 constexpr float InstanceSegmentation::skip_integration;
 constexpr float InstanceSegmentation::skip_fg_update;
 constexpr uint8_t InstanceSegmentation::instance_mask_threshold;
 
+
+
 InstanceSegmentation::InstanceSegmentation() :
-        instance_id(instance_invalid), instance_mask(cv::Mat::zeros(0, 0, se::mask_t))
+        instance_id(instance_invalid),
+        instance_mask(cv::Mat::zeros(0, 0, se::mask_t)),
+        detected(false)
 {
 }
 
@@ -20,28 +24,19 @@ InstanceSegmentation::InstanceSegmentation() :
 
 InstanceSegmentation::InstanceSegmentation(const int instance_id,
                                            const int class_id,
-                                           const cv::Mat& instance_mask) :
-        instance_id(instance_id), instance_mask(instance_mask), conf(class_id)
+                                           const cv::Mat& instance_mask,
+                                           const bool detected) :
+        InstanceSegmentation(instance_id, DetectionConfidence(class_id), instance_mask, detected)
 {
-    cv::threshold(
-        instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
 }
 
 
 
 InstanceSegmentation::InstanceSegmentation(const int instance_id,
+                                           const DetectionConfidence& confidence,
                                            const cv::Mat& instance_mask,
-                                           const DetectionConfidence& confidence) :
-        instance_id(instance_id), instance_mask(instance_mask), conf(confidence)
-{
-    cv::threshold(
-        instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
-}
-
-
-
-InstanceSegmentation::InstanceSegmentation(const int instance_id, const cv::Mat& instance_mask) :
-        instance_id(instance_id), instance_mask(instance_mask)
+                                           const bool detected) :
+        instance_id(instance_id), instance_mask(instance_mask), conf(confidence), detected(detected)
 {
     cv::threshold(
         instance_mask, instance_mask, instance_mask_threshold, UINT8_MAX, cv::THRESH_BINARY);
@@ -73,7 +68,7 @@ cv::Mat InstanceSegmentation::generateIntegrationMask() const
     // Update parts of the integration mask covered by the instance mask.
     integration_mask.setTo(cv::Scalar(base_value), instance_mask);
     // Set all positive parts of the mask to skip_fg_update if this is an undetected instance.
-    if (!detected()) {
+    if (!detected) {
         cv::Mat positive_mask = integration_mask > 0.0f;
         integration_mask.setTo(skip_fg_update, positive_mask);
     }
@@ -159,13 +154,6 @@ int InstanceSegmentation::merge(const InstanceSegmentation& other, const float o
 
 
 
-bool InstanceSegmentation::detected() const
-{
-    return conf.valid();
-}
-
-
-
 void InstanceSegmentation::print(FILE* f) const
 {
     const std::string object_type = semantic_classes.enabled(classId()) ? "THING" : "STUFF";
@@ -177,7 +165,7 @@ void InstanceSegmentation::print(FILE* f) const
             cv::countNonZero(instance_mask) / static_cast<float>(instance_mask.total()),
             classId(),
             100.0f * confidence(),
-            (detected() ? "  detected" : "undetected"),
+            (detected ? "  detected" : "undetected"),
             object_type.c_str(),
             semantic_classes.name(classId()).c_str());
 }
@@ -194,7 +182,7 @@ std::ostream& operator<<(std::ostream& os, const InstanceSegmentation& o)
        << cv::countNonZero(o.instance_mask) / static_cast<float>(o.instance_mask.total()) << "   "
        << std::setprecision(p) << std::setw(3) << o.classId() << " " << std::setw(3) << std::fixed
        << std::setprecision(0) << 100.0f * o.confidence() << "% " << std::setprecision(p)
-       << (o.detected() ? "  detected " : "undetected ") << object_type
+       << (o.detected ? "  detected " : "undetected ") << object_type
        << semantic_classes.name(o.classId());
     os.flags(f);
     return os;

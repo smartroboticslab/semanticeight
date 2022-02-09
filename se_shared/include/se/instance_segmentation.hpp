@@ -31,6 +31,11 @@ struct InstanceSegmentation {
      */
     DetectionConfidence conf;
 
+    /** True if this instance was detected by the segmentation network and false if it was generated
+     * from an existing object through raycasting.
+     */
+    bool detected;
+
 
 
     /** Create an invalid InstanceSegmentation.
@@ -40,16 +45,15 @@ struct InstanceSegmentation {
     /** If class_id is a valid semantic class ID, the corresponding element of conf will be set to
      * 1 and all other elements to 0.
      */
-    InstanceSegmentation(const int instance_id, const int class_id, const cv::Mat& instance_mask);
+    InstanceSegmentation(const int instance_id,
+                         const int class_id,
+                         const cv::Mat& instance_mask,
+                         const bool detected = true);
 
     InstanceSegmentation(const int instance_id,
+                         const DetectionConfidence& confidence,
                          const cv::Mat& instance_mask,
-                         const DetectionConfidence& confidence);
-
-    /** Create an undetected InstanceSegmentation. InstanceSegmentation::detected() will return
-     * false.
-     */
-    InstanceSegmentation(const int instance_id, const cv::Mat& instance_mask);
+                         const bool detected = true);
 
     /** Retern the ID of the detected object class.
      */
@@ -80,16 +84,11 @@ struct InstanceSegmentation {
     /** Use morphological opening and closing to remove small patches and small holes from the
      * InstanceSegmentation::instance_mask.
      */
-    void morphologicalRefinement(const size_t element_diameter = morph_diam_);
+    void morphologicalRefinement(const size_t element_diameter = morph_diam);
 
     void removeDepthOutliers(const cv::Mat& depth);
 
     int merge(const InstanceSegmentation& other, const float overlap_thres);
-
-    /** Return true if this instance was detected by the segmentation network and false if it was
-     * generated from an existing object through raycasting.
-     */
-    bool detected() const;
 
     void print(FILE* f = stdout) const;
 
@@ -97,7 +96,7 @@ struct InstanceSegmentation {
      * InstanceSegmentation::generateIntegrationMask() and
      * InstanceSegmentation::morphologicalRefinement().
      */
-    static constexpr size_t morph_diam_ = 5;
+    static constexpr size_t morph_diam = 5;
 
     static constexpr float skip_integration = -1.0f;
 

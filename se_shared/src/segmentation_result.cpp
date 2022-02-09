@@ -268,7 +268,7 @@ bool SegmentationResult::read(const std::string& base_dir, const std::string& ba
     // Add the detected objects to the SegmentationResult
     size_t num_objects = all_probs.size();
     for (size_t i = 0; i < num_objects; ++i) {
-        object_instances.push_back(InstanceSegmentation(se::instance_new, masks[i], all_probs[i]));
+        object_instances.push_back(InstanceSegmentation(se::instance_new, all_probs[i], masks[i]));
     }
 
     return true;

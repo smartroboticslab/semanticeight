@@ -152,15 +152,14 @@ void Object::integrate(const se::Image<float>& depth_image,
                             frame);
 
     // Update the integration count.
-    if (segmentation.detected()) {
+    if (segmentation.detected) {
         detected_integrations++;
+        // Update the object class confidence.
+        conf.merge(segmentation.conf);
     }
     else {
         undetected_integrations++;
     }
-
-    // Update the object class confidence.
-    conf.merge(segmentation.conf);
 
     // Count the number of VoxelBlocks at each scale.
     num_blocks_per_min_scale.fill(0);
