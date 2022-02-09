@@ -361,6 +361,7 @@ int main(int argc, char** argv)
     pipeline->setInitT_WC(config.init_T_WB * config.T_BC);
     pipeline->setT_WC(config.init_T_WB * config.T_BC);
     planner->setT_WB(config.init_T_WB);
+    planner->setPlanningT_WB(config.init_T_WB);
 
     if (read_ok != se::ReaderStatus::ok) {
         std::cerr << "Couldn't read initial pose\n";
@@ -503,6 +504,7 @@ int processAll(se::Reader* reader,
             pipeline->setInitT_WC(init_T_WB * config->T_BC);
             pipeline->setT_WC(init_T_WB * config->T_BC);
             planner->setT_WB(init_T_WB);
+            planner->setPlanningT_WB(init_T_WB);
         }
         if (read_ok != se::ReaderStatus::ok) {
             std::cerr << "Couldn't read pose\n";
@@ -578,6 +580,7 @@ int processAll(se::Reader* reader,
             // Set the pose to the ground truth.
             pipeline->setT_WC(T_WB * config->T_BC);
             planner->setT_WB(T_WB);
+            planner->setPlanningT_WB(T_WB);
             tracked = true;
         }
         // Call object tracking.
