@@ -105,7 +105,7 @@ float polar_from_index(int y_idx, int height, float vfov, float pitch_offset)
 
 
 /** \brief Compute the column index given an azimuth angle, the image width and the horizontal
-   * sensor FOV. It is assumed that the image spans an azimuth angle  range of hfov and that azimuth
+   * sensor FOV. It is assumed that the image spans an azimuth angle range of hfov and that azimuth
    * angle 0 corresponds to the middle column of the image.
    * \return The column index in the interval [0,width-1].
    */
@@ -209,10 +209,10 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
     const int window_width = window_percentage * entropy_image.width() + 0.5f;
     std::vector<float> window_sums(entropy_image.width(), 0.0f);
     for (size_t w = 0; w < window_sums.size(); w++) {
-        int n = 0;
+        int rays_in_frustum = 0;
         // The window's yaw is the azimuth angle of its middle column
         const float theta = azimuth_from_index(w, entropy_image.width(), M_TAU_F);
-        const float yaw_M = theta - sensor.horizontal_fov / 2.0f;
+        const float yaw_M = se::math::wrap_angle_pi(theta - sensor.horizontal_fov / 2.0f);
         Eigen::Matrix4f tmp_T_MB = T_MB;
         tmp_T_MB.topLeftCorner<3, 3>() = se::math::yaw_to_rotm(yaw_M);
         const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(tmp_T_MB * T_BC);
@@ -224,12 +224,12 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
                     if (frustum_overlap_image[x] < 1e-6f) {
                         window_sums[w] += entropy_image(x, y);
                     }
-                    n++;
+                    rays_in_frustum++;
                 }
             }
         }
         // Normalize the entropy in the interval [0-1] using the number of rays in the window.
-        window_sums[w] /= n;
+        window_sums[w] /= rays_in_frustum;
     }
     return window_sums;
 }
@@ -339,8 +339,9 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
     // Azimuth angle of the left edge of the window
     const int best_idx = r.first;
     const float theta = azimuth_from_index(best_idx, entropy_image.width(), M_TAU_F);
-    // The window's yaw is the azimuth angle of its middle column
-    const float best_yaw_M = theta - sensor.horizontal_fov / 2.0f;
+    // The window's yaw is the azimuth angle of its middle column. Make sure to wrap the angle since
+    // it can become < -pi if the window's middle wraps around.
+    const float best_yaw_M = se::math::wrap_angle_pi(theta - sensor.horizontal_fov / 2.0f);
     const float best_entropy = r.second;
     return std::make_pair(best_yaw_M, best_entropy);
 }
@@ -415,10 +416,10 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
     const cv::Scalar fov_color = cv::Scalar(255, 0, 0, 255);
     const int line_thickness = 2 * w / 360;
     // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle.
-    const int x_min =
-        index_from_azimuth(yaw_M + sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
-    const int x_max =
-        index_from_azimuth(yaw_M - sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
+    const int x_min = index_from_azimuth(
+        se::math::wrap_angle_pi(yaw_M + sensor.horizontal_fov / 2.0f), image.width(), M_TAU_F);
+    const int x_max = index_from_azimuth(
+        se::math::wrap_angle_pi(yaw_M - sensor.horizontal_fov / 2.0f), image.width(), M_TAU_F);
     // Draw the vertical lines.
     cv::line(image_cv, cv::Point(x_min % w, 0), cv::Point(x_min % w, h), fov_color, line_thickness);
     cv::line(image_cv, cv::Point(x_max % w, 0), cv::Point(x_max % w, h), fov_color, line_thickness);
@@ -479,6 +480,8 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
             image_cv, label, text_pos, font, scale, cv::Scalar(255, 255, 255, 255), thickness);
     }
 }
+
+
 
 void render_pose_entropy_depth(Image<uint32_t>& entropy,
                                Image<uint32_t>& depth,
