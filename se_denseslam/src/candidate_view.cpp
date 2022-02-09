@@ -6,6 +6,8 @@
 #include "se/candidate_view.hpp"
 
 #include <cassert>
+#include <fstream>
+#include <iomanip>
 #include <se/image_utils.hpp>
 #include <se/utils/math_utils.h>
 
@@ -233,6 +235,66 @@ void CandidateView::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
 Image<Eigen::Vector3f> CandidateView::rays() const
 {
     return entropy_hits_M_;
+}
+
+
+
+bool CandidateView::writeEntropyData(const std::string& filename) const
+{
+    std::ofstream f(filename);
+    if (!f.good()) {
+        return false;
+    }
+    f << std::fixed;
+
+    f << std::setprecision(6);
+    f << "Entropy\n";
+    f << entropy_image_.width() << " " << entropy_image_.height() << "\n";
+    for (int y = 0; y < entropy_image_.height(); y++) {
+        for (int x = 0; x < entropy_image_.width(); x++) {
+            f << std::setw(20) << entropy_image_(x, y);
+            if (x != entropy_image_.width() - 1) {
+                f << " ";
+            }
+        }
+        f << "\n";
+    }
+
+    f << "\n";
+    f << std::setprecision(6);
+    f << "Frustum overlap\n";
+    f << frustum_overlap_image_.width() << " " << frustum_overlap_image_.height() << "\n";
+    for (int y = 0; y < frustum_overlap_image_.height(); y++) {
+        for (int x = 0; x < frustum_overlap_image_.width(); x++) {
+            f << std::setw(20) << frustum_overlap_image_(x, y);
+            if (x != frustum_overlap_image_.width() - 1) {
+                f << " ";
+            }
+        }
+        f << "\n";
+    }
+
+    f << "\n";
+    f << std::setprecision(3);
+    f << "Entropy hits M\n";
+    f << entropy_hits_M_.width() << " " << entropy_hits_M_.height() << "\n";
+    for (int y = 0; y < entropy_hits_M_.height(); y++) {
+        for (int x = 0; x < entropy_hits_M_.width(); x++) {
+            f << std::setw(6) << entropy_hits_M_(x, y).x() << " " << std::setw(6)
+              << entropy_hits_M_(x, y).y() << " " << std::setw(6) << entropy_hits_M_(x, y).z();
+            if (x != entropy_hits_M_.width() - 1) {
+                f << "   ";
+            }
+        }
+        f << "\n";
+    }
+
+    f << "\n";
+    f << std::setprecision(6);
+    f << "Entropy: " << entropy_ << "\n";
+    f << "Optimal yaw M: " << yaw_M_ << "\n";
+
+    return f.good();
 }
 
 

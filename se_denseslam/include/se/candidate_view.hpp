@@ -91,6 +91,8 @@ class CandidateView {
 
     Image<Eigen::Vector3f> rays() const;
 
+    bool writeEntropyData(const std::string& filename) const;
+
     /** ICRA 2020
        */
     static Path addIntermediateTranslation(const Eigen::Matrix4f& segment_start_M,
