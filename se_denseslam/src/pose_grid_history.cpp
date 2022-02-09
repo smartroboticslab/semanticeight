@@ -261,7 +261,6 @@ size_t PoseGridHistory::indicesToLinearIndex(const Eigen::Vector4i& indices) con
 
 Eigen::Vector4i PoseGridHistory::linearIndexToIndices(const size_t linear_idx) const
 {
-    assert((0 <= linear_idx && "The linear index is non-negative"));
     assert((linear_idx < num_cells_ && "The linear index isn't greater than the size"));
     Eigen::Vector4i indices;
     size_t tmp = linear_idx;

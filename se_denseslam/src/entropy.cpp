@@ -13,6 +13,8 @@ namespace se {
    */
 float prob_to_log_odds(float p)
 {
+    assert((0.0f <= p && "The probability mustn't be negative."));
+    assert((p <= 1.0f && "The probability mustn't be greater than 1."));
     if (p == 0.0f) {
         return -INFINITY;
     }
@@ -50,6 +52,8 @@ float log_odds_to_prob(float l)
    */
 float entropy(float p)
 {
+    assert((0.0f <= p && "The probability mustn't be negative."));
+    assert((p <= 1.0f && "The probability mustn't be greater than 1."));
     if (p == 0.0f || p == 1.0f) {
         return 0.0f;
     }
@@ -70,7 +74,7 @@ float azimuth_from_index(const int x_idx, const int width, const float hfov)
 {
     assert(0 <= x_idx);
     assert(x_idx < width);
-    assert(0 < hfov);
+    assert(0.0f < hfov);
     assert(hfov <= M_TAU_F);
     const float delta_theta = hfov / width;
     const float theta_max = hfov / 2.0f;
@@ -90,7 +94,7 @@ float polar_from_index(int y_idx, int height, float vfov, float pitch_offset)
 {
     assert(0 <= y_idx);
     assert(y_idx < height);
-    assert(0 < vfov);
+    assert(0.0f < vfov);
     assert(vfov <= M_PI_F);
     const float delta_phi = vfov / height;
     const float phi_min = M_PI_F / 2.0f - vfov / 2.0f + pitch_offset;
@@ -109,6 +113,8 @@ int index_from_azimuth(const float theta, const int width, const float hfov)
 {
     assert(theta >= -hfov / 2.0f);
     assert(theta <= hfov / 2.0f);
+    assert(0.0f < hfov);
+    assert(hfov <= M_TAU_F);
     const float delta_theta = hfov / width;
     const float theta_max = hfov / 2.0f;
     // Image column coordinates increase towards the right but azimuth angle increases towards the
