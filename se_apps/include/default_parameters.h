@@ -735,6 +735,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
     Eigen::Quaternionf q_BC;
     Eigen::Vector3f init_t_WB;
     Eigen::Quaternionf init_q_WB;
+    const std::set<int> allowed_downsampling_factors {1, 2, 4, 8, 16, 32, 64};
     // Read all other command line options
     while ((c = getopt_long(argc, argv, short_options.c_str(), long_options, &option_index))
            != -1) {
@@ -752,11 +753,12 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
 
         case 'c': // sensor-downsampling-factor
             config.sensor_downsampling_factor = atoi(optarg);
-            if ((config.sensor_downsampling_factor != 1) && (config.sensor_downsampling_factor != 2)
-                && (config.sensor_downsampling_factor != 4)
-                && (config.sensor_downsampling_factor != 8)) {
-                std::cerr << "Error: --sensor-downsampling-factor (-c) must be 1, 2 ,4 "
-                          << "or 8  (was " << optarg << ")\n";
+            if (!allowed_downsampling_factors.count(config.sensor_downsampling_factor)) {
+                std::cerr << "Error: --sensor-downsampling-factor (-c) must be one of ";
+                for (auto f : allowed_downsampling_factors) {
+                    std::cerr << f << ", ";
+                }
+                std::cerr << "was " << optarg << "\n";
                 exit(EXIT_FAILURE);
             }
             break;
