@@ -412,7 +412,7 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
     const int w = image.width();
     const int h = image.height();
     cv::Mat image_cv(cv::Size(w, h), CV_8UC4, image.data());
-    const cv::Scalar fov_color = cv::Scalar(255, 0, 0, 128);
+    const cv::Scalar fov_color = cv::Scalar(255, 0, 0, 255);
     const int line_thickness = 2 * w / 360;
     // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle.
     const int x_min =
@@ -437,7 +437,7 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
     }
 
     // Show the yaw angle major and minor tick marks.
-    const cv::Scalar tick_color = cv::Scalar(255, 255, 255, 128);
+    const cv::Scalar tick_color = cv::Scalar(255, 255, 255, 255);
     const int major_tick_thickness = 2 * w / 360;
     const int minor_tick_thickness = 1 * w / 360;
     for (float t = 0.0f; t <= 1.0f; t += 0.25f) {
@@ -476,7 +476,7 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
         const int x = index_from_azimuth(angle, w, M_TAU_F);
         cv::Point text_pos(x - text_size.width / 2, h - 1 - baseline);
         cv::putText(
-            image_cv, label, text_pos, font, scale, cv::Scalar(255, 255, 255, 128), thickness);
+            image_cv, label, text_pos, font, scale, cv::Scalar(255, 255, 255, 255), thickness);
     }
 }
 
