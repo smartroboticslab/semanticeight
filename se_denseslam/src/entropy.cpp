@@ -68,7 +68,7 @@ float entropy(float p)
 /** \brief Compute the azimuth angle given a column index, the image width and the horizontal
    * sensor FOV. It is assumed that the image spans an azimuth angle range of hfov and that azimuth
    * angle 0 corresponds to the middle column of the image.
-   * \return The azimuth angle in the interval [-pi,pi].
+   * \return The azimuth angle in the interval [-pi,pi).
    */
 float azimuth_from_index(const int x_idx, const int width, const float hfov)
 {
@@ -80,7 +80,7 @@ float azimuth_from_index(const int x_idx, const int width, const float hfov)
     const float theta_max = hfov / 2.0f;
     // Image column coordinates increase towards the right but azimuth angle increases towards the
     // left.
-    return theta_max - delta_theta * (x_idx + 0.5f);
+    return se::math::wrap_angle_pi(theta_max - delta_theta * (x_idx + 0.5f));
 }
 
 
@@ -99,7 +99,7 @@ float polar_from_index(int y_idx, int height, float vfov, float pitch_offset)
     const float delta_phi = vfov / height;
     const float phi_min = M_PI_F / 2.0f - vfov / 2.0f + pitch_offset;
     // Both image row coordinates and polar angles increase downwards.
-    return phi_min + delta_phi * (y_idx + 0.5f);
+    return se::math::wrap_angle_pi(phi_min + delta_phi * (y_idx + 0.5f));
 }
 
 
@@ -112,14 +112,16 @@ float polar_from_index(int y_idx, int height, float vfov, float pitch_offset)
 int index_from_azimuth(const float theta, const int width, const float hfov)
 {
     assert(theta >= -hfov / 2.0f);
-    assert(theta <= hfov / 2.0f);
+    assert(theta < hfov / 2.0f);
     assert(0.0f < hfov);
     assert(hfov <= M_TAU_F);
     const float delta_theta = hfov / width;
     const float theta_max = hfov / 2.0f;
     // Image column coordinates increase towards the right but azimuth angle increases towards the
-    // left.
-    return roundf((theta_max - theta) / delta_theta - 0.5f);
+    // left. Modulo with width because angles of ±pi result in an index of width otherwise.
+    return static_cast<int>(
+               roundf((theta_max - se::math::wrap_angle_pi(theta)) / delta_theta - 0.5f))
+        % width;
 }
 
 
