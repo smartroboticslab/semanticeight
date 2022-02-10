@@ -111,8 +111,6 @@ float index_to_polar(int y_idx, int height, float vfov, float pitch_offset)
    */
 int azimuth_to_index(const float theta, const int width, const float hfov)
 {
-    assert(theta >= -hfov / 2.0f);
-    assert(theta < hfov / 2.0f);
     assert(0.0f < hfov);
     assert(hfov <= M_TAU_F);
     const float delta_theta = hfov / width;
@@ -417,25 +415,23 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
     const cv::Scalar fov_color = cv::Scalar(255, 0, 0, 255);
     const int line_thickness = 2 * w / 360;
     // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle.
-    const int x_min = azimuth_to_index(
-        se::math::wrap_angle_pi(yaw_M + sensor.horizontal_fov / 2.0f), image.width(), M_TAU_F);
-    const int x_max = azimuth_to_index(
-        se::math::wrap_angle_pi(yaw_M - sensor.horizontal_fov / 2.0f), image.width(), M_TAU_F);
+    const int x_min =
+        azimuth_to_index(yaw_M + sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
+    const int x_max =
+        azimuth_to_index(yaw_M - sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
     // Draw the vertical lines.
-    cv::line(image_cv, cv::Point(x_min % w, 0), cv::Point(x_min % w, h), fov_color, line_thickness);
-    cv::line(image_cv, cv::Point(x_max % w, 0), cv::Point(x_max % w, h), fov_color, line_thickness);
+    cv::line(image_cv, cv::Point(x_min, 0), cv::Point(x_min, h), fov_color, line_thickness);
+    cv::line(image_cv, cv::Point(x_max, 0), cv::Point(x_max, h), fov_color, line_thickness);
     // Draw the horizontal lines.
-    if (0 <= x_min && x_max < w) {
-        cv::line(
-            image_cv, cv::Point(x_min % w, 0), cv::Point(x_max % w, 0), fov_color, line_thickness);
-        cv::line(
-            image_cv, cv::Point(x_min % w, h), cv::Point(x_max % w, h), fov_color, line_thickness);
+    if (x_min < x_max) {
+        cv::line(image_cv, cv::Point(x_min, 0), cv::Point(x_max, 0), fov_color, line_thickness);
+        cv::line(image_cv, cv::Point(x_min, h), cv::Point(x_max, h), fov_color, line_thickness);
     }
     else {
-        cv::line(image_cv, cv::Point(x_min % w, 0), cv::Point(w - 1, 0), fov_color, line_thickness);
-        cv::line(image_cv, cv::Point(0, 0), cv::Point(x_max % w, 0), fov_color, line_thickness);
-        cv::line(image_cv, cv::Point(x_min % w, h), cv::Point(w - 1, h), fov_color, line_thickness);
-        cv::line(image_cv, cv::Point(0, h), cv::Point(x_max % w, h), fov_color, line_thickness);
+        cv::line(image_cv, cv::Point(x_min, 0), cv::Point(w - 1, 0), fov_color, line_thickness);
+        cv::line(image_cv, cv::Point(0, 0), cv::Point(x_max, 0), fov_color, line_thickness);
+        cv::line(image_cv, cv::Point(x_min, h), cv::Point(w - 1, h), fov_color, line_thickness);
+        cv::line(image_cv, cv::Point(0, h), cv::Point(x_max, h), fov_color, line_thickness);
     }
 
     // Show the yaw angle major and minor tick marks.
