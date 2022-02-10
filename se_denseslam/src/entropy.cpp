@@ -70,7 +70,7 @@ float entropy(float p)
    * angle 0 corresponds to the middle column of the image.
    * \return The azimuth angle in the interval [-pi,pi).
    */
-float azimuth_from_index(const int x_idx, const int width, const float hfov)
+float index_to_azimuth(const int x_idx, const int width, const float hfov)
 {
     assert(0 <= x_idx);
     assert(x_idx < width);
@@ -90,7 +90,7 @@ float azimuth_from_index(const int x_idx, const int width, const float hfov)
    * corresponds to the middle row of the image.
    * \return The polar angle in the interval [0,pi].
    */
-float polar_from_index(int y_idx, int height, float vfov, float pitch_offset)
+float index_to_polar(int y_idx, int height, float vfov, float pitch_offset)
 {
     assert(0 <= y_idx);
     assert(y_idx < height);
@@ -109,7 +109,7 @@ float polar_from_index(int y_idx, int height, float vfov, float pitch_offset)
    * angle 0 corresponds to the middle column of the image.
    * \return The column index in the interval [0,width-1].
    */
-int index_from_azimuth(const float theta, const int width, const float hfov)
+int azimuth_to_index(const float theta, const int width, const float hfov)
 {
     assert(theta >= -hfov / 2.0f);
     assert(theta < hfov / 2.0f);
@@ -133,8 +133,8 @@ Eigen::Vector3f
 ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov, float pitch_offset)
 {
     // Compute the spherical coordinates of the ray.
-    const float theta = azimuth_from_index(x, width, M_TAU_F);
-    const float phi = polar_from_index(y, height, vertical_fov, pitch_offset);
+    const float theta = index_to_azimuth(x, width, M_TAU_F);
+    const float phi = index_to_polar(y, height, vertical_fov, pitch_offset);
     // Convert spherical coordinates to cartesian coordinates assuming a radius of 1.
     return Eigen::Vector3f(sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
 }
@@ -213,7 +213,7 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
     for (size_t w = 0; w < window_sums.size(); w++) {
         int rays_in_frustum = 0;
         // The window's yaw is the azimuth angle of its middle column
-        const float theta = azimuth_from_index(w, entropy_image.width(), M_TAU_F);
+        const float theta = index_to_azimuth(w, entropy_image.width(), M_TAU_F);
         const float yaw_M = se::math::wrap_angle_pi(theta - sensor.horizontal_fov / 2.0f);
         Eigen::Matrix4f tmp_T_MB = T_MB;
         tmp_T_MB.topLeftCorner<3, 3>() = se::math::yaw_to_rotm(yaw_M);
@@ -340,7 +340,7 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
         max_window(entropy_image, entropy_hits_M, frustum_overlap_image, sensor, T_MB, T_BC);
     // Azimuth angle of the left edge of the window
     const int best_idx = r.first;
-    const float theta = azimuth_from_index(best_idx, entropy_image.width(), M_TAU_F);
+    const float theta = index_to_azimuth(best_idx, entropy_image.width(), M_TAU_F);
     // The window's yaw is the azimuth angle of its middle column. Make sure to wrap the angle since
     // it can become < -pi if the window's middle wraps around.
     const float best_yaw_M = se::math::wrap_angle_pi(theta - sensor.horizontal_fov / 2.0f);
@@ -418,9 +418,9 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
     const cv::Scalar fov_color = cv::Scalar(255, 0, 0, 255);
     const int line_thickness = 2 * w / 360;
     // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle.
-    const int x_min = index_from_azimuth(
+    const int x_min = azimuth_to_index(
         se::math::wrap_angle_pi(yaw_M + sensor.horizontal_fov / 2.0f), image.width(), M_TAU_F);
-    const int x_max = index_from_azimuth(
+    const int x_max = azimuth_to_index(
         se::math::wrap_angle_pi(yaw_M - sensor.horizontal_fov / 2.0f), image.width(), M_TAU_F);
     // Draw the vertical lines.
     cv::line(image_cv, cv::Point(x_min % w, 0), cv::Point(x_min % w, h), fov_color, line_thickness);
@@ -476,7 +476,7 @@ void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& se
         // Get the actual text size.
         text_size = cv::getTextSize(label, font, scale, thickness, &baseline);
         // Center the text above the angle tick mark.
-        const int x = index_from_azimuth(angle, w, M_TAU_F);
+        const int x = azimuth_to_index(angle, w, M_TAU_F);
         cv::Point text_pos(x - text_size.width / 2, h - 1 - baseline);
         cv::putText(
             image_cv, label, text_pos, font, scale, cv::Scalar(255, 255, 255, 255), thickness);
