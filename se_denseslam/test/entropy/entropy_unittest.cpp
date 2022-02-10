@@ -5,6 +5,8 @@
 #include "../../src/entropy.cpp"
 
 #include <gtest/gtest.h>
+#include <lodepng.h>
+#include <se/filesystem.hpp>
 
 #define EXPECT_FLOAT_EQ_NAN(x, y)   \
     if (std::isnan(x)) {            \
@@ -54,20 +56,112 @@ TEST(Entropy, entropy)
     EXPECT_LT(se::entropy(0.25f), 1.0f);
     EXPECT_GT(se::entropy(0.75f), 0.0f);
     EXPECT_LT(se::entropy(0.75f), 1.0f);
+    EXPECT_FLOAT_EQ(se::entropy(0.25f), se::entropy(0.75f));
+    EXPECT_LT(se::entropy(0.25f), se::entropy(0.30f));
 }
 
-TEST(Entropy, indexFromAzimuthFromIndex)
+TEST(Entropy, indexToAzimuth)
 {
     constexpr int width = 1024;
-    constexpr float hfov = 2.0f * M_PI_F;
-    //EXPECT_FLOAT_EQ(se::azimuth_from_index(0, width, hfov), hfov / 2.0f);
-    EXPECT_GT(se::azimuth_from_index(width / 4, width, hfov), 0.0f);
-    //EXPECT_FLOAT_EQ(se::azimuth_from_index(width / 2, width, hfov), 0.0f);
-    EXPECT_LT(se::azimuth_from_index(3 * width / 4, width, hfov), 0.0f);
-
-    for (int x = 0; x < width; x++) {
-        const float theta = se::azimuth_from_index(x, width, hfov);
-        EXPECT_EQ(se::index_from_azimuth(theta, width, hfov), x);
+    constexpr float hfov = M_TAU_F;
+    // Compute the azimuth angle for all indices up to width - 1.
+    std::vector<int> idx(width);
+    std::iota(idx.begin(), idx.end(), 0);
+    std::vector<float> azimuth(idx.size());
+    std::transform(idx.begin(), idx.end(), azimuth.begin(), [width, hfov](auto i) {
+        return se::index_to_azimuth(i, width, hfov);
+    });
+    for (auto a : azimuth) {
+        EXPECT_GE(a, -hfov / 2.0f);
+        EXPECT_LT(a, hfov / 2.0f);
+    }
+    for (size_t i = 0; i < azimuth.size() - 1; ++i) {
+        EXPECT_GT(azimuth[i], azimuth[i + 1]);
     }
 }
 
+TEST(Entropy, indexToPolar)
+{
+    constexpr int height = 64;
+    constexpr float vfov = se::math::deg_to_rad(20.0f);
+    constexpr float pitch_offset = se::math::deg_to_rad(10.0f);
+    constexpr float polar_min = M_PI_F / 2.0f - vfov / 2.0f + pitch_offset;
+    constexpr float polar_max = M_PI_F / 2.0f + vfov / 2.0f + pitch_offset;
+    // Compute the polar angle for all indices up to height - 1.
+    std::vector<int> idx(height);
+    std::iota(idx.begin(), idx.end(), 0);
+    std::vector<float> polar(idx.size());
+    std::transform(idx.begin(), idx.end(), polar.begin(), [height, vfov, pitch_offset](auto i) {
+        return se::index_to_polar(i, height, vfov, pitch_offset);
+    });
+    for (auto p : polar) {
+        EXPECT_GT(p, polar_min);
+        EXPECT_LT(p, polar_max);
+    }
+    for (size_t i = 0; i < polar.size() - 1; ++i) {
+        EXPECT_LT(polar[i], polar[i + 1]);
+    }
+}
+
+TEST(Entropy, azimuthToIndex)
+{
+    constexpr int width = 1024;
+    constexpr float hfov = M_TAU_F;
+    // Compute the indices for some azimuth angles in the interval (-pi, pi].
+    std::vector<float> azimuth = {
+        -hfov / 3.0f, -hfov / 4.0, -hfov / 8.0f, 0.0f, hfov / 8.0, hfov / 4.0, hfov / 3.0f};
+    std::vector<int> idx(azimuth.size());
+    std::transform(azimuth.begin(), azimuth.end(), idx.begin(), [width, hfov](auto a) {
+        return se::azimuth_to_index(a, width, hfov);
+    });
+    for (auto i : idx) {
+        EXPECT_GE(i, 0);
+        EXPECT_LT(i, width);
+    }
+    for (size_t i = 0; i < idx.size() - 1; ++i) {
+        EXPECT_GT(idx[i], idx[i + 1]);
+    }
+    // Test -pi separately because it doesn't follow the ordering.
+    EXPECT_EQ(se::azimuth_to_index(-hfov / 2.0f, width, hfov), 0);
+}
+
+TEST(Entropy, indexToAzimuthToIndex)
+{
+    constexpr int width = 1024;
+    constexpr float hfov = M_TAU_F;
+    EXPECT_GT(se::index_to_azimuth(width / 4, width, hfov), 0.0f);
+    EXPECT_LT(se::index_to_azimuth(3 * width / 4, width, hfov), 0.0f);
+
+    for (int x = 0; x < width; x++) {
+        const float theta = se::index_to_azimuth(x, width, hfov);
+        EXPECT_EQ(se::azimuth_to_index(theta, width, hfov), x);
+    }
+}
+
+TEST(Entropy, azimuthToIndexToAzimuth)
+{
+    constexpr int width = 1024;
+    constexpr float hfov = M_TAU_F;
+    constexpr float threshold = hfov / width / 2.0f;
+    // Can't test -hfov/2 because it will wrap around the image (as intended).
+    for (float a = -hfov / 2.0f + 0.001f; a < hfov / 2.0f; a += hfov / 8.0f) {
+        const int idx = se::azimuth_to_index(a, width, hfov);
+        EXPECT_LE(std::fabs(se::index_to_azimuth(idx, width, hfov) - a), threshold);
+    }
+}
+
+TEST(Entropy, overlayYaw)
+{
+    for (auto yaw_M : {0.0f, -M_PI_F}) {
+        se::Image<uint32_t> image(720, 200, 0);
+        const SensorImpl sensor(
+            {640, 480, false, 0.02, 5.0, 205.46963709898583, 205.46963709898583, 320.5, 240.5});
+        overlay_yaw(image, yaw_M, sensor);
+        const std::string filename =
+            stdfs::temp_directory_path() / std::string("overlay_" + std::to_string(yaw_M) + ".png");
+        lodepng_encode32_file(filename.c_str(),
+                              reinterpret_cast<const unsigned char*>(image.data()),
+                              image.width(),
+                              image.height());
+    }
+}
