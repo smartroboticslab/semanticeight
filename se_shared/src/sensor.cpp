@@ -330,10 +330,9 @@ se::OusterLidar::OusterLidar(const SensorConfig& c) :
     const float azimuth_angle = 360.0f / c.width;
     min_ray_angle = std::min(min_elevation_angle, azimuth_angle);
     horizontal_fov = 2.0f * M_PI;
-    constexpr float deg_to_rad = M_PI / 180.0f;
     const float max_elevation = c.beam_elevation_angles.maxCoeff();
     const float min_elevation = c.beam_elevation_angles.minCoeff();
-    vertical_fov = deg_to_rad * (max_elevation - min_elevation);
+    vertical_fov = se::math::deg_to_rad(max_elevation - min_elevation);
 }
 
 se::OusterLidar::OusterLidar(const OusterLidar& ol, const float sf) :
@@ -353,12 +352,11 @@ int se::OusterLidar::computeIntegrationScale(const Eigen::Vector3f& block_centre
                                              const int min_scale,
                                              const int max_block_scale) const
 {
-    constexpr float deg_to_rad = M_PI / 180.0f;
     const float dist = block_centre.norm();
     // Compute the side length in metres of a pixel projected dist metres from
     // the camera. This computes the chord length corresponding to the ray angle
     // at distance dist.
-    const float pixel_dim = 2.0f * dist * std::tan(min_ray_angle / 2.0f * deg_to_rad);
+    const float pixel_dim = 2.0f * dist * std::tan(se::math::deg_to_rad(min_ray_angle / 2.0f));
     // Compute the ratio using the worst case voxel_dim (space diagonal)
     const float pv_ratio = pixel_dim / (std::sqrt(3) * voxel_dim);
     int scale = 0;
@@ -400,12 +398,11 @@ int se::OusterLidar::targetIntegrationScale(const Eigen::Vector3f& block_centre,
                                             const float voxel_dim,
                                             const int max_block_scale) const
 {
-    constexpr float deg_to_rad = M_PI / 180.0f;
     const float dist = block_centre.norm();
     // Compute the side length in metres of a pixel projected dist metres from
     // the camera. This computes the chord length corresponding to the ray angle
     // at distance dist.
-    const float pixel_dim = 2.0f * dist * std::tan(min_ray_angle / 2.0f * deg_to_rad);
+    const float pixel_dim = 2.0f * dist * std::tan(se::math::deg_to_rad(min_ray_angle / 2.0f));
     // Compute the ratio using the worst case voxel_dim (space diagonal)
     const float pv_ratio = pixel_dim / (std::sqrt(3) * voxel_dim);
     int scale = 0;

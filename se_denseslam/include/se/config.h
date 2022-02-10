@@ -412,12 +412,12 @@ struct Configuration {
     float goal_z_threshold;
 
     /** The threshold in radians to consider a goal roll or pitch angle reached.
-     * <br>\em Default: 10 * math::deg_to_rad
+     * <br>\em Default: se::math::deg_to_rad(10)
      */
     float goal_roll_pitch_threshold;
 
     /** The threshold in radians to consider a goal yaw angle reached.
-     * <br>\em Default: 5 * math::deg_to_rad
+     * <br>\em Default: se::math::deg_to_rad(5)
      */
     float goal_yaw_threshold;
 
@@ -482,8 +482,8 @@ struct Configuration {
             solving_time(0.1f),
             goal_xy_threshold(0.2f),
             goal_z_threshold(0.2f),
-            goal_roll_pitch_threshold(10.0f * math::deg_to_rad),
-            goal_yaw_threshold(5.0f * math::deg_to_rad)
+            goal_roll_pitch_threshold(math::deg_to_rad(10.0f)),
+            goal_yaw_threshold(math::deg_to_rad(5.0f))
     {
     }
 

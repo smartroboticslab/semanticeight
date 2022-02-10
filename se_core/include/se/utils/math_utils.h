@@ -372,12 +372,25 @@ static Eigen::Matrix4f exp(const Eigen::Matrix<float, 6, 1>& a)
 
 
 
-constexpr float rad_to_deg = 180.0f / M_PI;
-constexpr float deg_to_rad = M_PI / 180.0f;
+/*! \brief Convert an angle from radians to degrees.
+ */
+template<typename T>
+static constexpr T rad_to_deg(T angle_rad)
+{
+    return angle_rad / static_cast<T>(M_PI) * static_cast<T>(180);
+}
+
+/*! \brief Convert an angle from degrees to radians.
+ */
+template<typename T>
+static constexpr T deg_to_rad(T angle_deg)
+{
+    return angle_deg / static_cast<T>(180) * static_cast<T>(M_PI);
+}
 
 /*! \brief Wrap an angle in radians to the interval [0, 2pi).
-     * https://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
-     */
+ * https://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
+ */
 template<typename T>
 static constexpr T wrap_angle_2pi(T angle_rad)
 {
@@ -390,8 +403,8 @@ static constexpr T wrap_angle_2pi(T angle_rad)
 }
 
 /*! \brief Wrap an angle in radians to the interval [-pi, pi).
-     * https://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
-     */
+ * https://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
+ */
 template<typename T>
 static constexpr T wrap_angle_pi(T angle_rad)
 {
@@ -405,8 +418,8 @@ static constexpr T wrap_angle_pi(T angle_rad)
 }
 
 /*! \brief Compute the smallest angle in the interval [-pi,pi] that if added to start_angle_rad
-     * will result in end_angle_rad or an equivalent angle.
-     */
+ * will result in end_angle_rad or an equivalent angle.
+ */
 template<typename T>
 static constexpr T angle_diff(T start_angle_rad, T end_angle_rad)
 {

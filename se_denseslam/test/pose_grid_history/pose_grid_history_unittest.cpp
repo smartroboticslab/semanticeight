@@ -20,7 +20,7 @@ class PoseGridTest : public ::testing::Test {
             sensor_config_({640, 480, false, 0.4f, 4.0f, 525.0f, 525.0f, 319.5f, 239.5f}),
             sensor_(sensor_config_),
             dimensions_(2.0f, 2.0f, 1.0f),
-            resolution_(0.5f, 1.0f, 0.5f, 36.0f * se::math::deg_to_rad),
+            resolution_(0.5f, 1.0f, 0.5f, se::math::deg_to_rad(36.0f)),
             grid_(dimensions_, resolution_)
     {
     }

@@ -292,7 +292,7 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
     f << "\n";
     f << std::setprecision(6);
     f << "Entropy: " << entropy_ << "\n";
-    f << "Optimal yaw M: " << yaw_M_ << "\n";
+    f << "Optimal yaw M: " << yaw_M_ << " rad   " << se::math::rad_to_deg(yaw_M_) << " degrees \n";
 
     return f.good();
 }
@@ -517,7 +517,7 @@ void CandidateView::yawBeforeMoving(Path& path)
 
 void CandidateView::yawWhileMoving(Path& path, float velocity_linear, float velocity_angular)
 {
-    constexpr float yaw_step = se::math::deg_to_rad * 45;
+    constexpr float yaw_step = se::math::deg_to_rad(45);
     Path new_path;
     for (size_t i = 0; i < path.size() - 1; ++i) {
         new_path.push_back(path[i]);

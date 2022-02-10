@@ -26,7 +26,7 @@ class PoseGridHistory : public PoseHistory {
      */
     PoseGridHistory(const Eigen::Vector3f& dimensions,
                     const Eigen::Vector4f& resolution =
-                        Eigen::Vector4f(1.0f, 1.0f, 1.0f, 360.0f / 20.0f * se::math::deg_to_rad));
+                        Eigen::Vector4f(1.0f, 1.0f, 1.0f, se::math::deg_to_rad(360.0f / 20.0f)));
 
     void record(const Eigen::Vector4f& pose);
 
