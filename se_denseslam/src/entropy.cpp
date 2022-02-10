@@ -181,7 +181,6 @@ std::pair<float, Eigen::Vector3f> entropy_along_ray(const Octree<VoxelImpl::Voxe
     const float t_step = map.voxelDim();
     for (float t = t_near; t <= t_far; t += t_step) {
         point_M = ray_origin_M + t * ray_dir_M;
-        //const float l = map.interpAtPoint(point_M, VoxelImpl::VoxelType::threshold).first;
         VoxelImpl::VoxelType::VoxelData data;
         map.getAtPoint(point_M, data);
         const float l = VoxelImpl::VoxelType::threshold(data);
@@ -197,14 +196,12 @@ std::pair<float, Eigen::Vector3f> entropy_along_ray(const Octree<VoxelImpl::Voxe
 
 
 std::vector<float> sum_windows(const Image<float>& entropy_image,
-                               const Image<Eigen::Vector3f>& /* entropy_hits_M */,
+                               const Image<Eigen::Vector3f>& entropy_hits_M,
                                const Image<float>& frustum_overlap_image,
                                const SensorImpl& sensor,
                                const Eigen::Matrix4f& T_MB,
                                const Eigen::Matrix4f& T_BC)
 {
-    const Image<Eigen::Vector3f> rays_B =
-        ray_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
     const float window_percentage = sensor.horizontal_fov / M_TAU_F;
     // Even if the window width takes an extra column into account, the rayInFrustum() test will
     // reject it.
@@ -212,16 +209,16 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
     std::vector<float> window_sums(entropy_image.width(), 0.0f);
     for (size_t w = 0; w < window_sums.size(); w++) {
         int rays_in_frustum = 0;
-        // The window's yaw is the azimuth angle of its middle column
-        const float theta = index_to_azimuth(w, entropy_image.width(), M_TAU_F);
-        const float yaw_M = se::math::wrap_angle_pi(theta - sensor.horizontal_fov / 2.0f);
+        // The window's yaw is the azimuth angle of its middle column.
+        const float yaw_M_left_edge = index_to_azimuth(w, entropy_image.width(), M_TAU_F);
+        const float yaw_M = se::math::wrap_angle_pi(yaw_M_left_edge - sensor.horizontal_fov / 2.0f);
         Eigen::Matrix4f tmp_T_MB = T_MB;
         tmp_T_MB.topLeftCorner<3, 3>() = se::math::yaw_to_rotm(yaw_M);
         const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(tmp_T_MB * T_BC);
         for (int y = 0; y < entropy_image.height(); y++) {
             for (int i = 0; i < window_width; i++) {
                 const int x = (w + i) % entropy_image.width();
-                const Eigen::Vector3f ray_C = (T_CM * T_MB * rays_B(x, y).homogeneous()).head<3>();
+                const Eigen::Vector3f ray_C = (T_CM * entropy_hits_M(x, y).homogeneous()).head<3>();
                 if (sensor.rayInFrustum(ray_C)) {
                     if (frustum_overlap_image[x] < 1e-6f) {
                         window_sums[w] += entropy_image(x, y);
@@ -239,9 +236,9 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
 
 
 /** Find the window that contains the maximum sum of pixel values from image.
-   * \return The column index of the leftmost edge of the window and its sum or -1 and -INFINITY if
-   *         the image width is 0.
-   */
+ * \return The column index of the leftmost edge of the window and its sum or -1 and -INFINITY if
+ *         the image width is 0.
+ */
 std::pair<int, float> max_window(const Image<float>& entropy_image,
                                  const Image<Eigen::Vector3f>& entropy_hits_M,
                                  const Image<float>& frustum_overlap_image,
@@ -284,6 +281,8 @@ void raycast_entropy(Image<float>& entropy_image,
         || entropy_hits_M.height() != entropy_image.height()) {
         entropy_hits_M = Image<Eigen::Vector3f>(entropy_image.width(), entropy_image.height());
     }
+    const float ray_entropy_max =
+        max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
     const Eigen::Vector3f& t_MB = T_MB.topRightCorner<3, 1>();
     const Image<Eigen::Vector3f> rays =
         ray_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
@@ -295,8 +294,7 @@ void raycast_entropy(Image<float>& entropy_image,
             const auto r =
                 entropy_along_ray(map, t_MB, rays(x, y), sensor.near_plane, sensor.far_plane);
             // Normalize the per-ray entropy in the interval [0-1].
-            entropy_image(x, y) =
-                r.first / max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
+            entropy_image(x, y) = r.first / ray_entropy_max;
             entropy_hits_M(x, y) = r.second;
         }
     }
@@ -340,10 +338,11 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
         max_window(entropy_image, entropy_hits_M, frustum_overlap_image, sensor, T_MB, T_BC);
     // Azimuth angle of the left edge of the window
     const int best_idx = r.first;
-    const float theta = index_to_azimuth(best_idx, entropy_image.width(), M_TAU_F);
+    const float yaw_M_left_edge = index_to_azimuth(best_idx, entropy_image.width(), M_TAU_F);
     // The window's yaw is the azimuth angle of its middle column. Make sure to wrap the angle since
     // it can become < -pi if the window's middle wraps around.
-    const float best_yaw_M = se::math::wrap_angle_pi(theta - sensor.horizontal_fov / 2.0f);
+    const float best_yaw_M =
+        se::math::wrap_angle_pi(yaw_M_left_edge - sensor.horizontal_fov / 2.0f);
     const float best_entropy = r.second;
     return std::make_pair(best_yaw_M, best_entropy);
 }
