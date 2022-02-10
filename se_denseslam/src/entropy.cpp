@@ -262,8 +262,10 @@ std::pair<int, float> max_window(const Image<float>& entropy_image,
 
 float max_ray_entropy(const float voxel_dim, const float near_plane, const float far_plane)
 {
-    // This is the number of voxels and the max entropy since the max entropy per-voxel is 1.
-    return BLOCK_SIZE * sqrtf(3.0f) * (far_plane - near_plane) / voxel_dim;
+    const float ray_length = far_plane - near_plane;
+    const float max_voxels_along_ray = ray_length / voxel_dim;
+    constexpr float max_entropy_per_voxel = 1.0f;
+    return max_entropy_per_voxel * max_voxels_along_ray;
 }
 
 
@@ -354,9 +356,8 @@ Image<uint32_t> visualize_entropy(const Image<float>& entropy,
 {
     Image<uint32_t> entropy_render(entropy.width(), entropy.height());
     for (size_t i = 0; i < entropy.size(); ++i) {
-        // Scale and clamp the entropy for visualization since its values are typically too low.
-        const uint8_t e = se::math::clamp(
-            UINT8_MAX * (6.0f * entropy[i]) + 0.5f, 0.0f, static_cast<float>(UINT8_MAX));
+        // Halve the entropy for visualization to allow having white overlays.
+        const uint8_t e = UINT8_MAX * (entropy[i] / 2.0f);
         entropy_render[i] = se::pack_rgba(e, e, e, 0xFF);
     }
     if (visualize_yaw) {
