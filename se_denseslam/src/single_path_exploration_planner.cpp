@@ -29,7 +29,7 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     CandidateConfig candidate_config = config_.candidate_config;
     candidate_config.planner_config.goal_t_MB_ = T_MB.topRightCorner<3, 1>();
     candidates_.emplace_back(
-        map, planner, frontiers, objects, sensor, T_MB, T_BC, T_MB_history, candidate_config);
+        *map, planner, frontiers, objects, sensor, T_MB, T_BC, T_MB_history, candidate_config);
     // Remove the candidate if it's not valid
     if (!candidates_.back().isValid()) {
         rejected_candidates_.push_back(candidates_.back());
@@ -42,22 +42,22 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
            //&& rejected_candidates_.size() <= max_failed && !candidate_sampling_tree.empty()) {
            && rejected_candidates_.size() <= max_failed && !remaining_frontiers.empty()) {
         // Sample a point
-        //const Eigen::Vector3f candidate_t_MB = sampleCandidate(map,
+        //const Eigen::Vector3f candidate_t_MB = sampleCandidate(*map,
         //                                                       remaining_frontiers,
         //                                                       objects,
         //                                                       sampling_step,
         //                                                       config_.sampling_min_M,
         //                                                       config_.sampling_max_M);
         //const Eigen::Vector3f candidate_t_MB = sampleCandidate(
-        //    map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
+        //    *map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
         const Eigen::Vector3f candidate_t_MB = sampleCandidate(
-            map, remaining_frontiers, config_.sampling_min_M, config_.sampling_max_M);
+            *map, remaining_frontiers, config_.sampling_min_M, config_.sampling_max_M);
         // Create the config for this particular candidate
         CandidateConfig candidate_config = config_.candidate_config;
         candidate_config.planner_config.goal_t_MB_ = candidate_t_MB;
         // Create candidate and compute its utility
         candidates_.emplace_back(
-            map, planner, frontiers, objects, sensor, T_MB, T_BC, T_MB_history, candidate_config);
+            *map, planner, frontiers, objects, sensor, T_MB, T_BC, T_MB_history, candidate_config);
         // Remove the candidate if it's not valid
         if (!candidates_.back().isValid()) {
             rejected_candidates_.push_back(candidates_.back());
@@ -126,12 +126,13 @@ std::vector<CandidateView> SinglePathExplorationPlanner::rejectedViews() const
 
 
 
-Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstPtr map,
-                                                              std::deque<se::key_t>& frontiers,
-                                                              const Objects& /*objects*/,
-                                                              const int sampling_step,
-                                                              const Eigen::Vector3f& sampling_min_M,
-                                                              const Eigen::Vector3f& sampling_max_M)
+Eigen::Vector3f
+SinglePathExplorationPlanner::sampleCandidate(const se::Octree<VoxelImpl::VoxelType>& map,
+                                              std::deque<se::key_t>& frontiers,
+                                              const Objects& /*objects*/,
+                                              const int sampling_step,
+                                              const Eigen::Vector3f& sampling_min_M,
+                                              const Eigen::Vector3f& sampling_max_M)
 {
     // TODO take objects into account
     if (frontiers.empty()) {
@@ -149,8 +150,8 @@ Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstP
         }
     }
     // Return the coordinates of the sampled Volume's centre
-    const int size = map->depthToSize(keyops::depth(code));
-    pos = map->voxelDim()
+    const int size = map.depthToSize(keyops::depth(code));
+    pos = map.voxelDim()
         * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
     se::math::clamp(pos, sampling_min_M, sampling_max_M);
     return pos;
@@ -158,18 +159,19 @@ Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstP
 
 
 
-Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstPtr map,
-                                                              MortonSamplingTree& sampling_tree,
-                                                              const Eigen::Vector3f& sampling_min_M,
-                                                              const Eigen::Vector3f& sampling_max_M)
+Eigen::Vector3f
+SinglePathExplorationPlanner::sampleCandidate(const se::Octree<VoxelImpl::VoxelType>& map,
+                                              MortonSamplingTree& sampling_tree,
+                                              const Eigen::Vector3f& sampling_min_M,
+                                              const Eigen::Vector3f& sampling_max_M)
 {
     key_t code;
     if (!sampling_tree.sampleCode(code)) {
         return Eigen::Vector3f::Constant(NAN);
     }
     // Return the coordinates of the sampled volume's centre
-    const int size = map->depthToSize(keyops::depth(code));
-    Eigen::Vector3f pos = map->voxelDim()
+    const int size = map.depthToSize(keyops::depth(code));
+    Eigen::Vector3f pos = map.voxelDim()
         * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
     math::clamp(pos, sampling_min_M, sampling_max_M);
     return pos;
@@ -177,17 +179,18 @@ Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstP
 
 
 
-Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstPtr map,
-                                                              std::deque<se::key_t>& frontiers,
-                                                              const Eigen::Vector3f& sampling_min_M,
-                                                              const Eigen::Vector3f& sampling_max_M)
+Eigen::Vector3f
+SinglePathExplorationPlanner::sampleCandidate(const se::Octree<VoxelImpl::VoxelType>& map,
+                                              std::deque<se::key_t>& frontiers,
+                                              const Eigen::Vector3f& sampling_min_M,
+                                              const Eigen::Vector3f& sampling_max_M)
 {
     std::shuffle(frontiers.begin(), frontiers.end(), std::mt19937{std::random_device{}()});
     const key_t code = frontiers.back();
     frontiers.pop_back();
     // Return the coordinates of the sampled volume's centre
-    const int size = map->depthToSize(keyops::depth(code));
-    Eigen::Vector3f pos = map->voxelDim()
+    const int size = map.depthToSize(keyops::depth(code));
+    Eigen::Vector3f pos = map.voxelDim()
         * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
     math::clamp(pos, sampling_min_M, sampling_max_M);
     return pos;

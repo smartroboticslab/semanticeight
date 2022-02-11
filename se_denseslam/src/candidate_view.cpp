@@ -28,7 +28,7 @@ CandidateView::CandidateView() :
 
 
 
-CandidateView::CandidateView(const OctreeConstPtr& map,
+CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
                              ptp::SafeFlightCorridorGenerator& planner,
                              const std::vector<se::key_t>& /*frontiers*/,
                              const Objects& objects,
@@ -79,7 +79,7 @@ CandidateView::CandidateView(const OctreeConstPtr& map,
         path_MB_.front() = T_MB;
     }
     // Raycast to compute the optimal yaw angle.
-    entropyRaycast(*map, sensor, T_BC, T_MB_history);
+    entropyRaycast(map, sensor, T_BC, T_MB_history);
     path_MB_.back().topLeftCorner<3, 3>() = yawToC_MB(yaw_M_);
     zeroRollPitch(path_MB_);
     // Get the LoD gain of the objects.
