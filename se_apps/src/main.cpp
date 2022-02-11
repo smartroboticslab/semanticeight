@@ -325,31 +325,7 @@ int main(int argc, char** argv)
                                    config.pyramid,
                                    config,
                                    config.voxel_impl_yaml);
-    se::ExplorationConfig exploration_config = {
-        config.num_candidates,
-        (pipeline->T_MW() * config.sampling_min_W.homogeneous()).head<3>(),
-        (pipeline->T_MW() * config.sampling_max_W.homogeneous()).head<3>(),
-        config.goal_xy_threshold,
-        config.goal_z_threshold,
-        config.goal_roll_pitch_threshold,
-        config.goal_yaw_threshold,
-        {config.exploration_weight,
-         config.use_pose_history,
-         config.raycast_width,
-         config.raycast_height,
-         config.delta_t,
-         config.linear_velocity,
-         config.angular_velocity,
-         {"",
-          Eigen::Vector3f::Zero(),
-          Eigen::Vector3f::Zero(),
-          config.robot_radius,
-          config.safety_radius,
-          config.min_control_point_radius,
-          config.skeleton_sample_precision,
-          config.solving_time}}};
-    planner = new se::ExplorationPlanner(
-        pipeline->getMap(), pipeline->T_MW(), config.T_BC, exploration_config);
+    planner = new se::ExplorationPlanner(*pipeline, config);
 
     // ========= UPDATE INIT POSE =========
     se::ReaderStatus read_ok = se::ReaderStatus::ok;

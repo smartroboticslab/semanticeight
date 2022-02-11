@@ -5,6 +5,7 @@
 #ifndef __EXPLORATION_PLANNER_HPP
 #define __EXPLORATION_PLANNER_HPP
 
+#include "se/DenseSLAMSystem.h"
 #include "se/single_path_exploration_planner.hpp"
 
 namespace se {
@@ -17,10 +18,7 @@ namespace se {
    */
 class ExplorationPlanner {
     public:
-    ExplorationPlanner(const OctreeConstPtr map,
-                       const Eigen::Matrix4f& T_MW,
-                       const Eigen::Matrix4f& T_BC,
-                       const ExplorationConfig& config);
+    ExplorationPlanner(const DenseSLAMSystem& pipeline, const se::Configuration& config);
 
     void setT_WB(const Eigen::Matrix4f& T_WB);
 
@@ -91,8 +89,8 @@ class ExplorationPlanner {
                        std::deque<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>>
         PathQueue;
 
-    const OctreeConstPtr map_;
     const ExplorationConfig config_;
+    const OctreeConstPtr map_;
     const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>
         sampling_aabb_edges_M_;
     const Eigen::Matrix4f T_MW_;

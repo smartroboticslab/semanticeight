@@ -8,17 +8,36 @@
 #include "se/exploration_utils.hpp"
 
 namespace se {
-ExplorationPlanner::ExplorationPlanner(const OctreeConstPtr map,
-                                       const Eigen::Matrix4f& T_MW,
-                                       const Eigen::Matrix4f& T_BC,
-                                       const ExplorationConfig& config) :
-        map_(map),
-        config_(config),
-        sampling_aabb_edges_M_(se::AABB(config.sampling_min_M, config.sampling_max_M).edges()),
-        T_MW_(T_MW),
-        T_WM_(se::math::to_inverse_transformation(T_MW)),
-        T_BC_(T_BC),
-        T_CB_(se::math::to_inverse_transformation(T_BC)),
+ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
+                                       const se::Configuration& config) :
+        config_({config.num_candidates,
+                 (pipeline.T_MW() * config.sampling_min_W.homogeneous()).head<3>(),
+                 (pipeline.T_MW() * config.sampling_max_W.homogeneous()).head<3>(),
+                 config.goal_xy_threshold,
+                 config.goal_z_threshold,
+                 config.goal_roll_pitch_threshold,
+                 config.goal_yaw_threshold,
+                 {config.exploration_weight,
+                  config.use_pose_history,
+                  config.raycast_width,
+                  config.raycast_height,
+                  config.delta_t,
+                  config.linear_velocity,
+                  config.angular_velocity,
+                  {"",
+                   Eigen::Vector3f::Zero(),
+                   Eigen::Vector3f::Zero(),
+                   config.robot_radius,
+                   config.safety_radius,
+                   config.min_control_point_radius,
+                   config.skeleton_sample_precision,
+                   config.solving_time}}}),
+        map_(pipeline.getMap()),
+        sampling_aabb_edges_M_(se::AABB(config_.sampling_min_M, config_.sampling_max_M).edges()),
+        T_MW_(pipeline.T_MW()),
+        T_WM_(pipeline.T_WM()),
+        T_BC_(config.T_BC),
+        T_CB_(se::math::to_inverse_transformation(T_BC_)),
         T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim()))
 {
     ompl::msg::setLogLevel(ompl::msg::LOG_ERROR);
