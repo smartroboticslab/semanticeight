@@ -48,7 +48,7 @@ CandidateView::CandidateView(const Eigen::Vector3f& t_MB) : CandidateView::Candi
 
 
 
-CandidateView::CandidateView(const OctreePtr& map,
+CandidateView::CandidateView(const OctreeConstPtr& map,
                              ptp::SafeFlightCorridorGenerator& planner,
                              const std::vector<se::key_t>& /*frontiers*/,
                              const Objects& objects,

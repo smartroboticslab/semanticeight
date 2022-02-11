@@ -14,7 +14,7 @@
 #include <set>
 
 namespace se {
-typedef std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> OctreePtr;
+typedef std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> OctreeConstPtr;
 
 struct CandidateConfig {
     // Utility settings
@@ -46,7 +46,7 @@ class CandidateView {
 
     /** \brief Create a CandidateView and compute its utility.
        */
-    CandidateView(const OctreePtr& map,
+    CandidateView(const OctreeConstPtr& map,
                   ptp::SafeFlightCorridorGenerator& planner,
                   const std::vector<se::key_t>& frontiers,
                   const Objects& objects,

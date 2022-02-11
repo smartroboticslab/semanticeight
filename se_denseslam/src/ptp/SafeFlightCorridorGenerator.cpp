@@ -16,7 +16,7 @@
 namespace ptp {
 
 SafeFlightCorridorGenerator::SafeFlightCorridorGenerator(
-    const std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map,
+    const std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> map,
     const PlanningParameter& pp) :
         map_(map),
         ow_(*map),

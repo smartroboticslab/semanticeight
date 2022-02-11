@@ -7,7 +7,7 @@
 
 namespace se {
 SinglePathExplorationPlanner::SinglePathExplorationPlanner(
-    const OctreePtr map,
+    const OctreeConstPtr map,
     const std::vector<se::key_t>& frontiers,
     const Objects& objects,
     const SensorImpl& sensor,
@@ -132,7 +132,7 @@ std::vector<CandidateView> SinglePathExplorationPlanner::rejectedViews() const
 
 
 
-Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
+Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstPtr map,
                                                               std::deque<se::key_t>& frontiers,
                                                               const Objects& /*objects*/,
                                                               const int sampling_step,
@@ -164,7 +164,7 @@ Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr ma
 
 
 
-Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
+Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstPtr map,
                                                               MortonSamplingTree& sampling_tree,
                                                               const Eigen::Vector3f& sampling_min_M,
                                                               const Eigen::Vector3f& sampling_max_M)
@@ -183,7 +183,7 @@ Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr ma
 
 
 
-Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreePtr map,
+Eigen::Vector3f SinglePathExplorationPlanner::sampleCandidate(const OctreeConstPtr map,
                                                               std::deque<se::key_t>& frontiers,
                                                               const Eigen::Vector3f& sampling_min_M,
                                                               const Eigen::Vector3f& sampling_max_M)

@@ -51,7 +51,7 @@ enum class PlanningResult {
 
 class SafeFlightCorridorGenerator {
     public:
-    SafeFlightCorridorGenerator(const std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map,
+    SafeFlightCorridorGenerator(const std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> map,
                                 const PlanningParameter& pp);
     /**
      * Plan the global path.
@@ -74,7 +74,7 @@ class SafeFlightCorridorGenerator {
     void simplifyPath(ompl::geometric::PathGeometric& path);
     void reduceToControlPointCorridorRadius(Path<kDim>::Ptr path_m);
 
-    const std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map_;
+    const std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> map_;
     const OccupancyWorld ow_;
     const ProbCollisionChecker pcc_;
 

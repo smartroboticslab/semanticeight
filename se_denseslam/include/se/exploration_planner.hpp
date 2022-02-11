@@ -17,7 +17,7 @@ namespace se {
    */
 class ExplorationPlanner {
     public:
-    ExplorationPlanner(const OctreePtr map,
+    ExplorationPlanner(const OctreeConstPtr map,
                        const Eigen::Matrix4f& T_MW,
                        const Eigen::Matrix4f& T_BC,
                        const ExplorationConfig& config);
@@ -91,7 +91,7 @@ class ExplorationPlanner {
                        std::deque<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>>
         PathQueue;
 
-    const OctreePtr map_;
+    const OctreeConstPtr map_;
     const ExplorationConfig config_;
     const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>
         sampling_aabb_edges_M_;

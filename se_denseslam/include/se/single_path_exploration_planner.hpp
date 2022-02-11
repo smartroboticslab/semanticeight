@@ -33,7 +33,7 @@ class SinglePathExplorationPlanner {
     public:
     /** \brief Generate the next-best-view on construction.
        */
-    SinglePathExplorationPlanner(const OctreePtr map,
+    SinglePathExplorationPlanner(const OctreeConstPtr map,
                                  const std::vector<se::key_t>& frontiers,
                                  const Objects& objects,
                                  const SensorImpl& sensor,
@@ -66,7 +66,7 @@ class SinglePathExplorationPlanner {
      * every sampling_step elements. Instead of sampling a random voxel as in ICRA 2020, sample the
      * center of the volume since we might have node-level frontiers now.
      */
-    static Eigen::Vector3f sampleCandidate(const OctreePtr map,
+    static Eigen::Vector3f sampleCandidate(const OctreeConstPtr map,
                                            std::deque<se::key_t>& frontiers,
                                            const Objects& objects,
                                            const int sampling_step,
@@ -75,14 +75,14 @@ class SinglePathExplorationPlanner {
 
     /** Use an se::MortonSamplingTree to sample frontiers more uniformly in space.
      */
-    static Eigen::Vector3f sampleCandidate(const OctreePtr map,
+    static Eigen::Vector3f sampleCandidate(const OctreeConstPtr map,
                                            MortonSamplingTree& sampling_tree,
                                            const Eigen::Vector3f& sampling_min_M,
                                            const Eigen::Vector3f& sampling_max_M);
 
     /** Sample a candidate position by randomly selecting a frontier.
      */
-    static Eigen::Vector3f sampleCandidate(const OctreePtr map,
+    static Eigen::Vector3f sampleCandidate(const OctreeConstPtr map,
                                            std::deque<se::key_t>& frontiers,
                                            const Eigen::Vector3f& sampling_min_M,
                                            const Eigen::Vector3f& sampling_max_M);

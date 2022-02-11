@@ -8,7 +8,7 @@
 #include "se/exploration_utils.hpp"
 
 namespace se {
-ExplorationPlanner::ExplorationPlanner(const OctreePtr map,
+ExplorationPlanner::ExplorationPlanner(const OctreeConstPtr map,
                                        const Eigen::Matrix4f& T_MW,
                                        const Eigen::Matrix4f& T_BC,
                                        const ExplorationConfig& config) :

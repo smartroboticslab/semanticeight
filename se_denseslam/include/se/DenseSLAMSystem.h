@@ -464,6 +464,11 @@ class DenseSLAMSystem {
         return map_;
     }
 
+    std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> getMap() const
+    {
+        return map_;
+    }
+
     void saveMap(const std::string& map_filename)
     {
         map_->save(map_filename);
@@ -535,7 +540,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of the translation.
      */
-    Eigen::Vector3f t_MW()
+    Eigen::Vector3f t_MW() const
     {
         return se::math::to_translation(T_MW_);
     }
@@ -545,7 +550,7 @@ class DenseSLAMSystem {
      *
      * \return The rotation (3x3 rotation matrix) and translation (3x1 vector) encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f T_MW()
+    Eigen::Matrix4f T_MW() const
     {
         return T_MW_;
     }
@@ -555,7 +560,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of the translation.
      */
-    Eigen::Vector3f t_WM()
+    Eigen::Vector3f t_WM() const
     {
         Eigen::Vector3f t_WM = se::math::to_inverse_translation(T_MW_);
         return t_WM;
@@ -566,7 +571,7 @@ class DenseSLAMSystem {
      *
      * \return The rotation (3x3 rotation matrix) and translation (3x1 vector) encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f T_WM()
+    Eigen::Matrix4f T_WM() const
     {
         Eigen::Matrix4f T_WM = se::math::to_inverse_transformation(T_MW_);
         return T_WM;
@@ -577,7 +582,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates t_MC.
      */
-    Eigen::Vector3f t_MC()
+    Eigen::Vector3f t_MC() const
     {
         return se::math::to_translation(T_MC_);
     }
@@ -587,7 +592,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of t_WC.
      */
-    Eigen::Vector3f t_WC()
+    Eigen::Vector3f t_WC() const
     {
         Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
         Eigen::Vector3f t_WC = se::math::to_translation(T_WC);
@@ -599,7 +604,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of initt_MC.
      */
-    Eigen::Vector3f initt_MC()
+    Eigen::Vector3f initt_MC() const
     {
         return se::math::to_translation(T_MC_);
     }
@@ -609,7 +614,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z coordinates of initt_WC.
      */
-    Eigen::Vector3f initt_WC()
+    Eigen::Vector3f initt_WC() const
     {
         Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
         Eigen::Vector3f initt_WC = se::math::to_translation(init_T_WC);
@@ -621,7 +626,7 @@ class DenseSLAMSystem {
      *
      * \return The current camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f T_MC()
+    Eigen::Matrix4f T_MC() const
     {
         return T_MC_;
     }
@@ -631,7 +636,7 @@ class DenseSLAMSystem {
      *
      * \return The current camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f T_WC()
+    Eigen::Matrix4f T_WC() const
     {
         Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
         return T_WC;
@@ -642,7 +647,7 @@ class DenseSLAMSystem {
      *
      * \return The initial camera pose init_T_MC_ encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f initT_MC()
+    Eigen::Matrix4f initT_MC() const
     {
         return init_T_MC_;
     }
@@ -652,7 +657,7 @@ class DenseSLAMSystem {
      *
      * \return The initial camera pose T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f initT_WC()
+    Eigen::Matrix4f initT_WC() const
     {
         Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
         return init_T_WC;
@@ -727,7 +732,7 @@ class DenseSLAMSystem {
      *
      * \return The current rendering camera pose render_T_MC encoded in a 4x4 matrix.
      */
-    Eigen::Matrix4f* renderT_MC_()
+    Eigen::Matrix4f* renderT_MC_() const
     {
         return render_T_MC_;
     }
@@ -737,7 +742,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z dimensions of the volume.
      */
-    Eigen::Vector3f getMapDimension()
+    Eigen::Vector3f getMapDimension() const
     {
         return (map_dim_);
     }
@@ -747,7 +752,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the x, y and z resolution of the volume.
      */
-    Eigen::Vector3i getMapSize()
+    Eigen::Vector3i getMapSize() const
     {
         return (map_size_);
     }
@@ -758,7 +763,7 @@ class DenseSLAMSystem {
      *
      * \return A vector containing the frame width and height.
      */
-    Eigen::Vector2i getImageResolution()
+    Eigen::Vector2i getImageResolution() const
     {
         return (image_res_);
     }
