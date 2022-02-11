@@ -11,17 +11,6 @@
 #include <se/image_utils.hpp>
 #include <se/utils/math_utils.h>
 
-/** Return the width of the window of a 360-degree image with width w that a sensor with horizontal
- * field of view hfov can view.
- */
-int window_width(int w, float hfov)
-{
-    const float window_percentage = hfov / (2.0f * M_PI_F);
-    return window_percentage * w + 0.5f;
-}
-
-
-
 namespace se {
 CandidateView::CandidateView() :
         desired_t_MB_(NAN, NAN, NAN),
@@ -35,15 +24,6 @@ CandidateView::CandidateView() :
         min_scale_image_(1, 1),
         utility_(-1.0f)
 {
-}
-
-
-
-CandidateView::CandidateView(const Eigen::Vector3f& t_MB) : CandidateView::CandidateView()
-{
-    desired_t_MB_ = t_MB;
-    path_MB_.push_back(Eigen::Matrix4f::Identity());
-    path_MB_.back().topRightCorner<3, 1>() = t_MB;
 }
 
 
@@ -62,6 +42,7 @@ CandidateView::CandidateView(const OctreeConstPtr& map,
         path_time_(-1.0f),
         entropy_(-1.0f),
         lod_gain_(-1.0f),
+        // TODO create if needed?
         entropy_image_(config.raycast_width, config.raycast_height),
         entropy_hits_M_(config.raycast_width, config.raycast_height),
         frustum_overlap_image_(config.raycast_width, 1, 0.0f),
@@ -69,6 +50,12 @@ CandidateView::CandidateView(const OctreeConstPtr& map,
         utility_(-1.0f),
         config_(config)
 {
+    // Reject based on the pose history.
+    if (config_.use_pose_history && T_MB_history->rejectPosition(desired_t_MB_, sensor)) {
+        path_MB_.push_back(Eigen::Matrix4f::Identity());
+        path_MB_.back().topRightCorner<3, 1>() = desired_t_MB_;
+        return;
+    }
     if (config_.planner_config.start_t_MB_.isApprox(config_.planner_config.goal_t_MB_)) {
         // No need to do path planning if start and goal positions are the same
         path_MB_.push_back(T_MB);

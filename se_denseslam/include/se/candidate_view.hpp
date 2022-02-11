@@ -39,13 +39,11 @@ struct CandidateConfig {
 class CandidateView {
     public:
     /** \brief Create an invalid CandidateView.
-       */
+     */
     CandidateView();
 
-    CandidateView(const Eigen::Vector3f& t_MB);
-
     /** \brief Create a CandidateView and compute its utility.
-       */
+     */
     CandidateView(const OctreeConstPtr& map,
                   ptp::SafeFlightCorridorGenerator& planner,
                   const std::vector<se::key_t>& frontiers,
@@ -59,8 +57,8 @@ class CandidateView {
     bool isValid() const;
 
     /** \brief Return the path to the candidate view.
-       * The first path element is the T_MB supplied to the candidate view constructor.
-       */
+     * The first path element is the T_MB supplied to the candidate view constructor.
+     */
     const Path& path() const;
 
     float utility() const;
@@ -94,7 +92,7 @@ class CandidateView {
     bool writeEntropyData(const std::string& filename) const;
 
     /** ICRA 2020
-       */
+     */
     static Path addIntermediateTranslation(const Eigen::Matrix4f& segment_start_M,
                                            const Eigen::Matrix4f& segment_end_M,
                                            float delta_t,
@@ -102,19 +100,19 @@ class CandidateView {
                                            float resolution);
 
     /** ICRA 2020
-       */
+     */
     static Path addIntermediateYaw(const Eigen::Matrix4f& segment_start_M,
                                    const Eigen::Matrix4f& segment_end_M,
                                    float delta_t,
                                    float velocity_angular);
 
     /** ICRA 2020
-       */
+     */
     static Path fuseIntermediatePaths(const Path& intermediate_translation,
                                       const Path& intermediate_yaw);
 
     /** ICRA 2020
-       */
+     */
     static Path getFinalPath(const Path& path_M,
                              float delta_t,
                              float velocity_linear,
@@ -155,7 +153,7 @@ class CandidateView {
     CandidateConfig config_;
 
     /** \brief Perform a 360 degree raycast and compute the optimal yaw angle.
-       */
+     */
     void entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
                         const SensorImpl& sensor,
                         const Eigen::Matrix4f& T_BC,
@@ -164,21 +162,21 @@ class CandidateView {
     void computeUtility();
 
     /** \brief Create a rotation matrix C_MB from a yaw angle in the Map frame.
-       */
+     */
     static Eigen::Matrix3f yawToC_MB(const float yaw_M);
 
     /** \brief Convert a path from the format returned by ptp to that used by semanticeight.
-       */
+     */
     static Path convertPath(const ptp::Path<ptp::kDim>::Ptr ptp_path);
 
     /** \brief Change the positions of path vertices that are within radius of the first vertex to
-       * the position of the first vertex.
-       */
+     * the position of the first vertex.
+     */
     static void removeSmallMovements(Path& path, const float radius);
 
     /** \brief Add intermmediate path waypoints so that yaw is performed before moving to the next
-       * waypoint. This is used to avoid aggressive MAV flying.
-       */
+     * waypoint. This is used to avoid aggressive MAV flying.
+     */
     static void yawBeforeMoving(Path& path);
 
     static void yawWhileMoving(Path& path, float velocity_linear, float velocity_angular);
@@ -188,9 +186,9 @@ class CandidateView {
     static void zeroRollPitch(Path& path_MB);
 
     /** \brief Compute the time required to complete the path by moving with the constant
-       * velocities provided. The yaw time takes into account the intermmediate yaw values, not just
-       * the start and and yaw angles.
-       */
+     * velocities provided. The yaw time takes into account the intermmediate yaw values, not just
+     * the start and and yaw angles.
+     */
     static float pathTime(const Path& path, float velocity_linear, float velocity_angular);
 };
 } // namespace se

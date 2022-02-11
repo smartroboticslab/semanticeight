@@ -26,15 +26,14 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     // Create a single planner for allcandidates.
     ptp::SafeFlightCorridorGenerator planner(map, config_.candidate_config.planner_config);
     // Add the current pose to the candidates
-    if (config_.candidate_config.use_pose_history
-        && T_MB_history->rejectPosition(T_MB.topRightCorner<3, 1>(), sensor)) {
-        rejected_candidates_.emplace_back(T_MB.topRightCorner<3, 1>());
-    }
-    else {
-        CandidateConfig candidate_config = config_.candidate_config;
-        candidate_config.planner_config.goal_t_MB_ = T_MB.topRightCorner<3, 1>();
-        candidates_.emplace_back(
-            map, planner, frontiers, objects, sensor, T_MB, T_BC, T_MB_history, candidate_config);
+    CandidateConfig candidate_config = config_.candidate_config;
+    candidate_config.planner_config.goal_t_MB_ = T_MB.topRightCorner<3, 1>();
+    candidates_.emplace_back(
+        map, planner, frontiers, objects, sensor, T_MB, T_BC, T_MB_history, candidate_config);
+    // Remove the candidate if it's not valid
+    if (!candidates_.back().isValid()) {
+        rejected_candidates_.push_back(candidates_.back());
+        candidates_.pop_back();
     }
     // Sample the candidate views aborting after a number of failed retries
     const size_t max_failed = 5 * config_.num_candidates;
@@ -53,11 +52,6 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         //    map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
         const Eigen::Vector3f candidate_t_MB = sampleCandidate(
             map, remaining_frontiers, config_.sampling_min_M, config_.sampling_max_M);
-        if (config_.candidate_config.use_pose_history
-            && T_MB_history->rejectPosition(candidate_t_MB, sensor)) {
-            rejected_candidates_.emplace_back(candidate_t_MB);
-            continue;
-        }
         // Create the config for this particular candidate
         CandidateConfig candidate_config = config_.candidate_config;
         candidate_config.planner_config.goal_t_MB_ = candidate_t_MB;
