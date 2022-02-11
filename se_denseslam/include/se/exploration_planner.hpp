@@ -18,7 +18,9 @@ namespace se {
    */
 class ExplorationPlanner {
     public:
-    ExplorationPlanner(const DenseSLAMSystem& pipeline, const se::Configuration& config);
+    ExplorationPlanner(const DenseSLAMSystem& pipeline,
+                       const SensorImpl& sensor,
+                       const se::Configuration& config);
 
     void setT_WB(const Eigen::Matrix4f& T_WB);
 
@@ -44,9 +46,7 @@ class ExplorationPlanner {
      * The returned path is a series of T_WB. The first T_WB is the same as the one returned by
      * se::ExplorationPlanner::getPlanningT_WB().
      */
-    Path computeNextPath_WB(const std::set<key_t>& frontiers,
-                            const Objects& objects,
-                            const SensorImpl& sensor);
+    Path computeNextPath_WB(const std::set<key_t>& frontiers, const Objects& objects);
 
     const std::vector<CandidateView>& candidateViews() const;
 
@@ -58,10 +58,9 @@ class ExplorationPlanner {
 
     void renderCurrentEntropyDepth(Image<uint32_t>& entropy,
                                    Image<uint32_t>& depth,
-                                   const SensorImpl& sensor,
                                    const bool visualize_yaw = true);
 
-    Image<uint32_t> renderMinScale(const SensorImpl& sensor);
+    Image<uint32_t> renderMinScale();
 
     const PoseGridHistory& getPoseGridHistory() const;
 
@@ -97,6 +96,7 @@ class ExplorationPlanner {
     const Eigen::Matrix4f T_WM_;
     const Eigen::Matrix4f T_BC_;
     const Eigen::Matrix4f T_CB_;
+    const SensorImpl sensor_;
     // The pose planning the next path will start from.
     Eigen::Matrix4f planning_T_MB_;
     // History of fusion poses.

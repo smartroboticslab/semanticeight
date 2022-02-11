@@ -9,6 +9,7 @@
 
 namespace se {
 ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
+                                       const SensorImpl& sensor,
                                        const se::Configuration& config) :
         config_({config.num_candidates,
                  (pipeline.T_MW() * config.sampling_min_W.homogeneous()).head<3>(),
@@ -38,6 +39,7 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
         T_WM_(pipeline.T_WM()),
         T_BC_(config.T_BC),
         T_CB_(se::math::to_inverse_transformation(T_BC_)),
+        sensor_(sensor),
         T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim()))
 {
     ompl::msg::setLogLevel(ompl::msg::LOG_ERROR);
@@ -148,14 +150,13 @@ void ExplorationPlanner::popGoalT_WB()
 
 
 Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
-                                            const Objects& objects,
-                                            const SensorImpl& sensor)
+                                            const Objects& objects)
 {
     const std::vector<key_t> frontier_vec(frontiers.begin(), frontiers.end());
     SinglePathExplorationPlanner planner(map_,
                                          frontier_vec,
                                          objects,
-                                         sensor,
+                                         sensor_,
                                          planning_T_MB_,
                                          T_BC_,
                                          T_MB_grid_history_,
@@ -211,17 +212,16 @@ size_t ExplorationPlanner::goalViewIndex() const
 
 void ExplorationPlanner::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
                                                    Image<uint32_t>& depth,
-                                                   const SensorImpl& sensor,
                                                    const bool visualize_yaw)
 {
-    goal_view_.renderCurrentEntropyDepth(entropy, depth, *map_, sensor, T_BC_, visualize_yaw);
+    goal_view_.renderCurrentEntropyDepth(entropy, depth, *map_, sensor_, T_BC_, visualize_yaw);
 }
 
 
 
-Image<uint32_t> ExplorationPlanner::renderMinScale(const SensorImpl& sensor)
+Image<uint32_t> ExplorationPlanner::renderMinScale()
 {
-    return goal_view_.renderMinScale(*map_, sensor, T_BC_);
+    return goal_view_.renderMinScale(*map_, sensor_, T_BC_);
 }
 
 

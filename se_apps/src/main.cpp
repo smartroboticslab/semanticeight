@@ -325,7 +325,7 @@ int main(int argc, char** argv)
                                    config.pyramid,
                                    config,
                                    config.voxel_impl_yaml);
-    planner = new se::ExplorationPlanner(*pipeline, config);
+    planner = new se::ExplorationPlanner(*pipeline, sensor, config);
 
     // ========= UPDATE INIT POSE =========
     se::ReaderStatus read_ok = se::ReaderStatus::ok;
@@ -577,8 +577,8 @@ int processAll(se::Reader* reader,
         // Planning TMP
         if (planner->goalReached() || num_planning_iterations == 0) {
             std::cout << "Planning " << num_planning_iterations << "\n";
-            const se::Path path_WB = planner->computeNextPath_WB(
-                pipeline->getFrontiers(), pipeline->getObjectMaps(), sensor);
+            const se::Path path_WB =
+                planner->computeNextPath_WB(pipeline->getFrontiers(), pipeline->getObjectMaps());
             num_planning_iterations++;
         }
 
