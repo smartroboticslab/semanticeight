@@ -46,8 +46,6 @@ class SinglePathExplorationPlanner {
                                  const PoseVectorHistory& T_MB_history,
                                  const ExplorationConfig& config);
 
-    CandidateView bestView() const;
-
     size_t bestViewIndex() const;
 
     Path bestPath() const;

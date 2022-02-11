@@ -104,7 +104,6 @@ class ExplorationPlanner {
     PoseVectorHistory T_MB_history_;
     std::vector<CandidateView> candidate_views_;
     std::vector<CandidateView> rejected_candidate_views_;
-    CandidateView goal_view_;
     size_t goal_view_idx_;
     PathQueue goal_path_T_MB_;
 };

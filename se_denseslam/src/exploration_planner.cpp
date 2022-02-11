@@ -164,7 +164,6 @@ Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
                                          config_);
     candidate_views_ = planner.views();
     rejected_candidate_views_ = planner.rejectedViews();
-    goal_view_ = planner.bestView();
     goal_view_idx_ = planner.bestViewIndex();
     const Path& goal_path_M = planner.bestPath();
     // Add it to the goal path queue.
@@ -198,7 +197,7 @@ const std::vector<CandidateView>& ExplorationPlanner::rejectedCandidateViews() c
 
 const CandidateView& ExplorationPlanner::goalView() const
 {
-    return goal_view_;
+    return candidate_views_[goal_view_idx_];
 }
 
 
@@ -214,14 +213,14 @@ void ExplorationPlanner::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
                                                    Image<uint32_t>& depth,
                                                    const bool visualize_yaw)
 {
-    goal_view_.renderCurrentEntropyDepth(entropy, depth, *map_, sensor_, T_BC_, visualize_yaw);
+    candidate_views_[goal_view_idx_].renderCurrentEntropyDepth(entropy, depth, visualize_yaw);
 }
 
 
 
 Image<uint32_t> ExplorationPlanner::renderMinScale()
 {
-    return goal_view_.renderMinScale(*map_, sensor_, T_BC_);
+    return candidate_views_[goal_view_idx_].renderMinScale();
 }
 
 

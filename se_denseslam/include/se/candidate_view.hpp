@@ -39,7 +39,9 @@ class CandidateView {
     public:
     /** \brief Create an invalid CandidateView.
      */
-    CandidateView();
+    CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
+                  const SensorImpl& sensor,
+                  const Eigen::Matrix4f& T_BC);
 
     /** \brief Create a CandidateView and compute its utility.
      */
@@ -66,24 +68,16 @@ class CandidateView {
 
     const Eigen::Matrix4f& goalT_MB() const;
 
-    void computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
-                                const SensorImpl& sensor,
-                                const Eigen::Matrix4f& T_BC,
-                                const PoseHistory* T_MB_history);
+    void computeIntermediateYaw(const PoseHistory* T_MB_history);
 
     Image<uint32_t> renderEntropy(const SensorImpl& sensor, const bool visualize_yaw = true) const;
 
     Image<uint32_t> renderDepth(const SensorImpl& sensor, const bool visualize_yaw = true) const;
 
-    Image<uint32_t> renderMinScale(const Octree<VoxelImpl::VoxelType>& map,
-                                   const SensorImpl& sensor,
-                                   const Eigen::Matrix4f& T_BC) const;
+    Image<uint32_t> renderMinScale() const;
 
     void renderCurrentEntropyDepth(Image<uint32_t>& entropy,
                                    Image<uint32_t>& depth,
-                                   const Octree<VoxelImpl::VoxelType>& map,
-                                   const SensorImpl& sensor,
-                                   const Eigen::Matrix4f& T_BC,
                                    const bool visualize_yaw = true) const;
 
     Image<Eigen::Vector3f> rays() const;
@@ -145,6 +139,9 @@ class CandidateView {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
+    const se::Octree<VoxelImpl::VoxelType>& map_;
+    const SensorImpl& sensor_;
+    const Eigen::Matrix4f& T_BC_;
     /** std::vector of T_MB. */
     Path path_MB_;
     /** A function of entropy and path_time. */
@@ -153,10 +150,7 @@ class CandidateView {
 
     /** \brief Perform a 360 degree raycast and compute the optimal yaw angle.
      */
-    void entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
-                        const SensorImpl& sensor,
-                        const Eigen::Matrix4f& T_BC,
-                        const PoseHistory* T_MB_history);
+    void entropyRaycast(const PoseHistory* T_MB_history);
 
     void computeUtility();
 

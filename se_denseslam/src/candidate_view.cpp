@@ -12,7 +12,9 @@
 #include <se/utils/math_utils.h>
 
 namespace se {
-CandidateView::CandidateView() :
+CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
+                             const SensorImpl& sensor,
+                             const Eigen::Matrix4f& T_BC) :
         desired_t_MB_(NAN, NAN, NAN),
         path_length_(-1.0f),
         path_time_(-1.0f),
@@ -22,6 +24,9 @@ CandidateView::CandidateView() :
         entropy_hits_M_(1, 1),
         frustum_overlap_image_(1, 1),
         min_scale_image_(1, 1),
+        map_(map),
+        sensor_(sensor),
+        T_BC_(T_BC),
         utility_(-1.0f)
 {
 }
@@ -47,6 +52,9 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         entropy_hits_M_(config.raycast_width, config.raycast_height),
         frustum_overlap_image_(config.raycast_width, 1, 0.0f),
         min_scale_image_(1, 1),
+        map_(map),
+        sensor_(sensor),
+        T_BC_(T_BC),
         utility_(-1.0f),
         config_(config)
 {
@@ -79,7 +87,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         path_MB_.front() = T_MB;
     }
     // Raycast to compute the optimal yaw angle.
-    entropyRaycast(map, sensor, T_BC, T_MB_history);
+    entropyRaycast(T_MB_history);
     path_MB_.back().topLeftCorner<3, 3>() = yawToC_MB(yaw_M_);
     zeroRollPitch(path_MB_);
     // Get the LoD gain of the objects.
@@ -128,28 +136,25 @@ const Eigen::Matrix4f& CandidateView::goalT_MB() const
 
 
 
-void CandidateView::computeIntermediateYaw(const Octree<VoxelImpl::VoxelType>& map,
-                                           const SensorImpl& sensor,
-                                           const Eigen::Matrix4f& T_BC,
-                                           const PoseHistory* T_MB_history)
+void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
 {
     // Raycast and optimize yaw at each intermediate path vertex
     for (size_t i = 1; i < path_MB_.size() - 1; i++) {
-        const Eigen::Matrix4f T_MC = path_MB_[i] * T_BC;
+        const Eigen::Matrix4f T_MC = path_MB_[i] * T_BC_;
         Image<float> entropy_image(entropy_image_.width(), entropy_image_.height());
         Image<Eigen::Vector3f> entropy_hits(entropy_hits_M_.width(), entropy_hits_M_.height());
         Image<float> frustum_overlap_image(entropy_image_.width(), 1, 0.0f);
-        raycast_entropy(entropy_image, entropy_hits, map, sensor, path_MB_[i], T_BC);
+        raycast_entropy(entropy_image, entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
         if (config_.use_pose_history) {
-            frustum_overlap(frustum_overlap_image, sensor, T_MC, T_BC, T_MB_history);
+            frustum_overlap(frustum_overlap_image, sensor_, T_MC, T_BC_, T_MB_history);
         }
         const std::pair<float, float> r = optimal_yaw(
-            entropy_image, entropy_hits, frustum_overlap_image, sensor, path_MB_[i], T_BC);
+            entropy_image, entropy_hits, frustum_overlap_image, sensor_, path_MB_[i], T_BC_);
         path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(r.first);
     }
     //yawBeforeMoving(path_MB_);
     //yawWhileMoving(path_MB_, config_.velocity_linear, config_.velocity_angular);
-    //path_MB_ = getFinalPath(path_MB_, config_.delta_t, config_.velocity_linear, config_.velocity_angular, map.voxelDim());
+    //path_MB_ = getFinalPath(path_MB_, config_.delta_t, config_.velocity_linear, config_.velocity_angular, map_.voxelDim());
 }
 
 
@@ -179,9 +184,7 @@ Image<uint32_t> CandidateView::renderDepth(const SensorImpl& sensor, const bool 
 
 
 
-Image<uint32_t> CandidateView::renderMinScale(const Octree<VoxelImpl::VoxelType>& /*map*/,
-                                              const SensorImpl& /*sensor*/,
-                                              const Eigen::Matrix4f& /*T_BC*/) const
+Image<uint32_t> CandidateView::renderMinScale() const
 {
     constexpr int max_scale_p1 = VoxelImpl::VoxelBlockType::max_scale + 1;
     Image<uint32_t> min_scale_render(min_scale_image_.width(), min_scale_image_.height());
@@ -198,9 +201,6 @@ Image<uint32_t> CandidateView::renderMinScale(const Octree<VoxelImpl::VoxelType>
 
 void CandidateView::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
                                               Image<uint32_t>& depth,
-                                              const Octree<VoxelImpl::VoxelType>& map,
-                                              const SensorImpl& sensor,
-                                              const Eigen::Matrix4f& T_BC,
                                               const bool visualize_yaw) const
 {
     Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
@@ -212,9 +212,9 @@ void CandidateView::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
     }
     Image<float> raw_entropy(entropy_image_.width(), entropy_image_.height());
     Image<Eigen::Vector3f> entropy_hits(entropy_image_.width(), entropy_image_.height());
-    raycast_entropy(raw_entropy, entropy_hits, map, sensor, T_MB, T_BC);
-    entropy = visualize_entropy(raw_entropy, sensor, yaw_M_, visualize_yaw && isValid());
-    depth = visualize_depth(entropy_hits, sensor, T_MB, yaw_M_, visualize_yaw && isValid());
+    raycast_entropy(raw_entropy, entropy_hits, map_, sensor_, T_MB, T_BC_);
+    entropy = visualize_entropy(raw_entropy, sensor_, yaw_M_, visualize_yaw && isValid());
+    depth = visualize_depth(entropy_hits, sensor_, T_MB, yaw_M_, visualize_yaw && isValid());
 }
 
 
@@ -397,19 +397,16 @@ Path CandidateView::getFinalPath(const Path& path_M,
 
 
 
-void CandidateView::entropyRaycast(const Octree<VoxelImpl::VoxelType>& map,
-                                   const SensorImpl& sensor,
-                                   const Eigen::Matrix4f& T_BC,
-                                   const PoseHistory* T_MB_history)
+void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
 {
-    const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC;
+    const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC_;
     // Raycast at the last path vertex
-    raycast_entropy(entropy_image_, entropy_hits_M_, map, sensor, path_MB_.back(), T_BC);
+    raycast_entropy(entropy_image_, entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_);
     if (config_.use_pose_history) {
-        frustum_overlap(frustum_overlap_image_, sensor, T_MC, T_BC, T_MB_history);
+        frustum_overlap(frustum_overlap_image_, sensor_, T_MC, T_BC_, T_MB_history);
     }
     const std::pair<float, float> r = optimal_yaw(
-        entropy_image_, entropy_hits_M_, frustum_overlap_image_, sensor, path_MB_.back(), T_BC);
+        entropy_image_, entropy_hits_M_, frustum_overlap_image_, sensor_, path_MB_.back(), T_BC_);
     yaw_M_ = r.first;
     entropy_ = r.second;
 }

@@ -75,18 +75,11 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     // Add an invalid candidate to return if no best candidate was found
     if (best_idx_ == SIZE_MAX) {
         best_idx_ = candidates_.size();
-        candidates_.emplace_back();
+        candidates_.emplace_back(*map, sensor, T_BC);
         return;
     }
     // Compute the yaw angles at each path vertex of the best candidate
-    candidates_[best_idx_].computeIntermediateYaw(*map, sensor, T_BC, T_MB_history);
-}
-
-
-
-CandidateView SinglePathExplorationPlanner::bestView() const
-{
-    return candidates_[best_idx_];
+    candidates_[best_idx_].computeIntermediateYaw(T_MB_history);
 }
 
 
