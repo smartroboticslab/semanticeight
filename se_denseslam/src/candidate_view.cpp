@@ -564,4 +564,33 @@ float CandidateView::pathTime(const Path& path, float velocity_linear, float vel
     return (std::fabs(t) > 10.0f * FLT_EPSILON) ? t : NAN;
 }
 
+
+
+std::ostream& operator<<(std::ostream& os, const CandidateView& c)
+{
+    os << "Valid:                 " << (c.isValid() ? "yes" : "no") << "\n";
+    os << "Utility:               " << c.utility() << "\n";
+    os << "Entropy:               " << c.entropy_ << "\n";
+    os << "LoD gain:              " << c.lod_gain_ << "\n";
+    os << "Path time:             " << c.path_time_ << "\n";
+    os << "Path length:           " << c.path_length_ << "\n";
+    os << "Path size:             " << c.path().size() << "\n";
+    os << "Desired position M:    " << c.desired_t_MB_.x() << " " << c.desired_t_MB_.y() << " "
+       << c.desired_t_MB_.z() << "\n";
+    os << "Goal position M:       " << c.goalT_MB().topRightCorner<3, 1>().x() << " "
+       << c.goalT_MB().topRightCorner<3, 1>().y() << " " << c.goalT_MB().topRightCorner<3, 1>().z()
+       << "\n";
+    os << "Goal yaw M:            " << c.yaw_M_ << "\n";
+    os << "Entropy image:         " << c.entropy_image_.width() << "x" << c.entropy_image_.height()
+       << "\n";
+    os << "Entropy hit image M:   " << c.entropy_hits_M_.width() << "x"
+       << c.entropy_hits_M_.height() << "\n";
+    os << "Frustum overlap image: " << c.frustum_overlap_image_.width() << "x"
+       << c.frustum_overlap_image_.height() << "\n";
+    os << "Min scale image:       " << c.min_scale_image_.width() << "x"
+       << c.min_scale_image_.height() << "\n";
+    os << "Utility computation:   " << c.utilityStr() << "\n";
+    return os;
+}
+
 } // namespace se

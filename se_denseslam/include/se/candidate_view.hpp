@@ -184,6 +184,9 @@ class CandidateView {
      */
     static float pathTime(const Path& path, float velocity_linear, float velocity_angular);
 };
+
+std::ostream& operator<<(std::ostream& os, const CandidateView& c);
+
 } // namespace se
 
 #endif // __CANDIDATE_VIEW_HPP
