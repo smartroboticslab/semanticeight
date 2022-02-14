@@ -152,8 +152,7 @@ int main(int argc, char** argv)
     progress_bar = new ProgressBar(config.max_frame);
 
     //  =========  BASIC PARAMETERS  (input image size / image size )  =========
-    const Eigen::Vector2i input_image_res =
-        (reader != nullptr) ? reader->depthImageRes() : Eigen::Vector2i(640, 480);
+    const Eigen::Vector2i input_image_res = reader->depthImageRes();
     const Eigen::Vector2i image_res = input_image_res / config.sensor_downsampling_factor;
 
     //  =========  BASIC BUFFERS  (input / output )  =========
