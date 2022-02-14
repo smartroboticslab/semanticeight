@@ -140,7 +140,7 @@ int main(int argc, char** argv)
     // ========= READER INITIALIZATION  =========
     reader = se::create_reader(config);
     if (reader == nullptr) {
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     // ========= UPDATE MAX FRAME =========
@@ -340,7 +340,7 @@ int main(int argc, char** argv)
 
     if (read_ok != se::ReaderStatus::ok) {
         std::cerr << "Couldn't read initial pose\n";
-        exit(1);
+        return EXIT_FAILURE;
     }
 
     //  =========  PRINT CONFIGURATION  =========
@@ -371,7 +371,7 @@ int main(int argc, char** argv)
     if (config.enable_benchmark || !config.enable_render) {
         if ((reader == nullptr) || !reader->good()) {
             std::cerr << "No valid input file specified\n";
-            exit(1);
+            return EXIT_FAILURE;
         }
 
         while (processAll(reader, sensor, true, config.enable_render, &config, false) == 0) {
@@ -391,7 +391,7 @@ int main(int argc, char** argv)
 #else
         if ((reader == nullptr) || !reader->good()) {
             std::cerr << "No valid input file specified\n";
-            exit(1);
+            return EXIT_FAILURE;
         }
         while (processAll(reader, sensor, true, true, &config, false) == 0) {
 #    ifdef SE_GLUT
