@@ -40,7 +40,9 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
         T_BC_(config.T_BC),
         T_CB_(se::math::to_inverse_transformation(T_BC_)),
         sensor_(sensor),
-        T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim()))
+        T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim())),
+        candidate_views_({CandidateView(*pipeline.getMap(), sensor, config.T_BC)}),
+        goal_view_idx_(0)
 {
     ompl::msg::setLogLevel(ompl::msg::LOG_ERROR);
 }
