@@ -159,11 +159,10 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
 
 
 
-Image<uint32_t> CandidateView::renderEntropy(const SensorImpl& sensor,
-                                             const bool visualize_yaw) const
+Image<uint32_t> CandidateView::renderEntropy(const bool visualize_yaw) const
 {
     if (isValid()) {
-        return visualize_entropy(entropy_image_, sensor, yaw_M_, visualize_yaw);
+        return visualize_entropy(entropy_image_, sensor_, yaw_M_, visualize_yaw);
     }
     else {
         return Image<uint32_t>(entropy_image_.width(), entropy_image_.height(), 0xFF0000FF);
@@ -172,10 +171,10 @@ Image<uint32_t> CandidateView::renderEntropy(const SensorImpl& sensor,
 
 
 
-Image<uint32_t> CandidateView::renderDepth(const SensorImpl& sensor, const bool visualize_yaw) const
+Image<uint32_t> CandidateView::renderDepth(const bool visualize_yaw) const
 {
     if (isValid()) {
-        return visualize_depth(entropy_hits_M_, sensor, goalT_MB(), yaw_M_, visualize_yaw);
+        return visualize_depth(entropy_hits_M_, sensor_, goalT_MB(), yaw_M_, visualize_yaw);
     }
     else {
         return Image<uint32_t>(entropy_hits_M_.width(), entropy_hits_M_.height(), 0xFF000000);

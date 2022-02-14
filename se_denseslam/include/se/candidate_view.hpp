@@ -70,9 +70,9 @@ class CandidateView {
 
     void computeIntermediateYaw(const PoseHistory* T_MB_history);
 
-    Image<uint32_t> renderEntropy(const SensorImpl& sensor, const bool visualize_yaw = true) const;
+    Image<uint32_t> renderEntropy(const bool visualize_yaw = true) const;
 
-    Image<uint32_t> renderDepth(const SensorImpl& sensor, const bool visualize_yaw = true) const;
+    Image<uint32_t> renderDepth(const bool visualize_yaw = true) const;
 
     Image<uint32_t> renderMinScale() const;
 
