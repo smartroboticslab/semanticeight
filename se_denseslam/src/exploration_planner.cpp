@@ -199,14 +199,24 @@ const std::vector<CandidateView>& ExplorationPlanner::rejectedCandidateViews() c
 
 const CandidateView& ExplorationPlanner::goalView() const
 {
-    return candidate_views_[goal_view_idx_];
+    if (goal_view_idx_ < candidate_views_.size()) {
+        return candidate_views_[goal_view_idx_];
+    }
+    else {
+        throw std::runtime_error("This point should never be reached");
+    }
 }
 
 
 
 size_t ExplorationPlanner::goalViewIndex() const
 {
-    return goal_view_idx_;
+    if (goal_view_idx_ < candidate_views_.size()) {
+        return goal_view_idx_;
+    }
+    else {
+        throw std::runtime_error("This point should never be reached");
+    }
 }
 
 
@@ -215,14 +225,14 @@ void ExplorationPlanner::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
                                                    Image<uint32_t>& depth,
                                                    const bool visualize_yaw)
 {
-    candidate_views_[goal_view_idx_].renderCurrentEntropyDepth(entropy, depth, visualize_yaw);
+    goalView().renderCurrentEntropyDepth(entropy, depth, visualize_yaw);
 }
 
 
 
 Image<uint32_t> ExplorationPlanner::renderMinScale()
 {
-    return candidate_views_[goal_view_idx_].renderMinScale();
+    return goalView().renderMinScale();
 }
 
 
