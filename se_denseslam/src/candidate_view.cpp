@@ -42,7 +42,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
                              const Eigen::Matrix4f& T_BC,
                              const PoseHistory* T_MB_history,
                              const CandidateConfig& config) :
-        desired_t_MB_(config_.planner_config.goal_t_MB_),
+        desired_t_MB_(config.planner_config.goal_t_MB_),
         path_length_(-1.0f),
         path_time_(-1.0f),
         entropy_(-1.0f),
