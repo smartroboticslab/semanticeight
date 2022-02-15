@@ -135,7 +135,14 @@ std::string CandidateView::utilityStr() const
 
 const Eigen::Matrix4f& CandidateView::goalT_MB() const
 {
-    return path_MB_.back();
+    if (path_MB_.empty()) {
+        static Eigen::Matrix4f invalid_T_MB = Eigen::Matrix4f::Identity();
+        invalid_T_MB.topRightCorner<3, 1>() = Eigen::Vector3f::Constant(NAN);
+        return invalid_T_MB;
+    }
+    else {
+        return path_MB_.back();
+    }
 }
 
 
