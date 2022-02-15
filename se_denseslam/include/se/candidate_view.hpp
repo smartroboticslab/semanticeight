@@ -137,12 +137,12 @@ class CandidateView {
     /** An image containing the minimum integration scale for each raycasted object. */
     Image<int8_t> min_scale_image_;
     std::string utility_str_;
+    const SensorImpl& sensor_;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
     const se::Octree<VoxelImpl::VoxelType>& map_;
-    const SensorImpl& sensor_;
     const Eigen::Matrix4f& T_BC_;
     /** std::vector of T_MB. */
     Path path_MB_;

@@ -23,8 +23,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         entropy_hits_M_(1, 1),
         frustum_overlap_image_(1, 1),
         min_scale_image_(1, 1),
-        map_(map),
         sensor_(sensor),
+        map_(map),
         T_BC_(T_BC),
         utility_(-1.0f)
 {
@@ -280,6 +280,12 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
     f << std::setprecision(6);
     f << "Entropy: " << entropy_ << "\n";
     f << "Optimal yaw M: " << yaw_M_ << " rad   " << se::math::rad_to_deg(yaw_M_) << " degrees \n";
+    f << "Window index: " << window_idx_ << " px\n";
+    f << "Window width: " << window_width_ << " px\n";
+    f << "Horizontal FoV: " << sensor_.horizontal_fov << " rad   "
+      << se::math::rad_to_deg(sensor_.horizontal_fov) << " degrees \n";
+    f << "Vertical FoV: " << sensor_.vertical_fov << " rad   "
+      << se::math::rad_to_deg(sensor_.vertical_fov) << " degrees \n";
 
     return f.good();
 }
@@ -582,6 +588,8 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Goal yaw M:            " << c.yaw_M_ << "\n";
     os << "Window index:          " << c.window_idx_ << "\n";
     os << "Window width:          " << c.window_width_ << "\n";
+    os << "Horizontal FoV:        " << se::math::rad_to_deg(c.sensor_.horizontal_fov) << "\n";
+    os << "Vertical FoV:          " << se::math::rad_to_deg(c.sensor_.vertical_fov) << "\n";
     os << "Entropy image:         " << c.entropy_image_.width() << "x" << c.entropy_image_.height()
        << "\n";
     os << "Entropy hit image M:   " << c.entropy_hits_M_.width() << "x"
