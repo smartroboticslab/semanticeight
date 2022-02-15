@@ -436,6 +436,8 @@ void CandidateView::computeUtility()
              lod_gain_,
              path_time_,
              utility_);
+    // Get rid of the trailing null byte.
+    utility_str_.resize(s);
 }
 
 
