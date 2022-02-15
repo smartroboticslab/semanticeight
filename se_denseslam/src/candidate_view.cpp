@@ -146,9 +146,9 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
         if (config_.use_pose_history) {
             frustum_overlap(frustum_overlap_image, sensor_, T_MC, T_BC_, T_MB_history);
         }
-        const std::pair<float, float> r = optimal_yaw(
+        const auto r = optimal_yaw(
             entropy_image, entropy_hits, frustum_overlap_image, sensor_, path_MB_[i], T_BC_);
-        path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(r.first);
+        path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(std::get<0>(r));
     }
     //yawBeforeMoving(path_MB_);
     //yawWhileMoving(path_MB_, config_.velocity_linear, config_.velocity_angular);
@@ -160,7 +160,7 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
 Image<uint32_t> CandidateView::renderEntropy(const bool visualize_yaw) const
 {
     if (isValid()) {
-        return visualize_entropy(entropy_image_, sensor_, yaw_M_, visualize_yaw);
+        return visualize_entropy(entropy_image_, window_idx_, window_width_, visualize_yaw);
     }
     else {
         return Image<uint32_t>(entropy_image_.width(), entropy_image_.height(), 0xFF0000FF);
@@ -172,7 +172,8 @@ Image<uint32_t> CandidateView::renderEntropy(const bool visualize_yaw) const
 Image<uint32_t> CandidateView::renderDepth(const bool visualize_yaw) const
 {
     if (isValid()) {
-        return visualize_depth(entropy_hits_M_, sensor_, goalT_MB(), yaw_M_, visualize_yaw);
+        return visualize_depth(
+            entropy_hits_M_, sensor_, goalT_MB(), window_idx_, window_width_, visualize_yaw);
     }
     else {
         return Image<uint32_t>(entropy_hits_M_.width(), entropy_hits_M_.height(), 0xFF000000);
@@ -210,8 +211,10 @@ void CandidateView::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
     Image<float> raw_entropy(entropy_image_.width(), entropy_image_.height());
     Image<Eigen::Vector3f> entropy_hits(entropy_image_.width(), entropy_image_.height());
     raycast_entropy(raw_entropy, entropy_hits, map_, sensor_, T_MB, T_BC_);
-    entropy = visualize_entropy(raw_entropy, sensor_, yaw_M_, visualize_yaw && isValid());
-    depth = visualize_depth(entropy_hits, sensor_, T_MB, yaw_M_, visualize_yaw && isValid());
+    entropy =
+        visualize_entropy(raw_entropy, window_idx_, window_width_, visualize_yaw && isValid());
+    depth = visualize_depth(
+        entropy_hits, sensor_, T_MB, window_idx_, window_width_, visualize_yaw && isValid());
 }
 
 
@@ -402,10 +405,8 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
     if (config_.use_pose_history) {
         frustum_overlap(frustum_overlap_image_, sensor_, T_MC, T_BC_, T_MB_history);
     }
-    const std::pair<float, float> r = optimal_yaw(
+    std::tie(yaw_M_, entropy_, window_idx_, window_width_) = optimal_yaw(
         entropy_image_, entropy_hits_M_, frustum_overlap_image_, sensor_, path_MB_.back(), T_BC_);
-    yaw_M_ = r.first;
-    entropy_ = r.second;
 }
 
 
@@ -579,6 +580,8 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
        << c.goalT_MB().topRightCorner<3, 1>().y() << " " << c.goalT_MB().topRightCorner<3, 1>().z()
        << "\n";
     os << "Goal yaw M:            " << c.yaw_M_ << "\n";
+    os << "Window index:          " << c.window_idx_ << "\n";
+    os << "Window width:          " << c.window_width_ << "\n";
     os << "Entropy image:         " << c.entropy_image_.width() << "x" << c.entropy_image_.height()
        << "\n";
     os << "Entropy hit image M:   " << c.entropy_hits_M_.width() << "x"

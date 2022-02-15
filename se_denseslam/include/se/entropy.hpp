@@ -39,30 +39,32 @@ void frustum_overlap(Image<float>& frustum_overlap_image,
                      const PoseHistory* T_MB_history);
 
 /** \brief Compute the yaw angle in the map frame M that maximizes the entropy.
- * \return The yaw angle (first) and the respective entropy (second).
+ * \return The yaw angle, the respective entropy, the index of the left edge of the window and the
+ * window width.
  */
-std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
-                                    const Image<Eigen::Vector3f>& entropy_hits_M,
-                                    const Image<float>& frustum_overlap_image,
-                                    const SensorImpl& sensor,
-                                    const Eigen::Matrix4f& T_MB,
-                                    const Eigen::Matrix4f& T_BC);
+std::tuple<float, float, int, int> optimal_yaw(const Image<float>& entropy_image,
+                                               const Image<Eigen::Vector3f>& entropy_hits_M,
+                                               const Image<float>& frustum_overlap_image,
+                                               const SensorImpl& sensor,
+                                               const Eigen::Matrix4f& T_MB,
+                                               const Eigen::Matrix4f& T_BC);
 
 Image<uint32_t> visualize_entropy(const Image<float>& entropy,
-                                  const SensorImpl& sensor,
-                                  const float yaw_M,
+                                  const int window_idx,
+                                  const int window_width,
                                   const bool visualize_yaw = true);
 
 Image<uint32_t> visualize_depth(const Image<Eigen::Vector3f>& entropy_hits_M,
                                 const SensorImpl& sensor,
                                 const Eigen::Matrix4f& T_MB,
-                                const float yaw_M,
+                                const int window_idx,
+                                const int window_width,
                                 const bool visualize_yaw = true);
 
 /** \brief Overlay the sensor FOV at yaw_M on the image.
  * \note Typically used only for visualization and debugging.
  */
-void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& sensor);
+void overlay_yaw(Image<uint32_t>& image, const int window_idx, const int window_width);
 
 void render_pose_entropy_depth(Image<uint32_t>& entropy,
                                Image<uint32_t>& depth,

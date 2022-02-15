@@ -152,11 +152,13 @@ TEST(Entropy, azimuthToIndexToAzimuth)
 
 TEST(Entropy, overlayYaw)
 {
-    for (auto yaw_M : {0.0f, -M_PI_F}) {
-        se::Image<uint32_t> image(720, 200, 0);
-        const SensorImpl sensor(
-            {640, 480, false, 0.02, 5.0, 205.46963709898583, 205.46963709898583, 320.5, 240.5});
-        overlay_yaw(image, yaw_M, sensor);
+    for (auto yaw_M : {0.0f, M_PI_F / 3.0f, -M_PI_F}) {
+        se::Image<uint32_t> image(36, 10, 0);
+        const SensorImpl sensor({640, 480, false, 0.02, 5.0, 205.5, 205.5, 319.5, 239.5});
+        const int window_idx = se::azimuth_to_index(
+            se::math::wrap_angle_2pi(yaw_M + sensor.horizontal_fov / 2.0f), image.width(), M_TAU_F);
+        const int window_width = se::compute_window_width(image.width(), sensor.horizontal_fov);
+        overlay_yaw(image, window_idx, window_width);
         const std::string filename =
             stdfs::temp_directory_path() / std::string("overlay_" + std::to_string(yaw_M) + ".png");
         lodepng_encode32_file(filename.c_str(),

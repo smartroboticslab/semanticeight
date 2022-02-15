@@ -193,6 +193,16 @@ std::pair<float, Eigen::Vector3f> entropy_along_ray(const Octree<VoxelImpl::Voxe
 
 
 
+int compute_window_width(const int image_width, const float hfov)
+{
+    const float window_percentage = hfov / M_TAU_F;
+    // Even if the window width takes an extra column into account, the rayInFrustum() test will
+    // reject it.
+    return window_percentage * image_width + 0.5f;
+}
+
+
+
 std::vector<float> sum_windows(const Image<float>& entropy_image,
                                const Image<Eigen::Vector3f>& entropy_hits_M,
                                const Image<float>& frustum_overlap_image,
@@ -200,10 +210,7 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
                                const Eigen::Matrix4f& T_MB,
                                const Eigen::Matrix4f& T_BC)
 {
-    const float window_percentage = sensor.horizontal_fov / M_TAU_F;
-    // Even if the window width takes an extra column into account, the rayInFrustum() test will
-    // reject it.
-    const int window_width = window_percentage * entropy_image.width() + 0.5f;
+    const int window_width = compute_window_width(entropy_image.width(), sensor.horizontal_fov);
     std::vector<float> window_sums(entropy_image.width(), 0.0f);
     for (size_t w = 0; w < window_sums.size(); w++) {
         int rays_in_frustum = 0;
@@ -326,12 +333,12 @@ void frustum_overlap(Image<float>& frustum_overlap_image,
 
 
 
-std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
-                                    const Image<Eigen::Vector3f>& entropy_hits_M,
-                                    const Image<float>& frustum_overlap_image,
-                                    const SensorImpl& sensor,
-                                    const Eigen::Matrix4f& T_MB,
-                                    const Eigen::Matrix4f& T_BC)
+std::tuple<float, float, int, int> optimal_yaw(const Image<float>& entropy_image,
+                                               const Image<Eigen::Vector3f>& entropy_hits_M,
+                                               const Image<float>& frustum_overlap_image,
+                                               const SensorImpl& sensor,
+                                               const Eigen::Matrix4f& T_MB,
+                                               const Eigen::Matrix4f& T_BC)
 {
     // Use a sliding window to compute the yaw angle that results in the maximum entropy
     const std::pair<int, float> r =
@@ -344,14 +351,17 @@ std::pair<float, float> optimal_yaw(const Image<float>& entropy_image,
     const float best_yaw_M =
         se::math::wrap_angle_pi(yaw_M_left_edge - sensor.horizontal_fov / 2.0f);
     const float best_entropy = r.second;
-    return std::make_pair(best_yaw_M, best_entropy);
+    return std::make_tuple(best_yaw_M,
+                           best_entropy,
+                           best_idx,
+                           compute_window_width(entropy_image.width(), sensor.horizontal_fov));
 }
 
 
 
 Image<uint32_t> visualize_entropy(const Image<float>& entropy,
-                                  const SensorImpl& sensor,
-                                  const float yaw_M,
+                                  const int window_idx,
+                                  const int window_width,
                                   const bool visualize_yaw)
 {
     Image<uint32_t> entropy_render(entropy.width(), entropy.height());
@@ -361,7 +371,7 @@ Image<uint32_t> visualize_entropy(const Image<float>& entropy,
         entropy_render[i] = se::pack_rgba(e, e, e, 0xFF);
     }
     if (visualize_yaw) {
-        overlay_yaw(entropy_render, yaw_M, sensor);
+        overlay_yaw(entropy_render, window_idx, window_width);
     }
     return entropy_render;
 }
@@ -371,7 +381,8 @@ Image<uint32_t> visualize_entropy(const Image<float>& entropy,
 Image<uint32_t> visualize_depth(const Image<Eigen::Vector3f>& entropy_hits_M,
                                 const SensorImpl& sensor,
                                 const Eigen::Matrix4f& T_MB,
-                                const float yaw_M,
+                                const int window_idx,
+                                const int window_width,
                                 const bool visualize_yaw)
 {
     const Eigen::Vector2i res(entropy_hits_M.width(), entropy_hits_M.height());
@@ -389,53 +400,63 @@ Image<uint32_t> visualize_depth(const Image<Eigen::Vector3f>& entropy_hits_M,
     se::depth_to_rgba(depth_render.data(), depth.data(), res, sensor.near_plane, sensor.far_plane);
     // Visualize the optimal yaw
     if (visualize_yaw) {
-        overlay_yaw(depth_render, yaw_M, sensor);
+        overlay_yaw(depth_render, window_idx, window_width);
     }
     return depth_render;
 }
 
 
 
-void overlay_yaw(Image<uint32_t>& image, const float yaw_M, const SensorImpl& sensor)
+void overlay_yaw(Image<uint32_t>& image, const int window_idx, const int window_width)
 {
+    // Show the FOV rectangle blended with the original image.
+    {
+        const int w = image.width();
+        const int h = image.height();
+        cv::Mat fov(cv::Size(w, h), CV_8UC4, cv::Scalar(255, 0, 0, 255));
+        cv::Mat fov_alpha(cv::Size(w, h), CV_32FC1, cv::Scalar(0.0f));
+        const cv::Scalar fov_on(0.5f);
+        const int thickness = 1;
+        // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle.
+        const int x_min = window_idx;
+        const int x_max = (window_idx + window_width - 1) % w;
+        // Draw the vertical lines.
+        cv::line(fov_alpha, cv::Point(x_min, 0), cv::Point(x_min, h - 1), fov_on, thickness);
+        cv::line(fov_alpha, cv::Point(x_max, 0), cv::Point(x_max, h - 1), fov_on, thickness);
+        // Draw the horizontal lines.
+        if (x_min < x_max) {
+            // No wrapping of the FOV rectangle.
+            cv::line(fov_alpha, cv::Point(x_min, 0), cv::Point(x_max, 0), fov_on, thickness);
+            cv::line(
+                fov_alpha, cv::Point(x_min, h - 1), cv::Point(x_max, h - 1), fov_on, thickness);
+        }
+        else {
+            // The FOV rectangle wraps around the left-right edges of the image.
+            cv::line(fov_alpha, cv::Point(x_min, 0), cv::Point(w - 1, 0), fov_on, thickness);
+            cv::line(fov_alpha, cv::Point(0, 0), cv::Point(x_max, 0), fov_on, thickness);
+            cv::line(
+                fov_alpha, cv::Point(x_min, h - 1), cv::Point(w - 1, h - 1), fov_on, thickness);
+            cv::line(fov_alpha, cv::Point(0, h - 1), cv::Point(x_max, h - 1), fov_on, thickness);
+        }
+        // Blend with the entropy render.
+        cv::Mat image_cv(cv::Size(w, h), CV_8UC4, image.data());
+        cv::Mat image_alpha(cv::Size(w, h), CV_32FC1, cv::Scalar(0.5f));
+        cv::blendLinear(image_cv, fov, image_alpha, fov_alpha, image_cv);
+    }
+
     // Resize the image to 720xSOMETHING to allow having nicer visualizations.
+    const int w = 720;
+    const int h = w * static_cast<float>(image.height()) / image.width() + 0.5f;
     {
         cv::Mat image_cv(cv::Size(image.width(), image.height()), CV_8UC4, image.data());
-        const int w = 720;
-        const int h = w * static_cast<float>(image.height()) / image.width() + 0.5f;
         Image<uint32_t> out_image(w, h);
         cv::Mat out_image_cv(cv::Size(w, h), CV_8UC4, out_image.data());
         cv::resize(image_cv, out_image_cv, out_image_cv.size(), 0.0, 0.0, cv::INTER_NEAREST);
         image = out_image;
     }
 
-    // Visualize the FOV rectangle.
-    const int w = image.width();
-    const int h = image.height();
-    cv::Mat image_cv(cv::Size(w, h), CV_8UC4, image.data());
-    const cv::Scalar fov_color = cv::Scalar(255, 0, 0, 255);
-    const int line_thickness = 2 * w / 360;
-    // Compute minimum and maximum horizontal pixel coordinates of the FOV rectangle.
-    const int x_min =
-        azimuth_to_index(yaw_M + sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
-    const int x_max =
-        azimuth_to_index(yaw_M - sensor.horizontal_fov / 2.0f, image.width(), M_TAU_F);
-    // Draw the vertical lines.
-    cv::line(image_cv, cv::Point(x_min, 0), cv::Point(x_min, h), fov_color, line_thickness);
-    cv::line(image_cv, cv::Point(x_max, 0), cv::Point(x_max, h), fov_color, line_thickness);
-    // Draw the horizontal lines.
-    if (x_min < x_max) {
-        cv::line(image_cv, cv::Point(x_min, 0), cv::Point(x_max, 0), fov_color, line_thickness);
-        cv::line(image_cv, cv::Point(x_min, h), cv::Point(x_max, h), fov_color, line_thickness);
-    }
-    else {
-        cv::line(image_cv, cv::Point(x_min, 0), cv::Point(w - 1, 0), fov_color, line_thickness);
-        cv::line(image_cv, cv::Point(0, 0), cv::Point(x_max, 0), fov_color, line_thickness);
-        cv::line(image_cv, cv::Point(x_min, h), cv::Point(w - 1, h), fov_color, line_thickness);
-        cv::line(image_cv, cv::Point(0, h), cv::Point(x_max, h), fov_color, line_thickness);
-    }
-
     // Show the yaw angle major and minor tick marks.
+    cv::Mat image_cv(cv::Size(w, h), CV_8UC4, image.data());
     const cv::Scalar tick_color = cv::Scalar(255, 255, 255, 255);
     const int major_tick_thickness = 2 * w / 360;
     const int minor_tick_thickness = 1 * w / 360;
@@ -493,8 +514,11 @@ void render_pose_entropy_depth(Image<uint32_t>& entropy,
     Image<Eigen::Vector3f> entropy_hits(entropy.width(), entropy.height());
     raycast_entropy(raw_entropy, entropy_hits, map, sensor, T_MB, T_BC);
     const float yaw_M = se::math::rotm_to_yaw(T_MB.topLeftCorner<3, 3>());
-    entropy = visualize_entropy(raw_entropy, sensor, yaw_M, visualize_yaw);
-    depth = visualize_depth(entropy_hits, sensor, T_MB, yaw_M, visualize_yaw);
+    const int window_idx = se::azimuth_to_index(
+        se::math::wrap_angle_2pi(yaw_M + sensor.horizontal_fov / 2.0f), entropy.width(), M_TAU_F);
+    const int window_width = compute_window_width(entropy.width(), sensor.horizontal_fov);
+    entropy = visualize_entropy(raw_entropy, window_idx, window_width, visualize_yaw);
+    depth = visualize_depth(entropy_hits, sensor, T_MB, window_idx, window_width, visualize_yaw);
 }
 
 } // namespace se
