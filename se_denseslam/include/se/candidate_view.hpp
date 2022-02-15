@@ -118,8 +118,6 @@ class CandidateView {
     Eigen::Vector3f desired_t_MB_;
     /** The optimal yaw angle with respect to the information gain. */
     float yaw_M_;
-    /** The length of the path in metres. */
-    float path_length_;
     /** The time needed to complete the path. */
     float path_time_;
     /** The information gain for the map at the optimal yaw angle. */

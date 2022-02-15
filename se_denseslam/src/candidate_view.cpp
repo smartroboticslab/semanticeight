@@ -16,7 +16,6 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
                              const SensorImpl& sensor,
                              const Eigen::Matrix4f& T_BC) :
         desired_t_MB_(NAN, NAN, NAN),
-        path_length_(-1.0f),
         path_time_(-1.0f),
         entropy_(-1.0f),
         lod_gain_(-1.0f),
@@ -43,7 +42,6 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
                              const PoseHistory* T_MB_history,
                              const CandidateConfig& config) :
         desired_t_MB_(config.planner_config.goal_t_MB_),
-        path_length_(-1.0f),
         path_time_(-1.0f),
         entropy_(-1.0f),
         lod_gain_(-1.0f),
@@ -572,7 +570,6 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Entropy:               " << c.entropy_ << "\n";
     os << "LoD gain:              " << c.lod_gain_ << "\n";
     os << "Path time:             " << c.path_time_ << "\n";
-    os << "Path length:           " << c.path_length_ << "\n";
     os << "Path size:             " << c.path().size() << "\n";
     os << "Desired position M:    " << c.desired_t_MB_.x() << " " << c.desired_t_MB_.y() << " "
        << c.desired_t_MB_.z() << "\n";
