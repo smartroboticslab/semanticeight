@@ -38,9 +38,10 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
         T_MW_(pipeline.T_MW()),
         T_WM_(pipeline.T_WM()),
         T_BC_(config.T_BC),
-        T_CB_(se::math::to_inverse_transformation(T_BC_)),
+        T_CB_(se::math::to_inverse_transformation(config.T_BC)),
         sensor_(sensor),
-        T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim())),
+        T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim()),
+                           Eigen::Vector4f(0.5f, 0.5f, 0.5f, M_TAU_F / config.raycast_width)),
         candidate_views_({CandidateView(*pipeline.getMap(), sensor, config.T_BC)}),
         goal_view_idx_(0)
 {

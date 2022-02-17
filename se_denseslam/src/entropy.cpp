@@ -6,7 +6,6 @@
 #include "se/entropy.hpp"
 
 #include <algorithm>
-#include <frustum_intersector.hpp>
 
 namespace se {
 /** \brief Convert a probability to log-odds form.
@@ -289,30 +288,6 @@ void raycast_entropy(Image<float>& entropy_image,
             entropy_image(x, y) = r.first / ray_entropy_max;
             entropy_hits_M(x, y) = r.second;
         }
-    }
-}
-
-
-
-void frustum_overlap(Image<float>& frustum_overlap_image,
-                     const SensorImpl& sensor,
-                     const Eigen::Matrix4f& T_MC,
-                     const Eigen::Matrix4f& T_BC,
-                     const PoseHistory* T_MB_history)
-{
-    const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
-    const se::PoseVector neighbors = T_MB_history->neighbourPoses(T_MC, sensor);
-#pragma omp parallel for
-    for (int x = 0; x < frustum_overlap_image.width(); x++) {
-        std::vector<float> overlap;
-        overlap.reserve(neighbors.size());
-        for (const auto& n_T_MB : neighbors) {
-            // Convert the neighbor pose to the candidate frame.
-            const Eigen::Matrix4f T_CCn = T_CM * n_T_MB * T_BC;
-            overlap.push_back(fi::frustum_intersection_pc(sensor.frustum_vertices_, T_CCn));
-        }
-        frustum_overlap_image[x] =
-            overlap.empty() ? 0.0f : *std::max_element(overlap.begin(), overlap.end());
     }
 }
 

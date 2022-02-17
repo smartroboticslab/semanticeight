@@ -5,6 +5,7 @@
 #include "se/pose_vector_history.hpp"
 
 #include <algorithm>
+#include <frustum_intersector.hpp>
 #include <random>
 
 #include "se/utils/math_utils.h"
@@ -90,6 +91,30 @@ PoseVector PoseVectorHistory::neighbourPoses(const Eigen::Matrix4f& pose,
         }
     }
     return neighbours;
+}
+
+
+
+void PoseVectorHistory::frustumOverlap(Image<float>& frustum_overlap_image,
+                                       const SensorImpl& sensor,
+                                       const Eigen::Matrix4f& T_MB,
+                                       const Eigen::Matrix4f& T_BC) const
+{
+    const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MB * T_BC);
+    const se::PoseVector neighbors = neighbourPoses(T_MB, sensor);
+#pragma omp parallel for
+    for (int x = 0; x < frustum_overlap_image.width(); x++) {
+        std::vector<float> overlap;
+        overlap.reserve(neighbors.size());
+        for (const auto& n_T_MB : neighbors) {
+            // Convert the neighbor pose to the candidate frame.
+            const Eigen::Matrix4f T_CCn = T_CM * n_T_MB * T_BC;
+            overlap.push_back(fi::frustum_intersection_pc(sensor.frustum_vertices_, T_CCn));
+        }
+        // FIXME SEM something should depend on x
+        frustum_overlap_image[x] =
+            overlap.empty() ? 0.0f : *std::max_element(overlap.begin(), overlap.end());
+    }
 }
 
 } // namespace se

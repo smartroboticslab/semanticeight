@@ -8,6 +8,8 @@
 #include <fstream>
 #include <limits>
 
+#include "se/entropy.hpp"
+
 namespace se {
 
 PoseGridHistory::PoseGridHistory(const Eigen::Vector3f& dimensions,
@@ -116,6 +118,23 @@ PoseVector PoseGridHistory::neighbourPoses(const Eigen::Matrix4f& pose,
         }
     }
     return neighbours;
+}
+
+
+
+void PoseGridHistory::frustumOverlap(Image<float>& frustum_overlap_image,
+                                     const SensorImpl& /* sensor */,
+                                     const Eigen::Matrix4f& T_MB,
+                                     const Eigen::Matrix4f& /* T_BC */) const
+{
+    const int w = frustum_overlap_image.width();
+#pragma omp parallel for
+    for (int x = 0; x < w; x++) {
+        const float yaw_M = se::index_to_azimuth(x, w, M_TAU_F);
+        Eigen::Vector4f test_T_MB = T_MB.topRightCorner<3, 1>().homogeneous();
+        test_T_MB.w() = yaw_M;
+        frustum_overlap_image[x] = get(test_T_MB) > 0 ? 1.0f : 0.0f;
+    }
 }
 
 

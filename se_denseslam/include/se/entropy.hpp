@@ -54,12 +54,6 @@ void raycast_entropy(Image<float>& entropy_image,
                      const Eigen::Matrix4f& T_MB,
                      const Eigen::Matrix4f& T_BC);
 
-void frustum_overlap(Image<float>& frustum_overlap_image,
-                     const SensorImpl& sensor,
-                     const Eigen::Matrix4f& T_MC,
-                     const Eigen::Matrix4f& T_BC,
-                     const PoseHistory* T_MB_history);
-
 /** \brief Compute the yaw angle in the map frame M that maximizes the entropy.
  * \return The yaw angle, the respective entropy, the index of the left edge of the window and the
  * window width.

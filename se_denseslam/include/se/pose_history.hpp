@@ -33,6 +33,11 @@ class PoseHistory {
     virtual PoseVector neighbourPoses(const Eigen::Matrix4f& pose,
                                       const SensorImpl& sensor) const = 0;
 
+    virtual void frustumOverlap(Image<float>& frustum_overlap_image,
+                                const SensorImpl& sensor,
+                                const Eigen::Matrix4f& T_MC,
+                                const Eigen::Matrix4f& T_BC) const = 0;
+
     private:
     mutable std::mt19937 gen_;
     mutable std::uniform_real_distribution<float> uniform_;

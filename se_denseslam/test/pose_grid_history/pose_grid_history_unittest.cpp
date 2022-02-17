@@ -211,3 +211,23 @@ TEST_F(PoseGridTest, neighbourPoses)
         ASSERT_EQ(neighbour_poses.size(), 2);
     }
 }
+
+TEST_F(PoseGridTest, frustumOverlap)
+{
+    grid_.record(Eigen::Vector4f(0.0f, 0.0f, 0.0f, se::math::deg_to_rad(-180.0f)));
+    grid_.record(Eigen::Vector4f(0.0f, 0.0f, 0.0f, se::math::deg_to_rad(0.0f)));
+    grid_.record(Eigen::Vector4f(0.0f, 0.0f, 0.0f, se::math::deg_to_rad(179.0f)));
+
+    const int width = grid_.dimensionsCells().w();
+    se::Image<float> frustum_overlap(width, 1);
+    grid_.frustumOverlap(
+        frustum_overlap, sensor_, Eigen::Matrix4f::Identity(), Eigen::Matrix4f::Identity());
+
+    std::vector<float> desired_frustum_overlap(width, 0.0f);
+    desired_frustum_overlap.front() = 1.0f; // 179 degrees
+    desired_frustum_overlap[4] = 1.0f;      // 0 degrees
+    desired_frustum_overlap.back() = 1.0f;  // -180 degrees
+    for (size_t i = 0; i < desired_frustum_overlap.size(); ++i) {
+        EXPECT_FLOAT_EQ(frustum_overlap[i], desired_frustum_overlap[i]);
+    }
+}
