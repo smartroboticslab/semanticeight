@@ -58,7 +58,8 @@ TEST_F(PoseGridTest, initialization)
 
 TEST_F(PoseGridTest, recordAndGetAll)
 {
-    // Record two poses for each cell.
+    // Record a different number of poses for each cell.
+    size_t n = 1;
     for (float x = resolution_.x() / 4.0f; x < dimensions_.x(); x += resolution_.x()) {
         for (float y = resolution_.y() / 4.0f; y < dimensions_.y(); y += resolution_.y()) {
             for (float z = resolution_.z() / 4.0f; z < dimensions_.z(); z += resolution_.z()) {
@@ -67,12 +68,16 @@ TEST_F(PoseGridTest, recordAndGetAll)
                     T << cos(yaw), -sin(yaw), 0, x, sin(yaw), cos(yaw), 0, y, 0, 0, 1, z, 0, 0, 0,
                         1;
                     grid_.record(T);
-                    grid_.record(Eigen::Vector4f(x, y, z, yaw));
+                    for (size_t i = 0; i < n; ++i) {
+                        grid_.record(Eigen::Vector4f(x, y, z, yaw));
+                    }
+                    n++;
                 }
             }
         }
     }
     // Ensure that each cell contains two measurements.
+    n = 1;
     for (float x = resolution_.x() / 4.0f; x < dimensions_.x(); x += resolution_.x()) {
         for (float y = resolution_.y() / 4.0f; y < dimensions_.y(); y += resolution_.y()) {
             for (float z = resolution_.z() / 4.0f; z < dimensions_.z(); z += resolution_.z()) {
@@ -80,8 +85,9 @@ TEST_F(PoseGridTest, recordAndGetAll)
                     Eigen::Matrix4f T;
                     T << cos(yaw), -sin(yaw), 0, x, sin(yaw), cos(yaw), 0, y, 0, 0, 1, z, 0, 0, 0,
                         1;
-                    EXPECT_EQ(grid_.get(T), 2);
-                    EXPECT_EQ(grid_.get(Eigen::Vector4f(x, y, z, yaw)), 2);
+                    EXPECT_EQ(grid_.get(T), n + 1);
+                    EXPECT_EQ(grid_.get(Eigen::Vector4f(x, y, z, yaw)), n + 1);
+                    n++;
                 }
             }
         }
@@ -179,4 +185,29 @@ TEST_F(PoseGridTest, singularity)
     EXPECT_EQ(grid_.get(T0), 3);
 
     EXPECT_TRUE(T2.isApprox(T0));
+}
+
+TEST_F(PoseGridTest, neighbourPoses)
+{
+    Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+    grid_.record(T);
+    {
+        const auto neighbour_poses = grid_.neighbourPoses(Eigen::Matrix4f::Identity(), sensor_);
+        ASSERT_EQ(neighbour_poses.size(), 1);
+        EXPECT_TRUE(T.isApprox(neighbour_poses.front()));
+    }
+
+    T.topLeftCorner<3, 3>() = se::math::yaw_to_rotm(se::math::deg_to_rad(45.0f));
+    grid_.record(T);
+    {
+        const auto neighbour_poses = grid_.neighbourPoses(Eigen::Matrix4f::Identity(), sensor_);
+        ASSERT_EQ(neighbour_poses.size(), 2);
+    }
+
+    T(0, 3) += 1.1f;
+    grid_.record(T);
+    {
+        const auto neighbour_poses = grid_.neighbourPoses(Eigen::Matrix4f::Identity(), sensor_);
+        ASSERT_EQ(neighbour_poses.size(), 2);
+    }
 }
