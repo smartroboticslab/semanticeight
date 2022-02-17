@@ -104,17 +104,14 @@ PoseVector PoseGridHistory::neighbourPoses(const Eigen::Matrix4f& pose,
 {
     const Eigen::Vector3f t = pose.topRightCorner<3, 1>();
     PoseVector neighbours;
-    for (int yaw = 0; yaw < size_.w(); yaw++) {
-        const Eigen::Vector4i indices = poseToIndices(Eigen::Vector4f(t.x(), t.y(), t.z(), yaw));
-        const size_t idx = indicesToLinearIndex(indices);
-        if (grid_[idx]) {
+    for (int yaw_idx = 0; yaw_idx < size_.w(); yaw_idx++) {
+        Eigen::Vector4i indices = poseToIndices(Eigen::Vector4f(t.x(), t.y(), t.z(), 0.0f));
+        indices.w() = yaw_idx;
+        if (grid_[indicesToLinearIndex(indices)]) {
             const Eigen::Vector4f p = indicesToPose(indices);
             Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+            T.topLeftCorner<3, 3>() = se::math::yaw_to_rotm(p.w());
             T.topRightCorner<3, 1>() = p.head<3>();
-            T(0, 0) = cos(p.w());
-            T(0, 1) = -sin(p.w());
-            T(1, 0) = sin(p.w());
-            T(1, 1) = cos(p.w());
             neighbours.push_back(T);
         }
     }
