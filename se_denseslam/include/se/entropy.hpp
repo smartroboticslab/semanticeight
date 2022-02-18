@@ -13,6 +13,28 @@
 #include <se/voxel_implementations.hpp>
 
 namespace se {
+
+/** \brief Compute the azimuth angle given a column index, the image width and the horizontal
+ * sensor FOV. It is assumed that the image spans an azimuth angle range of hfov and that azimuth
+ * angle 0 corresponds to the middle column of the image.
+ * \return The azimuth angle in the interval [-pi,pi).
+ */
+float index_to_azimuth(const int x_idx, const int width, const float hfov);
+
+/** \brief Compute the polar angle given a row index, the image height and the vertical sensor
+ * FOV. It is assumed that the image spans a polar angle range of vfov and that polar angle pi/2
+ * corresponds to the middle row of the image.
+ * \return The polar angle in the interval [0,pi].
+ */
+float index_to_polar(int y_idx, int height, float vfov, float pitch_offset);
+
+/** \brief Compute the column index given an azimuth angle, the image width and the horizontal
+ * sensor FOV. It is assumed that the image spans an azimuth angle range of hfov and that azimuth
+ * angle 0 corresponds to the middle column of the image.
+ * \return The column index in the interval [0,width-1].
+ */
+int azimuth_to_index(const float theta, const int width, const float hfov);
+
 /** \brief Return the maximum possible entropy value for a single ray.
  * According to Nils, the maximum number of voxels a ray may cross is
  * 8 * sqrt(3) * (far_plane - near_plane) / voxel_dim

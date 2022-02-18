@@ -10,7 +10,7 @@
 
 namespace se {
 /** \brief Convert a probability to log-odds form.
-   */
+ */
 float prob_to_log_odds(float p)
 {
     assert((0.0f <= p && "The probability mustn't be negative."));
@@ -29,7 +29,7 @@ float prob_to_log_odds(float p)
 
 
 /** \brief Convert a probability in log-odds form to a normal probability.
-   */
+ */
 float log_odds_to_prob(float l)
 {
     // Too small/large values will produce NaNs, set an arbitrary limit that works on 32-bit floats.
@@ -47,9 +47,9 @@ float log_odds_to_prob(float l)
 
 
 /** \brief Compute the Shannon entropy of an occupancy probability.
-   * H = -p log2(p) - (1-p) log2(1-p)
-   * \return The entropy in the interval [0, 1].
-   */
+ * H = -p log2(p) - (1-p) log2(1-p)
+ * \return The entropy in the interval [0, 1].
+ */
 float entropy(float p)
 {
     assert((0.0f <= p && "The probability mustn't be negative."));
@@ -65,11 +65,6 @@ float entropy(float p)
 
 
 
-/** \brief Compute the azimuth angle given a column index, the image width and the horizontal
-   * sensor FOV. It is assumed that the image spans an azimuth angle range of hfov and that azimuth
-   * angle 0 corresponds to the middle column of the image.
-   * \return The azimuth angle in the interval [-pi,pi).
-   */
 float index_to_azimuth(const int x_idx, const int width, const float hfov)
 {
     assert(0 <= x_idx);
@@ -85,11 +80,6 @@ float index_to_azimuth(const int x_idx, const int width, const float hfov)
 
 
 
-/** \brief Compute the polar angle given a row index, the image height and the vertical sensor
-   * FOV. It is assumed that the image spans a polar angle range of vfov and that polar angle pi/2
-   * corresponds to the middle row of the image.
-   * \return The polar angle in the interval [0,pi].
-   */
 float index_to_polar(int y_idx, int height, float vfov, float pitch_offset)
 {
     assert(0 <= y_idx);
@@ -104,11 +94,6 @@ float index_to_polar(int y_idx, int height, float vfov, float pitch_offset)
 
 
 
-/** \brief Compute the column index given an azimuth angle, the image width and the horizontal
-   * sensor FOV. It is assumed that the image spans an azimuth angle range of hfov and that azimuth
-   * angle 0 corresponds to the middle column of the image.
-   * \return The column index in the interval [0,width-1].
-   */
 int azimuth_to_index(const float theta, const int width, const float hfov)
 {
     assert(0.0f < hfov);
