@@ -62,21 +62,31 @@ TEST(Entropy, entropy)
 
 TEST(Entropy, indexToAzimuth)
 {
-    constexpr int width = 1024;
     constexpr float hfov = M_TAU_F;
-    // Compute the azimuth angle for all indices up to width - 1.
-    std::vector<int> idx(width);
-    std::iota(idx.begin(), idx.end(), 0);
-    std::vector<float> azimuth(idx.size());
-    std::transform(idx.begin(), idx.end(), azimuth.begin(), [width, hfov](auto i) {
-        return se::index_to_azimuth(i, width, hfov);
-    });
-    for (auto a : azimuth) {
-        EXPECT_GE(a, -hfov / 2.0f);
-        EXPECT_LT(a, hfov / 2.0f);
-    }
-    for (size_t i = 0; i < azimuth.size() - 1; ++i) {
-        EXPECT_GT(azimuth[i], azimuth[i + 1]);
+    for (int width : {10, 1024}) {
+        // Compute the azimuth angle for all indices up to width - 1.
+        std::vector<int> idx(width);
+        std::iota(idx.begin(), idx.end(), 0);
+        std::vector<float> azimuth(idx.size());
+        std::transform(idx.begin(), idx.end(), azimuth.begin(), [width, hfov](auto i) {
+            return se::index_to_azimuth(i, width, hfov);
+        });
+        for (size_t i = 0; i < azimuth.size(); ++i) {
+            // Test bounds.
+            EXPECT_GE(azimuth[i], -hfov / 2.0f);
+            EXPECT_LT(azimuth[i], hfov / 2.0f);
+            // Test for correct sign.
+            if (i < azimuth.size() / 2) {
+                EXPECT_GE(azimuth[i], 0.0f);
+            }
+            else {
+                EXPECT_LE(azimuth[i], 0.0f);
+            }
+            // Test correct order (azimuth angles increase left-to-right).
+            if (i > 0) {
+                EXPECT_GT(azimuth[i - 1], azimuth[i]);
+            }
+        }
     }
 }
 
