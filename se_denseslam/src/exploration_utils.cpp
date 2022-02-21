@@ -100,8 +100,7 @@ void freeSphere(se::Octree<VoxelImpl::VoxelType>& map,
                 float radius)
 {
     if (!std::is_same<VoxelImpl, MultiresOFusion>::value) {
-        std::cerr << "Error: Only MultiresOFusion is supported\n";
-        std::abort();
+        throw std::domain_error("Only MultiresOFusion is supported");
     }
     // Compute the sphere's AABB corners in metres and voxels
     const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f::Constant(radius);

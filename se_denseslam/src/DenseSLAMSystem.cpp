@@ -1104,8 +1104,7 @@ void DenseSLAMSystem::generateUndetectedInstances(se::SegmentationResult& detect
 void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor)
 {
     if (!std::is_same<VoxelImpl, MultiresOFusion>::value) {
-        std::cerr << "Error: Only MultiresOFusion is supported\n";
-        std::abort();
+        throw std::domain_error("Only MultiresOFusion is supported");
     }
     // Compute the cylinder parameters and increase the height by some percentage
     constexpr float min_radius = 0.5f;
@@ -1168,8 +1167,7 @@ void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor)
 void DenseSLAMSystem::freeInitSphere()
 {
     if (!std::is_same<VoxelImpl, MultiresOFusion>::value) {
-        std::cerr << "Error: Only MultiresOFusion is supported\n";
-        std::abort();
+        throw std::domain_error("Only MultiresOFusion is supported");
     }
     // Compute the sphere parameters
     const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
