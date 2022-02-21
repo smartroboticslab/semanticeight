@@ -64,6 +64,8 @@ class CandidateView {
 
     float utility() const;
 
+    float explorationUtility() const;
+
     std::string utilityStr() const;
 
     const Eigen::Matrix4f& goalT_MB() const;
@@ -149,6 +151,7 @@ class CandidateView {
     Path path_MB_;
     /** A function of entropy and path_time. */
     float utility_;
+    float exploration_utility_;
     CandidateConfig config_;
 
     /** \brief Perform a 360 degree raycast and compute the optimal yaw angle.
