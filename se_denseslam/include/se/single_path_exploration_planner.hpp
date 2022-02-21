@@ -56,12 +56,18 @@ class SinglePathExplorationPlanner {
 
     std::vector<CandidateView> rejectedViews() const;
 
+    /** \brief Return true if the utility computation with and without the object gain resulted in
+     * the same best candidate.
+     */
+    bool explorationDominant() const;
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:
     ExplorationConfig config_;
     std::vector<CandidateView> candidates_;
     std::vector<CandidateView> rejected_candidates_;
     size_t best_idx_;
+    bool exploration_dominant_;
 
     /** Sample a candidate position mostly like ICRA 2020, iterate over the sorted frontiers list
      * every sampling_step elements. Instead of sampling a random voxel as in ICRA 2020, sample the

@@ -43,7 +43,8 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
         T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim()),
                            Eigen::Vector4f(0.5f, 0.5f, 0.5f, M_TAU_F / config.raycast_width)),
         candidate_views_({CandidateView(*pipeline.getMap(), sensor, config.T_BC)}),
-        goal_view_idx_(0)
+        goal_view_idx_(0),
+        exploration_dominant_(true)
 {
     ompl::msg::setLogLevel(ompl::msg::LOG_ERROR);
 }
@@ -276,4 +277,12 @@ int ExplorationPlanner::writePathTSV(const std::string& filename, const Eigen::M
                    [&](const Eigen::Matrix4f& T_MB) { return T_FM * T_MB; });
     return write_path_tsv(filename, history_W);
 }
+
+
+
+bool ExplorationPlanner::explorationDominant() const
+{
+    return exploration_dominant_;
+}
+
 } // namespace se

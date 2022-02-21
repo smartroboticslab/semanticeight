@@ -6,6 +6,22 @@
 #include "se/single_path_exploration_planner.hpp"
 
 namespace se {
+
+template<typename FunctionT>
+size_t best_candidate(const std::vector<CandidateView>& candidates, const FunctionT get_utility)
+{
+    size_t best_idx = SIZE_MAX;
+    float best_utility = 0.0f;
+    for (size_t i = 0; i < candidates.size(); i++) {
+        const float candidate_utility = get_utility(candidates[i]);
+        if (candidate_utility > best_utility) {
+            best_idx = i;
+            best_utility = candidate_utility;
+        }
+    }
+    return best_idx;
+}
+
 SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     const OctreeConstPtr map,
     const std::vector<se::key_t>& frontiers,
@@ -16,7 +32,7 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     const PoseGridHistory& T_MB_grid_history,
     const PoseVectorHistory& /* T_MB_vector_history */,
     const ExplorationConfig& config) :
-        config_(config), best_idx_(SIZE_MAX)
+        config_(config), best_idx_(SIZE_MAX), exploration_dominant_(true)
 {
     const PoseHistory* T_MB_history = &T_MB_grid_history;
     //MortonSamplingTree candidate_sampling_tree(frontiers, map->voxelDepth());
@@ -65,13 +81,7 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         }
     }
     // Find the best candidate
-    float utility_max = 0.0f;
-    for (size_t i = 0; i < candidates_.size(); i++) {
-        if (candidates_[i].utility() > utility_max) {
-            utility_max = candidates_[i].utility();
-            best_idx_ = i;
-        }
-    }
+    best_idx_ = best_candidate(candidates_, [](const auto& c) { return c.utility(); });
     // Add an invalid candidate to return if no best candidate was found
     if (best_idx_ == SIZE_MAX) {
         best_idx_ = candidates_.size();
@@ -80,6 +90,10 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     }
     // Compute the yaw angles at each path vertex of the best candidate
     candidates_[best_idx_].computeIntermediateYaw(T_MB_history);
+    // Compare the best candidate with the best candidate without taking objects into account.
+    const size_t best_exploration_idx =
+        best_candidate(candidates_, [](const auto& c) { return c.explorationUtility(); });
+    exploration_dominant_ = (best_idx_ == best_exploration_idx);
 }
 
 
@@ -115,6 +129,13 @@ std::vector<CandidateView> SinglePathExplorationPlanner::views() const
 std::vector<CandidateView> SinglePathExplorationPlanner::rejectedViews() const
 {
     return rejected_candidates_;
+}
+
+
+
+bool SinglePathExplorationPlanner::explorationDominant() const
+{
+    return exploration_dominant_;
 }
 
 

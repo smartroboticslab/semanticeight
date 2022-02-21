@@ -82,6 +82,11 @@ class ExplorationPlanner {
     int writePathTSV(const std::string& filename,
                      const Eigen::Matrix4f& T_FW = Eigen::Matrix4f::Identity()) const;
 
+    /** \brief Return true if the utility computation with and without the object gain resulted in
+     * the same best candidate in the last planning iteration.
+     */
+    bool explorationDominant() const;
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:
     typedef std::queue<Eigen::Matrix4f,
@@ -106,6 +111,7 @@ class ExplorationPlanner {
     std::vector<CandidateView> rejected_candidate_views_;
     size_t goal_view_idx_;
     PathQueue goal_path_T_MB_;
+    bool exploration_dominant_;
 };
 } // namespace se
 
