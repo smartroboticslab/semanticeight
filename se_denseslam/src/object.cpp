@@ -224,6 +224,20 @@ void Object::renderObjectVolume(uint32_t* output_image_data,
 
 
 
+Object::ScaleArray<float> Object::percentageAtScale() const
+{
+    const int num_blocks =
+        std::accumulate(num_blocks_per_min_scale.begin(), num_blocks_per_min_scale.end(), 0);
+    Object::ScaleArray<float> pc;
+    std::transform(num_blocks_per_min_scale.begin(),
+                   num_blocks_per_min_scale.end(),
+                   pc.begin(),
+                   [num_blocks](auto b) { return 100.0f * b / num_blocks; });
+    return pc;
+}
+
+
+
 void Object::print(FILE* f) const
 {
     // The longest class name has 16 characters (chest_of_drawers) but we'll likely not need larger
@@ -235,10 +249,8 @@ void Object::print(FILE* f) const
             classId(),
             100.0f * conf.confidence());
     // Show detailed information about the minimum scales of the allocated VoxelBlocks.
-    const int num_blocks =
-        std::accumulate(num_blocks_per_min_scale.begin(), num_blocks_per_min_scale.end(), 0);
-    for (int s = 0; s < ObjVoxelImpl::VoxelBlockType::num_scales; s++) {
-        fprintf(f, " %3.0f%%", 100.0f * num_blocks_per_min_scale[s] / num_blocks);
+    for (auto pc : percentageAtScale()) {
+        fprintf(f, " %3.0f%%", pc);
     }
 }
 
@@ -256,10 +268,7 @@ std::ostream& operator<<(std::ostream& os, const Object& o)
        << std::setw(3) << std::fixed << std::setprecision(0) << 100.0f * o.conf.confidence()
        << "%, scales";
     // Show detailed information about the minimum scales of the allocated VoxelBlocks.
-    const int num_blocks =
-        std::accumulate(o.num_blocks_per_min_scale.begin(), o.num_blocks_per_min_scale.end(), 0);
-    for (int s = 0; s < ObjVoxelImpl::VoxelBlockType::num_scales; s++) {
-        const float pc = 100.0f * o.num_blocks_per_min_scale[s] / num_blocks;
+    for (auto pc : o.percentageAtScale()) {
         os << " " << std::setw(3) << std::fixed << std::setprecision(0) << pc << "%";
     }
     os.flags(f);

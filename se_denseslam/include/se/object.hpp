@@ -38,8 +38,10 @@
 /**
  * Contains the storage and all relevant parameters for a detected object.
  */
-class Object {
-    public:
+struct Object {
+    template<typename T>
+    using ScaleArray = std::array<T, ObjVoxelImpl::VoxelBlockType::num_scales>;
+
     /**
      * The instance ID of the object. Used to distinguish between different
      * objects with the same semantic class label.
@@ -54,7 +56,7 @@ class Object {
     /** The number of VoxelBlocks with minimum data at each scale. It is updated in
      * Object::integrate().
      */
-    std::array<int, ObjVoxelImpl::VoxelBlockType::num_scales> num_blocks_per_min_scale;
+    ScaleArray<int> num_blocks_per_min_scale;
 
     /** The number of measurements integrated into the object where the object was detected by the
      * semantic segmentation network.
@@ -168,6 +170,8 @@ class Object {
                             const SensorImpl& sensor,
                             const Eigen::Matrix4f& render_T_MC,
                             const bool render_color);
+
+    Object::ScaleArray<float> percentageAtScale() const;
 
     void print(FILE* f = stdout) const;
 
