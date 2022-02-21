@@ -1107,9 +1107,9 @@ void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor)
         throw std::domain_error("Only MultiresOFusion is supported");
     }
     // Compute the cylinder parameters and increase the height by some percentage
-    constexpr float min_radius = 0.5f;
-    const float height =
-        std::max(3.0f * 2.0f * (config_.robot_radius + config_.safety_radius), min_radius);
+    constexpr float min_height = 0.5f;
+    const float robot_height = 2.0f * (config_.robot_radius + config_.safety_radius);
+    const float height = std::max(3.0f * robot_height, min_height);
     const float radius = std::max(height, (height / 2.0f) / tan(sensor.vertical_fov / 2.0f));
     const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
     // Compute the cylinder's AABB corners in metres and voxels
