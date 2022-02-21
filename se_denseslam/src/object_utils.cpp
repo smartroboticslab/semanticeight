@@ -344,4 +344,30 @@ float lod_gain_raycasting(const Objects& objects,
     return num_nonzero_scale / static_cast<float>(image_res.prod());
 }
 
+
+
+Object::ScaleArray<float> combinedPercentageAtScale(const Objects& objects)
+{
+    // Accumulate the per-scale blocks of all objects.
+    Object::ScaleArray<size_t> num_blocks_per_min_scale{};
+    for (const auto& o : objects) {
+        std::transform(num_blocks_per_min_scale.cbegin(),
+                       num_blocks_per_min_scale.cend(),
+                       o->num_blocks_per_min_scale.cbegin(),
+                       num_blocks_per_min_scale.begin(),
+                       std::plus<>{});
+    }
+    // Compute the percentages.
+    const size_t num_blocks =
+        std::reduce(num_blocks_per_min_scale.cbegin(), num_blocks_per_min_scale.cend());
+    Object::ScaleArray<float> pc{};
+    if (num_blocks != 0) {
+        std::transform(num_blocks_per_min_scale.cbegin(),
+                       num_blocks_per_min_scale.cend(),
+                       pc.begin(),
+                       [num_blocks](auto b) { return 100.0f * b / num_blocks; });
+    }
+    return pc;
+}
+
 } // namespace se
