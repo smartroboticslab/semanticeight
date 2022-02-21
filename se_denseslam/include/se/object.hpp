@@ -54,7 +54,7 @@ class Object {
     /** The number of VoxelBlocks with minimum data at each scale. It is updated in
      * Object::integrate().
      */
-    std::array<int, ObjVoxelImpl::VoxelBlockType::max_scale + 1> num_blocks_per_min_scale;
+    std::array<int, ObjVoxelImpl::VoxelBlockType::num_scales> num_blocks_per_min_scale;
 
     /** The number of measurements integrated into the object where the object was detected by the
      * semantic segmentation network.

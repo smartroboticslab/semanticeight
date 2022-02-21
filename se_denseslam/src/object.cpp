@@ -237,7 +237,7 @@ void Object::print(FILE* f) const
     // Show detailed information about the minimum scales of the allocated VoxelBlocks.
     const int num_blocks =
         std::accumulate(num_blocks_per_min_scale.begin(), num_blocks_per_min_scale.end(), 0);
-    for (int s = 0; s <= ObjVoxelImpl::VoxelBlockType::max_scale; s++) {
+    for (int s = 0; s < ObjVoxelImpl::VoxelBlockType::num_scales; s++) {
         fprintf(f, " %3.0f%%", 100.0f * num_blocks_per_min_scale[s] / num_blocks);
     }
 }
@@ -258,7 +258,7 @@ std::ostream& operator<<(std::ostream& os, const Object& o)
     // Show detailed information about the minimum scales of the allocated VoxelBlocks.
     const int num_blocks =
         std::accumulate(o.num_blocks_per_min_scale.begin(), o.num_blocks_per_min_scale.end(), 0);
-    for (int s = 0; s <= ObjVoxelImpl::VoxelBlockType::max_scale; s++) {
+    for (int s = 0; s < ObjVoxelImpl::VoxelBlockType::num_scales; s++) {
         const float pc = 100.0f * o.num_blocks_per_min_scale[s] / num_blocks;
         os << " " << std::setw(3) << std::fixed << std::setprecision(0) << pc << "%";
     }
