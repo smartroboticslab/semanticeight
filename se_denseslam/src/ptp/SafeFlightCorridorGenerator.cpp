@@ -15,6 +15,24 @@
 
 namespace ptp {
 
+std::string to_string(PlanningResult result)
+{
+    switch (result) {
+    case PlanningResult::Success:
+        return "Success";
+    case PlanningResult::Partial:
+        return "Partial path planned";
+    case PlanningResult::Failed:
+        return "Planning failed";
+    case PlanningResult::StartOccupied:
+        return "Start position occupied";
+    case PlanningResult::GoalOccupied:
+        return "Goal position occupied";
+    default:
+        return "Unknown";
+    }
+}
+
 SafeFlightCorridorGenerator::SafeFlightCorridorGenerator(
     const std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> map,
     const PlanningParameter& pp) :

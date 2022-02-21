@@ -49,6 +49,8 @@ enum class PlanningResult {
     GoalOccupied,
 };
 
+std::string to_string(PlanningResult result);
+
 class SafeFlightCorridorGenerator {
     public:
     SafeFlightCorridorGenerator(const std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> map,
