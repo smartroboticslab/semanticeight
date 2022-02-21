@@ -137,6 +137,7 @@ class CandidateView {
     /** An image containing the minimum integration scale for each raycasted object. */
     Image<int8_t> min_scale_image_;
     std::string utility_str_;
+    std::string status_;
     const SensorImpl& sensor_;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

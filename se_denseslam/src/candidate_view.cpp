@@ -66,17 +66,20 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
     if (config_.use_pose_history && T_MB_history->rejectPosition(desired_t_MB_, sensor)) {
         path_MB_.push_back(Eigen::Matrix4f::Identity());
         path_MB_.back().topRightCorner<3, 1>() = desired_t_MB_;
+        status_ = "Rejected from pose history";
         return;
     }
     if (config_.planner_config.start_t_MB_.isApprox(config_.planner_config.goal_t_MB_)) {
         // No need to do path planning if start and goal positions are the same
         path_MB_.push_back(T_MB);
         path_MB_.push_back(T_MB);
+        status_ = "Same start/goal positions";
     }
     else {
         // Plan a path to the goal
         const auto status =
             planner.planPath(config_.planner_config.start_t_MB_, config_.planner_config.goal_t_MB_);
+        status_ = ptp::to_string(status);
         if (status != ptp::PlanningResult::Success && status != ptp::PlanningResult::Partial) {
             // Could not plan a path. Add the attempted goal point to the path for visualization
             path_MB_.push_back(Eigen::Matrix4f::Identity());
@@ -588,6 +591,7 @@ float CandidateView::pathTime(const Path& path, float velocity_linear, float vel
 std::ostream& operator<<(std::ostream& os, const CandidateView& c)
 {
     os << "Valid:                 " << (c.isValid() ? "yes" : "no") << "\n";
+    os << "Status:                " << c.status_ << "\n";
     os << "Utility:               " << c.utility() << "\n";
     os << "Entropy:               " << c.entropy_ << "\n";
     os << "LoD gain:              " << c.lod_gain_ << "\n";
