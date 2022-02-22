@@ -3,6 +3,7 @@
 
 #include <Eigen/StdVector>
 #include <cassert>
+#include <type_traits>
 #include <vector>
 
 namespace se {
@@ -91,6 +92,9 @@ class Image {
     int width_;
     int height_;
     std::vector<T, Eigen::aligned_allocator<T>> data_;
+
+    static_assert(!std::is_same<T, bool>::value,
+                  "Use char/uint8_t instead of bool to avoid the std::vector<bool> specialization");
 };
 
 } // end namespace se
