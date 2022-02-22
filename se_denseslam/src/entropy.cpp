@@ -108,11 +108,11 @@ int azimuth_to_index(const float theta, const int width, const float hfov)
 
 
 
-/** \brieaf Compute the ray direction in the body frame B (x-forward, z-up) for a pixel x,y of an
+/** \brief Compute the ray direction in the body frame B (x-forward, z-up) for a pixel x,y of an
  * image width x height when performing a 360-degree raycast with the supplied verical_fov.
  */
 Eigen::Vector3f
-ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov, float pitch_offset)
+ray_dir_M(int x, int y, int width, int height, float vertical_fov, float pitch_offset)
 {
     // Compute the spherical coordinates of the ray.
     const float theta = index_to_azimuth(x, width, M_TAU_F);
@@ -123,27 +123,27 @@ ray_dir_from_pixel(int x, int y, int width, int height, float vertical_fov, floa
 
 
 
-/** \brieaf Compute the ray directions in the body frame B (x-forward, z-up) for all pixels of an
- * image width x height.
- */
-Image<Eigen::Vector3f>
-ray_image(const int width, const int height, const SensorImpl& sensor, const Eigen::Matrix4f& T_BC)
+Image<Eigen::Vector3f> ray_M_image(const int width,
+                                   const int height,
+                                   const SensorImpl& sensor,
+                                   const Eigen::Matrix4f& T_BC)
 {
     // Transformation from the camera body frame Bc (x-forward, z-up) to the camera frame C
     // (z-forward, x-right).
     Eigen::Matrix4f T_CBc;
     T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
-    const Eigen::Matrix4f T_BBc = T_BC * T_CBc;
+    const Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
+    const Eigen::Matrix4f T_MBc = T_MB * T_BC * T_CBc;
     // The pitch angle of the camera relative to the body frame.
-    const float pitch = math::wrap_angle_pi(T_BBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
-    Image<Eigen::Vector3f> rays(width, height);
+    const float pitch = math::wrap_angle_pi(T_MBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
+    Image<Eigen::Vector3f> rays_M(width, height);
 #pragma omp parallel for
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            rays(x, y) = ray_dir_from_pixel(x, y, width, height, sensor.vertical_fov, pitch);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            rays_M(x, y) = ray_dir_M(x, y, width, height, sensor.vertical_fov, pitch);
         }
     }
-    return rays;
+    return rays_M;
 }
 
 
@@ -275,15 +275,15 @@ void raycast_entropy(Image<float>& entropy_image,
     const float ray_entropy_max =
         max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
     const Eigen::Vector3f& t_MB = T_MB.topRightCorner<3, 1>();
-    const Image<Eigen::Vector3f> rays =
-        ray_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
+    const Image<Eigen::Vector3f> rays_M =
+        ray_M_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
 #pragma omp parallel for
     for (int y = 0; y < entropy_image.height(); y++) {
 #pragma omp simd
         for (int x = 0; x < entropy_image.width(); x++) {
             // Accumulate the entropy along the ray
             const auto r =
-                entropy_along_ray(map, t_MB, rays(x, y), sensor.near_plane, sensor.far_plane);
+                entropy_along_ray(map, t_MB, rays_M(x, y), sensor.near_plane, sensor.far_plane);
             // Normalize the per-ray entropy in the interval [0-1].
             entropy_image(x, y) = r.first / ray_entropy_max;
             entropy_hits_M(x, y) = r.second;

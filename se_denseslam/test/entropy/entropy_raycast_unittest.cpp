@@ -170,17 +170,21 @@ TEST_F(EntropyRaycast, rayImage)
     constexpr int raycast_height = 20;
     const Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
 
-    // T_BC from Firefly.
     Eigen::Matrix4f T_BC;
-    T_BC << 0, -0.09983341664682817, 0.9950041652780257, 0.1155739796873748, -1, 0, 0, 0.055, 0,
-        -0.9950041652780257, -0.09983341664682817, -0.02502997417539525, 0, 0, 0, 1;
+    T_BC << 0, 0, 1, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 1;
 
-    se::Image<Eigen::Vector3f> rays_MB = se::ray_image(raycast_width, raycast_height, sensor, T_BC);
-    se::Image<Eigen::Vector3f> rays_MBc =
-        se::ray_image(raycast_width, raycast_height, sensor, T_BC);
+    // T_BC from Firefly.
+    Eigen::Matrix4f T_BC_pitch;
+    T_BC_pitch << 0, -0.09983341664682817, 0.9950041652780257, 0.1155739796873748, -1, 0, 0, 0.055,
+        0, -0.9950041652780257, -0.09983341664682817, -0.02502997417539525, 0, 0, 0, 1;
 
-    se::save_point_cloud_pcd(rays_MB, tmp_ + "/rays_MB.pcd", T_MB);
-    se::save_point_cloud_pcd(rays_MBc, tmp_ + "/rays_MB_corrected_pitch.pcd", T_MB);
+    se::Image<Eigen::Vector3f> rays_M =
+        se::ray_M_image(raycast_width, raycast_height, sensor, T_BC);
+    se::Image<Eigen::Vector3f> rays_Mc =
+        se::ray_M_image(raycast_width, raycast_height, sensor, T_BC_pitch);
+
+    se::save_point_cloud_pcd(rays_M, tmp_ + "/rays_M.pcd", T_MB);
+    se::save_point_cloud_pcd(rays_Mc, tmp_ + "/rays_M_corrected_pitch.pcd", T_MB);
 
     // pcl_viewer -ax 1 /tmp/semanticeight_test_results/rays_*.pcd
     std::cout << "pcl_viewer -ax 1 " + tmp_ + "/rays_*.pcd\n";
