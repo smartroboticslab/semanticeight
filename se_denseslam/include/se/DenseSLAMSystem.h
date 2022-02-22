@@ -768,6 +768,8 @@ class DenseSLAMSystem {
         return (image_res_);
     }
 
+    const se::Image<float>& getDepth() const;
+
 
 
     // Semanticeight-only /////////////////////////////////////////////////////

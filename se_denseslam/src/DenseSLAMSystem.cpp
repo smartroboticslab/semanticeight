@@ -502,6 +502,13 @@ void DenseSLAMSystem::structureStats(size_t& num_nodes,
 
 
 
+const se::Image<float>& DenseSLAMSystem::getDepth() const
+{
+    return depth_image_;
+}
+
+
+
 // Semanticeight-only /////////////////////////////////////////////////////
 bool DenseSLAMSystem::preprocessSegmentation(const se::SegmentationResult& segmentation)
 {
