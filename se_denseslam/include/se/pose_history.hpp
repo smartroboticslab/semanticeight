@@ -19,19 +19,9 @@ class PoseHistory {
     public:
     PoseHistory();
 
-    virtual void record(const Eigen::Vector4f& pose) = 0;
-
-    virtual void record(const Eigen::Matrix4f& pose) = 0;
-
-    virtual float rejectionProbability(const Eigen::Vector3f& position,
-                                       const SensorImpl& sensor) const = 0;
-
-    bool rejectPosition(const Eigen::Vector3f& pos, const SensorImpl& sensor) const;
-
     virtual size_t size() const = 0;
 
-    virtual PoseVector neighbourPoses(const Eigen::Matrix4f& pose,
-                                      const SensorImpl& sensor) const = 0;
+    bool rejectPosition(const Eigen::Vector3f& pos, const SensorImpl& sensor) const;
 
     virtual void frustumOverlap(Image<float>& frustum_overlap_image,
                                 const SensorImpl& sensor,
@@ -41,6 +31,9 @@ class PoseHistory {
     private:
     mutable std::mt19937 gen_;
     mutable std::uniform_real_distribution<float> uniform_;
+
+    virtual float rejectionProbability(const Eigen::Vector3f& position,
+                                       const SensorImpl& sensor) const = 0;
 };
 
 } // namespace se

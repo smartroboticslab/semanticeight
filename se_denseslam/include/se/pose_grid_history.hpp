@@ -36,8 +36,6 @@ class PoseGridHistory : public PoseHistory {
 
     DataType get(const Eigen::Matrix4f& pose) const;
 
-    float rejectionProbability(const Eigen::Vector3f& position, const SensorImpl& sensor) const;
-
     Eigen::Vector3f dimensions() const;
 
     Eigen::Vector4f resolution() const;
@@ -82,6 +80,8 @@ class PoseGridHistory : public PoseHistory {
     size_t poseToIndex(const Eigen::Vector4f& pose) const;
 
     Eigen::Vector4f indexToPose(const size_t idx) const;
+
+    float rejectionProbability(const Eigen::Vector3f& position, const SensorImpl& sensor) const;
 
     static Eigen::Vector4f wrapYaw(const Eigen::Vector4f& pose);
 

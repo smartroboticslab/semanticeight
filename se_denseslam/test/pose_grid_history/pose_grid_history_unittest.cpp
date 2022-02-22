@@ -136,19 +136,6 @@ TEST_F(PoseGridTest, recordYaw)
 
 
 
-TEST_F(PoseGridTest, rejectionProbability)
-{
-    const Eigen::Vector4f pose(0.0f, 0.0f, 0.0f, 0.0f);
-    EXPECT_FLOAT_EQ(grid_.rejectionProbability(pose.head<3>(), sensor_), 0.0f);
-    for (int i = 0; i < 2; i++) {
-        grid_.record(pose);
-        EXPECT_FLOAT_EQ(grid_.rejectionProbability(pose.head<3>(), sensor_),
-                        1.0f / grid_.dimensionsCells().w());
-    }
-}
-
-
-
 TEST_F(PoseGridTest, visitedPoses)
 {
     const Eigen::Vector4f pose(0.0f, 0.0f, 0.0f, 0.0f);

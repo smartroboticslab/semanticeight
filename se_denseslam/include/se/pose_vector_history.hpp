@@ -17,8 +17,6 @@ class PoseVectorHistory : public PoseHistory {
 
     void record(const Eigen::Matrix4f& pose);
 
-    float rejectionProbability(const Eigen::Vector3f& pos, const SensorImpl& sensor) const;
-
     size_t size() const;
 
     PoseVector neighbourPoses(const Eigen::Matrix4f& pose, const SensorImpl& sensor) const;
@@ -29,6 +27,9 @@ class PoseVectorHistory : public PoseHistory {
                         const Eigen::Matrix4f& T_BC) const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    private:
+    float rejectionProbability(const Eigen::Vector3f& pos, const SensorImpl& sensor) const;
 };
 
 } // namespace se
