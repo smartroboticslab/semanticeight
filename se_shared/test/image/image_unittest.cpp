@@ -1,6 +1,6 @@
 /*
 
-Copyright 2016 Emanuele Vespa, Imperial College London 
+Copyright 2016 Emanuele Vespa, Imperial College London
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,7 @@ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
@@ -69,6 +69,25 @@ TEST(ImageTest, Accessor)
     for (int y = 0; y < img.height(); ++y) {
         for (int x = 0; x < img.width(); ++x) {
             ASSERT_EQ(img[i++], img(x, y));
+        }
+    }
+}
+
+TEST(ImageTest, Iterators)
+{
+    se::Image<int> image(64, 48);
+    // Populate with values
+    {
+        int value = 0;
+        for (auto& v : image) {
+            v = value++;
+        }
+    }
+    // Test values
+    {
+        int value = 0;
+        for (const auto& v : image) {
+            EXPECT_EQ(v, value++);
         }
     }
 }

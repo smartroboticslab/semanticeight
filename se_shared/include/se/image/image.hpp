@@ -10,15 +10,15 @@ namespace se {
 template<typename T>
 class Image {
     public:
-    Image(const unsigned w, const unsigned h) : width_(w), height_(h), data_(width_ * height_)
+    Image(const int w, const int h) : width_(w), height_(h), data_(width_ * height_)
     {
         assert(width_ > 0 && height_ > 0);
     }
 
-    Image(const unsigned w, const unsigned h, const T& val) : width_(w), height_(h)
+    Image(const int w, const int h, const T& val) :
+            width_(w), height_(h), data_(width_ * height_, val)
     {
         assert(width_ > 0 && height_ > 0);
-        data_.resize(width_ * height_, val);
     }
 
     T& operator[](std::size_t idx)
@@ -59,6 +59,32 @@ class Image {
     const T* data() const
     {
         return data_.data();
+    }
+
+    auto begin()
+    {
+        return data_.begin();
+    }
+    const auto begin() const
+    {
+        return data_.begin();
+    }
+    const auto cbegin() const
+    {
+        return data_.cbegin();
+    }
+
+    auto end()
+    {
+        return data_.end();
+    }
+    const auto end() const
+    {
+        return data_.end();
+    }
+    const auto cend() const
+    {
+        return data_.cend();
     }
 
     private:
