@@ -335,7 +335,7 @@ int main(int argc, char** argv)
     }
     pipeline->setInitT_WC(config.init_T_WB * config.T_BC);
     pipeline->setT_WC(config.init_T_WB * config.T_BC);
-    planner->setT_WB(config.init_T_WB);
+    planner->setT_WB(config.init_T_WB, se::Image<float>(image_res.x(), image_res.y(), 1.0f));
     planner->setPlanningT_WB(config.init_T_WB);
 
     if (read_ok != se::ReaderStatus::ok) {
@@ -478,7 +478,10 @@ int processAll(se::Reader* reader,
             read_ok = reader->getPose(init_T_WB, frame_offset);
             pipeline->setInitT_WC(init_T_WB * config->T_BC);
             pipeline->setT_WC(init_T_WB * config->T_BC);
-            planner->setT_WB(init_T_WB);
+            planner->setT_WB(init_T_WB,
+                             se::Image<float>(pipeline->getImageResolution().x(),
+                                              pipeline->getImageResolution().y(),
+                                              1.0f));
             planner->setPlanningT_WB(init_T_WB);
         }
         if (read_ok != se::ReaderStatus::ok) {
@@ -554,7 +557,7 @@ int processAll(se::Reader* reader,
         else {
             // Set the pose to the ground truth.
             pipeline->setT_WC(T_WB * config->T_BC);
-            planner->setT_WB(T_WB);
+            planner->setT_WB(T_WB, pipeline->getDepth());
             planner->setPlanningT_WB(T_WB);
             tracked = true;
         }

@@ -42,6 +42,11 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
         sensor_(sensor),
         T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim()),
                            Eigen::Vector4f(0.5f, 0.5f, 0.5f, M_TAU_F / config.raycast_width)),
+        T_MB_mask_history_(Eigen::Vector2i(config.raycast_width, config.raycast_height),
+                           sensor,
+                           config.T_BC,
+                           Eigen::Vector3f::Constant(map_->dim()),
+                           Eigen::Vector3f::Constant(0.5f)),
         candidate_views_({CandidateView(*pipeline.getMap(), sensor, config.T_BC)}),
         goal_view_idx_(0),
         exploration_dominant_(true)
@@ -51,10 +56,11 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
 
 
 
-void ExplorationPlanner::setT_WB(const Eigen::Matrix4f& T_WB)
+void ExplorationPlanner::setT_WB(const Eigen::Matrix4f& T_WB, const se::Image<float>& depth)
 {
     const Eigen::Matrix4f T_MB = T_MW_ * T_WB;
     T_MB_grid_history_.record(T_MB);
+    T_MB_mask_history_.record(T_MB, depth);
     T_MB_history_.record(T_MB);
 }
 
@@ -164,6 +170,7 @@ Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
                                          planning_T_MB_,
                                          T_BC_,
                                          T_MB_grid_history_,
+                                         T_MB_mask_history_,
                                          T_MB_history_,
                                          config_);
     candidate_views_ = planner.views();
@@ -242,6 +249,13 @@ Image<uint32_t> ExplorationPlanner::renderMinScale()
 const PoseGridHistory& ExplorationPlanner::getPoseGridHistory() const
 {
     return T_MB_grid_history_;
+}
+
+
+
+const PoseMaskHistory& ExplorationPlanner::getPoseMaskHistory() const
+{
+    return T_MB_mask_history_;
 }
 
 

@@ -22,7 +22,7 @@ class ExplorationPlanner {
                        const SensorImpl& sensor,
                        const se::Configuration& config);
 
-    void setT_WB(const Eigen::Matrix4f& T_WB);
+    void setT_WB(const Eigen::Matrix4f& T_WB, const se::Image<float>& depth);
 
     void setPlanningT_WB(const Eigen::Matrix4f& T_WB);
 
@@ -63,6 +63,8 @@ class ExplorationPlanner {
     Image<uint32_t> renderMinScale();
 
     const PoseGridHistory& getPoseGridHistory() const;
+
+    const PoseMaskHistory& getPoseMaskHistory() const;
 
     /** Return the edge vertices of the sampling AABB in the map frame in an order that can be
      * directly passed to rviz as a LINE_LIST.
@@ -106,6 +108,7 @@ class ExplorationPlanner {
     Eigen::Matrix4f planning_T_MB_;
     // History of fusion poses.
     PoseGridHistory T_MB_grid_history_;
+    PoseMaskHistory T_MB_mask_history_;
     PoseVectorHistory T_MB_history_;
     std::vector<CandidateView> candidate_views_;
     std::vector<CandidateView> rejected_candidate_views_;

@@ -29,12 +29,13 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     const SensorImpl& sensor,
     const Eigen::Matrix4f& T_MB,
     const Eigen::Matrix4f& T_BC,
-    const PoseGridHistory& T_MB_grid_history,
+    const PoseGridHistory& /* T_MB_grid_history */,
+    const PoseMaskHistory& T_MB_mask_history,
     const PoseVectorHistory& /* T_MB_vector_history */,
     const ExplorationConfig& config) :
         config_(config), best_idx_(SIZE_MAX), exploration_dominant_(true)
 {
-    const PoseHistory* T_MB_history = &T_MB_grid_history;
+    const PoseHistory* T_MB_history = &T_MB_mask_history;
     //MortonSamplingTree candidate_sampling_tree(frontiers, map->voxelDepth());
     std::deque<se::key_t> remaining_frontiers(frontiers.begin(), frontiers.end());
     candidates_.reserve(config_.num_candidates);

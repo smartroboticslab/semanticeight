@@ -11,6 +11,7 @@
 #include "se/candidate_view.hpp"
 #include "se/morton_sampling_tree.hpp"
 #include "se/pose_grid_history.hpp"
+#include "se/pose_mask_history.hpp"
 #include "se/pose_vector_history.hpp"
 
 namespace se {
@@ -43,6 +44,7 @@ class SinglePathExplorationPlanner {
                                  const Eigen::Matrix4f& T_MB,
                                  const Eigen::Matrix4f& T_BC,
                                  const PoseGridHistory& T_MB_grid_history,
+                                 const PoseMaskHistory& T_MB_mask_history,
                                  const PoseVectorHistory& T_MB_history,
                                  const ExplorationConfig& config);
 
