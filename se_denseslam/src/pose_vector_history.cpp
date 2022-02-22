@@ -95,7 +95,7 @@ PoseVector PoseVectorHistory::neighbourPoses(const Eigen::Matrix4f& pose,
 
 
 
-void PoseVectorHistory::frustumOverlap(Image<float>& frustum_overlap_image,
+void PoseVectorHistory::frustumOverlap(Image<uint8_t>& frustum_overlap_mask,
                                        const SensorImpl& sensor,
                                        const Eigen::Matrix4f& T_MB,
                                        const Eigen::Matrix4f& T_BC) const
@@ -103,7 +103,7 @@ void PoseVectorHistory::frustumOverlap(Image<float>& frustum_overlap_image,
     const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MB * T_BC);
     const se::PoseVector neighbors = neighbourPoses(T_MB, sensor);
 #pragma omp parallel for
-    for (int x = 0; x < frustum_overlap_image.width(); x++) {
+    for (int x = 0; x < frustum_overlap_mask.width(); x++) {
         std::vector<float> overlap;
         overlap.reserve(neighbors.size());
         for (const auto& n_T_MB : neighbors) {
@@ -112,8 +112,11 @@ void PoseVectorHistory::frustumOverlap(Image<float>& frustum_overlap_image,
             overlap.push_back(fi::frustum_intersection_pc(sensor.frustum_vertices_, T_CCn));
         }
         // FIXME SEM something should depend on x
-        frustum_overlap_image[x] =
-            overlap.empty() ? 0.0f : *std::max_element(overlap.begin(), overlap.end());
+        const uint8_t value = UINT8_MAX
+            * (overlap.empty() ? 0.0f : *std::max_element(overlap.begin(), overlap.end()));
+        for (int y = 0; y < frustum_overlap_mask.height(); y++) {
+            frustum_overlap_mask(x, y) = value;
+        }
     }
 }
 

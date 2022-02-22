@@ -23,7 +23,7 @@ class PoseHistory {
 
     bool rejectPosition(const Eigen::Vector3f& pos, const SensorImpl& sensor) const;
 
-    virtual void frustumOverlap(Image<float>& frustum_overlap_image,
+    virtual void frustumOverlap(Image<uint8_t>& frustum_overlap_mask,
                                 const SensorImpl& sensor,
                                 const Eigen::Matrix4f& T_MC,
                                 const Eigen::Matrix4f& T_BC) const = 0;

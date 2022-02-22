@@ -68,7 +68,7 @@ void raycast_entropy(Image<float>& entropy_image,
  */
 std::tuple<float, float, int, int> optimal_yaw(const Image<float>& entropy_image,
                                                const Image<Eigen::Vector3f>& entropy_hits_M,
-                                               const Image<float>& frustum_overlap_image,
+                                               const Image<uint8_t>& frustum_overlap_mask,
                                                const SensorImpl& sensor,
                                                const Eigen::Matrix4f& T_MB,
                                                const Eigen::Matrix4f& T_BC);

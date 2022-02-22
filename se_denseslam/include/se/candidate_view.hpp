@@ -134,8 +134,8 @@ class CandidateView {
     Image<float> entropy_image_;
     /** An image containing the points where entropy raycasting hit. */
     Image<Eigen::Vector3f> entropy_hits_M_;
-    /** An image containing the percentage of frustum overlap with the candidate's neighbors. */
-    Image<float> frustum_overlap_image_;
+    /** An image containing the per-pixel mask of frustum overlap with the candidate's neighbors. */
+    Image<uint8_t> frustum_overlap_mask_;
     /** An image containing the minimum integration scale for each raycasted object. */
     Image<int8_t> min_scale_image_;
     std::string utility_str_;

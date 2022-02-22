@@ -122,18 +122,20 @@ PoseVector PoseGridHistory::neighbourPoses(const Eigen::Matrix4f& pose,
 
 
 
-void PoseGridHistory::frustumOverlap(Image<float>& frustum_overlap_image,
+void PoseGridHistory::frustumOverlap(Image<uint8_t>& frustum_overlap_mask,
                                      const SensorImpl& /* sensor */,
                                      const Eigen::Matrix4f& T_MB,
                                      const Eigen::Matrix4f& /* T_BC */) const
 {
-    const int w = frustum_overlap_image.width();
 #pragma omp parallel for
-    for (int x = 0; x < w; x++) {
-        const float yaw_M = se::index_to_azimuth(x, w, M_TAU_F);
+    for (int x = 0; x < frustum_overlap_mask.width(); x++) {
+        const float yaw_M = se::index_to_azimuth(x, frustum_overlap_mask.width(), M_TAU_F);
         Eigen::Vector4f test_T_MB = T_MB.topRightCorner<3, 1>().homogeneous();
         test_T_MB.w() = yaw_M;
-        frustum_overlap_image[x] = get(test_T_MB) > 0 ? 1.0f : 0.0f;
+        const uint8_t value = get(test_T_MB) > 0 ? UINT8_MAX : 0u;
+        for (int y = 0; y < frustum_overlap_mask.height(); y++) {
+            frustum_overlap_mask(x, y) = value;
+        }
     }
 }
 

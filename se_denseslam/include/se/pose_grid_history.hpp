@@ -46,7 +46,7 @@ class PoseGridHistory : public PoseHistory {
 
     PoseVector neighbourPoses(const Eigen::Matrix4f& pose, const SensorImpl& sensor) const;
 
-    void frustumOverlap(Image<float>& frustum_overlap_image,
+    void frustumOverlap(Image<uint8_t>& frustum_overlap_mask,
                         const SensorImpl& sensor,
                         const Eigen::Matrix4f& T_MB,
                         const Eigen::Matrix4f& T_BC) const;
