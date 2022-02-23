@@ -30,7 +30,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         map_(map),
         T_BC_(T_BC),
         utility_(-1.0f),
-        exploration_utility_(-1.0f)
+        exploration_utility_(-1.0f),
+        object_utility_(-1.0f)
 {
 }
 
@@ -62,6 +63,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         T_BC_(T_BC),
         utility_(-1.0f),
         exploration_utility_(-1.0f),
+        object_utility_(-1.0f),
         config_(config)
 {
     // Reject based on the pose history.
@@ -134,6 +136,13 @@ float CandidateView::utility() const
 float CandidateView::explorationUtility() const
 {
     return exploration_utility_;
+}
+
+
+
+float CandidateView::objectUtility() const
+{
+    return object_utility_;
 }
 
 
@@ -450,6 +459,7 @@ void CandidateView::computeUtility()
         (config_.exploration_weight * entropy_ + (1.0f - config_.exploration_weight) * lod_gain_)
         / path_time_;
     exploration_utility_ = entropy_ / path_time_;
+    object_utility_ = lod_gain_ / path_time_;
     constexpr char format[] = "(%4.2f * %6.4f + %4.2f * %6.4f) / %-7.3f = %f";
     // Resize the string with the appropriate number of characters to fit the output of snprintf().
     const int s = snprintf(nullptr,
@@ -606,6 +616,7 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Status:                " << c.status_ << "\n";
     os << "Utility:               " << c.utility() << "\n";
     os << "Exploration utility:   " << c.explorationUtility() << "\n";
+    os << "Object utility:        " << c.objectUtility() << "\n";
     os << "Entropy:               " << c.entropy_ << "\n";
     os << "LoD gain:              " << c.lod_gain_ << "\n";
     os << "Path time:             " << c.path_time_ << "\n";
