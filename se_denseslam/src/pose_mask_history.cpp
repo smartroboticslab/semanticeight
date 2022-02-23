@@ -169,7 +169,6 @@ size_t PoseMaskHistory::positionToIndex(const Eigen::Vector3f& pos) const
     // Convert the (x,y,z) indices into a row-major linear index.
     // https://en.wikipedia.org/wiki/Row-major_order#Address_calculation_in_general
     const size_t idx = indices[2] + size_[2] * (indices[1] + size_[1] * indices[0]);
-    assert((0 <= idx && "The linear index is non-negative"));
     assert((idx < grid_.size() && "The linear index isn't greater than the size"));
     return idx;
 }
@@ -178,7 +177,6 @@ size_t PoseMaskHistory::positionToIndex(const Eigen::Vector3f& pos) const
 
 Eigen::Vector3f PoseMaskHistory::indexToPosition(const size_t idx) const
 {
-    assert((0 <= idx && "The linear index is non-negative"));
     assert((idx < grid_.size() && "The linear index isn't greater than the size"));
     // Convert the row-major linear index into (x,y,z) indices.
     Eigen::Vector3i indices;
