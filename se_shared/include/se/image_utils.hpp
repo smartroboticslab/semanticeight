@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <string>
 
+#include "se/image/image.hpp"
+
 
 
 namespace se {
@@ -402,6 +404,11 @@ static inline Eigen::Vector2i round_pixel(const Eigen::Vector2f& pixel_f)
     return (pixel_f + Eigen::Vector2f::Constant(0.5f)).cast<int>();
 }
 
+template<typename T>
+int save_pgm(const Image<T>& image, const std::string& filename);
+
 } // namespace se
+
+#include "image_utils_impl.hpp"
 
 #endif

@@ -324,3 +324,7 @@ int se::load_depth_pgm(uint16_t** depth_image_data,
 
     return 0;
 }
+
+// Explicit template instantiation
+template int se::save_pgm(const se::Image<uint8_t>& image, const std::string& filename);
+template int se::save_pgm(const se::Image<uint16_t>& image, const std::string& filename);
