@@ -62,13 +62,15 @@ void raycast_entropy(Image<float>& entropy_image,
                      const Eigen::Matrix4f& T_MB,
                      const Eigen::Matrix4f& T_BC);
 
+Image<float> mask_entropy_image(const Image<float>& entropy_image,
+                                const Image<uint8_t>& frustum_overlap_mask);
+
 /** \brief Compute the yaw angle in the map frame M that maximizes the entropy.
  * \return The yaw angle, the respective entropy, the index of the left edge of the window and the
  * window width.
  */
 std::tuple<float, float, int, int> optimal_yaw(const Image<float>& entropy_image,
                                                const Image<Eigen::Vector3f>& entropy_hits_M,
-                                               const Image<uint8_t>& frustum_overlap_mask,
                                                const SensorImpl& sensor,
                                                const Eigen::Matrix4f& T_MB,
                                                const Eigen::Matrix4f& T_BC);

@@ -165,14 +165,15 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
     for (size_t i = 1; i < path_MB_.size() - 1; i++) {
         Image<float> entropy_image(entropy_image_.width(), entropy_image_.height());
         Image<Eigen::Vector3f> entropy_hits(entropy_hits_M_.width(), entropy_hits_M_.height());
-        Image<uint8_t> frustum_overlap_mask(entropy_image_.width(), entropy_image_.height(), 0u);
         raycast_entropy(entropy_image, entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
         if (config_.use_pose_history) {
+            Image<uint8_t> frustum_overlap_mask(
+                entropy_image_.width(), entropy_image_.height(), 0u);
             const Eigen::Matrix4f T_MC = path_MB_[i] * T_BC_;
             T_MB_history->frustumOverlap(frustum_overlap_mask, sensor_, T_MC, T_BC_);
+            entropy_image = mask_entropy_image(entropy_image, frustum_overlap_mask);
         }
-        const auto r = optimal_yaw(
-            entropy_image, entropy_hits, frustum_overlap_mask, sensor_, path_MB_[i], T_BC_);
+        const auto r = optimal_yaw(entropy_image, entropy_hits, sensor_, path_MB_[i], T_BC_);
         path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(std::get<0>(r));
     }
     //yawBeforeMoving(path_MB_);
@@ -435,9 +436,10 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
     if (config_.use_pose_history) {
         const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC_;
         T_MB_history->frustumOverlap(frustum_overlap_mask_, sensor_, T_MC, T_BC_);
+        entropy_image_ = mask_entropy_image(entropy_image_, frustum_overlap_mask_);
     }
-    std::tie(yaw_M_, entropy_, window_idx_, window_width_) = optimal_yaw(
-        entropy_image_, entropy_hits_M_, frustum_overlap_mask_, sensor_, path_MB_.back(), T_BC_);
+    std::tie(yaw_M_, entropy_, window_idx_, window_width_) =
+        optimal_yaw(entropy_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
 }
 
 

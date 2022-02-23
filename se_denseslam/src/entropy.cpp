@@ -189,7 +189,6 @@ int compute_window_width(const int image_width, const float hfov)
 
 std::vector<float> sum_windows(const Image<float>& entropy_image,
                                const Image<Eigen::Vector3f>& entropy_hits_M,
-                               const Image<uint8_t>& frustum_overlap_mask,
                                const SensorImpl& sensor,
                                const Eigen::Matrix4f& T_MB,
                                const Eigen::Matrix4f& T_BC)
@@ -209,9 +208,7 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
                 const int x = (w + i) % entropy_image.width();
                 const Eigen::Vector3f ray_C = (T_CM * entropy_hits_M(x, y).homogeneous()).head<3>();
                 if (sensor.rayInFrustum(ray_C)) {
-                    if (!frustum_overlap_mask(x, y)) {
-                        window_sums[w] += entropy_image(x, y);
-                    }
+                    window_sums[w] += entropy_image(x, y);
                     rays_in_frustum++;
                 }
             }
@@ -230,13 +227,12 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
  */
 std::pair<int, float> max_window(const Image<float>& entropy_image,
                                  const Image<Eigen::Vector3f>& entropy_hits_M,
-                                 const Image<uint8_t>& frustum_overlap_mask,
                                  const SensorImpl& sensor,
                                  const Eigen::Matrix4f& T_MB,
                                  const Eigen::Matrix4f& T_BC)
 {
     const std::vector<float> window_sums =
-        sum_windows(entropy_image, entropy_hits_M, frustum_overlap_mask, sensor, T_MB, T_BC);
+        sum_windows(entropy_image, entropy_hits_M, sensor, T_MB, T_BC);
     // Find the window with the maximum sum
     const auto max_it = std::max_element(window_sums.begin(), window_sums.end());
     if (max_it != window_sums.end()) {
@@ -293,16 +289,30 @@ void raycast_entropy(Image<float>& entropy_image,
 
 
 
+Image<float> mask_entropy_image(const Image<float>& entropy_image,
+                                const Image<uint8_t>& frustum_overlap_mask)
+{
+    Image<float> masked_entropy(entropy_image.width(), entropy_image.height());
+#pragma omp parallel for
+    for (int y = 0; y < masked_entropy.height(); ++y) {
+#pragma omp simd
+        for (int x = 0; x < masked_entropy.width(); ++x) {
+            masked_entropy(x, y) = frustum_overlap_mask(x, y) ? 0.0f : entropy_image(x, y);
+        }
+    }
+    return masked_entropy;
+}
+
+
+
 std::tuple<float, float, int, int> optimal_yaw(const Image<float>& entropy_image,
                                                const Image<Eigen::Vector3f>& entropy_hits_M,
-                                               const Image<uint8_t>& frustum_overlap_mask,
                                                const SensorImpl& sensor,
                                                const Eigen::Matrix4f& T_MB,
                                                const Eigen::Matrix4f& T_BC)
 {
     // Use a sliding window to compute the yaw angle that results in the maximum entropy
-    const std::pair<int, float> r =
-        max_window(entropy_image, entropy_hits_M, frustum_overlap_mask, sensor, T_MB, T_BC);
+    const std::pair<int, float> r = max_window(entropy_image, entropy_hits_M, sensor, T_MB, T_BC);
     // Azimuth angle of the left edge of the window
     const int best_idx = r.first;
     const float yaw_M_left_edge = index_to_azimuth(best_idx, entropy_image.width(), M_TAU_F);
