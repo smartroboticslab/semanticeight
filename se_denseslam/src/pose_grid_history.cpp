@@ -17,7 +17,7 @@ PoseGridHistory::PoseGridHistory(const Eigen::Vector3f& dimensions,
         dim_(dimensions.x(), dimensions.y(), dimensions.z(), M_TAU_F),
         res_(resolution),
         inv_res_((1.0f / res_.array()).matrix()),
-        size_((dim_.array() / res_.array()).matrix().cast<int>()),
+        size_((dim_.array() / res_.array()).ceil().matrix().cast<int>()),
         num_cells_(size_.prod()),
         grid_(num_cells_, 0)
 {
