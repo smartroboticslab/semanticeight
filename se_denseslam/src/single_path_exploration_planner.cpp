@@ -23,6 +23,43 @@ std::pair<size_t, float> best_candidate(const std::vector<CandidateView>& candid
     return std::make_pair(best_idx, best_utility);
 }
 
+
+
+Eigen::Vector3f sample_random_frontier(const se::Octree<VoxelImpl::VoxelType>& map,
+                                       std::deque<se::key_t>& frontiers,
+                                       const Eigen::Vector3f& sampling_min_M,
+                                       const Eigen::Vector3f& sampling_max_M)
+{
+    std::shuffle(frontiers.begin(), frontiers.end(), std::mt19937{std::random_device{}()});
+    const key_t code = frontiers.back();
+    frontiers.pop_back();
+    // Return the coordinates of the sampled volume's centre.
+    const int size = map.depthToSize(keyops::depth(code));
+    Eigen::Vector3f pos_M = map.voxelDim()
+        * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
+    math::clamp(pos_M, sampling_min_M, sampling_max_M);
+    return pos_M;
+}
+
+
+
+Eigen::Vector3f sample_random_object(std::deque<ObjectPtr>& objects,
+                                     const Eigen::Vector3f& sampling_min_M,
+                                     const Eigen::Vector3f& sampling_max_M)
+{
+    std::shuffle(objects.begin(), objects.end(), std::mt19937{std::random_device{}()});
+    ObjectPtr object = objects.back();
+    objects.pop_back();
+    // Return the coordinates of the sampled object's centre.
+    Eigen::Vector3f pos_M =
+        (object->T_MO_ * Eigen::Vector3f::Constant(object->mapDim() / 2.0f).homogeneous())
+            .head<3>();
+    math::clamp(pos_M, sampling_min_M, sampling_max_M);
+    return pos_M;
+}
+
+
+
 SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     const OctreeConstPtr map,
     const std::vector<se::key_t>& frontiers,
@@ -39,6 +76,12 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     const PoseHistory* T_MB_history = &T_MB_mask_history;
     //MortonSamplingTree candidate_sampling_tree(frontiers, map->voxelDepth());
     std::deque<se::key_t> remaining_frontiers(frontiers.begin(), frontiers.end());
+    // Get the incomplete objects.
+    std::deque<ObjectPtr> remaining_objects;
+    std::copy_if(objects.begin(),
+                 objects.end(),
+                 std::back_inserter(remaining_objects),
+                 [](const auto o) { return !o->finished(); });
     candidates_.reserve(config_.num_candidates);
     config_.candidate_config.planner_config.start_t_MB_ = T_MB.topRightCorner<3, 1>();
     // Create a single planner for allcandidates.
@@ -68,8 +111,11 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         //                                                       config_.sampling_max_M);
         //const Eigen::Vector3f candidate_t_MB = sampleCandidate(
         //    *map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
-        const Eigen::Vector3f candidate_t_MB = sampleCandidate(
-            *map, remaining_frontiers, config_.sampling_min_M, config_.sampling_max_M);
+        const Eigen::Vector3f candidate_t_MB = sampleCandidate(*map,
+                                                               remaining_frontiers,
+                                                               remaining_objects,
+                                                               config_.sampling_min_M,
+                                                               config_.sampling_max_M);
         // Create the config for this particular candidate
         CandidateConfig candidate_config = config_.candidate_config;
         candidate_config.planner_config.goal_t_MB_ = candidate_t_MB;
@@ -202,18 +248,22 @@ SinglePathExplorationPlanner::sampleCandidate(const se::Octree<VoxelImpl::VoxelT
 Eigen::Vector3f
 SinglePathExplorationPlanner::sampleCandidate(const se::Octree<VoxelImpl::VoxelType>& map,
                                               std::deque<se::key_t>& frontiers,
+                                              std::deque<ObjectPtr>& objects,
                                               const Eigen::Vector3f& sampling_min_M,
-                                              const Eigen::Vector3f& sampling_max_M)
+                                              const Eigen::Vector3f& sampling_max_M,
+                                              const float frontier_sampling_prob)
 {
-    std::shuffle(frontiers.begin(), frontiers.end(), std::mt19937{std::random_device{}()});
-    const key_t code = frontiers.back();
-    frontiers.pop_back();
-    // Return the coordinates of the sampled volume's centre
-    const int size = map.depthToSize(keyops::depth(code));
-    Eigen::Vector3f pos = map.voxelDim()
-        * (keyops::decode(code).cast<float>() + Eigen::Vector3f::Constant(size / 2.0f));
-    math::clamp(pos, sampling_min_M, sampling_max_M);
-    return pos;
+    static std::mt19937 generator;
+    static std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+    if (frontiers.empty() && objects.empty()) {
+        return Eigen::Vector3f::Constant(NAN);
+    }
+    else if (objects.empty() || distribution(generator) < frontier_sampling_prob) {
+        return sample_random_frontier(map, frontiers, sampling_min_M, sampling_max_M);
+    }
+    else {
+        return sample_random_object(objects, sampling_min_M, sampling_max_M);
+    }
 }
 
 } // namespace se

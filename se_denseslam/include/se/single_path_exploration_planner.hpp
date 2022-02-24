@@ -89,12 +89,14 @@ class SinglePathExplorationPlanner {
                                            const Eigen::Vector3f& sampling_min_M,
                                            const Eigen::Vector3f& sampling_max_M);
 
-    /** Sample a candidate position by randomly selecting a frontier.
+    /** Sample a candidate position by randomly selecting a frontier or object.
      */
     static Eigen::Vector3f sampleCandidate(const se::Octree<VoxelImpl::VoxelType>& map,
                                            std::deque<se::key_t>& frontiers,
+                                           std::deque<ObjectPtr>& objects,
                                            const Eigen::Vector3f& sampling_min_M,
-                                           const Eigen::Vector3f& sampling_max_M);
+                                           const Eigen::Vector3f& sampling_max_M,
+                                           const float frontier_sampling_prob = 0.5f);
 };
 } // namespace se
 
