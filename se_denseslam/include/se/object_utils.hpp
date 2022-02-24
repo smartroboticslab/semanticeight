@@ -24,6 +24,8 @@ Objects filter_visible_objects(const Objects& objects, const std::set<int>& visi
 
 /** Return the per-object Level-of-Detail gain by counting VoxelBlocks with minimum scales other
  * than 0.
+ *
+ * \note UNUSED
  */
 std::vector<float> object_lod_gain_blocks(const Objects& objects,
                                           const SensorImpl& sensor,
@@ -31,6 +33,8 @@ std::vector<float> object_lod_gain_blocks(const Objects& objects,
 
 /** Return the per-object Level-of-Detail gain by raycasting objects and counting hits with
  * minimum scales other than 0 .
+ *
+ * \note UNUSED
  */
 std::vector<float> object_lod_gain_raycasting(const Objects& objects,
                                               const SensorImpl& sensor,
