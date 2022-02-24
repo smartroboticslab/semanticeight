@@ -246,6 +246,10 @@ class VoxelBlock : public Node<T> {
     {
         min_scale_ = s;
     }
+    int8_t minScaleReached() const
+    {
+        return min_scale_reached_;
+    }
 
     bool contains(const Eigen::Vector3i& voxel_coord) const;
 
@@ -288,6 +292,9 @@ class VoxelBlock : public Node<T> {
     Eigen::Vector3i coordinates_;
     int current_scale_;
     int min_scale_;
+    int8_t min_scale_reached_;
+
+    void updateMinScaleReached();
 
     private:
     // Internal copy helper function

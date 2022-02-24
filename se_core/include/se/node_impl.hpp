@@ -155,7 +155,8 @@ template<typename T>
 VoxelBlock<T>::VoxelBlock(const int current_scale, const int min_scale) :
         coordinates_(Eigen::Vector3i::Constant(0)),
         current_scale_(current_scale),
-        min_scale_(min_scale)
+        min_scale_(min_scale),
+        min_scale_reached_(min_scale)
 {
     this->size_ = BLOCK_SIZE;
 }
@@ -248,6 +249,17 @@ constexpr int VoxelBlock<T>::scaleOffset(const int scale)
 }
 
 template<typename T>
+void VoxelBlock<T>::updateMinScaleReached()
+{
+    if (min_scale_reached_ < 0) {
+        min_scale_reached_ = min_scale_;
+    }
+    else {
+        min_scale_reached_ = std::min(static_cast<int8_t>(min_scale_), min_scale_reached_);
+    }
+}
+
+template<typename T>
 void VoxelBlock<T>::initFromBlock(const VoxelBlock<T>& block)
 {
     this->code_ = block.code();
@@ -257,6 +269,7 @@ void VoxelBlock<T>::initFromBlock(const VoxelBlock<T>& block)
     this->active_ = block.active();
     coordinates_ = block.coordinates();
     min_scale_ = block.min_scale();
+    min_scale_reached_ = block.minScaleReached();
     current_scale_ = block.current_scale();
     std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
 }
@@ -355,6 +368,7 @@ void VoxelBlockFinest<T>::initFromBlock(const VoxelBlockFinest<T>& block)
     this->active_ = block.active();
     this->coordinates_ = block.coordinates();
     this->min_scale_ = block.min_scale();
+    this->min_scale_reached_ = block.minScaleReached();
     this->current_scale_ = block.current_scale();
     std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
     std::copy(block.blockData(), block.blockData() + num_voxels_in_block, blockData());
@@ -371,6 +385,7 @@ VoxelBlockFull<T>::VoxelBlockFull(const typename T::VoxelData init_data) : Voxel
         block_data_[voxel_idx] = init_data;
     }
     this->min_scale_ = -1;
+    this->min_scale_reached_ = -1;
 }
 
 template<typename T>
@@ -480,6 +495,7 @@ void VoxelBlockFull<T>::initFromBlock(const VoxelBlockFull<T>& block)
     this->active_ = block.active();
     this->coordinates_ = block.coordinates();
     this->min_scale_ = block.min_scale();
+    this->min_scale_reached_ = block.minScaleReached();
     this->current_scale_ = block.current_scale();
     std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
     std::copy(block.blockData(), block.blockData() + num_voxels_in_block, blockData());
@@ -695,6 +711,7 @@ void VoxelBlockSingle<T>::allocateDownTo()
             block_data_.push_back(voxel_data);
         }
         this->min_scale_ = 0;
+        this->min_scale_reached_ = 0;
     }
 }
 
@@ -711,6 +728,7 @@ void VoxelBlockSingle<T>::allocateDownTo(const int scale)
             block_data_.push_back(voxel_data);
         }
         this->min_scale_ = scale;
+        this->updateMinScaleReached();
     }
 }
 
@@ -725,6 +743,7 @@ void VoxelBlockSingle<T>::deleteUpTo(const int scale)
         block_data_.pop_back();
     }
     this->min_scale_ = scale;
+    this->updateMinScaleReached();
 }
 
 template<typename T>
@@ -737,6 +756,7 @@ void VoxelBlockSingle<T>::initFromBlock(const VoxelBlockSingle<T>& block)
     this->active_ = block.active();
     this->coordinates_ = block.coordinates();
     this->min_scale_ = block.min_scale();
+    this->min_scale_reached_ = block.minScaleReached();
     this->current_scale_ = block.current_scale();
     std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
     if (block.min_scale()
@@ -1257,6 +1277,7 @@ void VoxelBlockSingleMax<T>::allocateDownTo()
 
         this->current_scale_ = 0;
         this->min_scale_ = 0;
+        this->min_scale_reached_ = 0;
         curr_data_ = block_data_[this->max_scale];
     }
 }
@@ -1296,6 +1317,7 @@ void VoxelBlockSingleMax<T>::allocateDownTo(const int min_scale)
 
         this->current_scale_ = min_scale;
         this->min_scale_ = min_scale;
+        this->updateMinScaleReached();
         curr_data_ = block_data_[this->max_scale - min_scale];
     }
 }
@@ -1335,6 +1357,7 @@ void VoxelBlockSingleMax<T>::deleteUpTo(const int min_scale)
     block_max_data_.push_back(block_data_[this->max_scale - min_scale]);
 
     this->min_scale_ = min_scale;
+    this->updateMinScaleReached();
 }
 
 
@@ -1478,6 +1501,7 @@ bool VoxelBlockSingleMax<T>::switchData()
 
         this->current_scale_ = buffer_scale_;
         this->min_scale_ = buffer_scale_;
+        this->updateMinScaleReached();
 
         curr_data_ = buffer_data_;
         curr_integr_count_ = buffer_integr_count_;
@@ -1558,6 +1582,7 @@ void VoxelBlockSingleMax<T>::initFromBlock(const VoxelBlockSingleMax<T>& block)
     this->active_ = block.active();
     this->coordinates_ = block.coordinates();
     this->min_scale_ = block.min_scale();
+    this->min_scale_reached_ = block.minScaleReached();
     this->current_scale_ = block.current_scale();
     init_data_ = block.initData();
     std::copy(block.childrenData(), block.childrenData() + 8, this->children_data_);
