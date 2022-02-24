@@ -8,7 +8,8 @@
 namespace se {
 
 template<typename FunctionT>
-size_t best_candidate(const std::vector<CandidateView>& candidates, const FunctionT get_utility)
+std::pair<size_t, float> best_candidate(const std::vector<CandidateView>& candidates,
+                                        const FunctionT get_utility)
 {
     size_t best_idx = SIZE_MAX;
     float best_utility = 0.0f;
@@ -19,7 +20,7 @@ size_t best_candidate(const std::vector<CandidateView>& candidates, const Functi
             best_utility = candidate_utility;
         }
     }
-    return best_idx;
+    return std::make_pair(best_idx, best_utility);
 }
 
 SinglePathExplorationPlanner::SinglePathExplorationPlanner(
@@ -81,20 +82,24 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
             candidates_.pop_back();
         }
     }
-    // Find the best candidate
-    best_idx_ = best_candidate(candidates_, [](const auto& c) { return c.utility(); });
+    // Find the best candidate based of different utililties.
+    const auto combined = best_candidate(candidates_, [](const auto& c) { return c.utility(); });
+    const auto exploration =
+        best_candidate(candidates_, [](const auto& c) { return c.explorationUtility(); });
+    const auto object =
+        best_candidate(candidates_, [](const auto& c) { return c.objectUtility(); });
+    // Select the best candidate.
+    best_idx_ = combined.first;
     // Add an invalid candidate to return if no best candidate was found
     if (best_idx_ == SIZE_MAX) {
         best_idx_ = candidates_.size();
         candidates_.emplace_back(*map, sensor, T_BC);
         return;
     }
+    // Compare the best candidate with the best candidate without taking objects into account.
+    exploration_dominant_ = (best_idx_ == exploration.first);
     // Compute the yaw angles at each path vertex of the best candidate
     candidates_[best_idx_].computeIntermediateYaw(T_MB_history);
-    // Compare the best candidate with the best candidate without taking objects into account.
-    const size_t best_exploration_idx =
-        best_candidate(candidates_, [](const auto& c) { return c.explorationUtility(); });
-    exploration_dominant_ = (best_idx_ == best_exploration_idx);
 }
 
 
