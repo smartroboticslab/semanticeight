@@ -111,11 +111,13 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         //                                                       config_.sampling_max_M);
         //const Eigen::Vector3f candidate_t_MB = sampleCandidate(
         //    *map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
-        const Eigen::Vector3f candidate_t_MB = sampleCandidate(*map,
-                                                               remaining_frontiers,
-                                                               remaining_objects,
-                                                               config_.sampling_min_M,
-                                                               config_.sampling_max_M);
+        const Eigen::Vector3f candidate_t_MB =
+            sampleCandidate(*map,
+                            remaining_frontiers,
+                            remaining_objects,
+                            config_.sampling_min_M,
+                            config_.sampling_max_M,
+                            config_.frontier_sampling_probability);
         // Create the config for this particular candidate
         CandidateConfig candidate_config = config_.candidate_config;
         candidate_config.planner_config.goal_t_MB_ = candidate_t_MB;

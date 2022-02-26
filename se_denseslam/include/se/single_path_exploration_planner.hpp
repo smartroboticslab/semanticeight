@@ -19,9 +19,12 @@ namespace se {
 typedef std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> OctreeConstPtr;
 
 struct ExplorationConfig {
+    // Sampling settings
     int num_candidates;
+    float frontier_sampling_probability = 0.5f;
     Eigen::Vector3f sampling_min_M;
     Eigen::Vector3f sampling_max_M;
+    // Goal settings
     float goal_xy_threshold;
     float goal_z_threshold;
     float goal_roll_pitch_threshold;

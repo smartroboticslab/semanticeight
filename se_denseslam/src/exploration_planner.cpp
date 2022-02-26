@@ -12,6 +12,7 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
                                        const SensorImpl& sensor,
                                        const se::Configuration& config) :
         config_({config.num_candidates,
+                 config.frontier_sampling_probability,
                  (pipeline.T_MW() * config.sampling_min_W.homogeneous()).head<3>(),
                  (pipeline.T_MW() * config.sampling_max_W.homogeneous()).head<3>(),
                  config.goal_xy_threshold,

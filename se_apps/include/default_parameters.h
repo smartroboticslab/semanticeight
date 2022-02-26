@@ -658,6 +658,10 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
             if (has_yaml_exploration_config && yaml_exploration_config["num_candidates"]) {
                 config.num_candidates = yaml_exploration_config["num_candidates"].as<size_t>();
             }
+            if (has_yaml_exploration_config && yaml_exploration_config["frontier_sampling_probability"]) {
+                config.frontier_sampling_probability =
+                    yaml_exploration_config["frontier_sampling_probability"].as<float>();
+            }
             // Exploration weight
             if (has_yaml_exploration_config && yaml_exploration_config["exploration_weight"]) {
                 config.exploration_weight =
