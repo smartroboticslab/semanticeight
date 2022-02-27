@@ -77,6 +77,8 @@ class CandidateView {
 
     Image<uint32_t> renderEntropy(const bool visualize_yaw = true) const;
 
+    Image<uint32_t> renderBGScaleGain(const bool visualize_yaw = true) const;
+
     Image<uint32_t> renderDepth(const bool visualize_yaw = true) const;
 
     Image<uint32_t> renderMinScale() const;
@@ -135,6 +137,8 @@ class CandidateView {
     float lod_gain_;
     /** An image containing the information gain produced by the 360 raycasting. */
     Image<float> entropy_image_;
+    /** An image containing the background scale gain produced by the 360 raycasting. */
+    Image<float> bg_scale_gain_image_;
     /** An image containing the points where entropy raycasting hit. */
     Image<Eigen::Vector3f> entropy_hits_M_;
     /** An image containing the per-pixel mask of frustum overlap with the candidate's neighbors. */
@@ -158,6 +162,8 @@ class CandidateView {
     float exploration_utility_;
     float object_utility_;
     CandidateConfig config_;
+
+    static constexpr int8_t desired_scale_ = 0;
 
     /** \brief Perform a 360 degree raycast and compute the optimal yaw angle.
      */

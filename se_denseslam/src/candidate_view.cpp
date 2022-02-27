@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iomanip>
 #include <se/image_utils.hpp>
+#include <se/lod.hpp>
 #include <se/utils/math_utils.h>
 
 namespace se {
@@ -24,6 +25,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         entropy_(-1.0f),
         lod_gain_(-1.0f),
         entropy_image_(1, 1),
+        bg_scale_gain_image_(1, 1),
         entropy_hits_M_(1, 1),
         frustum_overlap_mask_(1, 1),
         min_scale_image_(1, 1),
@@ -57,6 +59,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         lod_gain_(-1.0f),
         // TODO create if needed?
         entropy_image_(config.raycast_width, config.raycast_height),
+        bg_scale_gain_image_(config.raycast_width, config.raycast_height),
         entropy_hits_M_(config.raycast_width, config.raycast_height),
         frustum_overlap_mask_(config.raycast_width, config.raycast_height, 0.0f),
         min_scale_image_(1, 1),
@@ -178,6 +181,8 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
         Image<float> entropy_image(entropy_image_.width(), entropy_image_.height());
         Image<Eigen::Vector3f> entropy_hits(entropy_hits_M_.width(), entropy_hits_M_.height());
         raycast_entropy(entropy_image, entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
+        const Image<float> bg_scale_gain_image =
+            bg_scale_gain(entropy_hits, map_, sensor_, path_MB_[i], T_BC_, desired_scale_);
         if (config_.use_pose_history) {
             Image<uint8_t> frustum_overlap_mask(
                 entropy_image_.width(), entropy_image_.height(), 0u);
@@ -202,6 +207,19 @@ Image<uint32_t> CandidateView::renderEntropy(const bool visualize_yaw) const
     }
     else {
         return Image<uint32_t>(entropy_image_.width(), entropy_image_.height(), 0xFF0000FF);
+    }
+}
+
+
+
+Image<uint32_t> CandidateView::renderBGScaleGain(const bool visualize_yaw) const
+{
+    if (isValid()) {
+        return visualize_entropy(bg_scale_gain_image_, window_idx_, window_width_, visualize_yaw);
+    }
+    else {
+        return Image<uint32_t>(
+            bg_scale_gain_image_.width(), bg_scale_gain_image_.height(), 0xFF0000FF);
     }
 }
 
@@ -279,6 +297,20 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
         for (int x = 0; x < entropy_image_.width(); x++) {
             f << std::setw(20) << entropy_image_(x, y);
             if (x != entropy_image_.width() - 1) {
+                f << " ";
+            }
+        }
+        f << "\n";
+    }
+
+    f << "\n";
+    f << std::setprecision(6);
+    f << "BG scale gain\n";
+    f << bg_scale_gain_image_.width() << " " << bg_scale_gain_image_.height() << "\n";
+    for (int y = 0; y < bg_scale_gain_image_.height(); y++) {
+        for (int x = 0; x < bg_scale_gain_image_.width(); x++) {
+            f << std::setw(20) << bg_scale_gain_image_(x, y);
+            if (x != bg_scale_gain_image_.width() - 1) {
                 f << " ";
             }
         }
@@ -445,6 +477,8 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
 {
     // Raycast at the last path vertex
     raycast_entropy(entropy_image_, entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_);
+    bg_scale_gain_image_ =
+        bg_scale_gain(entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_, desired_scale_);
     if (config_.use_pose_history) {
         const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC_;
         T_MB_history->frustumOverlap(frustum_overlap_mask_, sensor_, T_MC, T_BC_);
@@ -636,6 +670,8 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Vertical FoV:          " << se::math::rad_to_deg(c.sensor_.vertical_fov) << "\n";
     os << "Entropy image:         " << c.entropy_image_.width() << "x" << c.entropy_image_.height()
        << "\n";
+    os << "BG scale gain image:   " << c.bg_scale_gain_image_.width() << "x"
+       << c.bg_scale_gain_image_.height() << "\n";
     os << "Entropy hit image M:   " << c.entropy_hits_M_.width() << "x"
        << c.entropy_hits_M_.height() << "\n";
     os << "Frustum overlap mask:  " << c.frustum_overlap_mask_.width() << "x"
