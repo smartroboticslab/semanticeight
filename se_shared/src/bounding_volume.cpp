@@ -307,6 +307,7 @@ void se::BoundingSphere::overlay(uint32_t* out,
                                  const Eigen::Vector2i& output_size,
                                  const Eigen::Matrix4f& T_VC,
                                  const se::PinholeCamera& camera,
+                                 const cv::Scalar& colour,
                                  const float) const
 {
     const Eigen::Matrix4f T_CV = T_VC.inverse();
@@ -328,13 +329,11 @@ void se::BoundingSphere::overlay(uint32_t* out,
 
     // Draw the projected sphere center as a small circle.
     constexpr int point_radius_px = 2;
-    cv::circle(
-        out_mat, cv::Point(center_px.x(), center_px.y()), point_radius_px, _overlay_color, -1);
+    cv::circle(out_mat, cv::Point(center_px.x(), center_px.y()), point_radius_px, colour, -1);
 
     if (is_ellipse_ == 1) {
         // Draw the ellipse outline.
-        cv::ellipse(
-            out_mat, cv::Point(x_c_, y_c_), cv::Size(a_, b_), theta_, 0, 360, _overlay_color);
+        cv::ellipse(out_mat, cv::Point(x_c_, y_c_), cv::Size(a_, b_), theta_, 0, 360, colour);
     }
 }
 
@@ -463,6 +462,7 @@ void se::AABB::overlay(uint32_t* out,
                        const Eigen::Vector2i& output_size,
                        const Eigen::Matrix4f& T_VC,
                        const se::PinholeCamera& camera,
+                       const cv::Scalar& colour,
                        const float) const
 {
     // TODO: Use opacity parameter
@@ -505,7 +505,7 @@ void se::AABB::overlay(uint32_t* out,
         const auto& v1 = projected_vertices[v.first];
         const auto& v2 = projected_vertices[v.second];
         if (!isnan(v1.x) && !isnan(v1.y) && !isnan(v2.x) && !isnan(v2.y)) {
-            cv::line(out_mat, v1, v2, _overlay_color);
+            cv::line(out_mat, v1, v2, colour);
         }
     }
 }

@@ -349,8 +349,14 @@ void overlayBoundingVolumeKernel(uint32_t* output_image_data,
 {
     for (size_t i = 0; i < objects.size(); ++i) {
 #if SE_BOUNDING_VOLUME > 0
-        objects[i]->bounding_volume_M_.overlay(
-            output_image_data, output_image_res, T_MC, sensor, opacity);
+        const Eigen::Vector3f rgb =
+            se::internal::color_map[objects[i]->instance_id % se::internal::color_map.size()];
+        objects[i]->bounding_volume_M_.overlay(output_image_data,
+                                               output_image_res,
+                                               T_MC,
+                                               sensor,
+                                               cv::Scalar(rgb.x(), rgb.y(), rgb.z(), 255),
+                                               opacity);
 #else
 #endif
     }

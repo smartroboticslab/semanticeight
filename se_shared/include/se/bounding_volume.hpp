@@ -18,7 +18,6 @@
 
 
 namespace se {
-const cv::Scalar _overlay_color = cv::Scalar(255, 0, 128, 255);
 
 class BoundingVolume {
     public:
@@ -40,6 +39,7 @@ class BoundingVolume {
                          const Eigen::Vector2i& output_size,
                          const Eigen::Matrix4f& T_VC,
                          const PinholeCamera& camera,
+                         const cv::Scalar& colour,
                          const float opacity) const = 0;
 
     virtual std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>
@@ -96,6 +96,7 @@ class BoundingSphere : public BoundingVolume {
                  const Eigen::Vector2i& output_size,
                  const Eigen::Matrix4f& T_VC,
                  const PinholeCamera& camera,
+                 const cv::Scalar& colour,
                  const float opacity) const;
 
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> edges() const;
@@ -134,6 +135,7 @@ class AABB : public BoundingVolume {
                  const Eigen::Vector2i& output_size,
                  const Eigen::Matrix4f& T_VC,
                  const PinholeCamera& camera,
+                 const cv::Scalar& colour,
                  const float opacity) const;
 
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> edges() const;
