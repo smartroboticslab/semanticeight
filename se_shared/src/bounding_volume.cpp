@@ -429,22 +429,30 @@ cv::Mat se::AABB::raycastingMask(const Eigen::Vector2i& mask_size,
                                  const Eigen::Matrix4f& T_VC,
                                  const se::PinholeCamera& camera)
 {
-    // Initialize the destination Mat.
-    cv::Mat raycasting_mask = cv::Mat::zeros(cv::Size(mask_size.x(), mask_size.y()), se::mask_t);
-
+    // Return early if the AABB isn't visible.
+    if (!isVisible(T_VC, camera)) {
+        return cv::Mat::zeros(cv::Size(mask_size.x(), mask_size.y()), se::mask_t);
+    }
     // Project the AABB vertices on the image plane.
     std::vector<cv::Point2f> projected_vertices = projectAABB(T_VC, camera);
-
+    // Return a full mask if some vertices can't be projected.
+    auto result = std::find_if(projected_vertices.begin(),
+                               projected_vertices.end(),
+                               [](const auto& p) { return isnan(p.x) || isnan(p.y); });
+    if (result != projected_vertices.end()) {
+        return cv::Mat(cv::Size(mask_size.x(), mask_size.y()), se::mask_t, cv::Scalar(255));
+    }
     // Compute the convex hull of the projected vertices.
     std::vector<cv::Point2f> convex_hull_vertices;
     cv::convexHull(projected_vertices, convex_hull_vertices);
-
-    // Fill the convex hull on the mask. The convex hull points need to be
-    // converted from float to int coordinates.
+    // Fill the convex hull on the mask. The convex hull points need to be converted from float to
+    // int coordinates.
     std::vector<cv::Point2i> convex_hull_vertices_i(convex_hull_vertices.size());
-    for (size_t i = 0; i < convex_hull_vertices_i.size(); ++i) {
-        convex_hull_vertices_i[i] = convex_hull_vertices[i];
-    }
+    std::transform(convex_hull_vertices.begin(),
+                   convex_hull_vertices.end(),
+                   convex_hull_vertices_i.begin(),
+                   [](const auto& p) { return cv::Point2i(p.x + 0.5f, p.y + 0.5f); });
+    cv::Mat raycasting_mask = cv::Mat::zeros(cv::Size(mask_size.x(), mask_size.y()), se::mask_t);
     cv::fillConvexPoly(raycasting_mask, convex_hull_vertices_i, 255);
     return raycasting_mask;
 }
@@ -458,6 +466,14 @@ void se::AABB::overlay(uint32_t* out,
                        const float) const
 {
     // TODO: Use opacity parameter
+    // TODO: Erroneous edges when vertices behind the camera project inside the image.
+    // TODO: Erroneous edges when vertices behind the camera project in an x or y coordinate (but
+    // not both) inside the image.
+
+    // Return early if the AABB isn't visible.
+    if (!isVisible(T_VC, camera)) {
+        return;
+    }
 
     // Project the AABB vertices on the image plane.
     std::vector<cv::Point2f> projected_vertices = projectAABB(T_VC, camera);
@@ -467,23 +483,31 @@ void se::AABB::overlay(uint32_t* out,
     // operation is fast.
     cv::Mat out_mat(cv::Size(output_size.x(), output_size.y()), CV_8UC4, out);
 
-    // Draw the bottom box edges.
-    cv::line(out_mat, projected_vertices[0], projected_vertices[1], _overlay_color);
-    cv::line(out_mat, projected_vertices[1], projected_vertices[3], _overlay_color);
-    cv::line(out_mat, projected_vertices[3], projected_vertices[2], _overlay_color);
-    cv::line(out_mat, projected_vertices[2], projected_vertices[0], _overlay_color);
+    std::vector<std::pair<int, int>> vertex_pairs = {
+        // Bottom box edges.
+        {0, 1},
+        {1, 3},
+        {3, 2},
+        {2, 0},
+        // Top box edges.
+        {4, 5},
+        {5, 7},
+        {7, 6},
+        {6, 4},
+        // Vertical box edges.
+        {0, 4},
+        {1, 5},
+        {2, 6},
+        {3, 7},
+    };
 
-    // Draw the top box edges.
-    cv::line(out_mat, projected_vertices[4], projected_vertices[5], _overlay_color);
-    cv::line(out_mat, projected_vertices[5], projected_vertices[7], _overlay_color);
-    cv::line(out_mat, projected_vertices[7], projected_vertices[6], _overlay_color);
-    cv::line(out_mat, projected_vertices[6], projected_vertices[4], _overlay_color);
-
-    // Draw the vertical box edges.
-    cv::line(out_mat, projected_vertices[0], projected_vertices[4], _overlay_color);
-    cv::line(out_mat, projected_vertices[1], projected_vertices[5], _overlay_color);
-    cv::line(out_mat, projected_vertices[2], projected_vertices[6], _overlay_color);
-    cv::line(out_mat, projected_vertices[3], projected_vertices[7], _overlay_color);
+    for (const auto& v : vertex_pairs) {
+        const auto& v1 = projected_vertices[v.first];
+        const auto& v2 = projected_vertices[v.second];
+        if (!isnan(v1.x) && !isnan(v1.y) && !isnan(v2.x) && !isnan(v2.y)) {
+            cv::line(out_mat, v1, v2, _overlay_color);
+        }
+    }
 }
 
 
@@ -542,17 +566,32 @@ void se::AABB::updateVertices()
 std::vector<cv::Point2f> se::AABB::projectAABB(const Eigen::Matrix4f& T_VC,
                                                const se::PinholeCamera& camera) const
 {
-    std::vector<cv::Point2f> projected_vertices(8, cv::Point2f(-1.f, -1.f));
-    const Eigen::Matrix4f T_CV = T_VC.inverse();
-
-    // Project the AABB vertices on the image plane. Vertices outside the image
-    // plane will have coordinates [-1 -1]^T.
-    for (size_t i = 0; i < 8; ++i) {
-        Eigen::Vector2f proj = Eigen::Vector2f::Zero();
-        camera.model.project((T_CV * vertices_.col(i).homogeneous()).head<3>(), &proj);
-        projected_vertices[i] = cv::Point2f(proj.x(), proj.y());
+    std::vector<cv::Point2f> projected_vertices(8, cv::Point2f(NAN, NAN));
+    const Eigen::Matrix4f T_CV = se::math::to_inverse_transformation(T_VC);
+    for (size_t i = 0; i < projected_vertices.size(); ++i) {
+        Eigen::Vector3f vertex_C = (T_CV * vertices_.col(i).homogeneous()).head<3>();
+        // We still need to draw lines with vertices behind the camera, project them as if they
+        // are in front.
+        vertex_C.z() = std::fabs(vertex_C.z());
+        // Project the vertex on the image.
+        Eigen::Vector2f pixel;
+        switch (camera.model.project(vertex_C, &pixel)) {
+        // Relying on the fact that srl::PinholeCamera::project() modifies pixel before testing
+        // whether it's outside the image, masked or behing the camera. We keep the
+        // out-of-bounds coordinates to allow creating the correct convex hull and drawing the
+        // correct lines.
+        case srl::projection::ProjectionStatus::Behind:
+        case srl::projection::ProjectionStatus::Masked:
+        case srl::projection::ProjectionStatus::OutsideImage:
+        case srl::projection::ProjectionStatus::Successful:
+            projected_vertices[i] = cv::Point2f(pixel.x(), pixel.y());
+            break;
+        case srl::projection::ProjectionStatus::Invalid:
+        default:
+            // Keep NANs for invalid projections.
+            break;
+        }
     }
-
     return projected_vertices;
 }
 

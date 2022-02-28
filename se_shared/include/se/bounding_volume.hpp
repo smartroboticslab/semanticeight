@@ -145,6 +145,8 @@ class AABB : public BoundingVolume {
 
     void updateVertices();
 
+    /** Points corresponding the vertices that couldn't be projected contain NANs.
+     */
     std::vector<cv::Point2f> projectAABB(const Eigen::Matrix4f& T_VC,
                                          const PinholeCamera& camera) const;
 };
