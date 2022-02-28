@@ -208,6 +208,23 @@ struct PinholeCamera {
     bool sphereInFrustumInf(const Eigen::Vector3f& center_C, const float radius) const;
 
     /**
+     * \brief Test whether a 3D AABB in camera coordinates is inside the camera frustum.
+     *
+     * This implements the method described here
+     * http://www.lighthouse3d.com/tutorials/view-frustum-culling/geometric-approach-testing-boxes/
+     * which can result in some false positives.
+     */
+    bool aabbInFrustum(const Eigen::Matrix<float, 3, 8>& vertices_C) const;
+
+    /**
+     * \brief Test whether a 3D AABB in camera coordinates is inside the camera frustum.
+     *
+     * The difference from PinholeCamera::aabbInFrustum is that it is assumed that the far plane is
+     * at infinity.
+     */
+    bool aabbInFrustumInf(const Eigen::Matrix<float, 3, 8>& vertices_C) const;
+
+    /**
      * \brief Test whether a 3D ray in camera coordinates is inside the
      * camera frustum.
      *
@@ -236,6 +253,7 @@ struct PinholeCamera {
     static constexpr int num_frustum_vertices_ = 8;
     static constexpr int num_frustum_normals_ = 6;
     Eigen::Matrix<float, 4, num_frustum_vertices_> frustum_vertices_;
+    /** \brief The frustum normals point towards the interior of the frustum. */
     Eigen::Matrix<float, 4, num_frustum_normals_> frustum_normals_;
 
     /** The radius of the sphere centered on the camera frame and containing the frustum. */

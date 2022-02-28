@@ -237,6 +237,50 @@ bool se::PinholeCamera::sphereInFrustumInf(const Eigen::Vector3f& center_C,
     return true;
 }
 
+bool se::PinholeCamera::aabbInFrustum(const Eigen::Matrix<float, 3, 8>& vertices_C) const
+{
+    // The AABB is outside the frustum if all of its vertices are outside the same plane.
+    for (size_t i = 0; i < num_frustum_normals_; ++i) {
+        for (int v = 0; v < vertices_C.cols(); ++v) {
+            // Compute the signed distance between the vertex and the plane.
+            const float distance = vertices_C.col(v).homogeneous().dot(frustum_normals_.col(i));
+            if (distance >= 0.0f) {
+                // If at least one vertex is inside this plane we don't need to keep testing it.
+                break;
+            }
+            else if (v == vertices_C.cols() - 1) {
+                // All vertices were outside this plane, the AABB is guaranteed to be outside the
+                // frustum.
+                return false;
+            }
+        }
+    }
+    // The vertices aren't all on the outside of any single plane.
+    return true;
+}
+
+bool se::PinholeCamera::aabbInFrustumInf(const Eigen::Matrix<float, 3, 8>& vertices_C) const
+{
+    // The AABB is outside the frustum if all of its vertices are outside the same plane.
+    for (size_t i = 0; i < num_frustum_normals_ - 1; ++i) {
+        for (int v = 0; v < vertices_C.cols(); ++v) {
+            // Compute the signed distance between the vertex and the plane.
+            const float distance = vertices_C.col(v).homogeneous().dot(frustum_normals_.col(i));
+            if (distance >= 0.0f) {
+                // If at least one vertex is inside this plane we don't need to keep testing it.
+                break;
+            }
+            else if (v == vertices_C.cols() - 1) {
+                // All vertices were outside this plane, the AABB is guaranteed to be outside the
+                // frustum.
+                return false;
+            }
+        }
+    }
+    // The vertices aren't all on the outside of any single plane.
+    return true;
+}
+
 bool se::PinholeCamera::rayInFrustum(const Eigen::Vector3f& ray_C) const
 {
     // Skip the near and far plane normals
