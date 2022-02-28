@@ -4,6 +4,8 @@
 
 #include "se/bounding_volume.hpp"
 
+#include "se/utils/math_utils.h"
+
 
 
 /**
@@ -373,18 +375,13 @@ se::AABB::AABB(const se::Image<Eigen::Vector3f>& vertex_map,
 
 bool se::AABB::isVisible(const Eigen::Matrix4f& T_VC, const se::PinholeCamera& camera) const
 {
-    const Eigen::Matrix4f T_CV = T_VC.inverse();
-
-    // Convert the AABB vertices from world to camera coordinates and test for
-    // visibility one by one.
+    // Convert the AABB vertices from the bounding volume to the camera frame.
+    const Eigen::Matrix4f T_CV = se::math::to_inverse_transformation(T_VC);
+    Eigen::Matrix<float, 3, 8> vertices_C;
     for (int i = 0; i < vertices_.cols(); ++i) {
-        const Eigen::Vector3f vertex_c = (T_CV * vertices_.col(i).homogeneous()).head<3>();
-        const bool visible = camera.pointInFrustumInf(vertex_c);
-        if (visible) {
-            return true;
-        }
+        vertices_C.col(i) = (T_CV * vertices_.col(i).homogeneous()).head<3>();
     }
-    return false;
+    return camera.aabbInFrustum(vertices_C);
 }
 
 
