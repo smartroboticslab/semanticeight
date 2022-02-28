@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"
 #include "se/bounding_volume.hpp"
 #include "se/str_utils.hpp"
+#include "se/utils/math_utils.h"
 
 
 // Tolerance in pixels when comparing projected point coordinates.
@@ -239,5 +240,138 @@ TEST_F(BoundingSphereTest, computeProjection)
 
     // ROS camera.
     for (size_t i = 0; i < bounding_spheres_ros.size(); ++i) {
+    }
+}
+
+
+
+// Test that cv::line() draws using out-of-bounds points.
+TEST(BoundingVolumePrerequisites, line)
+{
+    constexpr int w = 64;
+    constexpr int h = 64;
+    const cv::Scalar colour(UINT8_MAX);
+    cv::Mat image(cv::Size(w, h), CV_8UC1, cv::Scalar(0));
+    // Horizontal line.
+    cv::line(image, cv::Point2i(0, 0), cv::Point2i(w + 10, 0), colour);
+    for (int x = 0; x < image.cols; ++x) {
+        EXPECT_EQ(image.at<uint8_t>(0, x), UINT8_MAX);
+    }
+    // Vertical line.
+    cv::line(image, cv::Point2i(0, -10), cv::Point2i(0, h + 10), colour);
+    for (int y = 0; y < image.rows; ++y) {
+        EXPECT_EQ(image.at<uint8_t>(y, 0), UINT8_MAX);
+    }
+    // Diagonal line.
+    cv::line(image, cv::Point2i(-10, -10), cv::Point2i(w + 10, h + 10), colour);
+    ASSERT_EQ(image.rows, image.cols);
+    for (int x = 0; x < image.cols; ++x) {
+        EXPECT_EQ(image.at<uint8_t>(x, x), UINT8_MAX);
+    }
+}
+
+
+
+// Test that cv::fillConvexPoly() draws using out-of-bounds points.
+TEST(BoundingVolumePrerequisites, fillConvexPoly)
+{
+    constexpr int w = 64;
+    constexpr int h = 64;
+    cv::Mat image(cv::Size(w, h), CV_8UC1, cv::Scalar(0));
+    const std::vector<cv::Point2i> vertices{{-10, -10}, {w + 10, -10}, {w + 10, h + 10}};
+    cv::fillConvexPoly(image, vertices, cv::Scalar(UINT8_MAX));
+
+    for (int y = 0; y < image.rows; ++y) {
+        for (int x = 0; x < image.cols; ++x) {
+            const uint8_t desired = x >= y ? UINT8_MAX : 0;
+            EXPECT_EQ(image.at<uint8_t>(y, x), desired);
+        }
+    }
+}
+
+
+
+TEST(AABB, project)
+{
+    if constexpr (false) {
+        const se::PinholeCamera sensor(
+            {640, 480, false, 0.001f, 10.0f, 325.0f, 325.0f, 319.5f, 239.5f});
+        const int w = sensor.model.imageWidth();
+        const int h = sensor.model.imageHeight();
+        const cv::Scalar bg_color(0x00, 0x00, 0x00, 0xFF);
+        const cv::Scalar aabb_color(0xFF, 0xFF, 0xFF, 0xFF);
+
+        constexpr float dim_M = 1.0f;
+        constexpr float inc = dim_M / 10.0f;
+        se::AABB aabb_M(Eigen::Vector3f::Constant(-dim_M / 2.0f),
+                        Eigen::Vector3f::Constant(dim_M / 2.0f));
+
+        Eigen::Matrix4f T_MC = Eigen::Matrix4f::Identity();
+        // Invalid projection -> smaller mask.
+        T_MC.topRightCorner<3, 1>() = Eigen::Vector3f(0, 0, -dim_M / 2);
+        // Vertices behind the camera -> correct mask.
+        //T_MC.topRightCorner<3, 1>() = Eigen::Vector3f(0, 0, -dim_M / 2 + inc);
+        // Vertices behind the camera -> bigger mask.
+        //T_MC.topRightCorner<3, 1>() = Eigen::Vector3f(-dim_M / 2 - inc, 0, -dim_M / 2 + inc);
+        // Vertices behind the camera -> wrong overlay.
+        //T_MC.topRightCorner<3, 1>() = Eigen::Vector3f(-dim_M / 2 - inc, 0, -dim_M / 2 + 2 * inc);
+
+        cv::namedWindow("test", cv::WINDOW_AUTOSIZE | cv::WINDOW_KEEPRATIO);
+        bool quit = false;
+        while (!quit) {
+            std::cout << "T_MC\n" << T_MC << "\n";
+
+
+            auto start_time = std::chrono::steady_clock::now();
+            cv::Mat overlay(cv::Size(w, h), CV_8UC4, bg_color);
+            aabb_M.overlay(reinterpret_cast<uint32_t*>(overlay.data),
+                           Eigen::Vector2i(w, h),
+                           T_MC,
+                           sensor,
+                           aabb_color,
+                           1.0f);
+            cv::Mat mask_binary = aabb_M.raycastingMask(Eigen::Vector2i(w, h), T_MC, sensor);
+            double duration_ms = 1000.0f
+                * std::chrono::duration<double>(std::chrono::steady_clock::now() - start_time)
+                      .count();
+            std::cout << "Overlay: " << duration_ms << " ms\n";
+
+            start_time = std::chrono::steady_clock::now();
+            cv::Mat mask(cv::Size(w, h), CV_8UC4, bg_color);
+            cv::cvtColor(mask_binary, mask, cv::COLOR_GRAY2RGBA);
+            duration_ms = 1000.0f
+                * std::chrono::duration<double>(std::chrono::steady_clock::now() - start_time)
+                      .count();
+            std::cout << "Mask:    " << duration_ms << " ms\n";
+
+            cv::Mat composite(cv::Size(w, 2 * h), CV_8UC4);
+            cv::vconcat(overlay, mask, composite);
+            cv::imshow("test", composite);
+            switch (cv::waitKey(0)) {
+            case 'q':
+                quit = true;
+                break;
+            case 'w':
+                T_MC.topRightCorner<3, 1>().z() += inc;
+                break;
+            case 's':
+                T_MC.topRightCorner<3, 1>().z() -= inc;
+                break;
+            case 'd':
+                T_MC.topRightCorner<3, 1>().x() += inc;
+                break;
+            case 'a':
+                T_MC.topRightCorner<3, 1>().x() -= inc;
+                break;
+            case 'f':
+                T_MC.topRightCorner<3, 1>().y() += inc;
+                break;
+            case 'r':
+                T_MC.topRightCorner<3, 1>().y() -= inc;
+                break;
+            default:
+                break;
+            }
+        }
     }
 }
