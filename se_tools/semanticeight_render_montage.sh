@@ -55,3 +55,29 @@ for depth in $depth_renders; do
 		"$out"
 done | parallel
 
+out_dir_2="$dir"_montage_aabb_mask
+volume_aabb_renders=$(find "$dir" -name '*volume_aabb_*.png' | sort -n)
+mkdir -p "$out_dir_2"
+
+for volume_aabb in $volume_aabb_renders
+do
+	n=$(frame_number "$volume_aabb")
+	name_pattern=$(printf '*aabb_mask_%05d_*.png' "$n")
+	aabb_mask_renders=$(find "$dir" -name "$name_pattern" | sort -n)
+	if [ -z "$aabb_mask_renders" ]
+	then
+		continue
+	fi
+	printf 'montage -label %%t -font Liberation-Mono '
+	for aabb_mask in $aabb_mask_renders
+	do
+		printf '%s ' "$volume_aabb"
+	done
+	for aabb_mask in $aabb_mask_renders
+	do
+		printf '%s ' "$aabb_mask"
+	done
+	out="$out_dir_2/render_$(printf '%05d' "$n").png"
+	printf -- '-geometry +2+2 -tile x2 %s\n' "$out"
+done | parallel
+
