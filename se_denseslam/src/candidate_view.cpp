@@ -288,7 +288,7 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
     f << frustum_overlap_mask_.width() << " " << frustum_overlap_mask_.height() << "\n";
     for (int y = 0; y < frustum_overlap_mask_.height(); y++) {
         for (int x = 0; x < frustum_overlap_mask_.width(); x++) {
-            f << std::setw(20) << frustum_overlap_mask_(x, y);
+            f << std::setw(20) << static_cast<int>(frustum_overlap_mask_(x, y));
             if (x != frustum_overlap_mask_.width() - 1) {
                 f << " ";
             }
