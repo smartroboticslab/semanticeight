@@ -65,7 +65,7 @@ class BoundingSphere : public BoundingVolume {
 
     BoundingSphere();
 
-    BoundingSphere(Eigen::Vector3f& center, float radius = 0.f);
+    BoundingSphere(const Eigen::Vector3f& center, float radius = 0.f);
 
     BoundingSphere(const Eigen::Vector3f& vertex_min, const Eigen::Vector3f& vertex_max);
 

@@ -29,7 +29,7 @@ se::BoundingSphere::BoundingSphere() :
 
 
 
-se::BoundingSphere::BoundingSphere(Eigen::Vector3f& center, float radius) :
+se::BoundingSphere::BoundingSphere(const Eigen::Vector3f& center, float radius) :
         center_(center), radius_(radius), is_ellipse_(0)
 {
 }
