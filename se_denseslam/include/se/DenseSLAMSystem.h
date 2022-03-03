@@ -884,7 +884,12 @@ class DenseSLAMSystem {
     std::vector<std::vector<se::Triangle>>
     objectTriangleMeshesV(const se::meshing::ScaleMode scale_mode = se::meshing::ScaleMode::Min);
 
-    Objects getObjectMaps()
+    Objects& getObjectMaps()
+    {
+        return objects_;
+    }
+
+    const Objects& getObjectMaps() const
     {
         return objects_;
     }
