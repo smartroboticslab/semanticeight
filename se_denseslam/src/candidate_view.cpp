@@ -26,6 +26,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         lod_gain_(-1.0f),
         entropy_image_(1, 1),
         bg_scale_gain_image_(1, 1),
+        object_scale_gain_image_(1, 1),
         entropy_hits_M_(1, 1),
         frustum_overlap_mask_(1, 1),
         min_scale_image_(1, 1),
@@ -60,6 +61,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         // TODO create if needed?
         entropy_image_(config.raycast_width, config.raycast_height),
         bg_scale_gain_image_(config.raycast_width, config.raycast_height),
+        object_scale_gain_image_(config.raycast_width, config.raycast_height),
         entropy_hits_M_(config.raycast_width, config.raycast_height),
         frustum_overlap_mask_(config.raycast_width, config.raycast_height, 0.0f),
         min_scale_image_(1, 1),
@@ -183,6 +185,8 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
         raycast_entropy(entropy_image, entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
         const Image<float> bg_scale_gain_image =
             bg_scale_gain(entropy_hits, map_, sensor_, path_MB_[i], T_BC_, desired_scale_);
+        const Image<float> object_scale_gain_image =
+            object_scale_gain(entropy_hits, objects_, sensor_, path_MB_[i], T_BC_);
         if (config_.use_pose_history) {
             Image<uint8_t> frustum_overlap_mask(
                 entropy_image_.width(), entropy_image_.height(), 0u);
@@ -220,6 +224,20 @@ Image<uint32_t> CandidateView::renderBGScaleGain(const bool visualize_yaw) const
     else {
         return Image<uint32_t>(
             bg_scale_gain_image_.width(), bg_scale_gain_image_.height(), 0xFF0000FF);
+    }
+}
+
+
+
+Image<uint32_t> CandidateView::renderObjectScaleGain(const bool visualize_yaw) const
+{
+    if (isValid()) {
+        return visualize_entropy(
+            object_scale_gain_image_, window_idx_, window_width_, visualize_yaw);
+    }
+    else {
+        return Image<uint32_t>(
+            object_scale_gain_image_.width(), object_scale_gain_image_.height(), 0xFF0000FF);
     }
 }
 
@@ -311,6 +329,20 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
         for (int x = 0; x < bg_scale_gain_image_.width(); x++) {
             f << std::setw(20) << bg_scale_gain_image_(x, y);
             if (x != bg_scale_gain_image_.width() - 1) {
+                f << " ";
+            }
+        }
+        f << "\n";
+    }
+
+    f << "\n";
+    f << std::setprecision(6);
+    f << "Object scale gain\n";
+    f << object_scale_gain_image_.width() << " " << object_scale_gain_image_.height() << "\n";
+    for (int y = 0; y < object_scale_gain_image_.height(); y++) {
+        for (int x = 0; x < object_scale_gain_image_.width(); x++) {
+            f << std::setw(20) << object_scale_gain_image_(x, y);
+            if (x != object_scale_gain_image_.width() - 1) {
                 f << " ";
             }
         }
@@ -479,6 +511,8 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
     raycast_entropy(entropy_image_, entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_);
     bg_scale_gain_image_ =
         bg_scale_gain(entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_, desired_scale_);
+    object_scale_gain_image_ =
+        object_scale_gain(entropy_hits_M_, objects_, sensor_, path_MB_.back(), T_BC_);
     if (config_.use_pose_history) {
         const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC_;
         T_MB_history->frustumOverlap(frustum_overlap_mask_, sensor_, T_MC, T_BC_);
@@ -649,36 +683,38 @@ float CandidateView::pathTime(const Path& path, float velocity_linear, float vel
 
 std::ostream& operator<<(std::ostream& os, const CandidateView& c)
 {
-    os << "Valid:                 " << (c.isValid() ? "yes" : "no") << "\n";
-    os << "Status:                " << c.status_ << "\n";
-    os << "Utility:               " << c.utility() << "\n";
-    os << "Exploration utility:   " << c.explorationUtility() << "\n";
-    os << "Object utility:        " << c.objectUtility() << "\n";
-    os << "Entropy:               " << c.entropy_ << "\n";
-    os << "LoD gain:              " << c.lod_gain_ << "\n";
-    os << "Path time:             " << c.path_time_ << "\n";
-    os << "Path size:             " << c.path().size() << "\n";
-    os << "Desired position M:    " << c.desired_t_MB_.x() << " " << c.desired_t_MB_.y() << " "
+    os << "Valid:                   " << (c.isValid() ? "yes" : "no") << "\n";
+    os << "Status:                  " << c.status_ << "\n";
+    os << "Utility:                 " << c.utility() << "\n";
+    os << "Exploration utility:     " << c.explorationUtility() << "\n";
+    os << "Object utility:          " << c.objectUtility() << "\n";
+    os << "Entropy:                 " << c.entropy_ << "\n";
+    os << "LoD gain:                " << c.lod_gain_ << "\n";
+    os << "Path time:               " << c.path_time_ << "\n";
+    os << "Path size:               " << c.path().size() << "\n";
+    os << "Desired position M:      " << c.desired_t_MB_.x() << " " << c.desired_t_MB_.y() << " "
        << c.desired_t_MB_.z() << "\n";
-    os << "Goal position M:       " << c.goalT_MB().topRightCorner<3, 1>().x() << " "
+    os << "Goal position M:         " << c.goalT_MB().topRightCorner<3, 1>().x() << " "
        << c.goalT_MB().topRightCorner<3, 1>().y() << " " << c.goalT_MB().topRightCorner<3, 1>().z()
        << "\n";
-    os << "Goal yaw M:            " << c.yaw_M_ << "\n";
-    os << "Window index:          " << c.window_idx_ << "\n";
-    os << "Window width:          " << c.window_width_ << "\n";
-    os << "Horizontal FoV:        " << se::math::rad_to_deg(c.sensor_.horizontal_fov) << "\n";
-    os << "Vertical FoV:          " << se::math::rad_to_deg(c.sensor_.vertical_fov) << "\n";
-    os << "Entropy image:         " << c.entropy_image_.width() << "x" << c.entropy_image_.height()
-       << "\n";
-    os << "BG scale gain image:   " << c.bg_scale_gain_image_.width() << "x"
+    os << "Goal yaw M:              " << c.yaw_M_ << "\n";
+    os << "Window index:            " << c.window_idx_ << "\n";
+    os << "Window width:            " << c.window_width_ << "\n";
+    os << "Horizontal FoV:          " << se::math::rad_to_deg(c.sensor_.horizontal_fov) << "\n";
+    os << "Vertical FoV:            " << se::math::rad_to_deg(c.sensor_.vertical_fov) << "\n";
+    os << "Entropy image:           " << c.entropy_image_.width() << "x"
+       << c.entropy_image_.height() << "\n";
+    os << "BG scale gain image:     " << c.bg_scale_gain_image_.width() << "x"
        << c.bg_scale_gain_image_.height() << "\n";
-    os << "Entropy hit image M:   " << c.entropy_hits_M_.width() << "x"
+    os << "Object scale gain image: " << c.object_scale_gain_image_.width() << "x"
+       << c.object_scale_gain_image_.height() << "\n";
+    os << "Entropy hit image M:     " << c.entropy_hits_M_.width() << "x"
        << c.entropy_hits_M_.height() << "\n";
-    os << "Frustum overlap mask:  " << c.frustum_overlap_mask_.width() << "x"
+    os << "Frustum overlap mask:    " << c.frustum_overlap_mask_.width() << "x"
        << c.frustum_overlap_mask_.height() << "\n";
-    os << "Min scale image:       " << c.min_scale_image_.width() << "x"
+    os << "Min scale image:         " << c.min_scale_image_.width() << "x"
        << c.min_scale_image_.height() << "\n";
-    os << "Utility computation:   " << c.utilityStr() << "\n";
+    os << "Utility computation:     " << c.utilityStr() << "\n";
     return os;
 }
 
