@@ -25,6 +25,8 @@ class BoundingVolume {
     {
     }
 
+    virtual bool contains(const Eigen::Vector3f& point_V) const = 0;
+
     virtual bool isVisible(const Eigen::Matrix4f& T_VC, const PinholeCamera& camera) const = 0;
 
     virtual void merge(const se::Image<Eigen::Vector3f>& vertex_map,
@@ -73,6 +75,8 @@ class BoundingSphere : public BoundingVolume {
                    const Eigen::Matrix4f& T_vm,
                    const cv::Mat& mask);
 
+    bool contains(const Eigen::Vector3f& point_V) const;
+
     bool isVisible(const Eigen::Matrix4f& T_VC, const PinholeCamera& camera) const;
 
     void merge(const BoundingSphere& other);
@@ -118,6 +122,8 @@ class AABB : public BoundingVolume {
     AABB(const se::Image<Eigen::Vector3f>& vertex_map,
          const Eigen::Matrix4f& T_vm,
          const cv::Mat& mask);
+
+    bool contains(const Eigen::Vector3f& point_V) const;
 
     bool isVisible(const Eigen::Matrix4f& T_VC, const PinholeCamera& camera) const;
 

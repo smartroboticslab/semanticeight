@@ -245,6 +245,48 @@ TEST_F(BoundingSphereTest, computeProjection)
 
 
 
+TEST(BoundingSphere, contains)
+{
+    const Eigen::Vector3f zeros = Eigen::Vector3f::Zero();
+    const Eigen::Vector3f ones = Eigen::Vector3f::Ones();
+    // Point
+    {
+        const se::BoundingSphere bv(zeros, 0);
+        EXPECT_TRUE(bv.contains(zeros));
+        EXPECT_FALSE(bv.contains(ones));
+    }
+    // Sphere
+    {
+        const se::BoundingSphere bv(ones, 1);
+        EXPECT_FALSE(bv.contains(zeros));
+        EXPECT_TRUE(bv.contains(ones));
+        EXPECT_TRUE(bv.contains(Eigen::Vector3f(1.1, 1.1, 0.8)));
+    }
+}
+
+
+
+TEST(AABB, contains)
+{
+    const Eigen::Vector3f zeros = Eigen::Vector3f::Zero();
+    const Eigen::Vector3f ones = Eigen::Vector3f::Ones();
+    // Point
+    {
+        const se::AABB bv(zeros, zeros);
+        EXPECT_TRUE(bv.contains(zeros));
+        EXPECT_FALSE(bv.contains(ones));
+    }
+    // Sphere
+    {
+        const se::AABB bv(-ones, ones);
+        EXPECT_TRUE(bv.contains(zeros));
+        EXPECT_TRUE(bv.contains(ones));
+        EXPECT_FALSE(bv.contains(Eigen::Vector3f(1.1, 1.1, 0.8)));
+    }
+}
+
+
+
 // Test that cv::line() draws using out-of-bounds points.
 TEST(BoundingVolumePrerequisites, line)
 {

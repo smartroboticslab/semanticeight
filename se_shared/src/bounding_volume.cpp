@@ -68,6 +68,13 @@ se::BoundingSphere::BoundingSphere(const se::Image<Eigen::Vector3f>& vertex_map,
 
 
 
+bool se::BoundingSphere::contains(const Eigen::Vector3f& point_V) const
+{
+    return (center_ - point_V).norm() <= radius_;
+}
+
+
+
 bool se::BoundingSphere::isVisible(const Eigen::Matrix4f& T_VC,
                                    const se::PinholeCamera& camera) const
 {
@@ -368,6 +375,13 @@ se::AABB::AABB(const se::Image<Eigen::Vector3f>& vertex_map,
 {
     vertexMapMinMax(vertex_map, mask, T_vm, min_, max_);
     updateVertices();
+}
+
+
+
+bool se::AABB::contains(const Eigen::Vector3f& point_V) const
+{
+    return (min_.array() <= point_V.array()).all() && (point_V.array() <= max_.array()).all();
 }
 
 
