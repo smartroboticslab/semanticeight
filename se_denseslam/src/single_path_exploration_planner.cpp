@@ -141,7 +141,7 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     // Add an invalid candidate to return if no best candidate was found
     if (best_idx_ == SIZE_MAX) {
         best_idx_ = candidates_.size();
-        candidates_.emplace_back(*map, sensor, T_BC);
+        candidates_.emplace_back(*map, objects, sensor, T_BC);
         return;
     }
     // Compare the best candidate with the best candidate without taking objects into account.

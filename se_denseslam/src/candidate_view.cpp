@@ -13,6 +13,7 @@
 
 namespace se {
 CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
+                             const Objects& objects,
                              const SensorImpl& sensor,
                              const Eigen::Matrix4f& T_BC) :
         desired_t_MB_(NAN, NAN, NAN),
@@ -28,6 +29,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         min_scale_image_(1, 1),
         sensor_(sensor),
         map_(map),
+        objects_(objects),
         T_BC_(T_BC),
         utility_(-1.0f),
         exploration_utility_(-1.0f),
@@ -60,6 +62,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         min_scale_image_(1, 1),
         sensor_(sensor),
         map_(map),
+        objects_(objects),
         T_BC_(T_BC),
         utility_(-1.0f),
         exploration_utility_(-1.0f),

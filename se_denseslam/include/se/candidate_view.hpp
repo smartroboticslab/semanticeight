@@ -40,6 +40,7 @@ class CandidateView {
     /** \brief Create an invalid CandidateView.
      */
     CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
+                  const Objects& objects,
                   const SensorImpl& sensor,
                   const Eigen::Matrix4f& T_BC);
 
@@ -148,6 +149,7 @@ class CandidateView {
 
     private:
     const se::Octree<VoxelImpl::VoxelType>& map_;
+    const Objects& objects_;
     const Eigen::Matrix4f& T_BC_;
     /** std::vector of T_MB. */
     Path path_MB_;

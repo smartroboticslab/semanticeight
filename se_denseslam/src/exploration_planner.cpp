@@ -48,7 +48,8 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
                            config.T_BC,
                            Eigen::Vector3f::Constant(map_->dim()),
                            Eigen::Vector3f::Constant(0.5f)),
-        candidate_views_({CandidateView(*pipeline.getMap(), sensor, config.T_BC)}),
+        candidate_views_(
+            {CandidateView(*pipeline.getMap(), pipeline.getObjectMaps(), sensor, config.T_BC)}),
         goal_view_idx_(0),
         exploration_dominant_(true)
 {
