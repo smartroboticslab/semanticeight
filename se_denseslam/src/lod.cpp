@@ -4,6 +4,8 @@
 
 #include "se/lod.hpp"
 
+#include "se/object_rendering.hpp"
+
 namespace se {
 
 template<typename VoxelT>
@@ -75,6 +77,50 @@ Image<float> bg_scale_gain(const Image<Eigen::Vector3f>& bg_hits_M,
             const Eigen::Vector3f& hit_M = bg_hits_M(x, y);
             if (!isnan(hit_M.x())) {
                 const auto* block = map.fetch(map.pointToVoxel(hit_M));
+                const float gain = block_scale_gain(block, map, sensor, T_CM, desired_scale);
+                gain_image(x, y) = gain / max_scale_gain;
+            }
+        }
+    }
+    return gain_image;
+}
+
+
+
+Image<float> object_scale_gain(const Image<Eigen::Vector3f>& bg_hits_M,
+                               const Objects& objects,
+                               const SensorImpl& sensor,
+                               const Eigen::Matrix4f& T_MB,
+                               const Eigen::Matrix4f& T_BC,
+                               const int8_t desired_scale)
+{
+    Image<float> gain_image(bg_hits_M.width(), bg_hits_M.height(), 0.0f);
+    const float max_scale_gain = ObjVoxelImpl::VoxelBlockType::max_scale;
+    const Eigen::Matrix4f T_MC = T_MB * T_BC;
+    const Eigen::Vector3f t_MC = se::math::to_translation(T_MC);
+    const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
+#pragma omp parallel for
+    for (int y = 0; y < gain_image.height(); ++y) {
+#pragma omp simd
+        for (int x = 0; x < gain_image.width(); ++x) {
+            // The background contains the objects so we can skip raycasting the objects if there is
+            // no background hit.
+            if (isnan(bg_hits_M(x, y).x())) {
+                continue;
+            }
+            const Eigen::Vector3f ray_dir_M = (bg_hits_M(x, y) - t_MC).normalized();
+            const ObjectHit hit = raycast_objects(objects,
+                                                  std::map<int, cv::Mat>(),
+                                                  Eigen::Vector2f(x, y),
+                                                  t_MC,
+                                                  ray_dir_M,
+                                                  sensor.near_plane,
+                                                  sensor.far_plane);
+            if (hit.instance_id != ObjectHit().instance_id) {
+                const Object& object = *(objects[hit.instance_id]);
+                const auto& map = *(object.map_);
+                const Eigen::Vector3f hit_O = (object.T_OM_ * hit.hit_M.homogeneous()).head<3>();
+                const auto* block = map.fetch(map.pointToVoxel(hit_O));
                 const float gain = block_scale_gain(block, map, sensor, T_CM, desired_scale);
                 gain_image(x, y) = gain / max_scale_gain;
             }

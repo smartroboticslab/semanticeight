@@ -6,6 +6,7 @@
 #define LOD_HPP
 
 #include "se/image/image.hpp"
+#include "se/object.hpp"
 #include "se/octree.hpp"
 #include "se/sensor_implementation.hpp"
 #include "se/voxel_implementations.hpp"
@@ -29,6 +30,16 @@ Image<float> bg_scale_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                            const Eigen::Matrix4f& T_MB,
                            const Eigen::Matrix4f& T_BC,
                            const int8_t desired_scale = 0);
+
+/** \brief Create a 360 degree scale gain image by getting the scale of objects along the provided
+ * rays. It is meant to be used with the hits returned by se::raycast_entropy().
+ */
+Image<float> object_scale_gain(const Image<Eigen::Vector3f>& bg_hits_M,
+                               const Objects& objects,
+                               const SensorImpl& sensor,
+                               const Eigen::Matrix4f& T_MB,
+                               const Eigen::Matrix4f& T_BC,
+                               const int8_t desired_scale = 0);
 
 } // namespace se
 
