@@ -203,6 +203,7 @@ void Object::renderObjectVolume(uint32_t* output_image_data,
         for (size_t i = 0; i < surface_point_cloud_M_.size(); ++i) {
             render_surface_point_cloud_M[i] = surface_point_cloud_M_[i];
             render_surface_normals_M[i] = surface_normals_M_[i];
+            min_scale_image[i] = min_scale_image_[i];
         }
     }
     else {

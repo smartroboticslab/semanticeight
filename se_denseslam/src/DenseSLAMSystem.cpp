@@ -320,6 +320,7 @@ void DenseSLAMSystem::renderVolume(uint32_t* volume_RGBA_image_data,
         for (size_t i = 0; i < surface_point_cloud_M_.size(); ++i) {
             render_surface_point_cloud_M[i] = surface_point_cloud_M_[i];
             render_surface_normals_M[i] = surface_normals_M_[i];
+            min_scale_image[i] = min_scale_image_[i];
         }
     }
     else {
@@ -714,6 +715,7 @@ void DenseSLAMSystem::renderObjects(uint32_t* output_image_data,
         for (size_t i = 0; i < surface_point_cloud_M_.size(); ++i) {
             render_surface_point_cloud_M[i] = surface_point_cloud_M_[i];
             render_surface_normals_M[i] = surface_normals_M_[i];
+            min_scale_image[i] = min_scale_image_[i];
             object_surface_point_cloud_M[i] = object_surface_point_cloud_M_[i];
             object_surface_normals_M[i] = object_surface_normals_M_[i];
             object_scale_image[i] = object_scale_image_[i];
