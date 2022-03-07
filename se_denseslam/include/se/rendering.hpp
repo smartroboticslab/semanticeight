@@ -73,6 +73,7 @@ template<typename VoxelImplT>
 void raycastKernel(const se::Octree<typename VoxelImplT::VoxelType>& map,
                    se::Image<Eigen::Vector3f>& surface_point_cloud_M,
                    se::Image<Eigen::Vector3f>& surface_normals_M,
+                   se::Image<int8_t>& scale_image,
                    se::Image<int8_t>& min_scale_image,
                    const Eigen::Matrix4f& raycast_T_MC,
                    const SensorImpl& sensor)
@@ -116,9 +117,11 @@ void raycastKernel(const se::Octree<typename VoxelImplT::VoxelType>& map,
                 // Fetch the VoxelBlock containing the hit and get its minimum updated scale.
                 const auto* block = map.fetch(map.pointToVoxel(surface_intersection_M.head<3>()));
                 if (block) {
+                    scale_image(x, y) = surface_intersection_M.w();
                     min_scale_image(x, y) = block->min_scale();
                 }
                 else {
+                    scale_image(x, y) = -1;
                     min_scale_image(x, y) = -1;
                 }
             }

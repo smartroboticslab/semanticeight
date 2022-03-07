@@ -26,6 +26,7 @@ Object::Object(const std::shared_ptr<se::Octree<ObjVoxelImpl::VoxelType>> map,
         raycast_T_MC_(T_MC),
         surface_point_cloud_M_(image_res.x(), image_res.y()),
         surface_normals_M_(image_res.x(), image_res.y()),
+        scale_image_(image_res.x(), image_res.y(), -1),
         min_scale_image_(image_res.x(), image_res.y(), -1),
         T_OM_(T_OM),
         T_MO_(se::math::to_inverse_transformation(T_OM_))
@@ -51,6 +52,7 @@ Object::Object(const Eigen::Vector2i& image_res,
         raycast_T_MC_(T_MC),
         surface_point_cloud_M_(image_res.x(), image_res.y()),
         surface_normals_M_(image_res.x(), image_res.y()),
+        scale_image_(image_res.x(), image_res.y(), -1),
         min_scale_image_(image_res.x(), image_res.y(), -1),
         T_OM_(T_OM),
         T_MO_(se::math::to_inverse_transformation(T_OM_))
@@ -182,8 +184,13 @@ void Object::integrate(const se::Image<float>& depth_image,
 void Object::raycast(const Eigen::Matrix4f& T_MC, const SensorImpl& sensor)
 {
     raycast_T_MC_ = T_MC;
-    raycastKernel<ObjVoxelImpl>(
-        *map_, surface_point_cloud_M_, surface_normals_M_, min_scale_image_, raycast_T_MC_, sensor);
+    raycastKernel<ObjVoxelImpl>(*map_,
+                                surface_point_cloud_M_,
+                                surface_normals_M_,
+                                scale_image_,
+                                min_scale_image_,
+                                raycast_T_MC_,
+                                sensor);
 }
 
 
@@ -196,6 +203,7 @@ void Object::renderObjectVolume(uint32_t* output_image_data,
 {
     se::Image<Eigen::Vector3f> render_surface_point_cloud_M(image_res_.x(), image_res_.y());
     se::Image<Eigen::Vector3f> render_surface_normals_M(image_res_.x(), image_res_.y());
+    se::Image<int8_t> scale_image(image_res_.x(), image_res_.y());
     se::Image<int8_t> min_scale_image(image_res_.x(), image_res_.y());
     if (render_T_MC.isApprox(raycast_T_MC_)) {
         // Copy the raycast from the camera viewpoint. Can't safely use memcpy with
@@ -203,6 +211,7 @@ void Object::renderObjectVolume(uint32_t* output_image_data,
         for (size_t i = 0; i < surface_point_cloud_M_.size(); ++i) {
             render_surface_point_cloud_M[i] = surface_point_cloud_M_[i];
             render_surface_normals_M[i] = surface_normals_M_[i];
+            scale_image[i] = scale_image_[i];
             min_scale_image[i] = min_scale_image_[i];
         }
     }
@@ -211,6 +220,7 @@ void Object::renderObjectVolume(uint32_t* output_image_data,
         raycastKernel<ObjVoxelImpl>(*map_,
                                     render_surface_point_cloud_M,
                                     render_surface_normals_M,
+                                    scale_image,
                                     min_scale_image,
                                     render_T_MC,
                                     sensor);

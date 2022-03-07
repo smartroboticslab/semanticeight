@@ -78,6 +78,7 @@ struct Object {
     Eigen::Matrix4f raycast_T_MC_;
     se::Image<Eigen::Vector3f> surface_point_cloud_M_;
     se::Image<Eigen::Vector3f> surface_normals_M_;
+    se::Image<int8_t> scale_image_;
     se::Image<int8_t> min_scale_image_;
 
     // Map

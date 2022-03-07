@@ -101,6 +101,7 @@ DenseSLAMSystem::DenseSLAMSystem(const Eigen::Vector2i& image_res,
         render_T_MC_(&T_MC_),
         T_MW_(T_MW),
         T_WM_(se::math::to_inverse_transformation(T_MW_)),
+        scale_image_(image_res_.x(), image_res_.y(), -1),
         min_scale_image_(image_res_.x(), image_res_.y(), -1),
         input_segmentation_(image_res_.x(), image_res_.y()),
         processed_segmentation_(image_res_.x(), image_res_.y()),
@@ -299,8 +300,13 @@ bool DenseSLAMSystem::raycast(const SensorImpl& sensor)
 {
     TICK("RAYCASTING")
     raycast_T_MC_ = T_MC_;
-    raycastKernel<VoxelImpl>(
-        *map_, surface_point_cloud_M_, surface_normals_M_, min_scale_image_, raycast_T_MC_, sensor);
+    raycastKernel<VoxelImpl>(*map_,
+                             surface_point_cloud_M_,
+                             surface_normals_M_,
+                             scale_image_,
+                             min_scale_image_,
+                             raycast_T_MC_,
+                             sensor);
     TOCK("RAYCASTING")
     return true;
 }
@@ -313,6 +319,7 @@ void DenseSLAMSystem::renderVolume(uint32_t* volume_RGBA_image_data,
 {
     se::Image<Eigen::Vector3f> render_surface_point_cloud_M(image_res_.x(), image_res_.y());
     se::Image<Eigen::Vector3f> render_surface_normals_M(image_res_.x(), image_res_.y());
+    se::Image<int8_t> scale_image(image_res_.x(), image_res_.y());
     se::Image<int8_t> min_scale_image(image_res_.x(), image_res_.y());
     if (render_T_MC_->isApprox(raycast_T_MC_)) {
         // Copy the raycast from the camera viewpoint. Can't safely use memcpy with
@@ -320,6 +327,7 @@ void DenseSLAMSystem::renderVolume(uint32_t* volume_RGBA_image_data,
         for (size_t i = 0; i < surface_point_cloud_M_.size(); ++i) {
             render_surface_point_cloud_M[i] = surface_point_cloud_M_[i];
             render_surface_normals_M[i] = surface_normals_M_[i];
+            scale_image[i] = scale_image_[i];
             min_scale_image[i] = min_scale_image_[i];
         }
     }
@@ -329,6 +337,7 @@ void DenseSLAMSystem::renderVolume(uint32_t* volume_RGBA_image_data,
         raycastKernel<VoxelImpl>(*map_,
                                  render_surface_point_cloud_M,
                                  render_surface_normals_M,
+                                 scale_image,
                                  min_scale_image,
                                  *render_T_MC_,
                                  sensor);
@@ -701,6 +710,7 @@ void DenseSLAMSystem::renderObjects(uint32_t* output_image_data,
 {
     se::Image<Eigen::Vector3f> render_surface_point_cloud_M(image_res_.x(), image_res_.y());
     se::Image<Eigen::Vector3f> render_surface_normals_M(image_res_.x(), image_res_.y());
+    se::Image<int8_t> scale_image(image_res_.x(), image_res_.y());
     se::Image<int8_t> min_scale_image(image_res_.x(), image_res_.y());
     se::Image<Eigen::Vector3f> object_surface_point_cloud_M(image_res_.x(), image_res_.y());
     se::Image<Eigen::Vector3f> object_surface_normals_M(image_res_.x(), image_res_.y());
@@ -715,6 +725,7 @@ void DenseSLAMSystem::renderObjects(uint32_t* output_image_data,
         for (size_t i = 0; i < surface_point_cloud_M_.size(); ++i) {
             render_surface_point_cloud_M[i] = surface_point_cloud_M_[i];
             render_surface_normals_M[i] = surface_normals_M_[i];
+            scale_image[i] = scale_image_[i];
             min_scale_image[i] = min_scale_image_[i];
             object_surface_point_cloud_M[i] = object_surface_point_cloud_M_[i];
             object_surface_normals_M[i] = object_surface_normals_M_[i];
@@ -730,6 +741,7 @@ void DenseSLAMSystem::renderObjects(uint32_t* output_image_data,
         raycastKernel<VoxelImpl>(*map_,
                                  render_surface_point_cloud_M,
                                  render_surface_normals_M,
+                                 scale_image,
                                  min_scale_image,
                                  *render_T_MC_,
                                  sensor);

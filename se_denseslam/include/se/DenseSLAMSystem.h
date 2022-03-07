@@ -108,6 +108,9 @@ class DenseSLAMSystem {
     std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> map_;
 
     // Semanticeight-only /////////////////////////////////////////////////////
+    /** Only used for rendering.
+     */
+    se::Image<int8_t> scale_image_;
     /** Contains the minimum scale at which the background has been integrated as of the last
      * raycast.
      */
