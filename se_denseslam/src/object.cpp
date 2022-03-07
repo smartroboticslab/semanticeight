@@ -230,7 +230,8 @@ void Object::renderObjectVolume(uint32_t* output_image_data,
                                      se::math::to_translation(render_T_MC),
                                      ambient,
                                      render_surface_point_cloud_M,
-                                     render_surface_normals_M);
+                                     render_surface_normals_M,
+                                     scale_image);
 }
 
 

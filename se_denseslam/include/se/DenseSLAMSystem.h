@@ -400,7 +400,8 @@ class DenseSLAMSystem {
      */
     void renderVolume(uint32_t* output_image_data,
                       const Eigen::Vector2i& output_image_res,
-                      const SensorImpl& sensor);
+                      const SensorImpl& sensor,
+                      const bool render_scale = false);
 
     /**
      * Render the output of the tracking algorithm. The meaning of the colors

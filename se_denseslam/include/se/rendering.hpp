@@ -164,7 +164,9 @@ void renderVolumeKernel(uint32_t* volume_RGBA_image_data,
                         const Eigen::Vector3f& light_M,
                         const Eigen::Vector3f& ambient_M,
                         const se::Image<Eigen::Vector3f>& surface_point_cloud_M,
-                        const se::Image<Eigen::Vector3f>& surface_normals_M)
+                        const se::Image<Eigen::Vector3f>& surface_normals_M,
+                        const se::Image<int8_t>& scale_image,
+                        const bool render_scale = false)
 {
     TICKD("renderVolumeKernel");
     const int h = volume_RGBA_image_res.y(); // clang complains if this is inside the for loop
@@ -184,7 +186,12 @@ void renderVolumeKernel(uint32_t* volume_RGBA_image_data,
                     Eigen::Vector3f::Constant(fmaxf(surface_normal_M.normalized().dot(diff), 0.f));
                 Eigen::Vector3f col = dir + ambient_M;
                 se::math::clamp(col, Eigen::Vector3f::Zero(), Eigen::Vector3f::Ones());
-                col *= 255.0f;
+                if (render_scale) {
+                    col = col.cwiseProduct(se::internal::color_map[scale_image(x, y)]);
+                }
+                else {
+                    col *= 255.0f;
+                }
                 volume_RGBA_image_data[pixel_idx] = se::pack_rgba(col.x(), col.y(), col.z(), 0xFF);
             }
             else {

@@ -315,7 +315,8 @@ bool DenseSLAMSystem::raycast(const SensorImpl& sensor)
 
 void DenseSLAMSystem::renderVolume(uint32_t* volume_RGBA_image_data,
                                    const Eigen::Vector2i& volume_RGBA_image_res,
-                                   const SensorImpl& sensor)
+                                   const SensorImpl& sensor,
+                                   const bool render_scale)
 {
     se::Image<Eigen::Vector3f> render_surface_point_cloud_M(image_res_.x(), image_res_.y());
     se::Image<Eigen::Vector3f> render_surface_normals_M(image_res_.x(), image_res_.y());
@@ -350,7 +351,9 @@ void DenseSLAMSystem::renderVolume(uint32_t* volume_RGBA_image_data,
                                   se::math::to_translation(*render_T_MC_),
                                   ambient,
                                   render_surface_point_cloud_M,
-                                  render_surface_normals_M);
+                                  render_surface_normals_M,
+                                  scale_image_,
+                                  render_scale);
     TOCK("renderVolume")
 }
 
@@ -781,7 +784,8 @@ void DenseSLAMSystem::renderObjects(uint32_t* output_image_data,
                                   se::math::to_translation(*render_T_MC_),
                                   ambient,
                                   render_surface_point_cloud_M,
-                                  render_surface_normals_M);
+                                  render_surface_normals_M,
+                                  scale_image);
 
     // Overlay the objects using the raycast.
     renderObjectListKernel(output_image_data,
