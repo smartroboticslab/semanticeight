@@ -109,7 +109,7 @@ int se::PinholeCamera::computeIntegrationScale(const Eigen::Vector3f& block_cent
     }
     else {
         lower_thresh = 5.75f;
-        upper_thresh = std::numeric_limits<int>::max();
+        upper_thresh = std::numeric_limits<float>::max();
     }
 
     /// EQUIVALENT
