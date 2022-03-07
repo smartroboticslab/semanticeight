@@ -5,8 +5,6 @@
 
 #include "se/segmentation.hpp"
 
-#include <execution>
-
 namespace se {
 // Use COCO classes by default.
 se::SemanticClasses semantic_classes = se::SemanticClasses::coco_classes();
@@ -59,8 +57,7 @@ cv::Mat extract_instance(const cv::Mat& instance_mask, const se::instance_mask_e
 {
     cv::Mat individual_mask(instance_mask.rows, instance_mask.cols, se::mask_t);
     // Set all elements matching the instance ID to 255 and all others to 0.
-    std::transform(std::execution::par_unseq,
-                   instance_mask.begin<se::instance_mask_elem_t>(),
+    std::transform(instance_mask.begin<se::instance_mask_elem_t>(),
                    instance_mask.end<se::instance_mask_elem_t>(),
                    individual_mask.begin<se::mask_elem_t>(),
                    [instance_id](const auto& value) { return (value == instance_id) ? 255 : 0; });

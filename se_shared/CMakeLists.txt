@@ -30,9 +30,6 @@ target_link_libraries(${LIB_NAME}
     ${YAML_CPP_LIBRARIES}
     CNPY::cnpy
     stdc++fs
-    # pkg-config --cflags --libs tbb
-    atomic
-    tbb
 )
 set_target_properties(${LIB_NAME} PROPERTIES
   CXX_STANDARD 17
