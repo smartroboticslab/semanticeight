@@ -11,6 +11,7 @@ namespace se {
 template<typename T>
 class Image {
     public:
+
     Image(const int w, const int h) : width_(w), height_(h), data_(width_ * height_)
     {
         assert(width_ > 0 && height_ > 0);
@@ -66,11 +67,11 @@ class Image {
     {
         return data_.begin();
     }
-    const auto begin() const
+    auto begin() const
     {
-        return data_.begin();
+        return data_.cbegin();
     }
-    const auto cbegin() const
+    auto cbegin() const
     {
         return data_.cbegin();
     }
@@ -79,11 +80,11 @@ class Image {
     {
         return data_.end();
     }
-    const auto end() const
+    auto end() const
     {
-        return data_.end();
+        return data_.cend();
     }
-    const auto cend() const
+    auto cend() const
     {
         return data_.cend();
     }
