@@ -262,16 +262,14 @@ Eigen::Matrix4f toT(std::vector<float> tokens)
             tokens[15];
         break;
     default:
-        std::cerr
-            << "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
-            << "3  parameters (translation): tx,ty,tz\n"
-            << "4  parameters (rotation in quaternion form): qx,qy,qz,qw\n"
-            << "7  parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw\n"
-            << "16 parameters (transformation matrix): R_11, R_12, R_13, t_1\n"
-            << "                                       R_21, R_22, R_23, t_2\n"
-            << "                                       R_31, R_32, R_33, t_3\n"
-            << std::endl;
-        exit(EXIT_FAILURE);
+        throw std::invalid_argument(
+            "Error: Invalid number of parameters for argument gt-transform. Valid parameters are:\n"
+            "3  parameters (translation): tx,ty,tz\n"
+            "4  parameters (rotation in quaternion form): qx,qy,qz,qw\n"
+            "7  parameters (translation and rotation): tx,ty,tz,qx,qy,qz,qw\n"
+            "16 parameters (transformation matrix): R_11, R_12, R_13, t_1\n"
+            "                                       R_21, R_22, R_23, t_2\n"
+            "                                       R_31, R_32, R_33, t_3\n");
     }
     return T;
 }
@@ -758,12 +756,13 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
         case 'c': // sensor-downsampling-factor
             config.sensor_downsampling_factor = atoi(optarg);
             if (!allowed_downsampling_factors.count(config.sensor_downsampling_factor)) {
-                std::cerr << "Error: --sensor-downsampling-factor (-c) must be one of ";
+                std::stringstream s;
+                s << "Error: --sensor-downsampling-factor (-c) must be one of ";
                 for (auto f : allowed_downsampling_factors) {
-                    std::cerr << f << ", ";
+                    s << f << ", ";
                 }
-                std::cerr << "was " << optarg << "\n";
-                exit(EXIT_FAILURE);
+                s << "was " << optarg << "\n";
+                throw std::invalid_argument(s.str());
             }
             break;
 
@@ -782,8 +781,8 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
         case 'f': // fps
             config.fps = atof(optarg);
             if (config.fps < 0) {
-                std::cerr << "Error: --fps (-f) must be >= 0 (was " << optarg << ")\n";
-                exit(EXIT_FAILURE);
+                throw std::invalid_argument("Error: --fps (-f) must be >= 0 (was "
+                                            + std::string(optarg) + ")");
             }
             break;
 
@@ -843,8 +842,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
         case 'r': // integration-rate
             config.integration_rate = atoi(optarg);
             if (config.integration_rate < 1) {
-                std::cerr << "Error: --integration-rate (-r) must >= 1 (was " << optarg << ")\n";
-                exit(EXIT_FAILURE);
+                throw std::invalid_argument("Error: --integration-rate (-r) must >= 1 (was " + std::string(optarg) + ")");
             }
             break;
 
@@ -852,9 +850,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
             config.map_dim = atof3(optarg);
             if ((config.map_dim.x() <= 0) || (config.map_dim.y() <= 0)
                 || (config.map_dim.z() <= 0)) {
-                std::cerr << "Error: --map-dim (-s) all dimensions must > 0 (was " << optarg
-                          << ")\n";
-                exit(EXIT_FAILURE);
+                throw std::invalid_argument("Error: --map-dim (-s) all dimensions must > 0 (was " + std::string(optarg) + ")");
             }
             break;
 
@@ -874,9 +870,7 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
             config.map_size = atoi3(optarg);
             if ((config.map_size.x() <= 0) || (config.map_size.y() <= 0)
                 || (config.map_size.z() <= 0)) {
-                std::cerr << "Error: --map-size (-s) all dimensions must > 0 (was " << optarg
-                          << ")\n";
-                exit(EXIT_FAILURE);
+                throw std::invalid_argument("Error: --map-size (-s) all dimensions must > 0 (was " + std::string(optarg) + ")");
             }
 
             break;
@@ -923,9 +917,9 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
 
     // Ensure the parameter values are valid.
     if (config.near_plane >= config.far_plane) {
-        std::cerr << "Error: Near plane must be smaller than far plane (" << config.near_plane
-                  << " >= " << config.far_plane << ")\n";
-        exit(EXIT_FAILURE);
+        throw std::invalid_argument("Error: Near plane must be smaller than far plane ("
+                                    + std::to_string(config.near_plane)
+                                    + " >= " + std::to_string(config.far_plane) + ")");
     }
 
     // Autogenerate filename if only a directory is provided

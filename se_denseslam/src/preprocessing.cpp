@@ -198,22 +198,17 @@ void downsampleDepthKernel(const float* input_depth_data,
                            se::Image<float>& output_depth)
 {
     TICKD("downsampleDepthKernel")
-    // Check for unsupported conditions
-    if ((input_depth_res.x() < output_depth.width())
-        || input_depth_res.y() < output_depth.height()) {
-        std::cerr << "Invalid ratio." << std::endl;
-        exit(1);
-    }
-    if ((input_depth_res.x() % output_depth.width() != 0)
-        || (input_depth_res.y() % output_depth.height() != 0)) {
-        std::cerr << "Invalid ratio." << std::endl;
-        exit(1);
-    }
-    if ((input_depth_res.x() / output_depth.width()
-         != input_depth_res.y() / output_depth.height())) {
-        std::cerr << "Invalid ratio." << std::endl;
-        exit(1);
-    }
+    assert((input_depth_res.x() >= output_depth.width())
+           && "Error: input width must be greater than output width");
+    assert((input_depth_res.y() >= output_depth.height())
+           && "Error: input height must be greater than output height");
+    assert((input_depth_res.x() % output_depth.width() == 0)
+           && "Error: input width must be an integer multiple of output width");
+    assert((input_depth_res.y() % output_depth.height() == 0)
+           && "Error: input height must be an integer multiple of output height");
+    assert(
+        (input_depth_res.x() / output_depth.width() == input_depth_res.y() / output_depth.height())
+        && "Error: input and output image aspect ratios must be the same");
 
     const int ratio = input_depth_res.x() / output_depth.width();
 #pragma omp parallel for
@@ -306,7 +301,7 @@ void downsampleImageKernel(const uint32_t* input_RGBA_image_data,
            && "Error: input height must be an integer multiple of output height");
     assert((input_RGBA_image_res.x() / output_RGBA_image.width()
             == input_RGBA_image_res.y() / output_RGBA_image.height())
-           && "Error: input and output width and height ratios must be the same");
+           && "Error: input and output image aspect ratios must be the same");
 
     const int ratio = input_RGBA_image_res.x() / output_RGBA_image.width();
     // Iterate over each output pixel.
