@@ -25,6 +25,7 @@ foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
   set(EXE_NAME "se-denseslam-${SENSOR_IMPL_LC}-main")
   add_executable(${EXE_NAME}
     "src/main.cpp"
+    "src/montage.cpp"
     ${READER_SRC}
   )
   target_include_directories(${EXE_NAME} BEFORE PRIVATE include)

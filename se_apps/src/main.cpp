@@ -6,14 +6,13 @@
  */
 
 #include "default_parameters.h"
+#include "draw.hpp"
+#include "montage.hpp"
 #include "reader.hpp"
 #include "se/DenseSLAMSystem.h"
 #include "se/exploration_planner.hpp"
 #include "se/perfstats.h"
 #include "se/system_info.hpp"
-#ifdef SE_GLUT
-#    include "draw.h"
-#endif
 
 
 
@@ -486,18 +485,25 @@ int main(int argc, char** argv)
         }
 
 #ifdef SE_GLUT
-        drawthem(rgba_render.data(),
-                 image_res,
-                 depth_render.data(),
-                 image_res,
-                 instance_render.data(),
-                 image_res,
-                 raycast_render.data(),
-                 image_res,
-                 volume_render_color.data(),
-                 image_res,
-                 volume_render.data(),
-                 image_res);
+        // Create vectors of images and labels.
+        const cv::Size res(image_res.x(), image_res.y());
+        std::vector<cv::Mat> images;
+        std::vector<std::string> labels;
+        labels.emplace_back("Input RGB");
+        images.emplace_back(res, CV_8UC4, rgba_render.data());
+        labels.emplace_back("Input depth");
+        images.emplace_back(res, CV_8UC4, depth_render.data());
+        labels.emplace_back("Object instances");
+        images.emplace_back(res, CV_8UC4, instance_render.data());
+        labels.emplace_back("Object raycasting");
+        images.emplace_back(res, CV_8UC4, raycast_render.data());
+        labels.emplace_back("Objects");
+        images.emplace_back(res, CV_8UC4, volume_render_color.data());
+        labels.emplace_back("Object instances");
+        images.emplace_back(res, CV_8UC4, volume_render.data());
+        // Combine all the images into one, overlay the labels and show it.
+        const cv::Mat render = se::montage(2, 3, images, labels);
+        drawit(reinterpret_cast<uint32_t*>(render.data), Eigen::Vector2i(render.cols, render.rows));
 #endif
     }
     if (!config.enable_benchmark) {
