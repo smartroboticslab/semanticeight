@@ -64,8 +64,6 @@ se::NewerCollegeReader::NewerCollegeReader(const se::ReaderConfig& c) : se::Read
     // Ensure a valid directory was provided
     if (!stdfs::is_directory(sequence_path_)) {
         status_ = se::ReaderStatus::error;
-        camera_active_ = false;
-        camera_open_ = false;
         return;
     }
     // Set the depth and RGBA image resolutions.
@@ -82,13 +80,9 @@ void se::NewerCollegeReader::restart()
     se::Reader::restart();
     if (stdfs::is_directory(sequence_path_)) {
         status_ = se::ReaderStatus::ok;
-        camera_active_ = true;
-        camera_open_ = true;
     }
     else {
         status_ = se::ReaderStatus::error;
-        camera_active_ = false;
-        camera_open_ = false;
     }
 }
 

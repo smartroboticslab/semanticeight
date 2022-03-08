@@ -20,8 +20,6 @@
 
 
 se::Reader::Reader(const se::ReaderConfig& c) :
-        camera_active_(true),
-        camera_open_(true),
         sequence_path_(c.sequence_path),
         ground_truth_file_(c.ground_truth_file),
         depth_image_res_(1, 1),
@@ -43,16 +41,12 @@ se::Reader::Reader(const se::ReaderConfig& c) :
         if (!ground_truth_fs_.good()) {
             std::cerr << "Error: Could not read ground truth file " << ground_truth_file_ << "\n";
             status_ = se::ReaderStatus::error;
-            camera_active_ = false;
-            camera_open_ = false;
         }
         segmentation_fs_.open(ground_truth_file_, std::ios::in);
         if (!segmentation_fs_.good()) {
             std::cerr << "Error: Could not read segmentation index file " << ground_truth_file_
                       << "\n";
             status_ = se::ReaderStatus::error;
-            camera_active_ = false;
-            camera_open_ = false;
         }
         segmentation_base_dir_ = str_utils::dirname(ground_truth_file_) + "/segmentation";
     }
@@ -78,10 +72,6 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image)
     }
     nextFrame();
     status_ = nextDepth(depth_image);
-    if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
-    }
     return status_;
 }
 
@@ -96,15 +86,9 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image,
     nextFrame();
     status_ = nextDepth(depth_image);
     if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
         return status_;
     }
     status_ = mergeStatus(nextRGBA(rgba_image), status_);
-    if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
-    }
     return status_;
 }
 
@@ -120,21 +104,13 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image,
     nextFrame();
     status_ = nextDepth(depth_image);
     if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
         return status_;
     }
     status_ = mergeStatus(nextRGBA(rgba_image), status_);
     if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
         return status_;
     }
     status_ = mergeStatus(nextPose(T_WB), status_);
-    if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
-    }
     return status_;
 }
 
@@ -151,26 +127,17 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image,
     nextFrame();
     status_ = nextDepth(depth_image);
     if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
         return status_;
     }
     status_ = mergeStatus(nextRGBA(rgba_image), status_);
     if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
         return status_;
     }
     status_ = mergeStatus(nextPose(T_WB), status_);
     if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
+        return status_;
     }
     status_ = mergeStatus(nextSegmentation(segmentation), status_);
-    if (!good()) {
-        camera_active_ = false;
-        camera_open_ = false;
-    }
     return status_;
 }
 
@@ -296,8 +263,6 @@ se::ReaderStatus se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame)
         if (num_cols < 7) {
             std::cerr << "Error: Invalid ground truth file format. "
                       << "Expected line format: ... tx ty tz qx qy qz qw\n";
-            camera_active_ = false;
-            camera_open_ = false;
             return se::ReaderStatus::error;
         }
         // Convert the last 7 columns to float
@@ -370,8 +335,6 @@ se::ReaderStatus se::Reader::nextSegmentation(se::SegmentationResult& segmentati
                       << "Expected at least 2 columns but got " << num_cols << ".\n"
                       << "  Expected line format: ID timestamp ...\n"
                       << "  but got: " << line << std::endl;
-            camera_active_ = false;
-            camera_open_ = false;
             return se::ReaderStatus::error;
         }
         // Read the basename of the RGB image into the file_basename string

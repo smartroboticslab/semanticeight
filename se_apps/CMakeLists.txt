@@ -3,15 +3,6 @@ cmake_minimum_required(VERSION 3.5...3.16)
 find_package(OpenNI2)
 find_package(GLUT)
 find_package(OpenGL)
-find_package(Qt5 COMPONENTS OpenGL PrintSupport Widgets)
-if(Qt5_FOUND)
-  set(CMAKE_AUTOMOC ON)
-  set(CMAKE_AUTORCC ON)
-  set(CMAKE_AUTOUIC ON)
-  if(CMAKE_VERSION VERSION_LESS "3.7.0")
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-  endif()
-endif()
 
 set(READER_SRC
   src/reader_base.cpp
@@ -66,51 +57,6 @@ foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
     target_include_directories(${EXE_NAME} PRIVATE ${OPENNI2_INCLUDE_PATHS})
     target_link_libraries(${EXE_NAME} PRIVATE ${OPENNI2_LIBRARIES})
     target_compile_definitions(${EXE_NAME} PRIVATE "-DSE_USE_OPENNI")
-  endif()
-
-
-
-  # Qt executable ###########################################################
-  if(SE_BUILD_QT_GUI AND Qt5_FOUND)
-    # Find the Qt source files
-    file(GLOB QT_SRC qt/*)
-    set(QT_SRC ${QT_SRC} "qt/images.qrc")
-
-    set(EXE_NAME "se-denseslam-${SENSOR_IMPL_LC}-qt")
-    add_executable(${EXE_NAME}
-      "src/main.cpp"
-      "src/PowerMonitor.cpp"
-      ${READER_SRC}
-      ${QT_SRC}
-    )
-    target_include_directories(${EXE_NAME} BEFORE PRIVATE include qt)
-    target_link_libraries(${EXE_NAME}
-      PRIVATE
-        SE::DenseSLAM${SENSOR_IMPL}
-        stdc++fs
-        Qt5::OpenGL
-        Qt5::PrintSupport
-        Qt5::Widgets
-    )
-    target_compile_definitions(${EXE_NAME}
-      PRIVATE
-        "-DSE_QT"
-        "-D_FILE_OFFSET_BITS=64"
-    )
-    set_target_properties(${EXE_NAME} PROPERTIES
-      CXX_STANDARD 17
-      CXX_STANDARD_REQUIRED ON
-      CXX_EXTENSIONS OFF
-    )
-    if(NOT APPLE)
-      target_link_libraries(${EXE_NAME} PRIVATE GL)
-    endif()
-    # Compile with OpenNI2 support
-    if(OPENNI2_FOUND)
-      target_include_directories(${EXE_NAME} PRIVATE ${OPENNI2_INCLUDE_PATHS})
-      target_link_libraries(${EXE_NAME} PRIVATE ${OPENNI2_LIBRARIES})
-      target_compile_definitions(${EXE_NAME} PRIVATE "-DSE_USE_OPENNI")
-    endif()
   endif()
 endforeach()
 

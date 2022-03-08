@@ -12,5 +12,5 @@ sudo apt-get --yes install g++ make cmake git libeigen3-dev libopencv-dev libyam
 
 # Optional dependencies
 sudo apt-get --yes install freeglut3-dev libopenni2-dev libpapi-dev \
-    qtbase5-dev python3 python3-numpy liboctomap-dev
+    python3 python3-numpy liboctomap-dev
 

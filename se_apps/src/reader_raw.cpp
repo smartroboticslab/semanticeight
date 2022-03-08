@@ -26,8 +26,6 @@ se::RAWReader::RAWReader(const se::ReaderConfig& c) : se::Reader(c)
     if (!raw_fs_.good()) {
         std::cerr << "Error: Could not read raw file " << sequence_path_ << "\n";
         status_ = se::ReaderStatus::error;
-        camera_active_ = false;
-        camera_open_ = false;
         return;
     }
     // Read the resolution of the first depth image.
@@ -35,8 +33,6 @@ se::RAWReader::RAWReader(const se::ReaderConfig& c) : se::Reader(c)
     if (!readResolution(raw_fs_, depth_image_res_)) {
         std::cerr << "Error: Could not read depth image size\n";
         status_ = se::ReaderStatus::error;
-        camera_active_ = false;
-        camera_open_ = false;
         return;
     }
     // Pre-compute depth image sizes.
@@ -48,8 +44,6 @@ se::RAWReader::RAWReader(const se::ReaderConfig& c) : se::Reader(c)
     if (!readResolution(raw_fs_, rgba_image_res_)) {
         std::cerr << "Error: Could not read RGBA image size\n";
         status_ = se::ReaderStatus::error;
-        camera_active_ = false;
-        camera_open_ = false;
         return;
     }
     // Pre-compute depth image sizes.
@@ -73,13 +67,9 @@ void se::RAWReader::restart()
         raw_fs_.seekg(0);
         if (raw_fs_.good()) {
             status_ = se::ReaderStatus::ok;
-            camera_active_ = true;
-            camera_open_ = true;
         }
         else {
             status_ = se::ReaderStatus::error;
-            camera_active_ = false;
-            camera_open_ = false;
         }
     }
 }

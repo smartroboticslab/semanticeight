@@ -56,7 +56,6 @@ The following packages are required to build the `se-denseslam` library:
 The benchmarking and GUI apps additionally require:
 
 * GLut (for the simple GUI)
-* PkgConfig/Qt5 (for the Qt GUI)
 * OpenNI2 (for Microsoft Kinect/Asus Xtion input)
 * Python3/Numpy/Matplotlib (for the evaluation scripts)
 

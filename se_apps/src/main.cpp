@@ -63,16 +63,6 @@ int processAll(se::Reader* reader,
                se::Configuration* config,
                bool reset = false);
 
-void qtLinkKinectQt(int argc,
-                    char** argv,
-                    DenseSLAMSystem** pipeline,
-                    se::Reader** reader,
-                    se::Configuration* config,
-                    void* depth_render,
-                    void* track_render,
-                    void* volume_render,
-                    void* rgba_render);
-
 struct ProgressBar {
     ProgressBar(int total_frames = -1) : total_frames_(total_frames)
     {
@@ -359,15 +349,14 @@ int main(int argc, char** argv)
     //temporary fix to test rendering fullsize
     config.render_volume_fullsize = false;
 
-#if !defined(SE_GLUT) && !defined(SE_QT)
+#if !defined(SE_GLUT)
     // Force disable render if compiled without GUI support and not in benchmark mode
     if (!config.enable_benchmark) {
         config.enable_render = false;
     }
 #endif
-    // The following runs the process loop for processing all the frames, if Qt
-    // is specified use that, else use GLUT. We can opt to disable the gui and the rendering which
-    // would be faster.
+    // The following runs the process loop for processing all the frames, if GLUT is specified use
+    // that. We can opt to disable the gui and the rendering which would be faster.
     if (config.enable_benchmark || !config.enable_render) {
         if ((reader == nullptr) || !reader->good()) {
             std::cerr << "No valid input file specified\n";
@@ -378,23 +367,12 @@ int main(int argc, char** argv)
         }
     }
     else {
-#ifdef SE_QT
-        qtLinkKinectQt(argc,
-                       argv,
-                       &pipeline,
-                       &reader,
-                       &config,
-                       depth_render,
-                       track_render,
-                       volume_render,
-                       rgba_render);
-#else
         if ((reader == nullptr) || !reader->good()) {
             std::cerr << "No valid input file specified\n";
             return EXIT_FAILURE;
         }
         while (processAll(reader, sensor, true, true, &config, false) == 0) {
-#    ifdef SE_GLUT
+#ifdef SE_GLUT
             drawthem(rgba_render,
                      image_res,
                      depth_render,
@@ -407,9 +385,8 @@ int main(int argc, char** argv)
                      image_res,
                      volume_render,
                      image_res);
-#    endif
-        }
 #endif
+        }
     }
     if (power_monitor && power_monitor->isActive()) {
         std::ofstream powerStream("power.rpt");

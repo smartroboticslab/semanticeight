@@ -14,7 +14,6 @@ set(SE_SENSOR_IMPLS PinholeCamera CACHE STRING "The camera implementations to co
 
 option(SE_BUILD_TESTS "Build the supereight unit tests" ON)
 option(SE_BUILD_GLUT_GUI "Build the OpenGL-based GUI" ON)
-option(SE_BUILD_QT_GUI "Build the Qt-based GUI" OFF)
 option(SE_USE_OMP "Compile with OpenMP" ON)
 option(SE_USE_ASAN "Compile with the address sanitizer" OFF)
 option(SE_USE_UBSAN "Compile with the undefined behavior sanitizer" OFF)
