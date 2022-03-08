@@ -50,8 +50,7 @@ void bilateralFilterKernel(se::Image<float>& output_image,
 {
     if ((input_image.width() != output_image.width())
         || input_image.height() != output_image.height()) {
-        std::cerr << "input/output image sizes differ." << std::endl;
-        exit(1);
+        output_image = se::Image<float>(input_image.width(), input_image.height());
     }
 
     TICKD("bilateralFilterKernel")
@@ -253,8 +252,7 @@ void halfSampleRobustImageKernel(se::Image<float>& output_image,
 {
     if ((input_image.width() / output_image.width() != 2)
         || (input_image.height() / output_image.height() != 2)) {
-        std::cerr << "Invalid ratio." << std::endl;
-        exit(1);
+        output_image = se::Image<float>(input_image.width() / 2, input_image.height() / 2);
     }
 
     TICKD("halfSampleRobustImageKernel");
