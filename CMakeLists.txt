@@ -17,6 +17,7 @@ option(SE_BUILD_GLUT_GUI "Build the OpenGL-based GUI" ON)
 option(SE_BUILD_QT_GUI "Build the Qt-based GUI" OFF)
 option(SE_USE_OMP "Compile with OpenMP" ON)
 option(SE_USE_ASAN "Compile with the address sanitizer" OFF)
+option(SE_USE_UBSAN "Compile with the undefined behavior sanitizer" OFF)
 
 # Compile without measuring individual function times
 add_definitions(-DSE_ENABLE_PERFSTATS=1)
@@ -42,6 +43,10 @@ if(SE_USE_ASAN)
   else()
     link_libraries(-static-libasan)
   endif()
+endif()
+if(SE_USE_UBSAN)
+  add_compile_options(-fsanitize=undefined)
+  link_libraries(-fsanitize=undefined)
 endif()
 
 
