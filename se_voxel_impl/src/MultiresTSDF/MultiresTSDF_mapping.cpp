@@ -179,7 +179,7 @@ struct MultiresTSDFUpdate {
         }
 
         const unsigned int child_idx =
-            se::child_idx(node->code(), se::keyops::code(node->code()), voxel_depth);
+            se::child_idx(node->code(), se::keyops::depth(node->code()), voxel_depth);
         if (sample_count > 0) {
             VoxelData& node_data = node->parent()->childData(child_idx);
             mean /= sample_count;
