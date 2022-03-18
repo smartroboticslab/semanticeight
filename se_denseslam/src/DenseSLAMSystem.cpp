@@ -587,6 +587,8 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame)
     // Create object instances for all existing visible objects that were not
     // present in the segmentation.
     generateUndetectedInstances(processed_segmentation_);
+    // Discard small undetected objects.
+    processed_segmentation_.removeSmall(small_mask_threshold_);
 
     // Add the new detected objects to the object list and to the
     // visible_objects_.
