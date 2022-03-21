@@ -884,7 +884,7 @@ void compute_dual_index(
 
     // Only compute dual index if all data is valid/observed
     for (int corner_idx = 0; corner_idx < 8; corner_idx++) {
-        if (data[corner_idx].y == 0.f)
+        if (!FieldType::isValid(data[corner_idx]))
             return;
     }
 

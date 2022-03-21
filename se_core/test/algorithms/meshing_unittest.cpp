@@ -61,6 +61,11 @@ struct TestVoxelT {
         return data.x < 0.f;
     };
 
+    static bool isValid(const TestVoxelT::VoxelData& data)
+    {
+        return data.y > 0.f;
+    };
+
     using VoxelBlockType = se::VoxelBlockFull<TestVoxelT>;
 
     using MemoryPoolType = se::PagedMemoryPool<TestVoxelT>;
