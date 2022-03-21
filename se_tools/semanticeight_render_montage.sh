@@ -30,7 +30,7 @@ fi
 dir="${1%%/}"
 out_dir="$dir"_montage
 
-depth_renders=$(find "$dir" -name '*depth_*.png' | sort -n)
+depth_renders=$(find "$dir" -name 'depth_[[:digit:]]*.png' | sort -n)
 mkdir -p "$out_dir"
 
 for depth in $depth_renders; do
