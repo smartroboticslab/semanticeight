@@ -169,7 +169,7 @@ class DenseSLAMSystem {
     /**
      * Small mask removal threshold in [0, 1].
      */
-    static constexpr float small_mask_threshold_ = 0.02;
+    static constexpr float small_mask_threshold_ = 0.04;
 
     /**
      * Minimum acceptable confidence for class detections [0, 1].
