@@ -1,9 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2014 University of Edinburgh, Imperial College London, University of Manchester.
- * SPDX-FileCopyrightText: 2020 Smart Robotics Lab, Imperial College London
- * SPDX-FileCopyrightText: 2020 Sotiris Papatheodorou
+ * SPDX-FileCopyrightText: 2014 University of Edinburgh, Imperial College London, University of Manchester
+ * SPDX-FileCopyrightText: 2016-2019 Emanuele Vespa
+ * SPDX-FileCopyrightText: 2020-2022 Smart Robotics Lab, Imperial College London, Technical University of Munich
+ * SPDX-FileCopyrightText: 2020-2022 Nils Funk
+ * SPDX-FileCopyrightText: 2020-2022 Sotiris Papatheodorou
  * SPDX-License-Identifier: MIT
- * Developed in the PAMELA project, EPSRC Programme Grant EP/K008730/1
  */
 
 #include "reader_base.hpp"
@@ -15,7 +16,95 @@
 #include <sstream>
 #include <thread>
 
+#include "se/filesystem.hpp"
 #include "se/str_utils.hpp"
+
+
+
+se::ReaderType se::string_to_reader_type(const std::string& s)
+{
+    std::string s_lowered(s);
+    str_utils::to_lower(s_lowered);
+    if (s_lowered == "openni") {
+        return se::ReaderType::OPENNI;
+    }
+    else if (s_lowered == "raw") {
+        return se::ReaderType::RAW;
+    }
+    else if (s_lowered == "newercollege") {
+        return se::ReaderType::NEWERCOLLEGE;
+    }
+    else if (s_lowered == "tum") {
+        return se::ReaderType::TUM;
+    }
+    else if (s_lowered == "interiornet") {
+        return se::ReaderType::INTERIORNET;
+    }
+    else {
+        return se::ReaderType::UNKNOWN;
+    }
+}
+
+
+
+std::string se::reader_type_to_string(se::ReaderType t)
+{
+    if (t == se::ReaderType::OPENNI) {
+        return "OpenNI";
+    }
+    else if (t == se::ReaderType::RAW) {
+        return "raw";
+    }
+    else if (t == se::ReaderType::NEWERCOLLEGE) {
+        return "NewerCollege";
+    }
+    else if (t == se::ReaderType::TUM) {
+        return "TUM";
+    }
+    else if (t == se::ReaderType::INTERIORNET) {
+        return "InteriorNet";
+    }
+    else {
+        return "unknown";
+    }
+}
+
+
+
+std::ostream& se::operator<<(std::ostream& os, const se::ReaderConfig& c)
+{
+    os << str_utils::str_to_pretty_str(se::reader_type_to_string(c.reader_type), "reader_type")
+       << "\n";
+    os << str_utils::str_to_pretty_str(c.sequence_path, "sequence_path") << "\n";
+    os << str_utils::str_to_pretty_str(c.ground_truth_file, "ground_truth_file") << "\n";
+    os << str_utils::value_to_pretty_str(c.fps, "fps") << "\n";
+    os << str_utils::bool_to_pretty_str(c.drop_frames, "drop_frames") << "\n";
+    os << str_utils::value_to_pretty_str(c.verbose, "verbose") << "\n";
+    return os;
+}
+
+
+
+std::ostream& se::operator<<(std::ostream& os, const ReaderStatus& s)
+{
+    switch (s) {
+    case ReaderStatus::ok:
+        os << "OK";
+        break;
+    case ReaderStatus::skip:
+        os << "skip";
+        break;
+    case ReaderStatus::eof:
+        os << "EOF";
+        break;
+    case ReaderStatus::error:
+        os << "error";
+        break;
+    default:
+        os << "unknown status";
+    }
+    return os;
+}
 
 
 
@@ -27,20 +116,26 @@ se::Reader::Reader(const se::ReaderConfig& c) :
         fps_(c.fps),
         spf_(1.0 / c.fps),
         drop_frames_(c.drop_frames),
-        enable_print_(c.enable_print),
+        verbose_(c.verbose),
         is_live_reader_(false),
         status_(se::ReaderStatus::ok),
         frame_(SIZE_MAX),
         num_frames_(0),
         ground_truth_frame_(SIZE_MAX),
+        ground_truth_delimiter_(' '),
         segmentation_frame_(SIZE_MAX)
 {
+    // Trim trailing slashes from sequence_path_
+    sequence_path_.erase(sequence_path_.find_last_not_of("/") + 1);
     // Open the ground truth file if supplied
     if (!ground_truth_file_.empty()) {
         ground_truth_fs_.open(ground_truth_file_, std::ios::in);
         if (!ground_truth_fs_.good()) {
             std::cerr << "Error: Could not read ground truth file " << ground_truth_file_ << "\n";
             status_ = se::ReaderStatus::error;
+        }
+        if (str_utils::ends_with(ground_truth_file_, ".csv")) {
+            ground_truth_delimiter_ = ',';
         }
         segmentation_fs_.open(ground_truth_file_, std::ios::in);
         if (!segmentation_fs_.good()) {
@@ -70,10 +165,18 @@ se::Reader::Reader(const se::ReaderConfig& c) :
 se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image)
 {
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to reader status: " << status_ << "\n";
+        }
         return status_;
     }
     nextFrame();
     status_ = nextDepth(depth_image);
+    if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextDepth() status: " << status_ << "\n";
+        }
+    }
     return status_;
 }
 
@@ -83,14 +186,25 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image,
                                       se::Image<uint32_t>& rgba_image)
 {
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to reader status: " << status_ << "\n";
+        }
         return status_;
     }
     nextFrame();
     status_ = nextDepth(depth_image);
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextDepth() status: " << status_ << "\n";
+        }
         return status_;
     }
     status_ = mergeStatus(nextRGBA(rgba_image), status_);
+    if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextRGBA() status: " << status_ << "\n";
+        }
+    }
     return status_;
 }
 
@@ -101,18 +215,32 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image,
                                       Eigen::Matrix4f& T_WB)
 {
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to reader status: " << status_ << "\n";
+        }
         return status_;
     }
     nextFrame();
     status_ = nextDepth(depth_image);
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextDepth() status: " << status_ << "\n";
+        }
         return status_;
     }
     status_ = mergeStatus(nextRGBA(rgba_image), status_);
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextRGBA() status: " << status_ << "\n";
+        }
         return status_;
     }
     status_ = mergeStatus(nextPose(T_WB), status_);
+    if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextPose() status: " << status_ << "\n";
+        }
+    }
     return status_;
 }
 
@@ -124,22 +252,39 @@ se::ReaderStatus se::Reader::nextData(se::Image<float>& depth_image,
                                       se::SegmentationResult& segmentation)
 {
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to reader status: " << status_ << "\n";
+        }
         return status_;
     }
     nextFrame();
     status_ = nextDepth(depth_image);
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextDepth() status: " << status_ << "\n";
+        }
         return status_;
     }
     status_ = mergeStatus(nextRGBA(rgba_image), status_);
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextRGBA() status: " << status_ << "\n";
+        }
         return status_;
     }
     status_ = mergeStatus(nextPose(T_WB), status_);
     if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextPose() status: " << status_ << "\n";
+        }
         return status_;
     }
     status_ = mergeStatus(nextSegmentation(segmentation), status_);
+    if (!good()) {
+        if (verbose_ >= 1) {
+            std::clog << "Stopping reading due to nextSegmentation() status: " << status_ << "\n";
+        }
+    }
     return status_;
 }
 
@@ -215,7 +360,7 @@ se::ReaderStatus se::Reader::mergeStatus(se::ReaderStatus status_1, se::ReaderSt
 
 se::ReaderStatus se::Reader::nextPose(Eigen::Matrix4f& T_WB)
 {
-    return readPose(T_WB, frame_);
+    return readPose(T_WB, frame_, ground_truth_delimiter_);
 }
 
 se::ReaderStatus se::Reader::getPose(Eigen::Matrix4f& T_WB, const size_t frame)
@@ -230,7 +375,7 @@ se::ReaderStatus se::Reader::getPose(Eigen::Matrix4f& T_WB, const size_t frame)
     ground_truth_fs_.clear();
     ground_truth_fs_.seekg(0);
 
-    auto status = readPose(T_WB, frame);
+    auto status = readPose(T_WB, frame, ground_truth_delimiter_);
 
     // Restore current state of ground truth variables
     ground_truth_frame_ = ground_truth_frame_curr;
@@ -240,7 +385,8 @@ se::ReaderStatus se::Reader::getPose(Eigen::Matrix4f& T_WB, const size_t frame)
 }
 
 
-se::ReaderStatus se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame)
+se::ReaderStatus
+se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame, const char delimiter)
 {
     std::string line;
     while (true) {
@@ -260,7 +406,7 @@ se::ReaderStatus se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame)
             continue;
         }
         // Data line read, split on spaces
-        const std::vector<std::string> line_data = str_utils::split_str(line, ' ');
+        const std::vector<std::string> line_data = str_utils::split_str(line, delimiter);
         const size_t num_cols = line_data.size();
         if (num_cols < 7) {
             std::cerr << "Error: Invalid ground truth file format. "
@@ -278,7 +424,7 @@ se::ReaderStatus se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame)
         }
         // Ensure all the pose elements are finite
         if (!pose_data_valid) {
-            if (enable_print_) {
+            if (verbose_ >= 1) {
                 std::cerr << "Warning: Expected finite ground truth pose but got";
                 for (uint8_t i = 0; i < 7; ++i) {
                     std::cerr << " " << pose_data[i];
@@ -293,7 +439,7 @@ se::ReaderStatus se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame)
             pose_data[6], pose_data[3], pose_data[4], pose_data[5]);
         // Ensure the quaternion represents a valid orientation
         if (std::abs(orientation.norm() - 1.0f) > 1e-3) {
-            if (enable_print_) {
+            if (verbose_ >= 1) {
                 std::cerr << "Warning: Expected unit quaternion but got " << orientation.x() << " "
                           << orientation.y() << " " << orientation.z() << " " << orientation.w()
                           << " (x,y,z,w) with norm " << orientation.norm() << "\n";
@@ -304,6 +450,7 @@ se::ReaderStatus se::Reader::readPose(Eigen::Matrix4f& T_WB, const size_t frame)
         T_WB = Eigen::Matrix4f::Identity();
         T_WB.block<3, 1>(0, 3) = position;
         T_WB.block<3, 3>(0, 0) = orientation.toRotationMatrix();
+
         return se::ReaderStatus::ok;
     }
 }

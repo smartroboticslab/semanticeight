@@ -20,7 +20,8 @@
 TEST(NoOpenNI, initAndRead)
 {
     // Initialize the reader.
-    const se::ReaderConfig config_ = {0, false, true, "", ""};
+    se::ReaderConfig config_;
+    config_.reader_type = se::ReaderType::OPENNI;
     se::OpenNIReader reader(config_);
 
     // Test for correct initial state.

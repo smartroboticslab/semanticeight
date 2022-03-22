@@ -1,9 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2014 University of Edinburgh, Imperial College London, University of Manchester.
- * SPDX-FileCopyrightText: 2020 Smart Robotics Lab, Imperial College London
- * SPDX-FileCopyrightText: 2020 Sotiris Papatheodorou
+ * SPDX-FileCopyrightText: 2014 University of Edinburgh, Imperial College London, University of Manchester
+ * SPDX-FileCopyrightText: 2016-2019 Emanuele Vespa
+ * SPDX-FileCopyrightText: 2020-2022 Smart Robotics Lab, Imperial College London, Technical University of Munich
+ * SPDX-FileCopyrightText: 2020-2022 Nils Funk
+ * SPDX-FileCopyrightText: 2020-2022 Sotiris Papatheodorou
  * SPDX-License-Identifier: MIT
- * Developed in the PAMELA project, EPSRC Programme Grant EP/K008730/1
  */
 
 #ifndef __READER_OPENNI_HPP
@@ -26,13 +27,15 @@
 
 namespace se {
 
-/** Reader for ICL-NUIM datasets. */
+/** Reader for the Microsoft Kinect and Asus Xtion using the OpenNI2 driver.
+ * https://structure.io/openni
+ */
 class OpenNIReader : public Reader {
     public:
     /** Construct an OpenNIReader from a ReaderConfig.
-       *
-       * \param[in] c The configuration struct to use.
-       */
+     *
+     * \param[in] c The configuration struct to use.
+     */
     OpenNIReader(const ReaderConfig& c);
 
     ~OpenNIReader();
@@ -41,9 +44,9 @@ class OpenNIReader : public Reader {
     void restart();
 
     /** The name of the reader.
-       *
-       * \return The string `"OpenNIReader"`.
-       */
+     *
+     * \return The string `"OpenNIReader"`.
+     */
     std::string name() const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

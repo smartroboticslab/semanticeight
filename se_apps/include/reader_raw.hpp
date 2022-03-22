@@ -1,9 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2014 University of Edinburgh, Imperial College London, University of Manchester.
- * SPDX-FileCopyrightText: 2020 Smart Robotics Lab, Imperial College London
- * SPDX-FileCopyrightText: 2020 Sotiris Papatheodorou
+ * SPDX-FileCopyrightText: 2014 University of Edinburgh, Imperial College London, University of Manchester
+ * SPDX-FileCopyrightText: 2016-2019 Emanuele Vespa
+ * SPDX-FileCopyrightText: 2020-2022 Smart Robotics Lab, Imperial College London, Technical University of Munich
+ * SPDX-FileCopyrightText: 2020-2022 Nils Funk
+ * SPDX-FileCopyrightText: 2020-2022 Sotiris Papatheodorou
  * SPDX-License-Identifier: MIT
- * Developed in the PAMELA project, EPSRC Programme Grant EP/K008730/1
  */
 
 #ifndef __READER_RAW_HPP
@@ -21,22 +22,24 @@
 
 namespace se {
 
-/** Reader for Slambench 1.0 .raw files. */
+/** Reader for SLAMBench 1.0 .raw files.
+ * http://apt.cs.manchester.ac.uk/projects/PAMELA/tools/SLAMBench/
+ */
 class RAWReader : public Reader {
     public:
     /** Construct a RAWReader from a ReaderConfig.
-       *
-       * \param[in] c The configuration struct to use.
-       */
+     *
+     * \param[in] c The configuration struct to use.
+     */
     RAWReader(const ReaderConfig& c);
 
     /** Restart reading from the beginning. */
     void restart();
 
     /** The name of the reader.
-       *
-       * \return The string `"RAWReader"`.
-       */
+     *
+     * \return The string `"RAWReader"`.
+     */
     std::string name() const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

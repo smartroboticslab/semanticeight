@@ -20,7 +20,6 @@ link_libraries(
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
-add_subdirectory(reader_iclnuim)
 add_subdirectory(reader_openni)
 add_subdirectory(reader_raw)
 

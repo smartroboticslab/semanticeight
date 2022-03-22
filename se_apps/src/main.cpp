@@ -37,7 +37,14 @@ int main(int argc, char** argv)
     try {
         se::Configuration config = parseArgs(argc, argv);
 
-        std::unique_ptr<se::Reader> reader(se::create_reader(config));
+        const se::ReaderConfig reader_config{se::string_to_reader_type(config.sequence_type),
+                                             config.sequence_path,
+                                             config.ground_truth_file,
+                                             0.0f,
+                                             config.fps,
+                                             config.drop_frames,
+                                             0};
+        std::unique_ptr<se::Reader> reader(se::create_reader(reader_config));
         if (!reader || !reader->good()) {
             std::cerr << "No valid input file specified\n";
             return EXIT_FAILURE;

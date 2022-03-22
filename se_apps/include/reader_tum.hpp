@@ -5,17 +5,13 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef SE_READER_INTERIORNET_HPP
-#define SE_READER_INTERIORNET_HPP
-
+#ifndef __READER_TUM_HPP
+#define __READER_TUM_HPP
 
 
 #include <Eigen/Dense>
 #include <cstdint>
 #include <fstream>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/opencv.hpp>
 #include <string>
 
 #include "reader_base.hpp"
@@ -27,16 +23,17 @@ namespace se {
 
 
 
-/** Reader for the InteriorNet dataset.
- * https://interiornet.org/
+/** Reader for the TUM RGBD dataset.
+ * https://vision.in.tum.de/data/datasets/rgbd-dataset
  */
-class InteriorNetReader : public Reader {
+class TUMReader : public Reader {
     public:
-    /** Construct a InteriorNetReader from a ReaderConfig.
+    /** Construct a TUMReader from a ReaderConfig.
      *
      * \param[in] c The configuration struct to use.
      */
-    InteriorNetReader(const ReaderConfig& c);
+    TUMReader(const ReaderConfig& c);
+
 
     /** Restart reading from the beginning. */
     void restart();
@@ -44,14 +41,14 @@ class InteriorNetReader : public Reader {
 
     /** The name of the reader.
      *
-     * \return The string `"InteriorNetReader"`.
+     * \return The string `"TUMReader"`.
      */
     std::string name() const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
-    static constexpr float interiornet_inverse_scale_ = 1.0f / 1000.0f;
+    static constexpr float tum_inverse_scale_ = 1.0f / 5000.0f;
     float inverse_scale_;
 
     // TODO Allow setting the max_match_timestamp_dist_ and
@@ -61,8 +58,6 @@ class InteriorNetReader : public Reader {
 
     static constexpr double max_interp_timestamp_dist_ = 10.0 * max_match_timestamp_dist_;
 
-    cv::Mat projection_inv_;
-
     std::vector<std::string> depth_filenames_;
 
     std::vector<std::string> rgb_filenames_;
@@ -70,8 +65,6 @@ class InteriorNetReader : public Reader {
     ReaderStatus nextDepth(Image<float>& depth_image);
 
     ReaderStatus nextRGBA(Image<uint32_t>& rgba_image);
-
-    ReaderStatus nextSegmentation(se::SegmentationResult& segmentation);
 };
 
 
@@ -79,5 +72,4 @@ class InteriorNetReader : public Reader {
 } // namespace se
 
 
-
-#endif //SE_READER_INTERIORNET_HPP
+#endif

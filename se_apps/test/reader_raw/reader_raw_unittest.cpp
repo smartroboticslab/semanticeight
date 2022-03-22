@@ -57,7 +57,8 @@ class TestRAWDataset : public ::testing::Test {
         fs.close();
 
         // Generate the reader config.
-        config_ = {0, false, true, raw_filename_, gt_filename_};
+        config_.sequence_path = raw_filename_;
+        config_.ground_truth_file = gt_filename_;
     }
 
     const size_t num_frames_ = 2;

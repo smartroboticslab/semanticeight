@@ -1,6 +1,9 @@
-// SPDX-FileCopyrightText: 2020-2021 Smart Robotics Lab, Imperial College London
-// SPDX-FileCopyrightText: 2020-2021 Sotiris Papatheodorou, Imperial College London
-// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * SPDX-FileCopyrightText: 2020-2021 Smart Robotics Lab, Imperial College London, Technical University of Munich
+ * SPDX-FileCopyrightText: 2020-2021 Nils Funk
+ * SPDX-FileCopyrightText: 2020-2021 Sotiris Papatheodorou
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 
 #include "reader_interiornet.hpp"
 
@@ -12,7 +15,6 @@
 #include <iomanip>
 #include <iostream>
 
-#include "lodepng.h"
 #include "se/filesystem.hpp"
 #include "se/image_utils.hpp"
 
@@ -30,15 +32,15 @@ struct InteriorNetImageEntry {
     std::string filename;
 
     /** Initialize an invalid InteriorNetImageEntry.
-   */
+     */
     InteriorNetImageEntry() : timestamp(NAN)
     {
     }
 
-    /** Initialize using a single-line string from a InteriorNet depth.txt or rgb.txt.
-   * \warning No error checking is performed in this function, it should be
-   * performed by the caller.
-   */
+    /** Initialize using a single-line string from a InteriorNet data.csv.
+     * \warning No error checking is performed in this function, it should be
+     * performed by the caller.
+     */
     InteriorNetImageEntry(const std::string& s)
     {
         std::vector<std::string> columns = str_utils::split_str(s, ' ', true);
@@ -62,7 +64,7 @@ struct InteriorNetPoseEntry {
     std::string rgb_filename;
 
     /** Initialize an invalid InteriorNetPoseEntry.
-   */
+     */
     InteriorNetPoseEntry()
     {
     }
@@ -77,10 +79,10 @@ struct InteriorNetPoseEntry {
     }
 
     /** Initialize using a single-line string from a InteriorNet groundtruth.txt.
-   * depth_filename and rgb_filename will not be initialized.
-   * \warning No error checking is performed in this function, it should be
-   * performed by the caller.
-   */
+     * depth_filename and rgb_filename will not be initialized.
+     * \warning No error checking is performed in this function, it should be
+     * performed by the caller.
+     */
     InteriorNetPoseEntry(const std::string& s)
     {
         const std::vector<std::string> columns = str_utils::split_str(s, ' ', true);
@@ -95,9 +97,9 @@ struct InteriorNetPoseEntry {
     }
 
     /** Return a single-line string representation of the ground truth pose.
-   * It can be used to write it to a ground truth file that is understood by
-   * supereight.
-   */
+     * It can be used to write it to a ground truth file that is understood by
+     * supereight.
+     */
     std::string string() const
     {
         const std::string s = std::to_string(timestamp) + " " + rgb_filename + " " + depth_filename
@@ -113,7 +115,7 @@ struct InteriorNetPoseEntry {
 
 
 
-/** Read a InteriorNet depth.txt or rgb.txt into an std::vector of InteriorNetImageEntry.
+/** Read a InteriorNet data.csv into an std::vector of InteriorNetImageEntry.
  * Return an empty std::vector if the file was not in the correct format.
  */
 std::vector<InteriorNetImageEntry> read_interiornet_image_list(const std::string& filename)
@@ -130,16 +132,15 @@ std::vector<InteriorNetImageEntry> read_interiornet_image_list(const std::string
         if (line[0] == '#') {
             continue;
         }
-        // Data line read, split on spaces
+        // Data line read, split on commas
         std::replace(line.begin(), line.end(), ',', ' ');
         const std::vector<std::string> columns = str_utils::split_str(line, ' ', true);
         // Ensure it has the expected number of columns
         if (columns.size() != 2) {
             std::cerr << "Error: Invalid format in data line " << images.size() + 1 << " of "
                       << filename << "\n";
-            std::cerr
-                << "Error: The format of each line in a InteriorNet depth.txt/rgb.txt file must be: "
-                << "timestamp filename\n";
+            std::cerr << "Error: The format of each line in an InteriorNet data.csv file must be: "
+                      << "timestamp,filename\n";
             images.clear();
             return images;
         }
@@ -262,7 +263,7 @@ constexpr double se::InteriorNetReader::max_interp_timestamp_dist_;
 
 se::InteriorNetReader::InteriorNetReader(const se::ReaderConfig& c) : se::Reader(c)
 {
-    inverse_scale_ = interiornet_inverse_scale_;
+    inverse_scale_ = (c.inverse_scale != 0) ? c.inverse_scale : interiornet_inverse_scale_;
 
     // Ensure sequence_path_ refers to a valid InteriorNet directory structure.
     if (!stdfs::is_directory(sequence_path_)
@@ -271,11 +272,12 @@ se::InteriorNetReader::InteriorNetReader(const se::ReaderConfig& c) : se::Reader
         || !stdfs::is_regular_file(sequence_path_ + "/depth0/data.csv")
         || !stdfs::is_regular_file(sequence_path_ + "/cam0/data.csv")) {
         status_ = se::ReaderStatus::error;
-        std::cerr << "Error: The InteriorNet sequence path must be a directory that contains"
-                  << " depth and rgb subdirectories and depth.txt and rgb.txt files\n";
+        std::cerr
+            << "Error: The InteriorNet sequence path must be a directory that contains"
+            << " depth0/data and cam0/data subdirectories and depth0/data.csv and cam0/data.csv files\n";
         return;
     }
-    // Read the image information from depth.txt and rgb.txt.
+    // Read the image information from the data.csv.
     std::vector<InteriorNetImageEntry> depth_images =
         read_interiornet_image_list(sequence_path_ + "/depth0/data.csv");
     std::vector<InteriorNetImageEntry> rgb_images =
@@ -317,47 +319,44 @@ se::InteriorNetReader::InteriorNetReader(const se::ReaderConfig& c) : se::Reader
     // Get the total number of frames.
     num_frames_ = depth_filenames_.size();
     // Set the depth image resolution to that of the first depth image.
-    unsigned w = 0;
-    unsigned h = 0;
     if (!depth_filenames_.empty()) {
         const std::string first_depth_filename =
             sequence_path_ + "/depth0/data/" + depth_filenames_[0];
-        unsigned char* image_data = nullptr;
-        if (lodepng_decode_file(&image_data, &w, &h, first_depth_filename.c_str(), LCT_GREY, 16)) {
-            free(image_data);
+        cv::Mat image_data = cv::imread(first_depth_filename.c_str(), cv::IMREAD_UNCHANGED);
+
+        if (image_data.data == NULL) {
             std::cerr << "Error: Could not read depth image " << first_depth_filename << "\n";
             status_ = se::ReaderStatus::error;
             return;
         }
-        depth_image_res_ = Eigen::Vector2i(w, h);
+
+        depth_image_res_ = Eigen::Vector2i(image_data.cols, image_data.rows);
     }
 
-    projection_.resize(w * h);
+    projection_inv_ = cv::Mat(depth_image_res_.y(), depth_image_res_.x(), CV_32FC1);
 
-    for (unsigned int y = 0; y < h; y++) {
-        for (unsigned int x = 0; x < w; x++) {
-            projection_[x + y * depth_image_res_.x()] =
-                sqrt((1
-                      + (x - InteriorNetIntrinsics::c_x) * (x - InteriorNetIntrinsics::c_x)
-                          / (InteriorNetIntrinsics::f_x * InteriorNetIntrinsics::f_x)
-                      + (y - InteriorNetIntrinsics::c_y) * (y - InteriorNetIntrinsics::c_y)
-                          / (InteriorNetIntrinsics::f_x * InteriorNetIntrinsics::f_x)));
+    for (int y = 0; y < depth_image_res_.y(); y++) {
+        for (int x = 0; x < depth_image_res_.x(); x++) {
+            projection_inv_.at<float>(y, x) = 1
+                / sqrt((1
+                        + (x - InteriorNetIntrinsics::c_x) * (x - InteriorNetIntrinsics::c_x)
+                            / (InteriorNetIntrinsics::f_x * InteriorNetIntrinsics::f_x)
+                        + (y - InteriorNetIntrinsics::c_y) * (y - InteriorNetIntrinsics::c_y)
+                            / (InteriorNetIntrinsics::f_x * InteriorNetIntrinsics::f_x)));
         }
     }
 
     // Set the RGBA image resolution to that of the first RGBA image.
-    w = 0;
-    h = 0;
     if (!rgb_filenames_.empty()) {
         const std::string first_rgb_filename = sequence_path_ + "/cam0/data/" + rgb_filenames_[0];
-        unsigned char* image_data = nullptr;
-        if (lodepng_decode32_file(&image_data, &w, &h, first_rgb_filename.c_str())) {
-            free(image_data);
+        cv::Mat image_data = cv::imread(first_rgb_filename.c_str(), cv::IMREAD_COLOR);
+
+        if (image_data.data == NULL) {
             std::cerr << "Error: Could not read RGB image " << first_rgb_filename << "\n";
             status_ = se::ReaderStatus::error;
             return;
         }
-        rgba_image_res_ = Eigen::Vector2i(w, h);
+        rgba_image_res_ = Eigen::Vector2i(image_data.cols, image_data.rows);
     }
 }
 
@@ -390,34 +389,27 @@ se::ReaderStatus se::InteriorNetReader::nextDepth(se::Image<float>& depth_image)
     }
     const std::string filename = sequence_path_ + "/depth0/data/" + depth_filenames_[frame_];
     // Read the image data.
-    unsigned w = 0;
-    unsigned h = 0;
-    unsigned char* image_data = nullptr;
-    if (lodepng_decode_file(&image_data, &w, &h, filename.c_str(), LCT_GREY, 16)) {
-        free(image_data);
+
+    // Read the image data.
+    cv::Mat image_data = cv::imread(filename.c_str(), cv::IMREAD_UNCHANGED);
+    cv::Mat depth_data;
+    image_data.convertTo(depth_data, CV_32FC1, inverse_scale_);
+    depth_data = depth_data.mul(projection_inv_);
+
+    if (image_data.empty()) {
         return se::ReaderStatus::error;
     }
-    assert(depth_image_res_.x() == static_cast<int>(w));
-    assert(depth_image_res_.y() == static_cast<int>(h));
+
+    assert(depth_image_res_.x() == static_cast<int>(image_data.cols));
+    assert(depth_image_res_.y() == static_cast<int>(image_data.rows));
     // Resize the output image if needed.
     if ((depth_image.width() != depth_image_res_.x())
         || (depth_image.height() != depth_image_res_.y())) {
         depth_image = se::Image<float>(depth_image_res_.x(), depth_image_res_.y());
     }
-    // Change from big endian to little endiad, scale and copy into the provided
-    // image.
-#pragma omp parallel for
-    for (size_t i = 0; i < w * h; ++i) {
-        // Swap the byte order.
-        const uint16_t depth_value = reinterpret_cast<uint16_t*>(image_data)[i];
-        const uint16_t low_byte = depth_value & 0x00FF;
-        const uint16_t high_byte = (depth_value & 0xFF00) >> 8;
-        const uint16_t depth_value_unscaled = (low_byte << 8 | high_byte);
 
-        depth_image[i] = inverse_scale_ / projection_[i] * depth_value_unscaled;
-    }
-
-    free(image_data);
+    cv::Mat wrapper_mat(depth_data.rows, depth_data.cols, CV_32FC1, depth_image.data());
+    depth_data.copyTo(wrapper_mat);
     return se::ReaderStatus::ok;
 }
 
@@ -429,24 +421,26 @@ se::ReaderStatus se::InteriorNetReader::nextRGBA(se::Image<uint32_t>& rgba_image
         return se::ReaderStatus::error;
     }
     const std::string filename = sequence_path_ + "/cam0/data/" + rgb_filenames_[frame_];
-    // Read the image data.
-    unsigned w = 0;
-    unsigned h = 0;
-    unsigned char* image_data = nullptr;
-    if (lodepng_decode32_file(&image_data, &w, &h, filename.c_str())) {
-        free(image_data);
+
+    cv::Mat image_data = cv::imread(filename.c_str(), cv::IMREAD_COLOR);
+
+    if (image_data.empty()) {
         return se::ReaderStatus::error;
     }
-    assert(rgba_image_res_.x() == static_cast<int>(w));
-    assert(rgba_image_res_.y() == static_cast<int>(h));
+
+    cv::Mat rgba_data;
+    cv::cvtColor(image_data, rgba_data, cv::COLOR_BGR2RGBA);
+
+    assert(rgba_image_res_.x() == static_cast<int>(rgba_data.cols));
+    assert(rgba_image_res_.y() == static_cast<int>(rgba_data.rows));
     // Resize the output image if needed.
     if ((rgba_image.width() != rgba_image_res_.x())
         || (rgba_image.height() != rgba_image_res_.y())) {
         rgba_image = se::Image<uint32_t>(rgba_image_res_.x(), rgba_image_res_.y());
     }
-    // Copy into the provided image.
-    std::memcpy(rgba_image.data(), image_data, w * h * sizeof(uint32_t));
-    free(image_data);
+
+    cv::Mat wrapper_mat(rgba_data.rows, rgba_data.cols, CV_8UC4, rgba_image.data());
+    rgba_data.copyTo(wrapper_mat);
     return se::ReaderStatus::ok;
 }
 

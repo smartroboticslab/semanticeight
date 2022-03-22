@@ -1,6 +1,8 @@
 /*
- * SPDX-FileCopyrightText: 2020 Masha Popovic, Imperial College London
- * SPDX-FileCopyrightText: 2020 Sotiris Papatheodorou, Imperial College London
+ * SPDX-FileCopyrightText: 2020-2021 Smart Robotics Lab, Imperial College London, Technical University of Munich
+ * SPDX-FileCopyrightText: 2020 Marija Popovic
+ * SPDX-FileCopyrightText: 2020-2021 Nils Funk
+ * SPDX-FileCopyrightText: 2020-2021 Sotiris Papatheodorou
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -17,8 +19,13 @@
 #include "se/filesystem.hpp"
 #include "se/image_utils.hpp"
 
+#ifdef SE_PCL
+#    include <pcl/io/pcd_io.h>
+#    include <pcl/point_types.h>
+#endif
 
 
+#ifdef SE_PCL
 Eigen::Vector3f atof3(const std::string& line)
 {
     Eigen::Vector3f res = Eigen::Vector3f::Zero();
@@ -52,25 +59,23 @@ Eigen::Vector3f atof3(const std::string& line)
 
 
 
-const int8_t se::NewerCollegeReader::pixel_offset[64] = {
-    0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18, 0,  6,
-    12, 18, 0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18,
-    0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18, 0,  6,  12, 18};
-
-
-
 se::NewerCollegeReader::NewerCollegeReader(const se::ReaderConfig& c) : se::Reader(c)
 {
     // Ensure a valid directory was provided
     if (!stdfs::is_directory(sequence_path_)) {
         status_ = se::ReaderStatus::error;
+        std::cerr << "Error: " << sequence_path_ << " is not a directory\n";
         return;
     }
     // Set the depth and RGBA image resolutions.
     depth_image_res_ = Eigen::Vector2i(1024, 64);
     rgba_image_res_ = Eigen::Vector2i(1024, 64);
-    // Get the total number of frames.
-    num_frames_ = numScans(sequence_path_);
+    // Get the scan filenames and total number of frames.
+    scan_filenames_ = getScanFilenames(sequence_path_);
+    num_frames_ = scan_filenames_.size();
+    if (verbose_ >= 1) {
+        std::clog << "Found " << num_frames_ << " PCD files\n";
+    }
 }
 
 
@@ -83,6 +88,7 @@ void se::NewerCollegeReader::restart()
     }
     else {
         status_ = se::ReaderStatus::error;
+        std::cerr << "Error: " << sequence_path_ << " is not a directory\n";
     }
 }
 
@@ -104,29 +110,21 @@ se::ReaderStatus se::NewerCollegeReader::nextDepth(se::Image<float>& depth_image
     }
     // Initialize the image to zeros.
     std::memset(depth_image.data(), 0, depth_image_res_.prod() * sizeof(float));
-    // Generate the filename and open the file for reading.
-    std::ostringstream basename;
-    basename << "cloud_" << std::setfill('0') << std::setw(5) << frame_ << ".pcd";
-    const std::string filename(sequence_path_ + "/" + basename.str());
-    std::ifstream fs(filename, std::ios::in);
-    if (!fs.good()) {
+    // Read the point cloud.
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    const std::string filename = scan_filenames_[frame_];
+    if (pcl::io::loadPCDFile<pcl::PointXYZ>(filename, *cloud) == -1) {
+        std::cerr << "Error: can't read point cloud from " << filename << "\n";
         return se::ReaderStatus::error;
     }
+    else if (verbose_ >= 1) {
+        std::clog << "Read point cloud from " << filename << "\n";
+    }
+    // Read the point cloud and convert each point to a distance.
     size_t pixel_idx = SIZE_MAX;
     std::vector<float> data(depth_image_res_.prod(), 0);
-    // Read the point cloud and convert each point to a distance.
-    for (std::string line; std::getline(fs, line);) {
-        // Ignore comment lines
-        if (line[0] == '#') {
-            continue;
-        }
-        // Ignore PCL lines
-        if (std::isalpha(line[0])) {
-            continue;
-        }
-        // Read the point
-        const Eigen::Vector3f point = atof3(line);
-        data[++pixel_idx] = point.norm();
+    for (const auto& point : *cloud) {
+        data[++pixel_idx] = Eigen::Vector3f(point.x, point.y, point.z).norm();
     }
 
     // Reorganize the distances into a depth image.
@@ -157,21 +155,70 @@ se::ReaderStatus se::NewerCollegeReader::nextRGBA(se::Image<uint32_t>& rgba_imag
 
 
 
-size_t se::NewerCollegeReader::numScans(const std::string& dir) const
+std::vector<std::string> se::NewerCollegeReader::getScanFilenames(const std::string& dir)
 {
-    const std::regex cloud_image_regex(".*cloud_[[:digit:]]{5}.pcd");
-    size_t cloud_count = 0;
+    static const std::string regex_pattern = ".*cloud_[[:digit:]]{10}_[[:digit:]]{9}.pcd";
+    static const std::regex cloud_image_regex(regex_pattern);
+    std::vector<std::string> filenames;
     for (const auto& p : stdfs::directory_iterator(dir)) {
         if (!stdfs::is_directory(p.path())) {
             const std::string filename = p.path().string();
             if (std::regex_match(filename, cloud_image_regex)) {
-                cloud_count++;
+                filenames.push_back(filename);
             }
         }
     }
-    if (cloud_count == 0) {
-        std::cerr << "Warning: found no files matching the regular expression "
-                  << "'cloud_[[:digit:]]{5}.pcd'\n";
+    // Sort the filenames to make they are opened in the correct order. This assumes that any
+    // numbers are zero-padded, which is true in the NewerCollege dataset.
+    std::sort(filenames.begin(), filenames.end());
+    if (filenames.empty()) {
+        std::cerr << "Warning: no files matching the regular expression " << regex_pattern << "\n";
     }
-    return cloud_count;
+    return filenames;
 }
+
+
+
+#else
+se::NewerCollegeReader::NewerCollegeReader(const se::ReaderConfig& c) : se::Reader(c)
+{
+    status_ = se::ReaderStatus::error;
+    std::cerr << "Error: not compiled with PCL, no Newer College support\n";
+}
+
+
+
+void se::NewerCollegeReader::restart()
+{
+    se::Reader::restart();
+}
+
+
+
+std::string se::NewerCollegeReader::name() const
+{
+    return std::string("NewerCollegeReader");
+}
+
+
+
+se::ReaderStatus se::NewerCollegeReader::nextDepth(se::Image<float>&)
+{
+    return se::ReaderStatus::error;
+}
+
+
+
+se::ReaderStatus se::NewerCollegeReader::nextRGBA(se::Image<uint32_t>&)
+{
+    return se::ReaderStatus::error;
+}
+
+
+
+std::vector<std::string> se::NewerCollegeReader::getScanFilenames(const std::string&)
+{
+    return std::vector<std::string>();
+}
+
+#endif
