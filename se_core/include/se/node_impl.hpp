@@ -251,11 +251,8 @@ constexpr int VoxelBlock<T>::scaleOffset(const int scale)
 template<typename T>
 void VoxelBlock<T>::updateMinScaleReached()
 {
-    if (min_scale_reached_ < 0) {
+    if (min_scale_reached_ < 0 || (min_scale_ >= 0 && min_scale_ < min_scale_reached_)) {
         min_scale_reached_ = min_scale_;
-    }
-    else {
-        min_scale_reached_ = std::min(static_cast<int8_t>(min_scale_), min_scale_reached_);
     }
 }
 
@@ -379,13 +376,11 @@ void VoxelBlockFinest<T>::initFromBlock(const VoxelBlockFinest<T>& block)
 // Voxel block full scale allocation implementation
 
 template<typename T>
-VoxelBlockFull<T>::VoxelBlockFull(const typename T::VoxelData init_data) : VoxelBlock<T>(0, 0)
+VoxelBlockFull<T>::VoxelBlockFull(const typename T::VoxelData init_data) : VoxelBlock<T>(0, -1)
 {
     for (unsigned int voxel_idx = 0; voxel_idx < num_voxels_in_block; voxel_idx++) {
         block_data_[voxel_idx] = init_data;
     }
-    this->min_scale_ = -1;
-    this->min_scale_reached_ = -1;
 }
 
 template<typename T>
@@ -1357,7 +1352,6 @@ void VoxelBlockSingleMax<T>::deleteUpTo(const int min_scale)
     block_max_data_.push_back(block_data_[this->max_scale - min_scale]);
 
     this->min_scale_ = min_scale;
-    this->updateMinScaleReached();
 }
 
 

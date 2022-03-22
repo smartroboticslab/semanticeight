@@ -245,6 +245,7 @@ class VoxelBlock : public Node<T> {
     void min_scale(const int s)
     {
         min_scale_ = s;
+        this->updateMinScaleReached();
     }
     int8_t minScaleReached() const
     {
