@@ -493,7 +493,7 @@ se::ReaderStatus se::Reader::nextSegmentation(se::SegmentationResult& segmentati
             return se::ReaderStatus::ok;
         }
         else {
-            return se::ReaderStatus::error;
+            return se::ReaderStatus::ok;
         }
     }
 }
