@@ -51,7 +51,7 @@ ObjectHit raycast_objects(const Objects& objects,
  * without.
  */
 void raycastObjectListKernel(const Objects& objects,
-                             const std::set<int>& visible_objects,
+                             const std::set<int>& visible_object_ids,
                              se::Image<Eigen::Vector3f>& surface_point_cloud_M,
                              se::Image<Eigen::Vector3f>& surface_normals_M,
                              cv::Mat& instance_id_image,

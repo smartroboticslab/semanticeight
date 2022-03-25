@@ -79,7 +79,7 @@ ObjectHit raycast_objects(const Objects& objects,
 
 
 void raycastObjectListKernel(const Objects& objects,
-                             const std::set<int>& visible_objects,
+                             const std::set<int>& visible_object_ids,
                              se::Image<Eigen::Vector3f>& surface_point_cloud_M,
                              se::Image<Eigen::Vector3f>& surface_normals_M,
                              cv::Mat& instance_id_image,
@@ -87,176 +87,52 @@ void raycastObjectListKernel(const Objects& objects,
                              se::Image<int8_t>& min_scale_image,
                              const Eigen::Matrix4f& raycast_T_MC,
                              const SensorImpl& sensor,
-                             const int frame)
+                             const int /* frame */)
 {
     TICKD("raycastObjectListKernel");
-    const std::vector<int> visible_objects_vec(visible_objects.begin(), visible_objects.end());
+    Objects visible_objects;
+    visible_objects.reserve(visible_object_ids.size());
+    std::transform(visible_object_ids.begin(),
+                   visible_object_ids.end(),
+                   std::back_inserter(visible_objects),
+                   [&](int id) { return objects[id]; });
+
+    std::map<int, cv::Mat> raycasting_masks;
 #if SE_BOUNDING_VOLUME > 0
     // Compute the visible object raycasting masks based on their bounding volumes.
-    std::vector<cv::Mat> raycasting_masks;
-    for (const auto& object_id : visible_objects_vec) {
-        Object& object = *(objects[object_id]);
-        raycasting_masks.push_back(object.bounding_volume_M_.raycastingMask(
+    for (const auto& o : visible_objects) {
+        raycasting_masks[o->instance_id] = o->bounding_volume_M_.raycastingMask(
             Eigen::Vector2i(surface_point_cloud_M.width(), surface_point_cloud_M.height()),
             raycast_T_MC,
-            sensor));
+            sensor);
     }
-#else
 #endif
 
-    dbg::images.init(objects.size(), surface_point_cloud_M.width(), surface_point_cloud_M.height());
 #pragma omp parallel for
     for (int y = 0; y < surface_point_cloud_M.height(); ++y) {
 #pragma omp simd
         for (int x = 0; x < surface_point_cloud_M.width(); ++x) {
-            // Count how many object volumes this ray has missed
-            size_t miss_count = 0;
-
             const size_t pixel_idx = x + surface_point_cloud_M.width() * y;
-            const Eigen::Vector2f pixel_f(x, y);
+            const Eigen::Vector2f pixel(x, y);
             Eigen::Vector3f ray_dir_C;
-            sensor.model.backProject(pixel_f, &ray_dir_C);
+            sensor.model.backProject(pixel, &ray_dir_C);
+            const Eigen::Vector3f t_MC = se::math::to_translation(raycast_T_MC);
             const Eigen::Vector3f ray_dir_M =
                 se::math::to_rotation(raycast_T_MC) * ray_dir_C.normalized();
-            const Eigen::Vector4f t_MC = se::math::to_translation(raycast_T_MC).homogeneous();
-
-            // Keep the distance to the nearest hit and the respective foreground
-            // probability
-            float nearest_hit_dist = INFINITY;
-            float nearest_hit_prob = 0.0f;
-
-            // Iterate over all visible objects.
-            for (size_t i = 0; i < visible_objects_vec.size(); i++) {
-                const Object& object = *(objects[visible_objects_vec[i]]);
-                const int instance_id = object.instance_id;
-                const int class_id = object.classId();
-
-#if SE_BOUNDING_VOLUME > 0
-                // Skip pixels outside the bounding volume mask
-                if ((instance_id != se::instance_bg)
-                    && !raycasting_masks[i].at<se::mask_elem_t>(y, x)) {
-                    miss_count++;
-                    //std::cout << "Skipping masked" << "\n";
-                    dbg::images.set(instance_id, x, y, dbg::raycast_outside_bounding);
-                    continue;
-                }
-#endif
-
-                // Change from map to object frame
-                const Eigen::Matrix4f& T_OM = object.T_OM_;
-                const Eigen::Vector3f ray_dir_O = se::math::to_rotation(T_OM) * ray_dir_M;
-                const Eigen::Vector3f t_OC = (T_OM * t_MC).head(3);
-                // Raycast the object
-                const Eigen::Vector4f surface_intersection_O =
-                    ObjVoxelImpl::raycast(*object.map_,
-                                          t_OC,
-                                          ray_dir_O,
-                                          sensor.nearDist(ray_dir_C),
-                                          sensor.farDist(ray_dir_C));
-
-                if (surface_intersection_O.w() >= 0.f) {
-                    float hit_distance = (t_OC - surface_intersection_O.head<3>()).norm();
-                    // Slightly increase the hit distance for the background and "stuff"
-                    // so that the foreground has priority
-                    if (class_id == se::semantic_classes.backgroundId()) {
-                        hit_distance += object.voxelDim();
-                    }
-                    else if (!se::semantic_classes.enabled(class_id)) {
-                        hit_distance += 0.5f * object.voxelDim();
-                    }
-                    // Skip hits further than the closest hit
-                    if (hit_distance > nearest_hit_dist) {
-                        miss_count++;
-                        //std::cout << "Skipping far hit" << "\n";
-                        dbg::images.set(instance_id, x, y, dbg::raycast_far);
-                        continue;
-                    }
-                    // Compute the foreground probability
-                    float fg_prob =
-                        object.map_
-                            ->interpAtPoint(surface_intersection_O.head<3>(),
-                                            [](const auto& data) { return data.getFg(); })
-                            .first;
-                    // Compute the complement of the probability if this is the
-                    // background. This allows comparing it with the foreground
-                    // probabilities of objects as it becomes a "valid hit" probability.
-                    if (class_id == se::semantic_classes.backgroundId()) {
-                        fg_prob = 1.0f - fg_prob;
-                    }
-                    // Skip hits with low foreground probability, i.e. belonging to the
-                    // background
-                    if (fg_prob <= 0.5f) {
-                        miss_count++;
-                        //std::cout << "Skipping FG prob " << fg_prob << " <= 0.5 hit" << "\n";
-                        dbg::images.set(instance_id, x, y, dbg::raycast_low_fg);
-                        continue;
-                    }
-                    // Skip hits with the same distance and lower foreground probability
-                    if ((hit_distance == nearest_hit_dist) && (fg_prob <= nearest_hit_prob)) {
-                        miss_count++;
-                        //std::cout << "Skipping lower prob hit" << "\n";
-                        dbg::images.set(instance_id, x, y, dbg::raycast_same_dist_lower_fg);
-                        continue;
-                    }
-                    // Good hit found.
-                    nearest_hit_prob = fg_prob;
-                    nearest_hit_dist = hit_distance;
-                    const Eigen::Matrix4f T_MO = se::math::to_inverse_transformation(T_OM);
-                    // Update the point cloud
-                    surface_point_cloud_M[pixel_idx] =
-                        (T_MO * surface_intersection_O.head(3).homogeneous()).head(3);
-                    // Update the normals
-                    Eigen::Vector3f surface_normal_O = object.map_->gradAtPoint(
-                        surface_intersection_O.head<3>(),
-                        ObjVoxelImpl::VoxelType::selectNodeValue,
-                        ObjVoxelImpl::VoxelType::selectVoxelValue,
-                        static_cast<int>(surface_intersection_O.w() + 0.5f));
-                    if (surface_normal_O.norm() == 0.f) {
-                        surface_normals_M[pixel_idx] = Eigen::Vector3f(INVALID, 0.f, 0.f);
-                    }
-                    else {
-                        // Invert normals for TSDF representations.
-                        surface_normals_M[pixel_idx] = se::math::to_rotation(T_MO)
-                            * (ObjVoxelImpl::invert_normals ? (-1.f * surface_normal_O).normalized()
-                                                            : surface_normal_O.normalized())
-                                  .head(3);
-                    }
-                    // Update the instance mask
-                    instance_id_image.at<se::instance_mask_elem_t>(y, x) = instance_id;
-                    scale_image[pixel_idx] = static_cast<int8_t>(surface_intersection_O.w());
-                    // Fetch the VoxelBlock containing the hit and get its minimum updated scale.
-                    // TODO SEM not sure why block would ever be nullptr if we got a valid hit but it happens.
-                    const auto* block = object.map_->fetch(
-                        object.map_->pointToVoxel(surface_intersection_O.head<3>()));
-                    if (block) {
-                        min_scale_image[pixel_idx] = block->min_scale();
-                    }
-                    else {
-                        min_scale_image[pixel_idx] = -1;
-                    }
-                    //std::cout << "Hit!" << "\n";
-                    dbg::images.set(instance_id, x, y, dbg::raycast_ok);
-                }
-                else {
-                    // No hit was made
-                    miss_count++;
-                    continue;
-                }
-            }
-
-            // All objects were missed.
-            if (miss_count == visible_objects_vec.size()) {
-                surface_point_cloud_M[pixel_idx] = Eigen::Vector3f::Zero();
-                surface_normals_M[pixel_idx] = Eigen::Vector3f(INVALID, 0.f, 0.f);
-                instance_id_image.at<se::instance_mask_elem_t>(y, x) = se::instance_bg;
-                scale_image[pixel_idx] = -1;
-                min_scale_image[pixel_idx] = -1;
-            }
+            const ObjectHit hit = raycast_objects(visible_objects,
+                                                  raycasting_masks,
+                                                  pixel,
+                                                  t_MC,
+                                                  ray_dir_M,
+                                                  sensor.nearDist(ray_dir_C),
+                                                  sensor.farDist(ray_dir_C));
+            instance_id_image.at<se::instance_mask_elem_t>(y, x) = hit.instance_id;
+            scale_image[pixel_idx] = hit.scale;
+            min_scale_image[pixel_idx] = hit.min_scale;
+            surface_point_cloud_M[pixel_idx] = hit.hit_M;
+            surface_normals_M[pixel_idx] = hit.normal_M;
         }
     }
-    std::stringstream p;
-    p << "object_raycast_" << std::setw(5) << std::setfill('0') << frame;
-    dbg::images.save("/home/srl/renders", p.str());
     TOCK("raycastObjectListKernel");
 }
 
