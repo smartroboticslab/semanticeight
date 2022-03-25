@@ -8,6 +8,7 @@
 
 #include <Eigen/Dense>
 #include <cstdint>
+#include <map>
 #include <opencv2/opencv.hpp>
 #include <set>
 #include <vector>
@@ -19,6 +20,29 @@
 
 
 enum RenderMode : uint8_t { Color, InstanceID, ClassID, Scale, MinScale, ForegroundProb };
+
+
+
+struct ObjectHit {
+    int instance_id = se::instance_bg;
+    int8_t scale = -1;
+    int8_t min_scale = -1;
+    Eigen::Vector3f hit_M = Eigen::Vector3f::Zero();
+    Eigen::Vector3f normal_M = Eigen::Vector3f(INVALID, 0.f, 0.f);
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+/** Raycast each object along the ray passing through pixel and return an ObjectHit for the nearest
+ * object. If no object is hit, the return struct will contain its default values.
+ */
+ObjectHit raycast_objects(const Objects& objects,
+                          const std::map<int, cv::Mat>& raycasting_masks,
+                          const Eigen::Vector2f pixel,
+                          const Eigen::Vector3f& ray_origin_MC,
+                          const Eigen::Vector3f& ray_dir_M,
+                          const float near_dist,
+                          const float far_dist);
 
 /**
  * Raycast each object and create unified vertex and normal maps.
