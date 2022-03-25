@@ -271,8 +271,10 @@ int main(int argc, char** argv)
         const bool track = !config.enable_ground_truth;
         const bool render = config.enable_render;
         while (true) {
+            se::perfstats.setIter(reader->frame());
+            const size_t frame = reader->frame() - frame_offset;
 #if SE_VERBOSE >= SE_VERBOSE_MINIMAL
-            std::cout << "----------------------------------------------------------\n";
+            std::cout << "Frame " << frame << " ----------------------------------------\n";
 #endif
             TICK("TOTAL");
             TICK("COMPUTATION")
@@ -285,8 +287,6 @@ int main(int argc, char** argv)
             const se::ReaderStatus read_status = config.enable_ground_truth
                 ? reader->nextData(input_depth_image, input_rgba_image, T_WB, input_segmentation)
                 : reader->nextData(input_depth_image, input_rgba_image);
-            se::perfstats.setIter(reader->frame());
-            const size_t frame = reader->frame() - frame_offset;
             TOCK("ACQUISITION")
             if (read_status == se::ReaderStatus::skip) {
                 // Skip this frame
