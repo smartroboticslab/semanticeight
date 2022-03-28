@@ -133,10 +133,16 @@ class CandidateView {
     int window_width_;
     /** The time needed to complete the path. */
     float path_time_;
+    /** The combined gain at the optimal yaw angle. */
+    float gain_;
     /** The information gain for the map at the optimal yaw angle. */
     float entropy_;
     /** The object level-of-detail gain at the optimal yaw angle. */
     float lod_gain_;
+    /** An image containing the combined gain produced by the 360 raycasting. It's a weighted sum
+     * of entropy and level-of-detail gains. The yaw optimization is performed on this image.
+     */
+    Image<float> gain_image_;
     /** An image containing the information gain produced by the 360 raycasting. */
     Image<float> entropy_image_;
     /** An image containing the background scale gain produced by the 360 raycasting. */
@@ -175,6 +181,11 @@ class CandidateView {
     void entropyRaycast(const PoseHistory* T_MB_history);
 
     void computeUtility();
+
+    static Image<float> computeGainImage(const Image<float>& entropy,
+                                         const Image<float>& bg_scale_gain,
+                                         const Image<float>& object_scale_gain,
+                                         const Eigen::Vector3f& weights);
 
     /** \brief Create a rotation matrix C_MB from a yaw angle in the Map frame.
      */

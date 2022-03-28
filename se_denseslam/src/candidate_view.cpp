@@ -22,8 +22,10 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         window_idx_(-1),
         window_width_(-1),
         path_time_(-1.0f),
+        gain_(-1.0f),
         entropy_(-1.0f),
         lod_gain_(-1.0f),
+        gain_image_(1, 1),
         entropy_image_(1, 1),
         bg_scale_gain_image_(1, 1),
         object_scale_gain_image_(1, 1),
@@ -56,9 +58,11 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         window_idx_(-1),
         window_width_(-1),
         path_time_(-1.0f),
+        gain_(-1.0f),
         entropy_(-1.0f),
         lod_gain_(-1.0f),
         // TODO create if needed?
+        gain_image_(config.raycast_width, config.raycast_height),
         entropy_image_(config.raycast_width, config.raycast_height),
         bg_scale_gain_image_(config.raycast_width, config.raycast_height),
         object_scale_gain_image_(config.raycast_width, config.raycast_height),
@@ -203,6 +207,8 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
             object_scale_gain_image =
                 mask_entropy_image(object_scale_gain_image, frustum_overlap_mask);
         }
+        Image<float> gain_image =
+            computeGainImage(entropy_image, bg_scale_gain_image, object_scale_gain_image, weights_);
         const auto r = optimal_yaw(entropy_image, entropy_hits, sensor_, path_MB_[i], T_BC_);
         path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(std::get<0>(r));
     }
@@ -318,6 +324,20 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
     f << std::fixed;
 
     f << std::setprecision(6);
+    f << "Gain\n";
+    f << gain_image_.width() << " " << gain_image_.height() << "\n";
+    for (int y = 0; y < gain_image_.height(); y++) {
+        for (int x = 0; x < gain_image_.width(); x++) {
+            f << std::setw(20) << gain_image_(x, y);
+            if (x != gain_image_.width() - 1) {
+                f << " ";
+            }
+        }
+        f << "\n";
+    }
+
+    f << "\n";
+    f << std::setprecision(6);
     f << "Entropy\n";
     f << entropy_image_.width() << " " << entropy_image_.height() << "\n";
     for (int y = 0; y < entropy_image_.height(); y++) {
@@ -389,6 +409,7 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
 
     f << "\n";
     f << std::setprecision(6);
+    f << "Gain: " << gain_ << "\n";
     f << "Entropy: " << entropy_ << "\n";
     f << "Optimal yaw M: " << yaw_M_ << " rad   " << se::math::rad_to_deg(yaw_M_) << " degrees \n";
     f << "Window index: " << window_idx_ << " px\n";
@@ -531,6 +552,8 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
         object_scale_gain_image_ =
             mask_entropy_image(object_scale_gain_image_, frustum_overlap_mask_);
     }
+    gain_image_ =
+        computeGainImage(entropy_image_, bg_scale_gain_image_, object_scale_gain_image_, weights_);
 }
 
 
@@ -556,6 +579,26 @@ void CandidateView::computeUtility()
              utility_);
     // Get rid of the trailing null byte.
     utility_str_.resize(s);
+}
+
+
+
+Image<float> CandidateView::computeGainImage(const Image<float>& entropy,
+                                             const Image<float>& bg_scale_gain,
+                                             const Image<float>& object_scale_gain,
+                                             const Eigen::Vector3f& weights)
+{
+    assert(entropy.width() == bg_scale_gain.width());
+    assert(entropy.width() == object_scale_gain.width());
+    assert(entropy.height() == bg_scale_gain.height());
+    assert(entropy.height() == object_scale_gain.height());
+    Image<float> gain(entropy.width(), entropy.height());
+#pragma omp parallel for
+    for (size_t i = 0; i < gain.size(); ++i) {
+        const Eigen::Vector3f data(entropy[i], bg_scale_gain[i], object_scale_gain[i]);
+        gain[i] = data.dot(weights);
+    }
+    return gain;
 }
 
 
@@ -690,6 +733,7 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Utility:                 " << c.utility() << "\n";
     os << "Exploration utility:     " << c.explorationUtility() << "\n";
     os << "Object utility:          " << c.objectUtility() << "\n";
+    os << "Gain:                    " << c.gain_ << "\n";
     os << "Entropy:                 " << c.entropy_ << "\n";
     os << "LoD gain:                " << c.lod_gain_ << "\n";
     os << "Path time:               " << c.path_time_ << "\n";
@@ -704,6 +748,8 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Window width:            " << c.window_width_ << "\n";
     os << "Horizontal FoV:          " << se::math::rad_to_deg(c.sensor_.horizontal_fov) << "\n";
     os << "Vertical FoV:            " << se::math::rad_to_deg(c.sensor_.vertical_fov) << "\n";
+    os << "Gain image:              " << c.gain_image_.width() << "x" << c.gain_image_.height()
+       << "\n";
     os << "Entropy image:           " << c.entropy_image_.width() << "x"
        << c.entropy_image_.height() << "\n";
     os << "BG scale gain image:     " << c.bg_scale_gain_image_.width() << "x"
