@@ -112,16 +112,18 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
                 && "The first path position is the current position"));
         path_MB_.front() = T_MB;
     }
-    // Raycast to compute the optimal yaw angle.
+    // Raycast and compute the composite gain image.
     entropyRaycast(T_MB_history);
-    std::tie(yaw_M_, entropy_, window_idx_, window_width_) =
+    // Compute the optimal yaw angle for the composite gain image.
+    std::tie(yaw_M_, gain_, window_idx_, window_width_) =
+        optimal_yaw(gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
+    // Compute the gain if only entorpy or object LoD is used.
+    std::tie(std::ignore, entropy_, std::ignore, std::ignore) =
         optimal_yaw(entropy_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
+    std::tie(std::ignore, lod_gain_, std::ignore, std::ignore) =
+        optimal_yaw(object_scale_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     path_MB_.back().topLeftCorner<3, 3>() = yawToC_MB(yaw_M_);
     zeroRollPitch(path_MB_);
-    // Get the LoD gain of the objects.
-    const SensorImpl raycasting_sensor(sensor, 0.5f);
-    lod_gain_ = lod_gain_raycasting(
-        objects, sensor, raycasting_sensor, path_MB_.back() * T_BC, min_scale_image_);
     // Compute the utility.
     path_time_ = pathTime(path_MB_, config_.velocity_linear, config_.velocity_angular);
     computeUtility();
@@ -209,7 +211,7 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
         }
         Image<float> gain_image =
             computeGainImage(entropy_image, bg_scale_gain_image, object_scale_gain_image, weights_);
-        const auto r = optimal_yaw(entropy_image, entropy_hits, sensor_, path_MB_[i], T_BC_);
+        const auto r = optimal_yaw(gain_image, entropy_hits, sensor_, path_MB_[i], T_BC_);
         path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(std::get<0>(r));
     }
     //yawBeforeMoving(path_MB_);
@@ -560,23 +562,23 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
 
 void CandidateView::computeUtility()
 {
-    utility_ = (weights_[0] * entropy_ + weights_[1] * lod_gain_) / path_time_;
+    utility_ = gain_ / path_time_;
     exploration_utility_ = entropy_ / path_time_;
     object_utility_ = lod_gain_ / path_time_;
-    constexpr char format[] = "(%4.2f * %6.4f + %4.2f * %6.4f) / %-7.3f = %f";
+    constexpr char format[] = "%6.4f / %-7.3f = %f (w: %5.3f %5.3f %5.3f)";
     // Resize the string with the appropriate number of characters to fit the output of snprintf().
     const int s = snprintf(
-        nullptr, 0, format, weights_[0], entropy_, weights_[1], lod_gain_, path_time_, utility_);
+        nullptr, 0, format, gain_, path_time_, utility_, weights_[0], weights_[1], weights_[2]);
     utility_str_ = std::string(s + 1, '\0');
     snprintf(&utility_str_[0],
              s + 1,
              format,
-             weights_[0],
-             entropy_,
-             weights_[1],
-             lod_gain_,
+             gain_,
              path_time_,
-             utility_);
+             utility_,
+             weights_[0],
+             weights_[1],
+             weights_[2]);
     // Get rid of the trailing null byte.
     utility_str_.resize(s);
 }
