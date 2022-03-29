@@ -53,7 +53,6 @@
 
 namespace se {
 namespace internal {
-static se::Image<int> scale_image(2048, 960); // TODO: Adjust scale image based on image dimensions.
 static std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> color_map = {
     {102, 194, 165},
     {252, 141, 98},
@@ -103,7 +102,6 @@ void raycastKernel(const se::Octree<typename VoxelImplT::VoxelType>& map,
                                     VoxelImplT::VoxelType::selectNodeValue,
                                     VoxelImplT::VoxelType::selectVoxelValue,
                                     static_cast<int>(surface_intersection_M.w() + 0.5f));
-                se::internal::scale_image(x, y) = static_cast<int>(surface_intersection_M.w());
                 if (surface_normal.norm() == 0.f) {
                     surface_normals_M[pixel.x() + pixel.y() * surface_normals_M.width()] =
                         Eigen::Vector3f(INVALID, 0.f, 0.f);
