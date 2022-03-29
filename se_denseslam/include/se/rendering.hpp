@@ -112,16 +112,10 @@ void raycastKernel(const se::Octree<typename VoxelImplT::VoxelType>& map,
                         VoxelImplT::invert_normals ? (-1.f * surface_normal).normalized()
                                                    : surface_normal.normalized();
                 }
+                scale_image(x, y) = surface_intersection_M.w();
                 // Fetch the VoxelBlock containing the hit and get its minimum updated scale.
                 const auto* block = map.fetch(map.pointToVoxel(surface_intersection_M.head<3>()));
-                if (block) {
-                    scale_image(x, y) = surface_intersection_M.w();
-                    min_scale_image(x, y) = block->min_scale();
-                }
-                else {
-                    scale_image(x, y) = -1;
-                    min_scale_image(x, y) = -1;
-                }
+                min_scale_image(x, y) = block ? block->min_scale() : -1;
             }
             else {
                 surface_point_cloud_M[pixel.x() + pixel.y() * surface_point_cloud_M.width()] =
