@@ -72,7 +72,10 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         utility_(-1.0f),
         exploration_utility_(-1.0f),
         object_utility_(-1.0f),
-        config_(config)
+        config_(config),
+        weights_(config_.utility_weights[0],
+                 config_.utility_weights[1],
+                 1.0f - config_.utility_weights.sum())
 {
     // Reject based on the pose history.
     if (config_.use_pose_history && T_MB_history->rejectPosition(desired_t_MB_, sensor)) {
@@ -526,29 +529,20 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
 
 void CandidateView::computeUtility()
 {
-    utility_ =
-        (config_.exploration_weight * entropy_ + (1.0f - config_.exploration_weight) * lod_gain_)
-        / path_time_;
+    utility_ = (weights_[0] * entropy_ + weights_[1] * lod_gain_) / path_time_;
     exploration_utility_ = entropy_ / path_time_;
     object_utility_ = lod_gain_ / path_time_;
     constexpr char format[] = "(%4.2f * %6.4f + %4.2f * %6.4f) / %-7.3f = %f";
     // Resize the string with the appropriate number of characters to fit the output of snprintf().
-    const int s = snprintf(nullptr,
-                           0,
-                           format,
-                           config_.exploration_weight,
-                           entropy_,
-                           (1.0f - config_.exploration_weight),
-                           lod_gain_,
-                           path_time_,
-                           utility_);
+    const int s = snprintf(
+        nullptr, 0, format, weights_[0], entropy_, weights_[1], lod_gain_, path_time_, utility_);
     utility_str_ = std::string(s + 1, '\0');
     snprintf(&utility_str_[0],
              s + 1,
              format,
-             config_.exploration_weight,
+             weights_[0],
              entropy_,
-             (1.0f - config_.exploration_weight),
+             weights_[1],
              lod_gain_,
              path_time_,
              utility_);

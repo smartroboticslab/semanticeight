@@ -660,10 +660,10 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
                 config.frontier_sampling_probability =
                     yaml_exploration_config["frontier_sampling_probability"].as<float>();
             }
-            // Exploration weight
-            if (has_yaml_exploration_config && yaml_exploration_config["exploration_weight"]) {
-                config.exploration_weight =
-                    yaml_exploration_config["exploration_weight"].as<float>();
+            // Utility weights
+            if (has_yaml_exploration_config && yaml_exploration_config["utility_weights"]) {
+                config.utility_weights = Eigen::Vector2f(
+                    yaml_map_config["utility_weights"].as<std::vector<float>>().data());
             }
             // use_pose_history
             if (has_yaml_exploration_config && yaml_exploration_config["use_pose_history"]) {

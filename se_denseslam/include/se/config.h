@@ -370,7 +370,7 @@ struct Configuration {
 
     float frontier_sampling_probability;
 
-    float exploration_weight;
+    Eigen::Vector2f utility_weights;
 
     bool use_pose_history;
 
@@ -471,7 +471,7 @@ struct Configuration {
             enable_exploration(true),
             num_candidates(10),
             frontier_sampling_probability(0.5f),
-            exploration_weight(0.5f),
+            utility_weights(1.0f / 3.0f, 1.0f / 3.0f),
             use_pose_history(true),
             raycast_width(36),
             raycast_height(10),
@@ -594,7 +594,7 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
     out << str_utils::value_to_pretty_str(config.frontier_sampling_probability,
                                           "Frontier sampling probability")
         << "\n";
-    out << str_utils::value_to_pretty_str(config.exploration_weight, "Exploration weight") << "\n";
+    out << str_utils::vector_to_pretty_str(config.utility_weights, "Utility weights") << "\n";
     out << str_utils::bool_to_pretty_str(config.use_pose_history, "Use pose history") << "\n";
     out << str_utils::value_to_pretty_str(config.raycast_width, "Raycast width") << "\n";
     out << str_utils::value_to_pretty_str(config.raycast_height, "Raycast height") << "\n";

@@ -17,7 +17,7 @@ namespace se {
 
 struct CandidateConfig {
     // Utility settings
-    float exploration_weight = 0.5f;
+    Eigen::Vector2f utility_weights = Eigen::Vector2f::Constant(1.0f / 3.0f);
     bool use_pose_history = true;
     // Raycasting parameters
     int raycast_width = 36;
@@ -166,6 +166,7 @@ class CandidateView {
     float exploration_utility_;
     float object_utility_;
     CandidateConfig config_;
+    Eigen::Vector3f weights_;
 
     static constexpr int8_t desired_scale_ = 0;
 
