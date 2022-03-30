@@ -110,6 +110,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
     }
     // Raycast to compute the optimal yaw angle.
     entropyRaycast(T_MB_history);
+    std::tie(yaw_M_, entropy_, window_idx_, window_width_) =
+        optimal_yaw(entropy_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     path_MB_.back().topLeftCorner<3, 3>() = yawToC_MB(yaw_M_);
     zeroRollPitch(path_MB_);
     // Get the LoD gain of the objects.
@@ -521,8 +523,6 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
         T_MB_history->frustumOverlap(frustum_overlap_mask_, sensor_, T_MC, T_BC_);
         entropy_image_ = mask_entropy_image(entropy_image_, frustum_overlap_mask_);
     }
-    std::tie(yaw_M_, entropy_, window_idx_, window_width_) =
-        optimal_yaw(entropy_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
 }
 
 
