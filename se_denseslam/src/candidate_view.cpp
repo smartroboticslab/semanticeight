@@ -188,16 +188,20 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
         Image<float> entropy_image(entropy_image_.width(), entropy_image_.height());
         Image<Eigen::Vector3f> entropy_hits(entropy_hits_M_.width(), entropy_hits_M_.height());
         raycast_entropy(entropy_image, entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
-        const Image<float> bg_scale_gain_image =
+        Image<float> bg_scale_gain_image =
             bg_scale_gain(entropy_hits, map_, sensor_, path_MB_[i], T_BC_, desired_scale_);
-        const Image<float> object_scale_gain_image =
+        Image<float> object_scale_gain_image =
             object_scale_gain(entropy_hits, objects_, sensor_, path_MB_[i], T_BC_);
+        // Mask all gain images based on the frustum overlap.
         if (config_.use_pose_history) {
             Image<uint8_t> frustum_overlap_mask(
                 entropy_image_.width(), entropy_image_.height(), 0u);
             const Eigen::Matrix4f T_MC = path_MB_[i] * T_BC_;
             T_MB_history->frustumOverlap(frustum_overlap_mask, sensor_, T_MC, T_BC_);
             entropy_image = mask_entropy_image(entropy_image, frustum_overlap_mask);
+            bg_scale_gain_image = mask_entropy_image(bg_scale_gain_image, frustum_overlap_mask);
+            object_scale_gain_image =
+                mask_entropy_image(object_scale_gain_image, frustum_overlap_mask);
         }
         const auto r = optimal_yaw(entropy_image, entropy_hits, sensor_, path_MB_[i], T_BC_);
         path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(std::get<0>(r));
@@ -518,10 +522,14 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
         bg_scale_gain(entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_, desired_scale_);
     object_scale_gain_image_ =
         object_scale_gain(entropy_hits_M_, objects_, sensor_, path_MB_.back(), T_BC_);
+    // Mask all gain images based on the frustum overlap.
     if (config_.use_pose_history) {
         const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC_;
         T_MB_history->frustumOverlap(frustum_overlap_mask_, sensor_, T_MC, T_BC_);
         entropy_image_ = mask_entropy_image(entropy_image_, frustum_overlap_mask_);
+        bg_scale_gain_image_ = mask_entropy_image(bg_scale_gain_image_, frustum_overlap_mask_);
+        object_scale_gain_image_ =
+            mask_entropy_image(object_scale_gain_image_, frustum_overlap_mask_);
     }
 }
 
