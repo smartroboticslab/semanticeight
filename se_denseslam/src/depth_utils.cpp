@@ -5,6 +5,7 @@
 #include "se/depth_utils.hpp"
 
 #include <algorithm>
+#include <random>
 
 #include "se/commons.h"
 #include "se/preprocessing.hpp"
@@ -200,6 +201,23 @@ cv::Mat occlusion_mask(const se::Image<Eigen::Vector3f>& object_point_cloud_M,
     pointCloudToDepthKernel(background_depth, background_point_cloud_M, T_CM);
     // Compute the occlusion.
     return occlusion_mask(object_depth, background_depth, background_voxel_dim);
+}
+
+
+
+void add_depth_measurement_noise(se::Image<float>& depth,
+                                 const float k_sigma,
+                                 const float min_sigma,
+                                 const float max_sigma)
+{
+    static std::random_device rd;
+    static std::mt19937 g(rd());
+#pragma omp parallel for
+    for (size_t i = 0; i < depth.size(); ++i) {
+        const float sigma = se::math::clamp(k_sigma * depth[i], min_sigma, max_sigma);
+        std::normal_distribution<float> N(depth[i], sigma);
+        depth[i] = N(g);
+    }
 }
 
 } // namespace se

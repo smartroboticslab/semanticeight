@@ -102,6 +102,11 @@ cv::Mat occlusion_mask(const se::Image<Eigen::Vector3f>& object_point_cloud_M,
                        const float background_voxel_dim,
                        const Eigen::Matrix4f& T_CM);
 
+void add_depth_measurement_noise(se::Image<float>& depth,
+                                 const float k_sigma,
+                                 const float min_sigma,
+                                 const float max_sigma);
+
 } // namespace se
 
 #endif // __DEPTH_UTILS_HPP

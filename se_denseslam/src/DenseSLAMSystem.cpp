@@ -182,6 +182,14 @@ bool DenseSLAMSystem::preprocessDepth(const float* input_depth_image_data,
                     depth_image_.data(),
                     sizeof(float) * image_res_.x() * image_res_.y());
     }
+    if (config_.sequence_name != "experiment") {
+        const float far_plane = 10.0f;
+        const float min_sigma = 0.005f;
+        const float max_sigma = 0.200f;
+        // k_sigma * far_plane^2 == max_sigma
+        const float k_sigma = max_sigma / (far_plane * far_plane);
+        add_depth_measurement_noise(depth_image_, k_sigma, min_sigma, max_sigma);
+    }
     TOCK("preprocessDepth")
     return true;
 }
