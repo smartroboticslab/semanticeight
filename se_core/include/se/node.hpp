@@ -252,6 +252,18 @@ class VoxelBlock : public Node<T> {
         return min_scale_reached_;
     }
 
+    float minDistUpdated() const
+    {
+        return min_dist_updated_;
+    }
+
+    void minDistUpdated(float dist)
+    {
+        if (dist < min_dist_updated_ && dist >= 0.0f) {
+            min_dist_updated_ = dist;
+        }
+    }
+
     bool contains(const Eigen::Vector3i& voxel_coord) const;
 
     virtual VoxelData data(const Eigen::Vector3i& voxel_coord) const = 0;
@@ -294,6 +306,7 @@ class VoxelBlock : public Node<T> {
     int current_scale_;
     int min_scale_;
     int8_t min_scale_reached_;
+    float min_dist_updated_ = INFINITY;
 
     void updateMinScaleReached();
 

@@ -477,6 +477,7 @@ struct MultiresTSDFUpdate {
                                                                    map_.maxBlockScale()),
                                    last_scale - 1);
         block->min_scale(block->min_scale() < 0 ? scale : std::min(block->min_scale(), scale));
+        block->minDistUpdated(sensor_.measurementFromPoint(block_centre_point_C));
         if (last_scale > scale) {
             propagateUpdate(block, scale);
             return;
