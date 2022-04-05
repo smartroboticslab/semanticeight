@@ -98,5 +98,8 @@ class Image {
                   "Use char/uint8_t instead of bool to avoid the std::vector<bool> specialization");
 };
 
+template<typename T>
+using ImageVec = std::vector<Image<T>, Eigen::aligned_allocator<Image<T>>>;
+
 } // end namespace se
 #endif
