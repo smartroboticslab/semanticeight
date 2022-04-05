@@ -218,8 +218,8 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
             object_dist_gain_image =
                 mask_entropy_image(object_dist_gain_image, frustum_overlap_mask);
         }
-        Image<float> gain_image = computeGainImage(
-            {entropy_image, bg_scale_gain_image, object_scale_gain_image}, weights_);
+        Image<float> gain_image =
+            computeGainImage({entropy_image, object_dist_gain_image}, weights_.head(2));
         const auto r = optimal_yaw(gain_image, entropy_hits, sensor_, path_MB_[i], T_BC_);
         path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(std::get<0>(r));
     }
@@ -595,8 +595,7 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
         object_dist_gain_image_ =
             mask_entropy_image(object_dist_gain_image_, frustum_overlap_mask_);
     }
-    gain_image_ = computeGainImage({entropy_image_, bg_scale_gain_image_, object_scale_gain_image_},
-                                   weights_);
+    gain_image_ = computeGainImage({entropy_image_, object_dist_gain_image_}, weights_.head(2));
 }
 
 
