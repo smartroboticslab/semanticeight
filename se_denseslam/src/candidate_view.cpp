@@ -77,10 +77,12 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         exploration_utility_(-1.0f),
         object_utility_(-1.0f),
         config_(config),
-        weights_(config_.utility_weights[0],
-                 config_.utility_weights[1],
-                 1.0f - config_.utility_weights.sum())
+        weights_(config_.utility_weights.size() + 1)
 {
+    weights_ = (Eigen::VectorXf(weights_.size()) << config_.utility_weights[0],
+                config_.utility_weights[1],
+                1.0f - config_.utility_weights.sum())
+                   .finished();
     // Reject based on the pose history.
     if (config_.use_pose_history && T_MB_history->rejectPosition(desired_t_MB_, sensor)) {
         path_MB_.push_back(Eigen::Matrix4f::Identity());
@@ -209,8 +211,8 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
             object_scale_gain_image =
                 mask_entropy_image(object_scale_gain_image, frustum_overlap_mask);
         }
-        Image<float> gain_image =
-            computeGainImage(entropy_image, bg_scale_gain_image, object_scale_gain_image, weights_);
+        Image<float> gain_image = computeGainImage(
+            {entropy_image, bg_scale_gain_image, object_scale_gain_image}, weights_);
         const auto r = optimal_yaw(gain_image, entropy_hits, sensor_, path_MB_[i], T_BC_);
         path_MB_[i].topLeftCorner<3, 3>() = yawToC_MB(std::get<0>(r));
     }
@@ -554,8 +556,8 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
         object_scale_gain_image_ =
             mask_entropy_image(object_scale_gain_image_, frustum_overlap_mask_);
     }
-    gain_image_ =
-        computeGainImage(entropy_image_, bg_scale_gain_image_, object_scale_gain_image_, weights_);
+    gain_image_ = computeGainImage({entropy_image_, bg_scale_gain_image_, object_scale_gain_image_},
+                                   weights_);
 }
 
 
@@ -585,20 +587,21 @@ void CandidateView::computeUtility()
 
 
 
-Image<float> CandidateView::computeGainImage(const Image<float>& entropy,
-                                             const Image<float>& bg_scale_gain,
-                                             const Image<float>& object_scale_gain,
-                                             const Eigen::Vector3f& weights)
+Image<float> CandidateView::computeGainImage(const ImageVec<float>& gain_images,
+                                             const Eigen::VectorXf& weights)
 {
-    assert(entropy.width() == bg_scale_gain.width());
-    assert(entropy.width() == object_scale_gain.width());
-    assert(entropy.height() == bg_scale_gain.height());
-    assert(entropy.height() == object_scale_gain.height());
-    Image<float> gain(entropy.width(), entropy.height());
+    assert(!gain_images.empty());
+    assert(gain_images.size() == static_cast<size_t>(weights.size()));
+    for (size_t i = 0; i < gain_images.size() - 1; ++i) {
+        assert(gain_images[i].width() == gain_images[i + 1].width());
+        assert(gain_images[i].height() == gain_images[i + 1].height());
+    }
+    Image<float> gain(gain_images[0].width(), gain_images[0].height(), 0.0f);
 #pragma omp parallel for
-    for (size_t i = 0; i < gain.size(); ++i) {
-        const Eigen::Vector3f data(entropy[i], bg_scale_gain[i], object_scale_gain[i]);
-        gain[i] = data.dot(weights);
+    for (size_t p = 0; p < gain.size(); ++p) {
+        for (size_t i = 0; i < gain_images.size(); ++i) {
+            gain[p] += weights[i] * gain_images[i][p];
+        }
     }
     return gain;
 }

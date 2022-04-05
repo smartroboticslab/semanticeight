@@ -172,7 +172,7 @@ class CandidateView {
     float exploration_utility_;
     float object_utility_;
     CandidateConfig config_;
-    Eigen::Vector3f weights_;
+    Eigen::VectorXf weights_;
 
     static constexpr int8_t desired_scale_ = 0;
 
@@ -182,10 +182,8 @@ class CandidateView {
 
     void computeUtility();
 
-    static Image<float> computeGainImage(const Image<float>& entropy,
-                                         const Image<float>& bg_scale_gain,
-                                         const Image<float>& object_scale_gain,
-                                         const Eigen::Vector3f& weights);
+    static Image<float> computeGainImage(const ImageVec<float>& gain_images,
+                                         const Eigen::VectorXf& weights);
 
     /** \brief Create a rotation matrix C_MB from a yaw angle in the Map frame.
      */
