@@ -24,8 +24,12 @@ int8_t block_scale_gain(const typename VoxelT::VoxelBlockType* block,
         block->coordinates(), VoxelT::VoxelBlockType::size_li, Eigen::Vector3f::Constant(0.5f));
     const Eigen::Vector3f block_centre_M = map.voxelFToPoint(block_centre_coord_f);
     const Eigen::Vector3f block_centre_C = (T_CM * block_centre_M.homogeneous()).head(3);
-    const int8_t block_expected_scale = sensor.targetIntegrationScale(
-        block_centre_C, map.voxelDim(), VoxelT::VoxelBlockType::max_scale);
+    const int8_t block_expected_scale =
+        sensor.computeIntegrationScale(block_centre_C,
+                                       map.voxelDim(),
+                                       block->current_scale(),
+                                       block->min_scale(),
+                                       VoxelT::VoxelBlockType::max_scale);
     return scale_gain(
         block_min_scale, block_expected_scale, desired_scale, VoxelT::VoxelBlockType::max_scale);
 }

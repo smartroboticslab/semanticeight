@@ -321,9 +321,11 @@ float lod_gain_raycasting(const Objects& objects,
                         // Keep track of the expected scale when this VoxelBlock is observed and its current
                         // minimum scale.
                         nearest_hit_expected_scale =
-                            sensor.targetIntegrationScale(block_centre_C,
-                                                          object.map_->voxelDim(),
-                                                          ObjVoxelImpl::VoxelBlockType::max_scale);
+                            sensor.computeIntegrationScale(block_centre_C,
+                                                           object.map_->voxelDim(),
+                                                           block->current_scale(),
+                                                           block->min_scale(),
+                                                           ObjVoxelImpl::VoxelBlockType::max_scale);
                         nearest_hit_min_scale = block->min_scale();
                     }
                     else {
