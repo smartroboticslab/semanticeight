@@ -30,6 +30,11 @@ struct ObjectHit {
     Eigen::Vector3f hit_M = Eigen::Vector3f::Zero();
     Eigen::Vector3f normal_M = Eigen::Vector3f(INVALID, 0.f, 0.f);
 
+    bool valid() const
+    {
+        return instance_id != se::instance_bg;
+    }
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 

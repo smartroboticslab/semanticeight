@@ -116,7 +116,7 @@ Image<float> object_scale_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                                                   ray_dir_M,
                                                   sensor.near_plane,
                                                   sensor.far_plane);
-            if (hit.instance_id != ObjectHit().instance_id) {
+            if (hit.valid()) {
                 const Object& object = *(objects[hit.instance_id]);
                 const auto& map = *(object.map_);
                 const Eigen::Vector3f hit_O = (object.T_OM_ * hit.hit_M.homogeneous()).head<3>();
