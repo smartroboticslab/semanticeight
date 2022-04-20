@@ -761,6 +761,7 @@ inline void gather_dual_data(
     DataT data[8],
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f,
     int& dual_max_scale,
+    float& min_dist_updated,
     const ScaleMode scale_mode = ScaleMode::Current)
 {
     const Eigen::Vector3i primal_corner_coord_rel = primal_corner_coord - block->coordinates();
@@ -817,6 +818,7 @@ inline void gather_dual_data(
         const int neighbour_scale = scale_mode_to_scale(scale_mode, *neighbour);
         int stride = 1 << neighbour_scale;
         dual_max_scale = std::max(neighbour_scale, dual_max_scale);
+        min_dist_updated = std::min(neighbour->minDistUpdated(), min_dist_updated);
         for (const auto& offset_idx : neighbours[neighbour_idx]) {
             logical_dual_corner_coord = primal_corner_coord + logical_dual_offset[offset_idx];
             dual_corner_coords_f[offset_idx] =
@@ -843,6 +845,7 @@ void compute_dual_index(
     DataT data[8],
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& dual_corner_coords_f,
     int& dual_max_scale,
+    float& min_dist_updated,
     ScaleMode scale_mode = ScaleMode::Current)
 {
     const unsigned int block_size = VoxelBlockType<FieldType>::size_li;
@@ -879,6 +882,7 @@ void compute_dual_index(
                          data,
                          dual_corner_coords_f,
                          dual_max_scale,
+                         min_dist_updated,
                          scale_mode);
     }
 
@@ -1002,6 +1006,7 @@ void dual_marching_cube(Octree<FieldType>& map,
                         dual_corner_coords_f(8, Eigen::Vector3f::Constant(0));
                     int dual_max_scale =
                         voxel_scale; ///<< Keep track of the max dual scale of each triangle to colouise the mesh by scale.
+                    float min_dist_updated = block->minDistUpdated();
                     ///   Initialise with block scale and update if coarser dual neighbours are fetched.
                     meshing::compute_dual_index(map,
                                                 block,
@@ -1012,6 +1017,7 @@ void dual_marching_cube(Octree<FieldType>& map,
                                                 data,
                                                 dual_corner_coords_f,
                                                 dual_max_scale,
+                                                min_dist_updated,
                                                 scale_mode);
 
                     const int* edges = triTable[edge_pattern_idx];
@@ -1033,6 +1039,7 @@ void dual_marching_cube(Octree<FieldType>& map,
                         triangle.vertexes[1] = vertex_1;
                         triangle.vertexes[2] = vertex_2;
                         triangle.max_vertex_scale = dual_max_scale;
+                        triangle.min_dist_updated = min_dist_updated;
                         // Interpolate color at each vertex
                         for (int i = 0; i < 3; i++) {
                             typename FieldType::VoxelData data;

@@ -136,6 +136,7 @@ int save_mesh_ply(const Mesh<FaceT>& mesh,
     file << "element face " << num_faces << "\n";
     file << "property list uchar int vertex_index\n";
     file << "property char scale\n";
+    file << "property float dist\n";
     file << "property uchar red\n";
     file << "property uchar green\n";
     file << "property uchar blue\n";
@@ -161,6 +162,8 @@ int save_mesh_ply(const Mesh<FaceT>& mesh,
         }
         // Write the integration scale.
         file << " " << static_cast<int>(mesh[f].max_vertex_scale);
+        // Write the update distance.
+        file << " " << mesh[f].min_dist_updated;
         // Write the face scale colour.
         const Eigen::Vector3i RGB =
             se::colours::scale[mesh[f].max_vertex_scale].template cast<int>();

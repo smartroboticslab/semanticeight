@@ -23,9 +23,10 @@ struct MeshFace {
     std::array<uint8_t, NumVertexes> g;
     std::array<uint8_t, NumVertexes> b;
     int8_t max_vertex_scale;
+    float min_dist_updated;
     static constexpr size_t num_vertexes = NumVertexes;
 
-    MeshFace() : max_vertex_scale(0)
+    MeshFace() : max_vertex_scale(0), min_dist_updated(INFINITY)
     {
         vertexes.fill(Eigen::Vector3f::Zero());
         r.fill(0u);
