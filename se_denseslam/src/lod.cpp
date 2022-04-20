@@ -30,8 +30,18 @@ int8_t block_scale_gain(const typename VoxelT::VoxelBlockType* block,
                                        block->current_scale(),
                                        block->min_scale(),
                                        VoxelT::VoxelBlockType::max_scale);
-    return scale_gain(
-        block_min_scale, block_expected_scale, desired_scale, VoxelT::VoxelBlockType::max_scale);
+    const float block_expected_dist = sensor.measurementFromPoint(block_centre_C);
+    const float block_half_diag = block->size() * map.voxelDim() * sqrt(3.0f) / 2.0f;
+    if (sensor.near_plane <= block_expected_dist - block_half_diag
+        && block_expected_dist + block_half_diag <= sensor.far_plane) {
+        return scale_gain(block_min_scale,
+                          block_expected_scale,
+                          desired_scale,
+                          VoxelT::VoxelBlockType::max_scale);
+    }
+    else {
+        return 0;
+    }
 }
 
 
