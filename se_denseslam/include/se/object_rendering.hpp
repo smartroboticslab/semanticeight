@@ -41,13 +41,15 @@ struct ObjectHit {
 /** Raycast each object along the ray passing through pixel and return an ObjectHit for the nearest
  * object. If no object is hit, the return struct will contain its default values.
  */
+template<typename RaycastF = decltype(ObjVoxelImpl::raycast)>
 ObjectHit raycast_objects(const Objects& objects,
                           const std::map<int, cv::Mat>& raycasting_masks,
                           const Eigen::Vector2f pixel,
                           const Eigen::Vector3f& ray_origin_MC,
                           const Eigen::Vector3f& ray_dir_M,
                           const float near_dist,
-                          const float far_dist);
+                          const float far_dist,
+                          RaycastF raycast = ObjVoxelImpl::raycast);
 
 /**
  * Raycast each object and create unified vertex and normal maps.
@@ -84,5 +86,7 @@ void overlayBoundingVolumeKernel(uint32_t* output_image_data,
                                  const Eigen::Matrix4f& T_MC,
                                  const SensorImpl& sensor,
                                  const float opacity);
+
+#include "se/object_rendering_impl.hpp"
 
 #endif
