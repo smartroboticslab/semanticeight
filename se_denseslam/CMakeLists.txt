@@ -45,6 +45,7 @@ foreach(SENSOR_IMPL ${SE_SENSOR_IMPLS})
     "./src/entropy.cpp"
     "./src/lod.cpp"
     "./src/dist.cpp"
+    "./src/completion.cpp"
     "./src/path.cpp"
     "./src/candidate_view.cpp"
     "./src/pose_history.cpp"
