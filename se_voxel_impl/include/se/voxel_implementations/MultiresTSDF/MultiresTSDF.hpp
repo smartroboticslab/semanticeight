@@ -219,13 +219,24 @@ struct MultiresTSDF {
 
 
     /**
-   * Cast a ray and return the point where the surface was hit.
-   */
+     * Cast a ray and return the point where the surface was hit.
+     */
     static Eigen::Vector4f raycast(const OctreeType& map,
                                    const Eigen::Vector3f& ray_origin_M,
                                    const Eigen::Vector3f& ray_dir_M,
                                    const float t_near,
                                    const float t_far);
+
+    /**
+     * Cast a ray and return the point where the back of the surface was hit. Unline
+     * MultiresTSDF::raycast(), no interpolation is performed since the only thing we care about is
+     * that the back of the surface was hit by this ray.
+     */
+    static Eigen::Vector4f raycastBackFace(const OctreeType& map,
+                                           const Eigen::Vector3f& ray_origin_M,
+                                           const Eigen::Vector3f& ray_dir_M,
+                                           const float t_near,
+                                           const float t_far);
 
     static void dumpMesh(OctreeType& map,
                          std::vector<se::Triangle>& mesh,

@@ -154,3 +154,93 @@ Eigen::Vector4f MultiresTSDF::raycast(const OctreeType& map,
     }
     return Eigen::Vector4f::Constant(-1.f);
 }
+
+
+
+enum class VoxelState {
+    Inside,
+    Outside,
+    Unknown,
+};
+
+Eigen::Vector4f MultiresTSDF::raycastBackFace(const OctreeType& map,
+                                              const Eigen::Vector3f& ray_origin_M,
+                                              const Eigen::Vector3f& ray_dir_M,
+                                              const float t_near,
+                                              const float t_far)
+{
+    se::VoxelBlockRayIterator<VoxelType> ray(map, ray_origin_M, ray_dir_M, t_near, t_far);
+    ray.next();
+    const float t_min = ray.tmin(); /* Get distance to the first intersected block */
+    if (t_min <= 0.f) {
+        return Eigen::Vector4f::Zero();
+    }
+    const float t_max = ray.tmax();
+
+    // first walk with largesteps until we found a hit
+    float t = t_min;
+    float step_size = MultiresTSDF::mu / 2;
+    Eigen::Vector3f ray_pos_M = Eigen::Vector3f::Zero();
+
+    float value_t = 0;
+    Eigen::Vector3f point_M_t = Eigen::Vector3f::Zero();
+    VoxelState state_t = VoxelState::Unknown;
+    VoxelState state_tt = VoxelState::Unknown;
+
+
+    if (!find_valid_point(map,
+                          VoxelType::selectNodeValue,
+                          VoxelType::selectVoxelValue,
+                          ray_origin_M,
+                          ray_dir_M,
+                          step_size,
+                          t_max,
+                          t,
+                          value_t,
+                          point_M_t)) {
+        return Eigen::Vector4f::Zero();
+    }
+    state_t = (value_t <= 0.0f) ? VoxelState::Inside : VoxelState::Outside;
+    step_size =
+        se::math::clamp(value_t * MultiresTSDF::mu, MultiresTSDF::mu / 10, MultiresTSDF::mu / 2);
+    t += step_size;
+
+    for (; t < t_max; t += step_size) {
+        ray_pos_M = ray_origin_M + ray_dir_M * t;
+        VoxelData data;
+        map.getAtPoint(ray_pos_M, data);
+        if (!MultiresTSDF::VoxelType::isValid(data)) {
+            state_tt = VoxelState::Unknown;
+        }
+        else if (MultiresTSDF::VoxelType::isInside(data)) {
+            state_tt = VoxelState::Inside;
+        }
+        else {
+            state_tt = VoxelState::Outside;
+        }
+        // All the possible state combinations between the two hit voxels:
+        // inside  -> outside    back face hit
+        //
+        // outside -> inside     skip ray
+        // inside  -> unknown    skip ray
+        //
+        // inside  -> inside     advance ray
+        // outside -> outside    advance ray
+        // unknown -> unknown    advance ray
+        // unknown -> outside    advance ray
+        // outside -> unknown    advance ray
+        // unknown -> inside     advance ray
+        if (state_t == VoxelState::Inside && state_tt == VoxelState::Outside) {
+            // Hit a back-face.
+            return Eigen::Vector4f(point_M_t.homogeneous());
+        }
+        else if ((state_t == VoxelState::Outside && state_tt == VoxelState::Inside)
+                 || (state_t == VoxelState::Inside && state_tt == VoxelState::Unknown)) {
+            // Hit something other than a back-face.
+            return Eigen::Vector4f::Zero();
+        }
+        state_tt = state_t;
+    }
+    // No back-face found.
+    return Eigen::Vector4f::Zero();
+}
