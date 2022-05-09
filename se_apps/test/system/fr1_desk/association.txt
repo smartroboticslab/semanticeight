@@ -1,0 +1,4 @@
+# Association of rgb images, depth images and ground truth poses
+# ID timestamp rgb_filename depth_filename tx ty tz qx qy qz qw
+000000 1305031453.359684 rgb/1305031453.359684.png depth/1305031453.374112.png 1.3112 0.8507 1.5186 0.8851 0.2362 -0.0898 -0.3909
+000001 1305031453.391690 rgb/1305031453.391690.png depth/1305031453.404816.png 1.3190 0.8446 1.5203 0.8871 0.2258 -0.0894 -0.3926

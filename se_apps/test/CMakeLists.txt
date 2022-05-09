@@ -22,4 +22,5 @@ link_libraries(
 
 add_subdirectory(reader_openni)
 add_subdirectory(reader_raw)
+add_subdirectory(system)
 
