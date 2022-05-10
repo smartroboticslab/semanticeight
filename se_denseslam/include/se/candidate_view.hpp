@@ -17,18 +17,19 @@ namespace se {
 
 struct CandidateConfig {
     // Utility settings
-    Eigen::Vector2f utility_weights = Eigen::Vector2f::Constant(1.0f / 3.0f);
-    bool use_pose_history = true;
+    Eigen::Vector2f utility_weights;
+    bool use_pose_history;
     // Raycasting parameters
-    int raycast_width = 36;
-    int raycast_height = 10;
+    int raycast_width;
+    int raycast_height;
     // MAV velocity
-    float delta_t = 0.5f;
-    float velocity_linear = 1.0f;
-    float velocity_angular = 0.1f;
+    float delta_t;
+    float velocity_linear;
+    float velocity_angular;
     // Path planner parameters
-    ptp::PlanningParameter planner_config =
-        {"", Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(), 0.3f, 0.0f, 0.1f, 0.05f, 0.1f};
+    ptp::PlanningParameter planner_config;
+
+    CandidateConfig(const Configuration& c = Configuration());
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

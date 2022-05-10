@@ -14,6 +14,27 @@
 #include <se/utils/math_utils.h>
 
 namespace se {
+CandidateConfig::CandidateConfig(const Configuration& c) :
+        utility_weights(c.utility_weights),
+        use_pose_history(c.use_pose_history),
+        raycast_width(c.raycast_width),
+        raycast_height(c.raycast_height),
+        delta_t(c.delta_t),
+        velocity_linear(c.linear_velocity),
+        velocity_angular(c.angular_velocity),
+        planner_config({"",
+                        Eigen::Vector3f::Zero(),
+                        Eigen::Vector3f::Zero(),
+                        c.robot_radius,
+                        c.safety_radius,
+                        c.min_control_point_radius,
+                        c.skeleton_sample_precision,
+                        c.solving_time})
+{
+}
+
+
+
 CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
                              const Objects& objects,
                              const SensorImpl& sensor,
