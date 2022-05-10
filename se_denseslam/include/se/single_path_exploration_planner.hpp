@@ -21,7 +21,7 @@ typedef std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> OctreeConstPtr;
 struct ExplorationConfig {
     // Sampling settings
     int num_candidates;
-    float frontier_sampling_probability = 0.5f;
+    float frontier_sampling_probability;
     Eigen::Vector3f sampling_min_M;
     Eigen::Vector3f sampling_max_M;
     // Goal settings
@@ -30,6 +30,9 @@ struct ExplorationConfig {
     float goal_roll_pitch_threshold;
     float goal_yaw_threshold;
     CandidateConfig candidate_config;
+
+    ExplorationConfig(const Configuration& c = Configuration(),
+                      const Eigen::Matrix4f& T_MW = Eigen::Matrix4f::Identity());
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

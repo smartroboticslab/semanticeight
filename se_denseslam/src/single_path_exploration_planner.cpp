@@ -60,6 +60,21 @@ Eigen::Vector3f sample_random_object(std::deque<ObjectPtr>& objects,
 
 
 
+ExplorationConfig::ExplorationConfig(const Configuration& c, const Eigen::Matrix4f& T_MW) :
+        num_candidates(c.num_candidates),
+        frontier_sampling_probability(c.frontier_sampling_probability),
+        sampling_min_M((T_MW * c.sampling_min_W.homogeneous()).head<3>()),
+        sampling_max_M((T_MW * c.sampling_max_W.homogeneous()).head<3>()),
+        goal_xy_threshold(c.goal_xy_threshold),
+        goal_z_threshold(c.goal_z_threshold),
+        goal_roll_pitch_threshold(c.goal_roll_pitch_threshold),
+        goal_yaw_threshold(c.goal_yaw_threshold),
+        candidate_config(c)
+{
+}
+
+
+
 SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     const OctreeConstPtr map,
     const std::vector<se::key_t>& frontiers,
