@@ -61,8 +61,7 @@ int se::save_point_cloud_ply(const se::Image<Eigen::Vector3f>& point_cloud,
 
     file << "ply" << std::endl;
     file << "format ascii 1.0" << std::endl;
-    file << "comment octree structure" << std::endl;
-    file << "element point " << point_cloud.size() << std::endl;
+    file << "element vertex " << point_cloud.size() << std::endl;
     file << "property float x" << std::endl;
     file << "property float y" << std::endl;
     file << "property float z" << std::endl;

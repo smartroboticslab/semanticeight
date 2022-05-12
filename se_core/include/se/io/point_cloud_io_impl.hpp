@@ -81,7 +81,6 @@ int se::save_point_cloud_ply(const std::vector<Triangle>& mesh,
 
     file << "ply" << std::endl;
     file << "format ascii 1.0" << std::endl;
-    file << "comment octree structure" << std::endl;
     file << "element vertex " << point_count << std::endl;
     file << "property float x" << std::endl;
     file << "property float y" << std::endl;
