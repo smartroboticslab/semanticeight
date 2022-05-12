@@ -10,12 +10,14 @@
 
 namespace se {
 /** The API uses Body poses in the World frame but internally everything is performed in the Map
-   * frame. Body poses are used for sampling and path planning and they are converted to camera
-   * poses for raycasting.
-   *
-   * The ExplorationPlanner keeps a copy of the path internally and removes vertices whenever
-   * goalReached() succeeds.
-   */
+ * frame. Body poses are used for sampling and path planning and they are converted to camera
+ * poses for raycasting.
+ *
+ * The ExplorationPlanner keeps a copy of the path internally and removes vertices whenever
+ * goalReached() succeeds.
+ *
+ * \warning The map frame (M) MUST be z-up.
+ */
 class ExplorationPlanner {
     public:
     ExplorationPlanner(const DenseSLAMSystem& pipeline,

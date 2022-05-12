@@ -45,6 +45,7 @@ class CandidateView {
                   const Eigen::Matrix4f& T_BC);
 
     /** \brief Create a CandidateView and compute its utility.
+     * \warning The map frame (M) MUST be z-up.
      */
     CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
                   ptp::SafeFlightCorridorGenerator& planner,

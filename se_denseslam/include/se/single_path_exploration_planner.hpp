@@ -39,7 +39,8 @@ struct ExplorationConfig {
 class SinglePathExplorationPlanner {
     public:
     /** \brief Generate the next-best-view on construction.
-       */
+     * \warning The map frame (M) MUST be z-up.
+     */
     SinglePathExplorationPlanner(const OctreeConstPtr map,
                                  const std::vector<se::key_t>& frontiers,
                                  const Objects& objects,
