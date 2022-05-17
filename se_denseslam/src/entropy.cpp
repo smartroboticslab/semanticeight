@@ -163,12 +163,18 @@ std::pair<float, Eigen::Vector3f> entropy_along_ray(const Octree<VoxelImpl::Voxe
     const float t_step = map.voxelDim();
     for (float t = t_near; t <= t_far; t += t_step) {
         point_M = ray_origin_M + t * ray_dir_M;
-        VoxelImpl::VoxelType::VoxelData data;
-        map.getAtPoint(point_M, data);
-        const float l = VoxelImpl::VoxelType::threshold(data);
-        ray_entropy += entropy(log_odds_to_prob(l));
-        if (l > VoxelImpl::surface_boundary) {
-            // We have reached occupied space, stop raycasting.
+        if (map.containsPoint(point_M)) {
+            VoxelImpl::VoxelType::VoxelData data;
+            map.getAtPoint(point_M, data);
+            const float l = VoxelImpl::VoxelType::threshold(data);
+            ray_entropy += entropy(log_odds_to_prob(l));
+            if (l > VoxelImpl::surface_boundary) {
+                // We have reached occupied space, stop raycasting.
+                break;
+            }
+        }
+        else {
+            // We ended up outside the map, stop raycasting.
             break;
         }
     }
