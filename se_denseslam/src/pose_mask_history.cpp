@@ -29,7 +29,7 @@ PoseMaskHistory::PoseMaskHistory(const Eigen::Vector2i& raycast_res,
         sensor_(sensor),
         T_BC_(T_BC),
         T_CB_(se::math::to_inverse_transformation(T_BC)),
-        rays_M_(se::ray_M_image(raycast_res.x(), raycast_res.y(), sensor, T_BC)),
+        rays_M_(se::ray_M_360_image(raycast_res.x(), raycast_res.y(), sensor, T_BC)),
         grid_(size_.prod(), Image<PoseMaskHistory::MaskType>(raycast_res.x(), raycast_res.y(), 0))
 {
 }

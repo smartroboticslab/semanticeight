@@ -123,10 +123,10 @@ ray_dir_M(int x, int y, int width, int height, float vertical_fov, float pitch_o
 
 
 
-Image<Eigen::Vector3f> ray_M_image(const int width,
-                                   const int height,
-                                   const SensorImpl& sensor,
-                                   const Eigen::Matrix4f& T_BC)
+Image<Eigen::Vector3f> ray_M_360_image(const int width,
+                                       const int height,
+                                       const SensorImpl& sensor,
+                                       const Eigen::Matrix4f& T_BC)
 {
     // Transformation from the camera body frame Bc (x-forward, z-up) to the camera frame C
     // (z-forward, x-right).
@@ -278,7 +278,7 @@ void raycast_entropy(Image<float>& entropy_image,
         max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
     const Eigen::Vector3f& t_MB = T_MB.topRightCorner<3, 1>();
     const Image<Eigen::Vector3f> rays_M =
-        ray_M_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
+        ray_M_360_image(entropy_image.width(), entropy_image.height(), sensor, T_BC);
 #pragma omp parallel for
     for (int y = 0; y < entropy_image.height(); y++) {
 #pragma omp simd

@@ -179,9 +179,9 @@ TEST_F(EntropyRaycast, rayImage)
         0, -0.9950041652780257, -0.09983341664682817, -0.02502997417539525, 0, 0, 0, 1;
 
     se::Image<Eigen::Vector3f> rays_M =
-        se::ray_M_image(raycast_width, raycast_height, sensor, T_BC);
+        se::ray_M_360_image(raycast_width, raycast_height, sensor, T_BC);
     se::Image<Eigen::Vector3f> rays_Mc =
-        se::ray_M_image(raycast_width, raycast_height, sensor, T_BC_pitch);
+        se::ray_M_360_image(raycast_width, raycast_height, sensor, T_BC_pitch);
 
     se::save_point_cloud_pcd(rays_M, tmp_ + "/rays_M.pcd", T_MB);
     se::save_point_cloud_pcd(rays_Mc, tmp_ + "/rays_M_corrected_pitch.pcd", T_MB);

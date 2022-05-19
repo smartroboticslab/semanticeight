@@ -45,10 +45,10 @@ float max_ray_entropy(const float voxel_dim, const float near_plane, const float
 /** \brief Compute the ray directions in the map frame M (z-up) for all pixels of a width x height
  * 360 degree image.
  */
-Image<Eigen::Vector3f> ray_M_image(const int width,
-                                   const int height,
-                                   const SensorImpl& sensor,
-                                   const Eigen::Matrix4f& T_BC);
+Image<Eigen::Vector3f> ray_M_360_image(const int width,
+                                       const int height,
+                                       const SensorImpl& sensor,
+                                       const Eigen::Matrix4f& T_BC);
 
 /** \brief Perform a 360 degree raycasting using a spherical camera model at t_MC computing the
  * map entropy. The size of entropy_image determines the number of rays cast. Frame B is
