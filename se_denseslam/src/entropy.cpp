@@ -123,6 +123,27 @@ ray_dir_M(int x, int y, int width, int height, float vertical_fov, float pitch_o
 
 
 
+Image<Eigen::Vector3f> ray_M_image(const SensorImpl& sensor, const Eigen::Matrix4f& T_MC)
+{
+    const int w = sensor.model.imageWidth();
+    const int h = sensor.model.imageHeight();
+    Image<Eigen::Vector3f> rays_M(w, h);
+#pragma omp parallel for
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            // Compute the ray in the camera frame C.
+            if (!sensor.model.backProject(Eigen::Vector2f(x, y), &rays_M(x, y))) {
+                throw std::runtime_error("Invalid backprojection");
+            }
+            // Transform the ray to the map frame M.
+            rays_M(x, y) = (T_MC.topLeftCorner<3, 3>() * rays_M(x, y)).normalized();
+        }
+    }
+    return rays_M;
+}
+
+
+
 Image<Eigen::Vector3f> ray_M_360_image(const int width,
                                        const int height,
                                        const SensorImpl& sensor,

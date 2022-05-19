@@ -42,6 +42,11 @@ int azimuth_to_index(const float theta, const int width, const float hfov);
  */
 float max_ray_entropy(const float voxel_dim, const float near_plane, const float far_plane);
 
+/** \brief Compute the ray directions in the map frame M (z-up) for all pixels of an image captured
+ * by sensor.
+ */
+Image<Eigen::Vector3f> ray_M_image(const SensorImpl& sensor, const Eigen::Matrix4f& T_MC);
+
 /** \brief Compute the ray directions in the map frame M (z-up) for all pixels of a width x height
  * 360 degree image.
  */
