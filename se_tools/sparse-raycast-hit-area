@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -eq 3 ]
+then
+	w="$1"
+	h="$2"
+	vfov="$3"
+else
+	printf 'Usage: %s WIDTH HEIGHT VFOV_DEG\n' "${0##*/}"
+	printf '  %s 36 10 49.13\n' "$0"
+	exit 2
+fi
+
+gnuplot -p -e "
+w = $w;
+h = $h;
+vfov = $vfov;
+d_max = 10;
+tand(a) = tan(a / 180.0 * pi);
+edge_h(d, w) = 2 * d * tand(360.0 / w / 2.0);
+edge_v(d, h, vfov) = 2 * d * tand(vfov / h / 2.0);
+area(d, w, h, vfov) = edge_h(d, w) * edge_v(d, h, vfov);
+set xlabel 'Ray hit distance (m)';
+set ylabel 'Hit area (m²)';
+set y2label 'Hit edge length (m)';
+set title sprintf('%dx%d 360° raycasting', w, h);
+set xtics 1;
+set ytics autofreq;
+set y2tics autofreq;
+set key top left;
+set grid;
+plot [0:d_max] area(x, w, h, vfov) title 'area', \
+	[0:d_max] edge_h(x, w) title 'horizontal edge' dashtype '.' axes x1y2, \
+	[0:d_max] edge_v(x, h, vfov) title 'vertical edge' dashtype '.' axes x1y2;
+"
