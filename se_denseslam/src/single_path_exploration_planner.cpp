@@ -148,9 +148,9 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
     // Find the best candidate based of different utililties.
     const auto combined = best_candidate(candidates_, [](const auto& c) { return c.utility(); });
     const auto exploration =
-        best_candidate(candidates_, [](const auto& c) { return c.explorationUtility(); });
+        best_candidate(candidates_, [](const auto& c) { return c.entropyUtility(); });
     //const auto object =
-    //    best_candidate(candidates_, [](const auto& c) { return c.objectUtility(); });
+    //    best_candidate(candidates_, [](const auto& c) { return c.objectLoDUtility(); });
     // Select the best candidate.
     best_idx_ = combined.first;
     // Add an invalid candidate to return if no best candidate was found

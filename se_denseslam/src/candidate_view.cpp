@@ -46,8 +46,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         window_width_(-1),
         path_time_(-1.0f),
         gain_(-1.0f),
-        entropy_(-1.0f),
-        lod_gain_(-1.0f),
+        entropy_gain_(-1.0f),
+        object_lod_gain_(-1.0f),
         gain_image_(1, 1),
         entropy_image_(1, 1),
         bg_scale_gain_image_(1, 1),
@@ -84,8 +84,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         window_width_(-1),
         path_time_(-1.0f),
         gain_(-1.0f),
-        entropy_(-1.0f),
-        lod_gain_(-1.0f),
+        entropy_gain_(-1.0f),
+        object_lod_gain_(-1.0f),
         // TODO create if needed?
         gain_image_(config.raycast_width, config.raycast_height),
         entropy_image_(config.raycast_width, config.raycast_height),
@@ -147,9 +147,9 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
     std::tie(yaw_M_, gain_, window_idx_, window_width_) =
         optimal_yaw(gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     // Compute the gain if only entorpy or object LoD is used.
-    std::tie(std::ignore, entropy_, std::ignore, std::ignore) =
+    std::tie(std::ignore, entropy_gain_, std::ignore, std::ignore) =
         optimal_yaw(entropy_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
-    std::tie(std::ignore, lod_gain_, std::ignore, std::ignore) =
+    std::tie(std::ignore, object_lod_gain_, std::ignore, std::ignore) =
         optimal_yaw(object_scale_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     path_MB_.back().topLeftCorner<3, 3>() = yawToC_MB(yaw_M_);
     zeroRollPitch(path_MB_);
@@ -181,14 +181,14 @@ float CandidateView::utility() const
 
 
 
-float CandidateView::explorationUtility() const
+float CandidateView::entropyUtility() const
 {
     return exploration_utility_;
 }
 
 
 
-float CandidateView::objectUtility() const
+float CandidateView::objectLoDUtility() const
 {
     return object_utility_;
 }
@@ -510,7 +510,7 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
     f << "\n";
     f << std::setprecision(6);
     f << "Gain: " << gain_ << "\n";
-    f << "Entropy: " << entropy_ << "\n";
+    f << "Entropy: " << entropy_gain_ << "\n";
     f << "Optimal yaw M: " << yaw_M_ << " rad   " << se::math::rad_to_deg(yaw_M_) << " degrees \n";
     f << "Window index: " << window_idx_ << " px\n";
     f << "Window width: " << window_width_ << " px\n";
@@ -674,8 +674,8 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
 void CandidateView::computeUtility()
 {
     utility_ = gain_ / path_time_;
-    exploration_utility_ = entropy_ / path_time_;
-    object_utility_ = lod_gain_ / path_time_;
+    exploration_utility_ = entropy_gain_ / path_time_;
+    object_utility_ = object_lod_gain_ / path_time_;
     constexpr char format[] = "%6.4f / %-7.3f = %f (w: %5.3f %5.3f %5.3f)";
     // Resize the string with the appropriate number of characters to fit the output of snprintf().
     const int s = snprintf(
@@ -845,11 +845,11 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Valid:                   " << (c.isValid() ? "yes" : "no") << "\n";
     os << "Status:                  " << c.status_ << "\n";
     os << "Utility:                 " << c.utility() << "\n";
-    os << "Exploration utility:     " << c.explorationUtility() << "\n";
-    os << "Object utility:          " << c.objectUtility() << "\n";
+    os << "Entropy utility:         " << c.entropyUtility() << "\n";
+    os << "Object LoD utility:      " << c.objectLoDUtility() << "\n";
     os << "Gain:                    " << c.gain_ << "\n";
-    os << "Entropy:                 " << c.entropy_ << "\n";
-    os << "LoD gain:                " << c.lod_gain_ << "\n";
+    os << "Entropy:                 " << c.entropy_gain_ << "\n";
+    os << "LoD gain:                " << c.object_lod_gain_ << "\n";
     os << "Path time:               " << c.path_time_ << "\n";
     os << "Path size:               " << c.path().size() << "\n";
     os << "Desired position M:      " << c.desired_t_MB_.x() << " " << c.desired_t_MB_.y() << " "

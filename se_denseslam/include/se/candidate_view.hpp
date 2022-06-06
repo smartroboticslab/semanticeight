@@ -67,9 +67,9 @@ class CandidateView {
 
     float utility() const;
 
-    float explorationUtility() const;
+    float entropyUtility() const;
 
-    float objectUtility() const;
+    float objectLoDUtility() const;
 
     std::string utilityStr() const;
 
@@ -142,9 +142,9 @@ class CandidateView {
     /** The combined gain at the optimal yaw angle. */
     float gain_;
     /** The information gain for the map at the optimal yaw angle. */
-    float entropy_;
+    float entropy_gain_;
     /** The object level-of-detail gain at the optimal yaw angle. */
-    float lod_gain_;
+    float object_lod_gain_;
     /** An image containing the combined gain produced by the 360 raycasting. It's a weighted sum
      * of entropy and level-of-detail gains. The yaw optimization is performed on this image.
      */
