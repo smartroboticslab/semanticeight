@@ -48,6 +48,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         gain_(-1.0f),
         entropy_gain_(-1.0f),
         object_lod_gain_(-1.0f),
+        object_dist_gain_(-1.0f),
+        object_compl_gain_(-1.0f),
         gain_image_(1, 1),
         entropy_image_(1, 1),
         bg_scale_gain_image_(1, 1),
@@ -63,7 +65,9 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         T_BC_(T_BC),
         utility_(-1.0f),
         exploration_utility_(-1.0f),
-        object_utility_(-1.0f)
+        object_utility_(-1.0f),
+        object_dist_utility_(-1.0f),
+        object_compl_utility_(-1.0f)
 {
 }
 
@@ -86,6 +90,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         gain_(-1.0f),
         entropy_gain_(-1.0f),
         object_lod_gain_(-1.0f),
+        object_dist_gain_(-1.0f),
+        object_compl_gain_(-1.0f),
         // TODO create if needed?
         gain_image_(config.raycast_width, config.raycast_height),
         entropy_image_(config.raycast_width, config.raycast_height),
@@ -103,6 +109,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         utility_(-1.0f),
         exploration_utility_(-1.0f),
         object_utility_(-1.0f),
+        object_dist_utility_(-1.0f),
+        object_compl_utility_(-1.0f),
         config_(config),
         weights_(config_.utility_weights.size() + 1)
 {
@@ -151,6 +159,10 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         optimal_yaw(entropy_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     std::tie(std::ignore, object_lod_gain_, std::ignore, std::ignore) =
         optimal_yaw(object_scale_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
+    std::tie(std::ignore, object_dist_gain_, std::ignore, std::ignore) =
+        optimal_yaw(object_dist_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
+    std::tie(std::ignore, object_compl_gain_, std::ignore, std::ignore) =
+        optimal_yaw(object_compl_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     path_MB_.back().topLeftCorner<3, 3>() = yawToC_MB(yaw_M_);
     zeroRollPitch(path_MB_);
     // Compute the utility.
@@ -191,6 +203,20 @@ float CandidateView::entropyUtility() const
 float CandidateView::objectLoDUtility() const
 {
     return object_utility_;
+}
+
+
+
+float CandidateView::objectDistUtility() const
+{
+    return object_dist_utility_;
+}
+
+
+
+float CandidateView::objectComplUtility() const
+{
+    return object_compl_utility_;
 }
 
 
@@ -676,6 +702,8 @@ void CandidateView::computeUtility()
     utility_ = gain_ / path_time_;
     exploration_utility_ = entropy_gain_ / path_time_;
     object_utility_ = object_lod_gain_ / path_time_;
+    object_dist_utility_ = object_dist_gain_ / path_time_;
+    object_compl_utility_ = object_compl_gain_ / path_time_;
     constexpr char format[] = "%6.4f / %-7.3f = %f (w: %5.3f %5.3f %5.3f)";
     // Resize the string with the appropriate number of characters to fit the output of snprintf().
     const int s = snprintf(
@@ -847,9 +875,13 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Utility:                 " << c.utility() << "\n";
     os << "Entropy utility:         " << c.entropyUtility() << "\n";
     os << "Object LoD utility:      " << c.objectLoDUtility() << "\n";
+    os << "Object distace utility:  " << c.objectDistUtility() << "\n";
+    os << "Object compl. utility:   " << c.objectComplUtility() << "\n";
     os << "Gain:                    " << c.gain_ << "\n";
     os << "Entropy:                 " << c.entropy_gain_ << "\n";
     os << "LoD gain:                " << c.object_lod_gain_ << "\n";
+    os << "Object distance gain:    " << c.object_dist_gain_ << "\n";
+    os << "Object completion gain:  " << c.object_compl_gain_ << "\n";
     os << "Path time:               " << c.path_time_ << "\n";
     os << "Path size:               " << c.path().size() << "\n";
     os << "Desired position M:      " << c.desired_t_MB_.x() << " " << c.desired_t_MB_.y() << " "

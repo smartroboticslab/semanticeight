@@ -71,6 +71,10 @@ class CandidateView {
 
     float objectLoDUtility() const;
 
+    float objectDistUtility() const;
+
+    float objectComplUtility() const;
+
     std::string utilityStr() const;
 
     const Eigen::Matrix4f& goalT_MB() const;
@@ -145,6 +149,10 @@ class CandidateView {
     float entropy_gain_;
     /** The object level-of-detail gain at the optimal yaw angle. */
     float object_lod_gain_;
+    /** The object distance gain at the optimal yaw angle. */
+    float object_dist_gain_;
+    /** The object completion gain at the optimal yaw angle. */
+    float object_compl_gain_;
     /** An image containing the combined gain produced by the 360 raycasting. It's a weighted sum
      * of entropy and level-of-detail gains. The yaw optimization is performed on this image.
      */
@@ -181,6 +189,8 @@ class CandidateView {
     float utility_;
     float exploration_utility_;
     float object_utility_;
+    float object_dist_utility_;
+    float object_compl_utility_;
     CandidateConfig config_;
     Eigen::VectorXf weights_;
 
