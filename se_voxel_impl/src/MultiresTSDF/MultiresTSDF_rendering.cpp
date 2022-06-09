@@ -222,7 +222,6 @@ Eigen::Vector4f MultiresTSDF::raycastBackFace(const OctreeType& map,
         // inside  -> outside    back face hit
         //
         // outside -> inside     skip ray
-        // inside  -> unknown    skip ray
         //
         // inside  -> inside     advance ray
         // outside -> outside    advance ray
@@ -230,12 +229,12 @@ Eigen::Vector4f MultiresTSDF::raycastBackFace(const OctreeType& map,
         // unknown -> outside    advance ray
         // outside -> unknown    advance ray
         // unknown -> inside     advance ray
+        // inside  -> unknown    advance ray
         if (state_t == VoxelState::Inside && state_tt == VoxelState::Outside) {
             // Hit a back-face.
             return Eigen::Vector4f(point_M_t.homogeneous());
         }
-        else if ((state_t == VoxelState::Outside && state_tt == VoxelState::Inside)
-                 || (state_t == VoxelState::Inside && state_tt == VoxelState::Unknown)) {
+        else if (state_t == VoxelState::Outside && state_tt == VoxelState::Inside) {
             // Hit something other than a back-face.
             return Eigen::Vector4f::Zero();
         }
