@@ -71,6 +71,8 @@ Image<float> object_dist_gain(const Image<Eigen::Vector3f>& bg_hits_M,
     const Eigen::Matrix4f T_MC = T_MB * T_BC;
     const Eigen::Vector3f t_MC = se::math::to_translation(T_MC);
     const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
+    // The map (M) and body (B) frames have the same orientation so C_CB is the same as C_CM.
+    const Eigen::Matrix3f C_CM = se::math::to_inverse_rotation(T_BC);
 #pragma omp parallel for
     for (int y = 0; y < gain_image.height(); ++y) {
 #pragma omp simd
@@ -81,13 +83,14 @@ Image<float> object_dist_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                 continue;
             }
             const Eigen::Vector3f ray_dir_M = (bg_hits_M(x, y) - t_MC).normalized();
+            const Eigen::Vector3f ray_dir_C = C_CM * ray_dir_M;
             const ObjectHit hit = raycast_objects(objects,
                                                   std::map<int, cv::Mat>(),
                                                   Eigen::Vector2f(x, y),
                                                   t_MC,
                                                   ray_dir_M,
-                                                  sensor.near_plane,
-                                                  sensor.far_plane);
+                                                  sensor.nearDist(ray_dir_C),
+                                                  sensor.farDist(ray_dir_C));
             if (hit.instance_id != ObjectHit().instance_id) {
                 const Object& object = *(objects[hit.instance_id]);
                 const auto& map = *(object.map_);
