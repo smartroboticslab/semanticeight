@@ -5,6 +5,7 @@
 #define __POINT_CLOUD_UTILS_HPP
 
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
 #include <string>
 
 #include "se/image/image.hpp"
@@ -57,6 +58,19 @@ int save_point_cloud_ply(const se::Image<Eigen::Vector3f>& point_cloud,
 int save_point_cloud_vtk(const se::Image<Eigen::Vector3f>& point_cloud,
                          const std::string& filename,
                          const Eigen::Matrix4f& T_WC);
+
+/** Save rays in frame F as line segments in a PLY file.
+ */
+int save_rays_ply(
+    const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& rays_F,
+    const std::string& filename,
+    const Eigen::Matrix4f& T_WF = Eigen::Matrix4f::Identity());
+
+/** Save rays in frame F as line segments in a PLY file.
+ */
+int save_rays_ply(const se::Image<Eigen::Vector3f>& rays_F,
+                  const std::string& filename,
+                  const Eigen::Matrix4f& T_WF = Eigen::Matrix4f::Identity());
 
 } // namespace se
 
