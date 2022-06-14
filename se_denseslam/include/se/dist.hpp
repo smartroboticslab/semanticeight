@@ -24,7 +24,7 @@ float dist_gain(const float block_min_dist,
 
 /** \brief Create a 360 degree distance gain image by getting the minimum observation distance of
  * objects along the provided rays. It is meant to be used with the hits returned by
- * se::raycast_entropy().
+ * se::raycast_entropy_360().
  */
 Image<float> object_dist_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                               const Objects& objects,

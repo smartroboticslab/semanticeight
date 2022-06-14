@@ -22,7 +22,7 @@ int8_t scale_gain(const int8_t block_min_scale,
                   const int8_t max_scale = VoxelImpl::VoxelBlockType::max_scale);
 
 /** \brief Create a 360 degree scale gain image by getting the scale at the provided hits.
- * It is meant to be used with the hits returned by se::raycast_entropy().
+ * It is meant to be used with the hits returned by se::raycast_entropy_360().
  */
 Image<float> bg_scale_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                            const Octree<VoxelImpl::VoxelType>& map,
@@ -32,7 +32,7 @@ Image<float> bg_scale_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                            const int8_t desired_scale = 0);
 
 /** \brief Create a 360 degree scale gain image by getting the scale of objects along the provided
- * rays. It is meant to be used with the hits returned by se::raycast_entropy().
+ * rays. It is meant to be used with the hits returned by se::raycast_entropy_360().
  */
 Image<float> object_scale_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                                const Objects& objects,

@@ -60,12 +60,12 @@ Image<Eigen::Vector3f> ray_M_360_image(const int width,
  * x-forward, z-up. The raycasting is performed from the origin of the body frame instead of the
  * origin of the camera frame. This approximation works well enough if they are close.
  */
-void raycast_entropy(Image<float>& entropy_image,
-                     Image<Eigen::Vector3f>& entropy_hits_M,
-                     const Octree<VoxelImpl::VoxelType>& map,
-                     const SensorImpl& sensor,
-                     const Eigen::Matrix4f& T_MB,
-                     const Eigen::Matrix4f& T_BC);
+void raycast_entropy_360(Image<float>& entropy_image,
+                         Image<Eigen::Vector3f>& entropy_hits_M,
+                         const Octree<VoxelImpl::VoxelType>& map,
+                         const SensorImpl& sensor,
+                         const Eigen::Matrix4f& T_MB,
+                         const Eigen::Matrix4f& T_BC);
 
 Image<float> mask_entropy_image(const Image<float>& entropy_image,
                                 const Image<uint8_t>& frustum_overlap_mask);
