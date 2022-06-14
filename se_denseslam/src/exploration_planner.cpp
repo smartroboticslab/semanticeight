@@ -219,13 +219,6 @@ void ExplorationPlanner::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
 
 
 
-Image<uint32_t> ExplorationPlanner::renderMinScale()
-{
-    return goalView().renderMinScale();
-}
-
-
-
 const PoseGridHistory& ExplorationPlanner::getPoseGridHistory() const
 {
     return T_MB_grid_history_;

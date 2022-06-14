@@ -11,7 +11,6 @@
 #include <se/completion.hpp>
 #include <se/dist.hpp>
 #include <se/image_utils.hpp>
-#include <se/lod.hpp>
 #include <se/utils/math_utils.h>
 
 namespace se {
@@ -47,25 +46,20 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         path_time_(-1.0f),
         gain_(-1.0f),
         entropy_gain_(-1.0f),
-        object_lod_gain_(-1.0f),
         object_dist_gain_(-1.0f),
         object_compl_gain_(-1.0f),
         gain_image_(1, 1),
         entropy_image_(1, 1),
-        bg_scale_gain_image_(1, 1),
-        object_scale_gain_image_(1, 1),
         object_dist_gain_image_(1, 1),
         object_compl_gain_image_(1, 1),
         entropy_hits_M_(1, 1),
         frustum_overlap_mask_(1, 1),
-        min_scale_image_(1, 1),
         sensor_(sensor),
         map_(map),
         objects_(objects),
         T_BC_(T_BC),
         utility_(-1.0f),
         exploration_utility_(-1.0f),
-        object_utility_(-1.0f),
         object_dist_utility_(-1.0f),
         object_compl_utility_(-1.0f)
 {
@@ -89,26 +83,21 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         path_time_(-1.0f),
         gain_(-1.0f),
         entropy_gain_(-1.0f),
-        object_lod_gain_(-1.0f),
         object_dist_gain_(-1.0f),
         object_compl_gain_(-1.0f),
         // TODO create if needed?
         gain_image_(config.raycast_width, config.raycast_height),
         entropy_image_(config.raycast_width, config.raycast_height),
-        bg_scale_gain_image_(config.raycast_width, config.raycast_height),
-        object_scale_gain_image_(config.raycast_width, config.raycast_height),
         object_dist_gain_image_(config.raycast_width, config.raycast_height),
         object_compl_gain_image_(config.raycast_width, config.raycast_height),
         entropy_hits_M_(config.raycast_width, config.raycast_height),
         frustum_overlap_mask_(config.raycast_width, config.raycast_height, 0.0f),
-        min_scale_image_(1, 1),
         sensor_(sensor),
         map_(map),
         objects_(objects),
         T_BC_(T_BC),
         utility_(-1.0f),
         exploration_utility_(-1.0f),
-        object_utility_(-1.0f),
         object_dist_utility_(-1.0f),
         object_compl_utility_(-1.0f),
         config_(config),
@@ -154,11 +143,9 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
     // Compute the optimal yaw angle for the composite gain image.
     std::tie(yaw_M_, gain_, window_idx_, window_width_) =
         optimal_yaw(gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
-    // Compute the gain if only entorpy or object LoD is used.
+    // Compute the gain if only a single gain is used.
     std::tie(std::ignore, entropy_gain_, std::ignore, std::ignore) =
         optimal_yaw(entropy_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
-    std::tie(std::ignore, object_lod_gain_, std::ignore, std::ignore) =
-        optimal_yaw(object_scale_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     std::tie(std::ignore, object_dist_gain_, std::ignore, std::ignore) =
         optimal_yaw(object_dist_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     std::tie(std::ignore, object_compl_gain_, std::ignore, std::ignore) =
@@ -196,13 +183,6 @@ float CandidateView::utility() const
 float CandidateView::entropyUtility() const
 {
     return exploration_utility_;
-}
-
-
-
-float CandidateView::objectLoDUtility() const
-{
-    return object_utility_;
 }
 
 
@@ -249,10 +229,6 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
         Image<float> entropy_image(entropy_image_.width(), entropy_image_.height());
         Image<Eigen::Vector3f> entropy_hits(entropy_hits_M_.width(), entropy_hits_M_.height());
         raycast_entropy_360(entropy_image, entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
-        Image<float> bg_scale_gain_image =
-            bg_scale_gain(entropy_hits, map_, sensor_, path_MB_[i], T_BC_, desired_scale_);
-        Image<float> object_scale_gain_image =
-            object_scale_gain(entropy_hits, objects_, sensor_, path_MB_[i], T_BC_);
         Image<float> object_dist_gain_image =
             object_dist_gain(entropy_hits, objects_, sensor_, path_MB_[i], T_BC_);
         Image<float> object_compl_gain_image = object_completion_gain(
@@ -269,9 +245,6 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
             const Eigen::Matrix4f T_MC = path_MB_[i] * T_BC_;
             T_MB_history->frustumOverlap(frustum_overlap_mask, sensor_, T_MC, T_BC_);
             entropy_image = mask_entropy_image(entropy_image, frustum_overlap_mask);
-            bg_scale_gain_image = mask_entropy_image(bg_scale_gain_image, frustum_overlap_mask);
-            object_scale_gain_image =
-                mask_entropy_image(object_scale_gain_image, frustum_overlap_mask);
             object_dist_gain_image =
                 mask_entropy_image(object_dist_gain_image, frustum_overlap_mask);
             object_compl_gain_image =
@@ -296,33 +269,6 @@ Image<uint32_t> CandidateView::renderEntropy(const bool visualize_yaw) const
     }
     else {
         return Image<uint32_t>(entropy_image_.width(), entropy_image_.height(), 0xFF0000FF);
-    }
-}
-
-
-
-Image<uint32_t> CandidateView::renderBGScaleGain(const bool visualize_yaw) const
-{
-    if (isValid()) {
-        return visualize_entropy(bg_scale_gain_image_, window_idx_, window_width_, visualize_yaw);
-    }
-    else {
-        return Image<uint32_t>(
-            bg_scale_gain_image_.width(), bg_scale_gain_image_.height(), 0xFF0000FF);
-    }
-}
-
-
-
-Image<uint32_t> CandidateView::renderObjectScaleGain(const bool visualize_yaw) const
-{
-    if (isValid()) {
-        return visualize_entropy(
-            object_scale_gain_image_, window_idx_, window_width_, visualize_yaw);
-    }
-    else {
-        return Image<uint32_t>(
-            object_scale_gain_image_.width(), object_scale_gain_image_.height(), 0xFF0000FF);
     }
 }
 
@@ -365,21 +311,6 @@ Image<uint32_t> CandidateView::renderDepth(const bool visualize_yaw) const
     else {
         return Image<uint32_t>(entropy_hits_M_.width(), entropy_hits_M_.height(), 0xFF000000);
     }
-}
-
-
-
-Image<uint32_t> CandidateView::renderMinScale() const
-{
-    constexpr int max_scale_p1 = VoxelImpl::VoxelBlockType::max_scale + 1;
-    Image<uint32_t> min_scale_render(min_scale_image_.width(), min_scale_image_.height());
-#pragma omp parallel for
-    for (size_t i = 0; i < min_scale_render.size(); ++i) {
-        // Scale the minimum scale to the interval [0,255].
-        const uint8_t s = UINT8_MAX * static_cast<float>(min_scale_image_[i] + 1) / max_scale_p1;
-        min_scale_render[i] = se::pack_rgba(s, s, s, 0xFF);
-    }
-    return min_scale_render;
 }
 
 
@@ -442,34 +373,6 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
         for (int x = 0; x < entropy_image_.width(); x++) {
             f << std::setw(20) << entropy_image_(x, y);
             if (x != entropy_image_.width() - 1) {
-                f << " ";
-            }
-        }
-        f << "\n";
-    }
-
-    f << "\n";
-    f << std::setprecision(6);
-    f << "BG scale gain\n";
-    f << bg_scale_gain_image_.width() << " " << bg_scale_gain_image_.height() << "\n";
-    for (int y = 0; y < bg_scale_gain_image_.height(); y++) {
-        for (int x = 0; x < bg_scale_gain_image_.width(); x++) {
-            f << std::setw(20) << bg_scale_gain_image_(x, y);
-            if (x != bg_scale_gain_image_.width() - 1) {
-                f << " ";
-            }
-        }
-        f << "\n";
-    }
-
-    f << "\n";
-    f << std::setprecision(6);
-    f << "Object scale gain\n";
-    f << object_scale_gain_image_.width() << " " << object_scale_gain_image_.height() << "\n";
-    for (int y = 0; y < object_scale_gain_image_.height(); y++) {
-        for (int x = 0; x < object_scale_gain_image_.width(); x++) {
-            f << std::setw(20) << object_scale_gain_image_(x, y);
-            if (x != object_scale_gain_image_.width() - 1) {
                 f << " ";
             }
         }
@@ -665,10 +568,6 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
 {
     // Raycast at the last path vertex
     raycast_entropy_360(entropy_image_, entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_);
-    bg_scale_gain_image_ =
-        bg_scale_gain(entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_, desired_scale_);
-    object_scale_gain_image_ =
-        object_scale_gain(entropy_hits_M_, objects_, sensor_, path_MB_.back(), T_BC_);
     object_dist_gain_image_ =
         object_dist_gain(entropy_hits_M_, objects_, sensor_, path_MB_.back(), T_BC_);
     object_compl_gain_image_ = object_completion_gain(
@@ -683,9 +582,6 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
         const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC_;
         T_MB_history->frustumOverlap(frustum_overlap_mask_, sensor_, T_MC, T_BC_);
         entropy_image_ = mask_entropy_image(entropy_image_, frustum_overlap_mask_);
-        bg_scale_gain_image_ = mask_entropy_image(bg_scale_gain_image_, frustum_overlap_mask_);
-        object_scale_gain_image_ =
-            mask_entropy_image(object_scale_gain_image_, frustum_overlap_mask_);
         object_dist_gain_image_ =
             mask_entropy_image(object_dist_gain_image_, frustum_overlap_mask_);
         object_compl_gain_image_ =
@@ -701,7 +597,6 @@ void CandidateView::computeUtility()
 {
     utility_ = gain_ / path_time_;
     exploration_utility_ = entropy_gain_ / path_time_;
-    object_utility_ = object_lod_gain_ / path_time_;
     object_dist_utility_ = object_dist_gain_ / path_time_;
     object_compl_utility_ = object_compl_gain_ / path_time_;
     constexpr char format[] = "%6.4f / %-7.3f = %f (w: %5.3f %5.3f %5.3f)";
@@ -874,12 +769,10 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Status:                  " << c.status_ << "\n";
     os << "Utility:                 " << c.utility() << "\n";
     os << "Entropy utility:         " << c.entropyUtility() << "\n";
-    os << "Object LoD utility:      " << c.objectLoDUtility() << "\n";
     os << "Object distace utility:  " << c.objectDistUtility() << "\n";
     os << "Object compl. utility:   " << c.objectComplUtility() << "\n";
     os << "Gain:                    " << c.gain_ << "\n";
     os << "Entropy:                 " << c.entropy_gain_ << "\n";
-    os << "LoD gain:                " << c.object_lod_gain_ << "\n";
     os << "Object distance gain:    " << c.object_dist_gain_ << "\n";
     os << "Object completion gain:  " << c.object_compl_gain_ << "\n";
     os << "Path time:               " << c.path_time_ << "\n";
@@ -898,10 +791,6 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
        << "\n";
     os << "Entropy image:           " << c.entropy_image_.width() << "x"
        << c.entropy_image_.height() << "\n";
-    os << "BG scale gain image:     " << c.bg_scale_gain_image_.width() << "x"
-       << c.bg_scale_gain_image_.height() << "\n";
-    os << "Object scale gain image: " << c.object_scale_gain_image_.width() << "x"
-       << c.object_scale_gain_image_.height() << "\n";
     os << "Object dist gain image:  " << c.object_dist_gain_image_.width() << "x"
        << c.object_dist_gain_image_.height() << "\n";
     os << "Object compl gain image: " << c.object_compl_gain_image_.width() << "x"
@@ -910,8 +799,6 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
        << c.entropy_hits_M_.height() << "\n";
     os << "Frustum overlap mask:    " << c.frustum_overlap_mask_.width() << "x"
        << c.frustum_overlap_mask_.height() << "\n";
-    os << "Min scale image:         " << c.min_scale_image_.width() << "x"
-       << c.min_scale_image_.height() << "\n";
     os << "Utility computation:     " << c.utilityStr() << "\n";
     return os;
 }

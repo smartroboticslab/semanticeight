@@ -62,8 +62,6 @@ class ExplorationPlanner {
                                    Image<uint32_t>& depth,
                                    const bool visualize_yaw = true);
 
-    Image<uint32_t> renderMinScale();
-
     const PoseGridHistory& getPoseGridHistory() const;
 
     const PoseMaskHistory& getPoseMaskHistory() const;

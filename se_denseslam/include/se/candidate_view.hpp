@@ -69,8 +69,6 @@ class CandidateView {
 
     float entropyUtility() const;
 
-    float objectLoDUtility() const;
-
     float objectDistUtility() const;
 
     float objectComplUtility() const;
@@ -83,17 +81,11 @@ class CandidateView {
 
     Image<uint32_t> renderEntropy(const bool visualize_yaw = true) const;
 
-    Image<uint32_t> renderBGScaleGain(const bool visualize_yaw = true) const;
-
-    Image<uint32_t> renderObjectScaleGain(const bool visualize_yaw = true) const;
-
     Image<uint32_t> renderObjectDistGain(const bool visualize_yaw = true) const;
 
     Image<uint32_t> renderObjectCompletionGain(const bool visualize_yaw = true) const;
 
     Image<uint32_t> renderDepth(const bool visualize_yaw = true) const;
-
-    Image<uint32_t> renderMinScale() const;
 
     void renderCurrentEntropyDepth(Image<uint32_t>& entropy,
                                    Image<uint32_t>& depth,
@@ -147,8 +139,6 @@ class CandidateView {
     float gain_;
     /** The information gain for the map at the optimal yaw angle. */
     float entropy_gain_;
-    /** The object level-of-detail gain at the optimal yaw angle. */
-    float object_lod_gain_;
     /** The object distance gain at the optimal yaw angle. */
     float object_dist_gain_;
     /** The object completion gain at the optimal yaw angle. */
@@ -159,10 +149,6 @@ class CandidateView {
     Image<float> gain_image_;
     /** An image containing the information gain produced by the 360 raycasting. */
     Image<float> entropy_image_;
-    /** An image containing the background scale gain produced by the 360 raycasting. */
-    Image<float> bg_scale_gain_image_;
-    /** An image containing the object scale gain produced by the 360 raycasting. */
-    Image<float> object_scale_gain_image_;
     /** An image containing the object distance gain produced by the 360 raycasting. */
     Image<float> object_dist_gain_image_;
     /** An image containing the object completion gain produced by the 360 raycasting. */
@@ -171,8 +157,6 @@ class CandidateView {
     Image<Eigen::Vector3f> entropy_hits_M_;
     /** An image containing the per-pixel mask of frustum overlap with the candidate's neighbors. */
     Image<uint8_t> frustum_overlap_mask_;
-    /** An image containing the minimum integration scale for each raycasted object. */
-    Image<int8_t> min_scale_image_;
     std::string utility_str_;
     std::string status_;
     const SensorImpl& sensor_;
@@ -188,13 +172,10 @@ class CandidateView {
     /** A function of entropy and path_time. */
     float utility_;
     float exploration_utility_;
-    float object_utility_;
     float object_dist_utility_;
     float object_compl_utility_;
     CandidateConfig config_;
     Eigen::VectorXf weights_;
-
-    static constexpr int8_t desired_scale_ = 0;
 
     /** \brief Perform a 360 degree raycast and compute the optimal yaw angle.
      */
