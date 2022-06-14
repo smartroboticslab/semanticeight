@@ -271,12 +271,13 @@ int main(int argc, char** argv)
         const bool track = !config.enable_ground_truth;
         const bool render = config.enable_render;
         while (true) {
+            TICK("TOTAL");
             se::perfstats.setIter(reader->frame());
             const size_t frame = reader->frame() - frame_offset;
 #if SE_VERBOSE >= SE_VERBOSE_MINIMAL
             std::cout << "Frame " << frame << " ----------------------------------------\n";
 #endif
-            TICK("TOTAL");
+
             TICK("COMPUTATION")
             const std::chrono::time_point<std::chrono::steady_clock> now =
                 std::chrono::steady_clock::now();
@@ -489,8 +490,6 @@ int main(int argc, char** argv)
                 se::perfstats.sample("num_blocks_s3", num_blocks_per_scale[3], PerfStats::COUNT);
             }
 
-            TOCK("TOTAL")
-
             if (config.enable_benchmark || !config.enable_render) {
                 if (config.log_path != "") {
                     se::perfstats.writeToFilestream();
@@ -522,6 +521,7 @@ int main(int argc, char** argv)
             drawit(reinterpret_cast<uint32_t*>(render.data),
                    Eigen::Vector2i(render.cols, render.rows));
 #endif
+            TOCK("TOTAL")
         }
         if (!config.enable_benchmark) {
             std::cout << "{";
