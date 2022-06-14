@@ -284,6 +284,41 @@ float max_ray_entropy(const float voxel_dim, const float near_plane, const float
 
 
 
+void raycast_entropy(Image<float>& entropy_image,
+                     Image<Eigen::Vector3f>& entropy_hits_M,
+                     const Octree<VoxelImpl::VoxelType>& map,
+                     const SensorImpl& sensor,
+                     const Eigen::Matrix4f& T_MB,
+                     const Eigen::Matrix4f& T_BC)
+{
+    if (entropy_image.width() != sensor.model.imageWidth()
+        || entropy_image.height() != sensor.model.imageHeight()) {
+        entropy_image = Image<float>(sensor.model.imageWidth(), sensor.model.imageHeight());
+    }
+    if (entropy_hits_M.width() != entropy_image.width()
+        || entropy_hits_M.height() != entropy_image.height()) {
+        entropy_hits_M = Image<Eigen::Vector3f>(entropy_image.width(), entropy_image.height());
+    }
+    const float ray_entropy_max =
+        max_ray_entropy(map.voxelDim(), sensor.near_plane, sensor.far_plane);
+    const Eigen::Vector3f& t_MB = T_MB.topRightCorner<3, 1>();
+    const Image<Eigen::Vector3f> rays_M = ray_M_image(sensor, T_MB * T_BC);
+#pragma omp parallel for
+    for (int y = 0; y < entropy_image.height(); y++) {
+#pragma omp simd
+        for (int x = 0; x < entropy_image.width(); x++) {
+            // Accumulate the entropy along the ray
+            const auto r =
+                entropy_along_ray(map, t_MB, rays_M(x, y), sensor.near_plane, sensor.far_plane);
+            // Normalize the per-ray entropy in the interval [0-1].
+            entropy_image(x, y) = r.first / ray_entropy_max;
+            entropy_hits_M(x, y) = r.second;
+        }
+    }
+}
+
+
+
 void raycast_entropy_360(Image<float>& entropy_image,
                          Image<Eigen::Vector3f>& entropy_hits_M,
                          const Octree<VoxelImpl::VoxelType>& map,

@@ -55,6 +55,15 @@ Image<Eigen::Vector3f> ray_M_360_image(const int width,
                                        const SensorImpl& sensor,
                                        const Eigen::Matrix4f& T_BC);
 
+/** \brief TODO
+ */
+void raycast_entropy(Image<float>& entropy_image,
+                     Image<Eigen::Vector3f>& entropy_hits_M,
+                     const Octree<VoxelImpl::VoxelType>& map,
+                     const SensorImpl& sensor,
+                     const Eigen::Matrix4f& T_MB,
+                     const Eigen::Matrix4f& T_BC);
+
 /** \brief Perform a 360 degree raycasting using a spherical camera model at t_MC computing the
  * map entropy. The size of entropy_image determines the number of rays cast. Frame B is
  * x-forward, z-up. The raycasting is performed from the origin of the body frame instead of the
