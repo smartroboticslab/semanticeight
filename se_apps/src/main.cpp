@@ -10,6 +10,8 @@
 #include "montage.hpp"
 #include "reader.hpp"
 #include "se/DenseSLAMSystem.h"
+#include "se/completion.hpp"
+#include "se/dist.hpp"
 #include "se/exploration_planner.hpp"
 #include "se/perfstats.h"
 #include "se/system_info.hpp"
@@ -75,6 +77,14 @@ int main(int argc, char** argv)
         se::Image<uint32_t> raycast_render(image_res.x(), image_res.y());
         se::Image<uint32_t> segmentation_render(image_res.x(), image_res.y());
         se::Image<uint32_t> volume_aabb_render(image_res.x(), image_res.y());
+
+        se::Image<float> entropy_gain(image_res.x(), image_res.y());
+        se::Image<float> obj_dist_gain(image_res.x(), image_res.y());
+        se::Image<float> obj_compl_gain(image_res.x(), image_res.y());
+        se::Image<Eigen::Vector3f> entropy_hits_M(image_res.x(), image_res.y());
+        se::Image<uint32_t> entropy_gain_render(image_res.x(), image_res.y());
+        se::Image<uint32_t> obj_dist_gain_render(image_res.x(), image_res.y());
+        se::Image<uint32_t> obj_compl_gain_render(image_res.x(), image_res.y());
 
         // Setup semantic classes
         se::semantic_classes = se::SemanticClasses::coco_classes();
@@ -323,6 +333,39 @@ int main(int argc, char** argv)
                 break;
             }
 
+            if (save_renders && render_frame) {
+                const Eigen::Matrix4f T_MB = pipeline->T_MW() * T_WB;
+                se::raycast_entropy(
+                    entropy_gain, entropy_hits_M, *(pipeline->getMap()), sensor, T_MB, config.T_BC);
+                obj_dist_gain = se::object_dist_gain(
+                    entropy_hits_M, pipeline->getObjectMaps(), sensor, T_MB, config.T_BC);
+                obj_compl_gain =
+                    se::object_completion_gain(se::ray_M_image(sensor, T_MB * config.T_BC),
+                                               entropy_hits_M,
+                                               pipeline->getObjectMaps(),
+                                               sensor,
+                                               T_MB,
+                                               config.T_BC);
+                // TODO SEM compute weighted gain
+
+                entropy_gain_render = se::visualize_entropy(entropy_gain, 0, 0, false);
+                obj_dist_gain_render = se::visualize_entropy(obj_dist_gain, 0, 0, false);
+                obj_compl_gain_render = se::visualize_entropy(obj_compl_gain, 0, 0, false);
+                lodepng_encode32_file((render_prefix + "entropy_pre_" + render_suffix).c_str(),
+                                      reinterpret_cast<unsigned char*>(entropy_gain_render.data()),
+                                      image_res.x(),
+                                      image_res.y());
+                lodepng_encode32_file((render_prefix + "obj_dist_pre_" + render_suffix).c_str(),
+                                      reinterpret_cast<unsigned char*>(obj_dist_gain_render.data()),
+                                      image_res.x(),
+                                      image_res.y());
+                lodepng_encode32_file(
+                    (render_prefix + "obj_compl_pre_" + render_suffix).c_str(),
+                    reinterpret_cast<unsigned char*>(obj_compl_gain_render.data()),
+                    image_res.x(),
+                    image_res.y());
+            }
+
             TICK("PREPROCESSING")
             pipeline->preprocessDepth(
                 input_depth_image.data(), input_image_res, config.bilateral_filter);
@@ -444,6 +487,37 @@ int main(int argc, char** argv)
                                       reinterpret_cast<unsigned char*>(class_render.data()),
                                       image_res.x(),
                                       image_res.y());
+
+                const Eigen::Matrix4f T_MB = pipeline->T_MW() * T_WB;
+                se::raycast_entropy(
+                    entropy_gain, entropy_hits_M, *(pipeline->getMap()), sensor, T_MB, config.T_BC);
+                obj_dist_gain = se::object_dist_gain(
+                    entropy_hits_M, pipeline->getObjectMaps(), sensor, T_MB, config.T_BC);
+                obj_compl_gain =
+                    se::object_completion_gain(se::ray_M_image(sensor, T_MB * config.T_BC),
+                                               entropy_hits_M,
+                                               pipeline->getObjectMaps(),
+                                               sensor,
+                                               T_MB,
+                                               config.T_BC);
+                // TODO SEM compute weighted gain
+
+                entropy_gain_render = se::visualize_entropy(entropy_gain, 0, 0, false);
+                obj_dist_gain_render = se::visualize_entropy(obj_dist_gain, 0, 0, false);
+                obj_compl_gain_render = se::visualize_entropy(obj_compl_gain, 0, 0, false);
+                lodepng_encode32_file((render_prefix + "entropy_post_" + render_suffix).c_str(),
+                                      reinterpret_cast<unsigned char*>(entropy_gain_render.data()),
+                                      image_res.x(),
+                                      image_res.y());
+                lodepng_encode32_file((render_prefix + "obj_dist_post_" + render_suffix).c_str(),
+                                      reinterpret_cast<unsigned char*>(obj_dist_gain_render.data()),
+                                      image_res.x(),
+                                      image_res.y());
+                lodepng_encode32_file(
+                    (render_prefix + "obj_compl_post_" + render_suffix).c_str(),
+                    reinterpret_cast<unsigned char*>(obj_compl_gain_render.data()),
+                    image_res.x(),
+                    image_res.y());
             }
 
             // Save meshes
