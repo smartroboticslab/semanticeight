@@ -267,9 +267,13 @@ int main(int argc, char** argv)
         se::perfstats.includeDetailed(true);
         se::perfstats.setFilestream(&log_file_stream);
 
+        const bool create_renders = config.enable_render && config.rendering_rate != 0;
+        const bool save_renders = create_renders && !config.output_render_file.empty();
+        const std::string render_prefix = config.output_render_file + "/";
+        std::string render_suffix;
+
         Eigen::Matrix4f T_WB;
         const bool track = !config.enable_ground_truth;
-        const bool render = config.enable_render;
         while (true) {
             TICK("TOTAL");
             se::perfstats.setIter(reader->frame());
@@ -277,6 +281,13 @@ int main(int argc, char** argv)
 #if SE_VERBOSE >= SE_VERBOSE_MINIMAL
             std::cout << "Frame " << frame << " ----------------------------------------\n";
 #endif
+            const bool render_frame = create_renders && frame % config.rendering_rate == 0;
+            if (save_renders && render_frame) {
+                stdfs::create_directories(config.output_render_file);
+                std::stringstream path_suffix_ss;
+                path_suffix_ss << std::setw(5) << std::setfill('0') << frame << ".png";
+                render_suffix = path_suffix_ss.str();
+            }
 
             TICK("COMPUTATION")
             const std::chrono::time_point<std::chrono::steady_clock> now =
@@ -362,89 +373,74 @@ int main(int argc, char** argv)
                 num_planning_iterations++;
             }
 
-            const bool render_volume =
-                config.rendering_rate != 0 && frame % config.rendering_rate == 0;
-            if (render) {
+            if (render_frame) {
                 TICK("RENDERING")
-                // Do the fast renders at every frame
                 pipeline->renderObjectClasses(class_render.data(), image_res);
                 pipeline->renderObjectInstances(instance_render.data(), image_res);
-                if (render_volume) {
-                    // Raycast first to avoid doing it during the rendering
-                    pipeline->raycastObjectsAndBg(sensor, frame);
-                    pipeline->renderRGBA(rgba_render.data(), image_res);
-                    pipeline->renderDepth(depth_render.data(), image_res, sensor);
-                    pipeline->renderTrack(track_render.data(), image_res);
-                    pipeline->renderObjects(
-                        volume_render.data(), image_res, sensor, RenderMode::InstanceID, false);
-                    pipeline->renderObjects(
-                        volume_render_color.data(), image_res, sensor, RenderMode::Color, false);
-                    pipeline->renderObjects(
-                        volume_render_scale.data(), image_res, sensor, RenderMode::Scale, false);
-                    pipeline->renderObjects(volume_render_min_scale.data(),
-                                            image_res,
-                                            sensor,
-                                            RenderMode::MinScale,
-                                            false);
-                    pipeline->renderRaycast(raycast_render.data(), image_res);
-                }
+                pipeline->raycastObjectsAndBg(sensor, frame);
+                pipeline->renderRGBA(rgba_render.data(), image_res);
+                pipeline->renderDepth(depth_render.data(), image_res, sensor);
+                pipeline->renderTrack(track_render.data(), image_res);
+                pipeline->renderObjects(
+                    volume_render.data(), image_res, sensor, RenderMode::InstanceID, false);
+                pipeline->renderObjects(
+                    volume_render_color.data(), image_res, sensor, RenderMode::Color, false);
+                pipeline->renderObjects(
+                    volume_render_scale.data(), image_res, sensor, RenderMode::Scale, false);
+                pipeline->renderObjects(
+                    volume_render_min_scale.data(), image_res, sensor, RenderMode::MinScale, false);
+                pipeline->renderRaycast(raycast_render.data(), image_res);
                 TOCK("RENDERING")
             }
             TOCK("COMPUTATION")
 
-            if (render_volume && config.output_render_file != "") {
-                stdfs::create_directories(config.output_render_file);
-                const std::string prefix = config.output_render_file + "/";
-                std::stringstream path_suffix_ss;
-                path_suffix_ss << std::setw(5) << std::setfill('0') << frame << ".png";
-                const std::string suffix = path_suffix_ss.str();
-
+            if (save_renders && render_frame) {
                 pipeline->renderInputSegmentation(segmentation_render.data(), image_res);
                 pipeline->renderObjects(
                     volume_aabb_render.data(), image_res, sensor, RenderMode::InstanceID);
 
-                lodepng_encode32_file((prefix + "rgba_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "rgba_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(rgba_render.data()),
                                       image_res.x(),
                                       image_res.y());
-                lodepng_encode32_file((prefix + "depth_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "depth_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(depth_render.data()),
                                       image_res.x(),
                                       image_res.y());
-                lodepng_encode32_file((prefix + "segm_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "segm_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(segmentation_render.data()),
                                       image_res.x(),
                                       image_res.y());
-                lodepng_encode32_file((prefix + "volume_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "volume_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(volume_render.data()),
                                       image_res.x(),
                                       image_res.y());
-                lodepng_encode32_file((prefix + "volume_color_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "volume_color_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(volume_render_color.data()),
                                       image_res.x(),
                                       image_res.y());
-                lodepng_encode32_file((prefix + "volume_scale_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "volume_scale_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(volume_render_scale.data()),
                                       image_res.x(),
                                       image_res.y());
                 lodepng_encode32_file(
-                    (prefix + "volume_min_scale_" + suffix).c_str(),
+                    (render_prefix + "volume_min_scale_" + render_suffix).c_str(),
                     reinterpret_cast<unsigned char*>(volume_render_min_scale.data()),
                     image_res.x(),
                     image_res.y());
-                lodepng_encode32_file((prefix + "volume_aabb_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "volume_aabb_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(volume_aabb_render.data()),
                                       image_res.x(),
                                       image_res.y());
-                lodepng_encode32_file((prefix + "raycast_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "raycast_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(raycast_render.data()),
                                       image_res.x(),
                                       image_res.y());
-                lodepng_encode32_file((prefix + "instance_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "instance_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(instance_render.data()),
                                       image_res.x(),
                                       image_res.y());
-                lodepng_encode32_file((prefix + "class_" + suffix).c_str(),
+                lodepng_encode32_file((render_prefix + "class_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(class_render.data()),
                                       image_res.x(),
                                       image_res.y());
