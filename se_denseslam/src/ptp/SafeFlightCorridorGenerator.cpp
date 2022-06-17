@@ -133,11 +133,14 @@ void SafeFlightCorridorGenerator::setupPlanner(const Eigen::Vector3f& start_poin
     OmplToEigen::convertState(goal_point_M, &ompl_goal);
 
     pdef_ = std::shared_ptr<ob::ProblemDefinition>(new ob::ProblemDefinition(si_));
-    pdef_->setStartAndGoalStates(ompl_start, ompl_goal);
+    pdef_->setStartAndGoalStates(ompl_start, ompl_goal, 1.5 * robot_radius_);
 
-    /// Optimise for path length.
-    pdef_->setOptimizationObjective(
-        ob::OptimizationObjectivePtr(new ob::PathLengthOptimizationObjective(si_)));
+    // Optimise for path length.
+    objective_ = ob::OptimizationObjectivePtr(new ob::PathLengthOptimizationObjective(si_));
+    // Set a high cost (path length) threshold so that planning essentially stops on the first path
+    // found.
+    objective_->setCostThreshold(ob::Cost(1000.0));
+    pdef_->setOptimizationObjective(objective_);
 
     optimizingPlanner_ = std::shared_ptr<og::InformedRRTstar>(new og::InformedRRTstar(si_));
     optimizingPlanner_->setProblemDefinition(pdef_);

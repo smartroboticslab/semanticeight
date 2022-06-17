@@ -87,6 +87,7 @@ class SafeFlightCorridorGenerator {
 
     ompl::base::StateSpacePtr space_;
     ompl::base::SpaceInformationPtr si_;
+    ompl::base::OptimizationObjectivePtr objective_;
     ompl::base::ProblemDefinitionPtr pdef_;
     ompl::base::PlannerPtr optimizingPlanner_;
 
