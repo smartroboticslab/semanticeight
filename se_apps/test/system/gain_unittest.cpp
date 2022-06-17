@@ -136,7 +136,6 @@ TEST(System, gainRaycasting)
         const se::Image<uint32_t> entropy_render = candidate.renderEntropy(false);
         const se::Image<uint32_t> depth_render = candidate.renderDepth(false);
         const se::Image<uint32_t> object_dist_render = candidate.renderObjectDistGain(false);
-        const se::Image<uint32_t> object_compl_render = candidate.renderObjectCompletionGain(false);
 
         // Save renders.
         const std::string tmp(stdfs::temp_directory_path()
@@ -160,10 +159,6 @@ TEST(System, gainRaycasting)
                               reinterpret_cast<const unsigned char*>(object_dist_render.data()),
                               object_dist_render.width(),
                               object_dist_render.height());
-        lodepng_encode32_file((tmp + "/object_compl_" + suffix.str()).c_str(),
-                              reinterpret_cast<const unsigned char*>(object_compl_render.data()),
-                              object_compl_render.width(),
-                              object_compl_render.height());
 
         // Create more renders
         Eigen::Matrix4f T_CCr;
