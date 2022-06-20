@@ -38,17 +38,23 @@ struct TestVoxelT {
     struct VoxelData {
         float x;
         float y;
+        float fg;
         uint8_t r;
         uint8_t g;
         uint8_t b;
+
+        inline float getFg() const
+        {
+            return fg;
+        }
     };
     static inline VoxelData invalid()
     {
-        return {0.f, 0.f};
+        return {0.f, 0.f, 0.f};
     }
     static inline VoxelData initData()
     {
-        return {-1.f, 1.f};
+        return {-1.f, 1.f, 0.f};
     }
 
     static float selectValue(const TestVoxelT::VoxelData& data)

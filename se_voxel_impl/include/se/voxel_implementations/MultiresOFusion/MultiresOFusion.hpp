@@ -81,6 +81,11 @@ struct MultiresOFusion {
 
             bool operator==(const VoxelData& other) const;
             bool operator!=(const VoxelData& other) const;
+
+            inline float getFg() const
+            {
+                return fg;
+            }
         };
 
         static inline VoxelData invalid()

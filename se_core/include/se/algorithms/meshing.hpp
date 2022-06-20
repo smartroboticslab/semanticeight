@@ -1040,7 +1040,7 @@ void dual_marching_cube(Octree<FieldType>& map,
                         triangle.vertexes[2] = vertex_2;
                         triangle.max_vertex_scale = dual_max_scale;
                         triangle.min_dist_updated = min_dist_updated;
-                        // Interpolate color at each vertex
+                        // Interpolate color and foreground at each vertex
                         for (int i = 0; i < 3; i++) {
                             typename FieldType::VoxelData data;
                             map.get(triangle.vertexes[i].cast<int>(), data, 0);
@@ -1053,6 +1053,11 @@ void dual_marching_cube(Octree<FieldType>& map,
                             triangle.b[i] = map.interp(triangle.vertexes[i],
                                                        [](const auto& data) { return data.b; })
                                                 .first;
+                            triangle.fg =
+                                std::max(triangle.fg,
+                                         map.interp(triangle.vertexes[i],
+                                                    [](const auto& data) { return data.getFg(); })
+                                             .first);
                         }
 
                         lck.lock();

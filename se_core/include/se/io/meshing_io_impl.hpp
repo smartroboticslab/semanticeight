@@ -122,6 +122,12 @@ int save_mesh_vtk(const Mesh<FaceT>& mesh,
         // ParaView doesn't like infs so store the largest float value instead.
         file << (std::isinf(mesh[f].min_dist_updated) ? FLT_MAX : mesh[f].min_dist_updated) << "\n";
     }
+    // Write the face foreground probability.
+    file << "SCALARS fg float 1\n";
+    file << "LOOKUP_TABLE default\n";
+    for (size_t f = 0; f < num_faces; ++f) {
+        file << mesh[f].fg << "\n";
+    }
 
     file.close();
     return 0;
@@ -161,6 +167,7 @@ int save_mesh_ply(const Mesh<FaceT>& mesh,
     file << "property list uchar int vertex_index\n";
     file << "property char scale\n";
     file << "property float dist\n";
+    file << "property float fg\n";
     file << "property uchar red\n";
     file << "property uchar green\n";
     file << "property uchar blue\n";
@@ -188,6 +195,8 @@ int save_mesh_ply(const Mesh<FaceT>& mesh,
         file << " " << static_cast<int>(mesh[f].max_vertex_scale);
         // Write the update distance.
         file << " " << mesh[f].min_dist_updated;
+        // Write the foreground probability.
+        file << " " << mesh[f].fg;
         // Write the face scale colour.
         const Eigen::Vector3i RGB =
             se::colours::scale[mesh[f].max_vertex_scale].template cast<int>();
