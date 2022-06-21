@@ -29,10 +29,11 @@ fi
 
 dir="${1%%/}"
 out_dir="$dir"_montage
-mkdir -p "$out_dir"
 
 depth_renders=$(find "$dir" -type f -name '*_depth.png' | sort -n)
+
 for depth in $depth_renders; do
+	mkdir -p "$out_dir"
 	n=$(frame_number "$depth")
 	entropy=$(printf '%s\n' "$depth" | sed 's/depth/entropy/' | null_if_not_file)
 	bg_gain=$(printf '%s\n' "$depth" | sed 's/depth/bg_gain/' | null_if_not_file)

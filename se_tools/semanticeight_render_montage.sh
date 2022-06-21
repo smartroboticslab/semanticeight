@@ -31,7 +31,6 @@ dir="${1%%/}"
 out_dir="$dir"_montage
 
 depth_renders=$(find "$dir" -name 'depth_[[:digit:]]*.png' | sort -n)
-mkdir -p "$out_dir"
 
 for depth in $depth_renders; do
 	rgba=$(printf '%s\n' "$depth" | sed 's/depth/rgba/' | null_if_not_file)
@@ -46,6 +45,7 @@ for depth in $depth_renders; do
 	volume_min_scale=$(printf '%s\n' "$depth" | sed 's/depth/volume_min_scale/' | null_if_not_file)
 
 	n=$(frame_number "$depth")
+	mkdir -p "$out_dir"
 	out="$out_dir/render_$(printf '%05d' "$n").png"
 
 	printf 'montage -label %%t -font Liberation-Mono %s %s %s null: %s %s %s %s %s %s %s %s -geometry +2+2 -tile 4x %s\n' \
@@ -57,7 +57,6 @@ done | parallel
 
 out_dir_2="$dir"_montage_aabb_mask
 volume_aabb_renders=$(find "$dir" -name '*volume_aabb_*.png' | sort -n)
-mkdir -p "$out_dir_2"
 
 for volume_aabb in $volume_aabb_renders
 do
@@ -77,6 +76,7 @@ do
 	do
 		printf '%s ' "$aabb_mask"
 	done
+	mkdir -p "$out_dir_2"
 	out="$out_dir_2/render_$(printf '%05d' "$n").png"
 	printf -- '-geometry +2+2 -tile x2 %s\n' "$out"
 done | parallel
