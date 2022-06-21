@@ -139,7 +139,7 @@ struct MultiresTSDF {
 
         static bool isValid(const VoxelData& data)
         {
-            return data.y > 0 && data.fg > std::numeric_limits<fg_t>::max() / 2;
+            return data.y > 0;
         };
 
         using VoxelBlockType = se::VoxelBlockFull<MultiresTSDF::VoxelType>;
