@@ -360,8 +360,8 @@ Object::ScaleArray<float> combinedPercentageAtScale(const Objects& objects)
                        std::plus<>{});
     }
     // Compute the percentages.
-    const size_t num_blocks =
-        std::reduce(num_blocks_per_min_scale.cbegin(), num_blocks_per_min_scale.cend());
+    const size_t num_blocks = std::accumulate(
+        num_blocks_per_min_scale.cbegin(), num_blocks_per_min_scale.cend(), static_cast<size_t>(0));
     Object::ScaleArray<float> pc{};
     if (num_blocks != 0) {
         std::transform(num_blocks_per_min_scale.cbegin(),
