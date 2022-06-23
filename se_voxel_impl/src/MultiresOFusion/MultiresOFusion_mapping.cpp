@@ -494,6 +494,7 @@ struct MultiresOFusionUpdate {
             se::get_sample_coord(voxel_coord_base, integration_stride, sample_offset_frac_);
         const Eigen::Vector3f sample_point_base_C =
             (T_CM_ * (voxel_dim_ * voxel_sample_coord_base_f).homogeneous()).head(3);
+        block->minDistUpdated(sensor_.measurementFromPoint(sample_point_base_C));
 
         const Eigen::Matrix3f sample_point_delta_matrix_C =
             (se::math::to_rotation(T_CM_)
