@@ -36,14 +36,12 @@ for depth in $depth_renders; do
 	mkdir -p "$out_dir"
 	n=$(frame_number "$depth")
 	entropy=$(printf '%s\n' "$depth" | sed 's/depth/entropy/' | null_if_not_file)
-	bg_gain=$(printf '%s\n' "$depth" | sed 's/depth/bg_gain/' | null_if_not_file)
-	object_gain=$(printf '%s\n' "$depth" | sed 's/depth/object_gain/' | null_if_not_file)
 	object_dist_gain=$(printf '%s\n' "$depth" | sed 's/depth/object_dist_gain/' | null_if_not_file)
-	object_compl_gain=$(printf '%s\n' "$depth" | sed 's/depth/object_compl_gain/' | null_if_not_file)
+	bg_dist_gain=$(printf '%s\n' "$depth" | sed 's/depth/bg_dist_gain/' | null_if_not_file)
 	out=$(printf '%s/%s\n' "$out_dir" "$(basename "$depth")" | sed 's/depth/render/')
 
-	printf 'montage -label %%t -font Liberation-Mono %s %s %s %s %s %s -geometry +2+2 -tile 1x %s\n' \
-		"$depth" "$entropy" "$bg_gain" "$object_gain" "$object_dist_gain" "$object_compl_gain" "$out"
+	printf 'montage -label %%t -font Liberation-Mono %s %s %s %s -geometry +2+2 -tile 1x %s\n' \
+		"$depth" "$entropy" "$object_dist_gain" "$bg_dist_gain" "$out"
 done | parallel
 
 
