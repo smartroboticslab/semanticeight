@@ -59,6 +59,36 @@ float dist_gain(const float block_min_dist,
 
 
 
+Image<float> bg_dist_gain(const Image<Eigen::Vector3f>& bg_hits_M,
+                          const Octree<VoxelImpl::VoxelType>& map,
+                          const SensorImpl& sensor,
+                          const Eigen::Matrix4f& T_MB,
+                          const Eigen::Matrix4f& T_BC,
+                          const float desired_dist)
+{
+    Image<float> gain_image(bg_hits_M.width(), bg_hits_M.height(), 0.0f);
+    const float max_dist_gain = sensor.far_plane;
+    const Eigen::Matrix4f T_MC = T_MB * T_BC;
+    const Eigen::Matrix4f T_CM = se::math::to_inverse_transformation(T_MC);
+#pragma omp parallel for
+    for (int y = 0; y < gain_image.height(); ++y) {
+#pragma omp simd
+        for (int x = 0; x < gain_image.width(); ++x) {
+            if (isnan(bg_hits_M(x, y).x())) {
+                gain_image(x, y) = 0.0f;
+            }
+            else {
+                const auto* block = map.fetch(map.pointToVoxel(bg_hits_M(x, y)));
+                const float gain = block_dist_gain(block, map, sensor, T_CM, desired_dist);
+                gain_image(x, y) = gain / max_dist_gain;
+            }
+        }
+    }
+    return gain_image;
+}
+
+
+
 Image<float> object_dist_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                               const Objects& objects,
                               const SensorImpl& sensor,

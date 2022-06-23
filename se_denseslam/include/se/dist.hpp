@@ -13,25 +13,37 @@
 
 namespace se {
 
-static constexpr float default_desired_distance = 1.0f;
+static constexpr float default_desired_distance_bg = 3.0f;
+static constexpr float default_desired_distance_object = 1.0f;
 
 /** \brief Compute the distance gain by observing a VoxelBlock with minimum observation distance
  * block_min_dist at block_expected_dist expected_scale.
  */
 float dist_gain(const float block_min_dist,
                 const float block_expected_dist,
-                const float desired_dist = default_desired_distance);
+                const float desired_dist);
 
-/** \brief Create a 360 degree distance gain image by getting the minimum observation distance of
- * objects along the provided rays. It is meant to be used with the hits returned by
+/** \brief Create a distance gain image by getting the minimum observation distance of the
+ * background along the provided hit rays. It is meant to be used with the hits returned by
  * se::raycast_entropy_360() or se::raycast_entropy().
+ */
+Image<float> bg_dist_gain(const Image<Eigen::Vector3f>& bg_hits_M,
+                          const Octree<VoxelImpl::VoxelType>& map,
+                          const SensorImpl& sensor,
+                          const Eigen::Matrix4f& T_MB,
+                          const Eigen::Matrix4f& T_BC,
+                          const float desired_dist = default_desired_distance_bg);
+
+/** \brief Create a distance gain image by getting the minimum observation distance of objects along
+ * the provided hit rays. It is meant to be used with the hits returned by se::raycast_entropy_360()
+ * or se::raycast_entropy().
  */
 Image<float> object_dist_gain(const Image<Eigen::Vector3f>& bg_hits_M,
                               const Objects& objects,
                               const SensorImpl& sensor,
                               const Eigen::Matrix4f& T_MB,
                               const Eigen::Matrix4f& T_BC,
-                              const float desired_dist = default_desired_distance);
+                              const float desired_dist = default_desired_distance_object);
 
 } // namespace se
 
