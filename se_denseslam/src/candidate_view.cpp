@@ -559,7 +559,7 @@ Image<float> CandidateView::computeGainImage(const ImageVec<float>& gain_images,
                                              const Eigen::VectorXf& weights)
 {
     assert(!gain_images.empty());
-    assert(gain_images.size() == static_cast<size_t>(weights.size()));
+    assert(gain_images.size() <= static_cast<size_t>(weights.size()));
     for (size_t i = 0; i < gain_images.size() - 1; ++i) {
         assert(gain_images[i].width() == gain_images[i + 1].width());
         assert(gain_images[i].height() == gain_images[i + 1].height());
