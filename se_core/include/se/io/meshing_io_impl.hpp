@@ -101,14 +101,6 @@ int save_mesh_vtk(const Mesh<FaceT>& mesh,
         }
     }
 
-    file << "CELL_DATA " << num_faces << "\n";
-    // Write the face scale colours.
-    file << "COLOR_SCALARS scale_RGB 3\n";
-    for (size_t f = 0; f < num_faces; ++f) {
-        // Colour the triangle depending on its scale.
-        const Eigen::Vector3f RGB = se::colours::scale[mesh[f].max_vertex_scale] / 255.0f;
-        file << RGB[0] << " " << RGB[1] << " " << RGB[2] << "\n";
-    }
     // Write the face scale.
     file << "SCALARS scale int 1\n";
     file << "LOOKUP_TABLE default\n";
@@ -168,9 +160,6 @@ int save_mesh_ply(const Mesh<FaceT>& mesh,
     file << "property char scale\n";
     file << "property float dist\n";
     file << "property float fg\n";
-    file << "property uchar red\n";
-    file << "property uchar green\n";
-    file << "property uchar blue\n";
     file << "end_header\n";
 
     // Write the vertices.
@@ -197,10 +186,6 @@ int save_mesh_ply(const Mesh<FaceT>& mesh,
         file << " " << mesh[f].min_dist_updated;
         // Write the foreground probability.
         file << " " << mesh[f].fg;
-        // Write the face scale colour.
-        const Eigen::Vector3i RGB =
-            se::colours::scale[mesh[f].max_vertex_scale].template cast<int>();
-        file << " " << RGB[0] << " " << RGB[1] << " " << RGB[2];
         file << "\n";
     }
 
