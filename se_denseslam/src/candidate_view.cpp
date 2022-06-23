@@ -46,9 +46,11 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         gain_(-1.0f),
         entropy_gain_(-1.0f),
         object_dist_gain_(-1.0f),
+        bg_dist_gain_(-1.0f),
         gain_image_(1, 1),
         entropy_image_(1, 1),
         object_dist_gain_image_(1, 1),
+        bg_dist_gain_image_(1, 1),
         entropy_hits_M_(1, 1),
         frustum_overlap_mask_(1, 1),
         sensor_(sensor),
@@ -57,7 +59,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         T_BC_(T_BC),
         utility_(-1.0f),
         exploration_utility_(-1.0f),
-        object_dist_utility_(-1.0f)
+        object_dist_utility_(-1.0f),
+        bg_dist_utility_(-1.0f)
 {
 }
 
@@ -80,10 +83,12 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         gain_(-1.0f),
         entropy_gain_(-1.0f),
         object_dist_gain_(-1.0f),
+        bg_dist_gain_(-1.0f),
         // TODO create if needed?
         gain_image_(config.raycast_width, config.raycast_height),
         entropy_image_(config.raycast_width, config.raycast_height),
         object_dist_gain_image_(config.raycast_width, config.raycast_height),
+        bg_dist_gain_image_(config.raycast_width, config.raycast_height),
         entropy_hits_M_(config.raycast_width, config.raycast_height),
         frustum_overlap_mask_(config.raycast_width, config.raycast_height, 0.0f),
         sensor_(sensor),
@@ -93,6 +98,7 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         utility_(-1.0f),
         exploration_utility_(-1.0f),
         object_dist_utility_(-1.0f),
+        bg_dist_utility_(-1.0f),
         config_(config),
         weights_(config_.utility_weights.size() + 1)
 {
@@ -141,6 +147,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         optimal_yaw(entropy_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     std::tie(std::ignore, object_dist_gain_, std::ignore, std::ignore) =
         optimal_yaw(object_dist_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
+    std::tie(std::ignore, bg_dist_gain_, std::ignore, std::ignore) =
+        optimal_yaw(bg_dist_gain_image_, entropy_hits_M_, sensor_, path_MB_.back(), T_BC_);
     path_MB_.back().topLeftCorner<3, 3>() = yawToC_MB(yaw_M_);
     zeroRollPitch(path_MB_);
     // Compute the utility.
@@ -185,6 +193,13 @@ float CandidateView::objectDistUtility() const
 
 
 
+float CandidateView::bgDistUtility() const
+{
+    return bg_dist_utility_;
+}
+
+
+
 std::string CandidateView::utilityStr() const
 {
     return utility_str_;
@@ -215,6 +230,8 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
         raycast_entropy_360(entropy_image, entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
         Image<float> object_dist_gain_image =
             object_dist_gain(entropy_hits, objects_, sensor_, path_MB_[i], T_BC_);
+        Image<float> bg_dist_gain_image =
+            bg_dist_gain(entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
         // Mask all gain images based on the frustum overlap.
         if (config_.use_pose_history) {
             Image<uint8_t> frustum_overlap_mask(
@@ -224,6 +241,7 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
             entropy_image = mask_entropy_image(entropy_image, frustum_overlap_mask);
             object_dist_gain_image =
                 mask_entropy_image(object_dist_gain_image, frustum_overlap_mask);
+            bg_dist_gain_image = mask_entropy_image(bg_dist_gain_image, frustum_overlap_mask);
         }
         Image<float> gain_image =
             computeGainImage({entropy_image, object_dist_gain_image}, weights_.head<2>());
@@ -258,6 +276,19 @@ Image<uint32_t> CandidateView::renderObjectDistGain(const bool visualize_yaw) co
     else {
         return Image<uint32_t>(
             object_dist_gain_image_.width(), object_dist_gain_image_.height(), 0xFF0000FF);
+    }
+}
+
+
+
+Image<uint32_t> CandidateView::renderBGDistGain(const bool visualize_yaw) const
+{
+    if (isValid()) {
+        return visualize_entropy(bg_dist_gain_image_, window_idx_, window_width_, visualize_yaw);
+    }
+    else {
+        return Image<uint32_t>(
+            bg_dist_gain_image_.width(), bg_dist_gain_image_.height(), 0xFF0000FF);
     }
 }
 
@@ -348,6 +379,20 @@ bool CandidateView::writeEntropyData(const std::string& filename) const
         for (int x = 0; x < object_dist_gain_image_.width(); x++) {
             f << std::setw(20) << object_dist_gain_image_(x, y);
             if (x != object_dist_gain_image_.width() - 1) {
+                f << " ";
+            }
+        }
+        f << "\n";
+    }
+
+    f << "\n";
+    f << std::setprecision(6);
+    f << "Background distance gain\n";
+    f << bg_dist_gain_image_.width() << " " << bg_dist_gain_image_.height() << "\n";
+    for (int y = 0; y < bg_dist_gain_image_.height(); y++) {
+        for (int x = 0; x < bg_dist_gain_image_.width(); x++) {
+            f << std::setw(20) << bg_dist_gain_image_(x, y);
+            if (x != bg_dist_gain_image_.width() - 1) {
                 f << " ";
             }
         }
@@ -517,6 +562,7 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
     raycast_entropy_360(entropy_image_, entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_);
     object_dist_gain_image_ =
         object_dist_gain(entropy_hits_M_, objects_, sensor_, path_MB_.back(), T_BC_);
+    bg_dist_gain_image_ = bg_dist_gain(entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_);
     // Mask all gain images based on the frustum overlap.
     if (config_.use_pose_history) {
         const Eigen::Matrix4f T_MC = path_MB_.back() * T_BC_;
@@ -524,6 +570,7 @@ void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
         entropy_image_ = mask_entropy_image(entropy_image_, frustum_overlap_mask_);
         object_dist_gain_image_ =
             mask_entropy_image(object_dist_gain_image_, frustum_overlap_mask_);
+        bg_dist_gain_image_ = mask_entropy_image(bg_dist_gain_image_, frustum_overlap_mask_);
     }
     gain_image_ = computeGainImage({entropy_image_, object_dist_gain_image_}, weights_.head<2>());
 }
@@ -535,6 +582,7 @@ void CandidateView::computeUtility()
     utility_ = gain_ / path_time_;
     exploration_utility_ = entropy_gain_ / path_time_;
     object_dist_utility_ = object_dist_gain_ / path_time_;
+    bg_dist_utility_ = bg_dist_gain_ / path_time_;
     constexpr char format[] = "%6.4f / %-7.3f = %f (w: %5.3f %5.3f %5.3f)";
     // Resize the string with the appropriate number of characters to fit the output of snprintf().
     const int s = snprintf(
@@ -706,9 +754,11 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
     os << "Utility:                 " << c.utility() << "\n";
     os << "Entropy utility:         " << c.entropyUtility() << "\n";
     os << "Object distace utility:  " << c.objectDistUtility() << "\n";
+    os << "BG distace utility:      " << c.bgDistUtility() << "\n";
     os << "Gain:                    " << c.gain_ << "\n";
     os << "Entropy:                 " << c.entropy_gain_ << "\n";
     os << "Object distance gain:    " << c.object_dist_gain_ << "\n";
+    os << "BG distance gain:        " << c.bg_dist_gain_ << "\n";
     os << "Path time:               " << c.path_time_ << "\n";
     os << "Path size:               " << c.path().size() << "\n";
     os << "Desired position M:      " << c.desired_t_MB_.x() << " " << c.desired_t_MB_.y() << " "
@@ -727,6 +777,8 @@ std::ostream& operator<<(std::ostream& os, const CandidateView& c)
        << c.entropy_image_.height() << "\n";
     os << "Object dist gain image:  " << c.object_dist_gain_image_.width() << "x"
        << c.object_dist_gain_image_.height() << "\n";
+    os << "BG dist gain image:      " << c.bg_dist_gain_image_.width() << "x"
+       << c.bg_dist_gain_image_.height() << "\n";
     os << "Entropy hit image M:     " << c.entropy_hits_M_.width() << "x"
        << c.entropy_hits_M_.height() << "\n";
     os << "Frustum overlap mask:    " << c.frustum_overlap_mask_.width() << "x"

@@ -71,6 +71,8 @@ class CandidateView {
 
     float objectDistUtility() const;
 
+    float bgDistUtility() const;
+
     std::string utilityStr() const;
 
     const Eigen::Matrix4f& goalT_MB() const;
@@ -78,6 +80,8 @@ class CandidateView {
     void computeIntermediateYaw(const PoseHistory* T_MB_history);
 
     Image<uint32_t> renderEntropy(const bool visualize_yaw = true) const;
+
+    Image<uint32_t> renderBGDistGain(const bool visualize_yaw = true) const;
 
     Image<uint32_t> renderObjectDistGain(const bool visualize_yaw = true) const;
 
@@ -137,6 +141,8 @@ class CandidateView {
     float entropy_gain_;
     /** The object distance gain at the optimal yaw angle. */
     float object_dist_gain_;
+    /** The background distance gain at the optimal yaw angle. */
+    float bg_dist_gain_;
     /** An image containing the combined gain produced by the 360 raycasting. It's a weighted sum
      * of entropy and level-of-detail gains. The yaw optimization is performed on this image.
      */
@@ -145,6 +151,8 @@ class CandidateView {
     Image<float> entropy_image_;
     /** An image containing the object distance gain produced by the 360 raycasting. */
     Image<float> object_dist_gain_image_;
+    /** An image containing the background distance gain produced by the 360 raycasting. */
+    Image<float> bg_dist_gain_image_;
     /** An image containing the points where entropy raycasting hit. */
     Image<Eigen::Vector3f> entropy_hits_M_;
     /** An image containing the per-pixel mask of frustum overlap with the candidate's neighbors. */
@@ -165,6 +173,7 @@ class CandidateView {
     float utility_;
     float exploration_utility_;
     float object_dist_utility_;
+    float bg_dist_utility_;
     CandidateConfig config_;
     Eigen::VectorXf weights_;
 
