@@ -155,13 +155,21 @@ Image<Eigen::Vector3f> ray_M_360_image(const int width,
     T_CBc << 0, -1, -0, -0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
     const Eigen::Matrix4f T_MB = Eigen::Matrix4f::Identity();
     const Eigen::Matrix4f T_MBc = T_MB * T_BC * T_CBc;
-    // The pitch angle of the camera relative to the body frame.
-    const float pitch = math::wrap_angle_pi(T_MBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
+    // Slightly reduce the camera's vertical FoV to account for the pitch threshold used to
+    // determine whether the goal has been reached. Without this workaround the top or bottom row of
+    // the gain image will continue to have a gain since the candidate wasn't observed from the
+    // exact pose expected.
+    constexpr float vfov_factor = 0.8f;
+    const float reduced_vfov = vfov_factor * sensor.vertical_fov;
+    // The pitch angle of the camera relative to the body frame. Take the vertical FoV reduction
+    // into account.
+    const float pitch = (1.0f + (1.0f - vfov_factor) / 2.0f)
+        * math::wrap_angle_pi(T_MBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
     Image<Eigen::Vector3f> rays_M(width, height);
 #pragma omp parallel for
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            rays_M(x, y) = ray_dir_M(x, y, width, height, sensor.vertical_fov, pitch);
+            rays_M(x, y) = ray_dir_M(x, y, width, height, reduced_vfov, pitch);
         }
     }
     return rays_M;
