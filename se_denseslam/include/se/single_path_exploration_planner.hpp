@@ -22,8 +22,6 @@ struct ExplorationConfig {
     // Sampling settings
     int num_candidates;
     float frontier_sampling_probability;
-    Eigen::Vector3f sampling_min_M;
-    Eigen::Vector3f sampling_max_M;
     // Goal settings
     float goal_xy_threshold;
     float goal_z_threshold;

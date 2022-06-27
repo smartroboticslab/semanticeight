@@ -13,7 +13,9 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
                                        const se::Configuration& config) :
         config_(config, pipeline.T_MW()),
         map_(pipeline.getMap()),
-        sampling_aabb_edges_M_(se::AABB(config_.sampling_min_M, config_.sampling_max_M).edges()),
+        sampling_aabb_edges_M_(se::AABB(config_.candidate_config.planner_config.sampling_min_M_,
+                                        config_.candidate_config.planner_config.sampling_max_M_)
+                                   .edges()),
         T_MW_(pipeline.T_MW()),
         T_WM_(pipeline.T_WM()),
         T_BC_(config.T_BC),

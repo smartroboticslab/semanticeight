@@ -29,7 +29,8 @@ struct CandidateConfig {
     // Path planner parameters
     ptp::PlanningParameter planner_config;
 
-    CandidateConfig(const Configuration& c = Configuration());
+    CandidateConfig(const Configuration& c = Configuration(),
+                    const Eigen::Matrix4f& T_MW = Eigen::Matrix4f::Identity());
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

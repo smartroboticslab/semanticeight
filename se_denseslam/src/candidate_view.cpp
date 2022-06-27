@@ -13,7 +13,7 @@
 #include <se/utils/math_utils.h>
 
 namespace se {
-CandidateConfig::CandidateConfig(const Configuration& c) :
+CandidateConfig::CandidateConfig(const Configuration& c, const Eigen::Matrix4f& T_MW) :
         utility_weights(c.utility_weights),
         use_pose_history(c.use_pose_history),
         raycast_width(c.raycast_width),
@@ -27,7 +27,9 @@ CandidateConfig::CandidateConfig(const Configuration& c) :
                         c.safety_radius,
                         c.min_control_point_radius,
                         c.skeleton_sample_precision,
-                        c.solving_time})
+                        c.solving_time,
+                        (T_MW * c.sampling_min_W.homogeneous()).head<3>(),
+                        (T_MW * c.sampling_max_W.homogeneous()).head<3>()})
 {
 }
 

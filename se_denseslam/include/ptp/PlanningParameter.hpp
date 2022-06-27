@@ -34,7 +34,9 @@ struct PlanningParameter {
             safety_radius_(0),
             min_control_point_radius_(0.1),
             skeleton_sample_precision_(0.05),
-            solving_time_(0.0)
+            solving_time_(0.0),
+            sampling_min_M_(-10000, -10000, -10000),
+            sampling_max_M_(10000, 10000, 10000)
     {
     }
 
@@ -52,14 +54,18 @@ struct PlanningParameter {
                       const float& safety_radius,
                       const float& min_control_point_radius,
                       const float& skeleton_sample_precision,
-                      const float& solving_time) :
+                      const float& solving_time,
+                      const Eigen::Vector3f& sampling_min_M,
+                      const Eigen::Vector3f& sampling_max_M) :
             start_t_MB_(start_t_MB),
             goal_t_MB_(goal_t_MB),
             robot_radius_(robot_radius),
             safety_radius_(safety_radius),
             min_control_point_radius_(min_control_point_radius),
             skeleton_sample_precision_(skeleton_sample_precision),
-            solving_time_(solving_time)
+            solving_time_(solving_time),
+            sampling_min_M_(sampling_min_M),
+            sampling_max_M_(sampling_max_M)
     {
     }
 
@@ -70,6 +76,8 @@ struct PlanningParameter {
     float min_control_point_radius_;
     float skeleton_sample_precision_;
     float solving_time_; ///> Solving time to find a path
+    Eigen::Vector3f sampling_min_M_;
+    Eigen::Vector3f sampling_max_M_;
 };
 
 } // namespace ptp

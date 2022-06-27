@@ -63,13 +63,11 @@ Eigen::Vector3f sample_random_object(std::deque<ObjectPtr>& objects,
 ExplorationConfig::ExplorationConfig(const Configuration& c, const Eigen::Matrix4f& T_MW) :
         num_candidates(c.num_candidates),
         frontier_sampling_probability(c.frontier_sampling_probability),
-        sampling_min_M((T_MW * c.sampling_min_W.homogeneous()).head<3>()),
-        sampling_max_M((T_MW * c.sampling_max_W.homogeneous()).head<3>()),
         goal_xy_threshold(c.goal_xy_threshold),
         goal_z_threshold(c.goal_z_threshold),
         goal_roll_pitch_threshold(c.goal_roll_pitch_threshold),
         goal_yaw_threshold(c.goal_yaw_threshold),
-        candidate_config(c)
+        candidate_config(c, T_MW)
 {
 }
 
@@ -118,20 +116,24 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
            //&& rejected_candidates_.size() <= max_failed && !candidate_sampling_tree.empty()) {
            && rejected_candidates_.size() <= max_failed && !remaining_frontiers.empty()) {
         // Sample a point
-        //const Eigen::Vector3f candidate_t_MB = sampleCandidate(*map,
-        //                                                       remaining_frontiers,
-        //                                                       objects,
-        //                                                       sampling_step,
-        //                                                       config_.sampling_min_M,
-        //                                                       config_.sampling_max_M);
-        //const Eigen::Vector3f candidate_t_MB = sampleCandidate(
-        //    *map, candidate_sampling_tree, config_.sampling_min_M, config_.sampling_max_M);
+        //const Eigen::Vector3f candidate_t_MB =
+        //    sampleCandidate(*map,
+        //                    remaining_frontiers,
+        //                    objects,
+        //                    sampling_step,
+        //                    config_.candidate_config.planner_config.sampling_min_M_,
+        //                    config_.candidate_config.planner_config.sampling_max_M_);
+        //const Eigen::Vector3f candidate_t_MB =
+        //    sampleCandidate(*map,
+        //                    candidate_sampling_tree,
+        //                    config_.candidate_config.planner_config.sampling_min_M_,
+        //                    config_.candidate_config.planner_config.sampling_max_M_);
         const Eigen::Vector3f candidate_t_MB =
             sampleCandidate(*map,
                             remaining_frontiers,
                             remaining_objects,
-                            config_.sampling_min_M,
-                            config_.sampling_max_M,
+                            config_.candidate_config.planner_config.sampling_min_M_,
+                            config_.candidate_config.planner_config.sampling_max_M_,
                             config_.frontier_sampling_probability);
         // Create the config for this particular candidate
         CandidateConfig candidate_config = config_.candidate_config;
