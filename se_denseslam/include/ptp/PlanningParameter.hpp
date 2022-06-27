@@ -28,7 +28,6 @@ struct PlanningParameter {
 
     /** Default Constructor. */
     PlanningParameter() :
-            octree_path_(""),
             start_t_MB_(Eigen::Vector3f::Zero()),
             goal_t_MB_(Eigen::Vector3f::Zero()),
             robot_radius_(0.15),
@@ -47,15 +46,13 @@ struct PlanningParameter {
    * @param [in] robot_radius Cubic bounding box size of UAV + safety margin. [m]
    * @param [in] solving_time Solving time to find a path. [s]
    */
-    PlanningParameter(const std::string& octree_path,
-                      const Eigen::Vector3f& start_t_MB,
+    PlanningParameter(const Eigen::Vector3f& start_t_MB,
                       const Eigen::Vector3f& goal_t_MB,
                       const float& robot_radius,
                       const float& safety_radius,
                       const float& min_control_point_radius,
                       const float& skeleton_sample_precision,
                       const float& solving_time) :
-            octree_path_(octree_path),
             start_t_MB_(start_t_MB),
             goal_t_MB_(goal_t_MB),
             robot_radius_(robot_radius),
@@ -66,7 +63,6 @@ struct PlanningParameter {
     {
     }
 
-    std::string octree_path_;
     Eigen::Vector3f start_t_MB_; ///> Start position for path planning
     Eigen::Vector3f goal_t_MB_;  ///> Goal position for path planning
     float robot_radius_;         ///> Robot bounding sphere radius
