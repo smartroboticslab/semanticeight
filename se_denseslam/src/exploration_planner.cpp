@@ -99,19 +99,22 @@ bool ExplorationPlanner::goalReached()
     const Eigen::Matrix4f& current_T_MB = T_MB_history_.poses.back();
     const Eigen::Matrix4f& goal_T_MB = goal_path_T_MB_.front();
     const Eigen::Vector3f pos_error = math::position_error(goal_T_MB, current_T_MB);
-    if (pos_error.head<2>().norm() > config_.goal_xy_threshold) {
+    if (pos_error.head<2>().norm() > config_.candidate_config.goal_xy_threshold) {
         return false;
     }
-    if (pos_error.tail<1>().norm() > config_.goal_z_threshold) {
+    if (pos_error.tail<1>().norm() > config_.candidate_config.goal_z_threshold) {
         return false;
     }
-    if (fabsf(math::yaw_error(goal_T_MB, current_T_MB)) > config_.goal_yaw_threshold) {
+    if (fabsf(math::yaw_error(goal_T_MB, current_T_MB))
+        > config_.candidate_config.goal_yaw_threshold) {
         return false;
     }
-    if (fabsf(math::pitch_error(goal_T_MB, current_T_MB)) > config_.goal_roll_pitch_threshold) {
+    if (fabsf(math::pitch_error(goal_T_MB, current_T_MB))
+        > config_.candidate_config.goal_roll_pitch_threshold) {
         return false;
     }
-    if (fabsf(math::roll_error(goal_T_MB, current_T_MB)) > config_.goal_roll_pitch_threshold) {
+    if (fabsf(math::roll_error(goal_T_MB, current_T_MB))
+        > config_.candidate_config.goal_roll_pitch_threshold) {
         return false;
     }
     // Remove the reached pose from the goal path.

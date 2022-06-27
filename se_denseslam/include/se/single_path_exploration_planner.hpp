@@ -22,11 +22,6 @@ struct ExplorationConfig {
     // Sampling settings
     int num_candidates;
     float frontier_sampling_probability;
-    // Goal settings
-    float goal_xy_threshold;
-    float goal_z_threshold;
-    float goal_roll_pitch_threshold;
-    float goal_yaw_threshold;
     CandidateConfig candidate_config;
 
     ExplorationConfig(const Configuration& c = Configuration(),

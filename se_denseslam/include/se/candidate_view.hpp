@@ -26,6 +26,11 @@ struct CandidateConfig {
     float delta_t;
     float velocity_linear;
     float velocity_angular;
+    // Goal settings
+    float goal_xy_threshold;
+    float goal_z_threshold;
+    float goal_roll_pitch_threshold;
+    float goal_yaw_threshold;
     // Path planner parameters
     ptp::PlanningParameter planner_config;
 
