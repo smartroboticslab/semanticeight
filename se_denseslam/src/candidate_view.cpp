@@ -232,7 +232,13 @@ void CandidateView::computeIntermediateYaw(const PoseHistory* T_MB_history)
     for (size_t i = 1; i < path_MB_.size() - 1; i++) {
         Image<float> entropy_image(entropy_image_.width(), entropy_image_.height());
         Image<Eigen::Vector3f> entropy_hits(entropy_hits_M_.width(), entropy_hits_M_.height());
-        raycast_entropy_360(entropy_image, entropy_hits, map_, sensor_, path_MB_[i], T_BC_);
+        raycast_entropy_360(entropy_image,
+                            entropy_hits,
+                            map_,
+                            sensor_,
+                            path_MB_[i],
+                            T_BC_,
+                            config_.goal_roll_pitch_threshold);
         Image<float> object_dist_gain_image =
             object_dist_gain(entropy_hits, objects_, sensor_, path_MB_[i], T_BC_);
         Image<float> bg_dist_gain_image =
@@ -325,7 +331,8 @@ void CandidateView::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
     }
     Image<float> raw_entropy(entropy_image_.width(), entropy_image_.height());
     Image<Eigen::Vector3f> entropy_hits(entropy_image_.width(), entropy_image_.height());
-    raycast_entropy_360(raw_entropy, entropy_hits, map_, sensor_, T_MB, T_BC_);
+    raycast_entropy_360(
+        raw_entropy, entropy_hits, map_, sensor_, T_MB, T_BC_, config_.goal_roll_pitch_threshold);
     entropy =
         visualize_entropy(raw_entropy, window_idx_, window_width_, visualize_yaw && isValid());
     depth = visualize_depth(
@@ -564,7 +571,13 @@ Path CandidateView::getFinalPath(const Path& path_M,
 void CandidateView::entropyRaycast(const PoseHistory* T_MB_history)
 {
     // Raycast at the last path vertex
-    raycast_entropy_360(entropy_image_, entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_);
+    raycast_entropy_360(entropy_image_,
+                        entropy_hits_M_,
+                        map_,
+                        sensor_,
+                        path_MB_.back(),
+                        T_BC_,
+                        config_.goal_roll_pitch_threshold);
     object_dist_gain_image_ =
         object_dist_gain(entropy_hits_M_, objects_, sensor_, path_MB_.back(), T_BC_);
     bg_dist_gain_image_ = bg_dist_gain(entropy_hits_M_, map_, sensor_, path_MB_.back(), T_BC_);

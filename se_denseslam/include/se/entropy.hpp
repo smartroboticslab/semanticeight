@@ -53,7 +53,8 @@ Image<Eigen::Vector3f> ray_M_image(const SensorImpl& sensor, const Eigen::Matrix
 Image<Eigen::Vector3f> ray_M_360_image(const int width,
                                        const int height,
                                        const SensorImpl& sensor,
-                                       const Eigen::Matrix4f& T_BC);
+                                       const Eigen::Matrix4f& T_BC,
+                                       const float roll_pitch_threshold = 0.0f);
 
 /** \brief TODO
  */
@@ -74,7 +75,8 @@ void raycast_entropy_360(Image<float>& entropy_image,
                          const Octree<VoxelImpl::VoxelType>& map,
                          const SensorImpl& sensor,
                          const Eigen::Matrix4f& T_MB,
-                         const Eigen::Matrix4f& T_BC);
+                         const Eigen::Matrix4f& T_BC,
+                         const float roll_pitch_threshold);
 
 Image<float> mask_entropy_image(const Image<float>& entropy_image,
                                 const Image<uint8_t>& frustum_overlap_mask);
@@ -112,7 +114,8 @@ void render_pose_entropy_depth(Image<uint32_t>& entropy,
                                const SensorImpl& sensor,
                                const Eigen::Matrix4f& T_MB,
                                const Eigen::Matrix4f& T_BC,
-                               const bool visualize_yaw = true);
+                               const bool visualize_yaw = true,
+                               const float roll_pitch_threshold = 0.0f);
 
 } // namespace se
 
