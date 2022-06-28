@@ -37,7 +37,7 @@ SafeFlightCorridorGenerator::SafeFlightCorridorGenerator(
     const std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> map,
     const PlanningParameter& pp) :
         map_(map),
-        ow_(*map),
+        ow_(*map, pp.sampling_min_M_, pp.sampling_max_M_),
         pcc_(ow_, pp),
         flight_corridor_radius_reduction_(pp.robot_radius_ + pp.safety_radius_),
         min_flight_corridor_radius_(pp.robot_radius_ + pp.safety_radius_

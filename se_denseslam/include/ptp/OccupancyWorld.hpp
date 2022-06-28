@@ -30,6 +30,10 @@ class OccupancyWorld {
     public:
     OccupancyWorld(const se::Octree<VoxelImpl::VoxelType>& map);
 
+    OccupancyWorld(const se::Octree<VoxelImpl::VoxelType>& map,
+                   const Eigen::Vector3f& planning_bounds_min_m,
+                   const Eigen::Vector3f& planning_bounds_max_m);
+
     const se::Octree<VoxelImpl::VoxelType>& getMap() const;
 
     void getMapBounds(Eigen::Vector3f& map_bounds_min_v, Eigen::Vector3f& map_bounds_max_v) const;

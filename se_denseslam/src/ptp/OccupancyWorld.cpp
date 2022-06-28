@@ -19,6 +19,17 @@ OccupancyWorld::OccupancyWorld(const se::Octree<MultiresOFusion::VoxelType>& map
     updateMapBounds();
 }
 
+OccupancyWorld::OccupancyWorld(const se::Octree<VoxelImpl::VoxelType>& map,
+                               const Eigen::Vector3f& planning_bounds_min_m,
+                               const Eigen::Vector3f& planning_bounds_max_m) :
+        OccupancyWorld::OccupancyWorld(map)
+{
+    const Eigen::Vector3f planning_bounds_min_v = map_.pointToVoxelF(planning_bounds_min_m);
+    const Eigen::Vector3f planning_bounds_max_v = map_.pointToVoxelF(planning_bounds_max_m);
+    map_bounds_min_ = map_bounds_min_.cwiseMax(planning_bounds_min_v);
+    map_bounds_max_ = map_bounds_max_.cwiseMin(planning_bounds_max_v);
+}
+
 const se::Octree<VoxelImpl::VoxelType>& OccupancyWorld::getMap() const
 {
     return map_;
