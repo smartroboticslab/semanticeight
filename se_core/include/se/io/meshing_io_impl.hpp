@@ -155,6 +155,7 @@ int save_mesh_ply(const Mesh<FaceT>& mesh,
     file << "property uchar red\n";
     file << "property uchar green\n";
     file << "property uchar blue\n";
+    file << "property float dist\n";
     file << "element face " << num_faces << "\n";
     file << "property list uchar int vertex_index\n";
     file << "property char scale\n";
@@ -170,6 +171,7 @@ int save_mesh_ply(const Mesh<FaceT>& mesh,
             file << vertex_W.x() << " " << vertex_W.y() << " " << vertex_W.z();
             file << " " << static_cast<int>(mesh[f].r[v]) << " " << static_cast<int>(mesh[f].g[v])
                  << " " << static_cast<int>(mesh[f].b[v]);
+            file << " " << mesh[f].min_dist_updated;
             file << "\n";
         }
     }
