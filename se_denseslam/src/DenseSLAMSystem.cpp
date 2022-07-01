@@ -510,6 +510,19 @@ void DenseSLAMSystem::saveStructure(const std::string base_filename)
 
 
 
+bool DenseSLAMSystem::saveSliceZ(const std::string filename, const float z_M)
+{
+    const int z_voxel = map_->pointToVoxel(Eigen::Vector3f(0, 0, z_M)).z();
+    return save_3d_value_slice_vtk(*map_,
+                                   filename,
+                                   Eigen::Vector3i(0, 0, z_voxel),
+                                   Eigen::Vector3i(map_->size(), map_->size(), z_voxel + 1),
+                                   VoxelImpl::VoxelType::selectNodeValue,
+                                   VoxelImpl::VoxelType::selectVoxelValue);
+}
+
+
+
 void DenseSLAMSystem::structureStats(size_t& num_nodes,
                                      size_t& num_blocks,
                                      std::vector<size_t>& num_blocks_per_scale)
