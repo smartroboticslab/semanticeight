@@ -383,7 +383,7 @@ class DenseSLAMSystem {
      */
     void saveStructure(const std::string base_filename);
 
-    bool saveSliceZ(const std::string filename, const float z_M);
+    bool saveThresholdSliceZ(const std::string filename, const float z_M);
 
     void structureStats(size_t& num_nodes,
                         size_t& num_blocks,
