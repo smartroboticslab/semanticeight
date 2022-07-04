@@ -193,12 +193,7 @@ const std::vector<CandidateView>& ExplorationPlanner::rejectedCandidateViews() c
 
 const CandidateView& ExplorationPlanner::goalView() const
 {
-    if (goal_view_idx_ < candidate_views_.size()) {
-        return candidate_views_[goal_view_idx_];
-    }
-    else {
-        throw std::runtime_error("This point should never be reached");
-    }
+    return candidate_views_[goalViewIndex()];
 }
 
 
@@ -209,7 +204,9 @@ size_t ExplorationPlanner::goalViewIndex() const
         return goal_view_idx_;
     }
     else {
-        throw std::runtime_error("This point should never be reached");
+        throw std::runtime_error("goal_view_idx_ (" + std::to_string(goal_view_idx_)
+                                 + ") >= candidate_views_.size() ("
+                                 + std::to_string(candidate_views_.size()) + ")");
     }
 }
 
