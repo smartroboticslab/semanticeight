@@ -5,22 +5,22 @@
 
 #include "se/single_path_exploration_planner.hpp"
 
+#include <algorithm>
+
 namespace se {
 
 template<typename FunctionT>
 std::pair<size_t, float> best_candidate(const std::vector<CandidateView>& candidates,
                                         const FunctionT get_utility)
 {
-    size_t best_idx = SIZE_MAX;
-    float best_utility = 0.0f;
-    for (size_t i = 0; i < candidates.size(); i++) {
-        const float candidate_utility = get_utility(candidates[i]);
-        if (candidate_utility > best_utility) {
-            best_idx = i;
-            best_utility = candidate_utility;
-        }
+    const auto comp = [&](const auto& a, const auto& b) { return get_utility(a) < get_utility(b); };
+    const auto best_it = std::max_element(candidates.begin(), candidates.end(), comp);
+    if (best_it == candidates.end()) {
+        return std::make_pair(SIZE_MAX, 0.0f);
     }
-    return std::make_pair(best_idx, best_utility);
+    else {
+        return std::make_pair(std::distance(candidates.begin(), best_it), get_utility(*best_it));
+    }
 }
 
 
