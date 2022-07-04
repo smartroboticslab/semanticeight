@@ -120,7 +120,7 @@ class ProbCollisionChecker {
     const ptp::OccupancyWorld& ow_;
     const PlanningParameter& pp_;
     const float res_;
-    static constexpr float free_threshold_ = -20.0f;
+    static constexpr float free_threshold_ = -6.0f;
 };
 
 } // namespace ptp
