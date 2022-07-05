@@ -39,8 +39,8 @@ for depth in $depth_renders; do
 	entropy_post=$(printf '%s\n' "$depth" | sed 's/depth/entropy_post/' | null_if_not_file)
 	obj_dist_pre=$(printf '%s\n' "$depth" | sed 's/depth/obj_dist_pre/' | null_if_not_file)
 	obj_dist_post=$(printf '%s\n' "$depth" | sed 's/depth/obj_dist_post/' | null_if_not_file)
-	obj_compl_pre=$(printf '%s\n' "$depth" | sed 's/depth/obj_compl_pre/' | null_if_not_file)
-	obj_compl_post=$(printf '%s\n' "$depth" | sed 's/depth/obj_compl_post/' | null_if_not_file)
+	bg_dist_pre=$(printf '%s\n' "$depth" | sed 's/depth/bg_dist_pre/' | null_if_not_file)
+	bg_dist_post=$(printf '%s\n' "$depth" | sed 's/depth/bg_dist_post/' | null_if_not_file)
 	gain_pre=$(printf '%s\n' "$depth" | sed 's/depth/gain_pre/' | null_if_not_file)
 	gain_post=$(printf '%s\n' "$depth" | sed 's/depth/gain_post/' | null_if_not_file)
 
@@ -49,7 +49,7 @@ for depth in $depth_renders; do
 
 	printf 'montage -label %%t -font Liberation-Mono %s %s %s %s %s %s %s %s %s %s %s %s -geometry +2+2 -tile 4x %s\n' \
 		"$depth" "$volume" "$rgba" "$segm" \
-		"$entropy_pre" "$obj_dist_pre" "$obj_dist_pre" "$gain_pre" \
-		"$entropy_post" "$obj_dist_post" "$obj_dist_post" "$gain_post" \
+		"$entropy_pre" "$obj_dist_pre" "$bg_dist_pre" "$gain_pre" \
+		"$entropy_post" "$obj_dist_post" "$bg_dist_post" "$gain_post" \
 		"$out"
 done | parallel

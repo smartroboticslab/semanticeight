@@ -7,6 +7,7 @@
 #include "reader_raw.hpp"
 #include "se/DenseSLAMSystem.h"
 #include "se/completion.hpp"
+#include "se/dist.hpp"
 #include "se/exploration_planner.hpp"
 #include "se/filesystem.hpp"
 #include "se/point_cloud_utils.hpp"
@@ -177,6 +178,15 @@ TEST(System, gainRaycasting)
                               reinterpret_cast<const unsigned char*>(compl_gain_render.data()),
                               compl_gain_render.width(),
                               compl_gain_render.height());
+
+        const se::Image<float> bg_gain = se::bg_dist_gain(
+            candidate.entropy_hits_M_, *pipeline->getMap(), sensor, T_MB, config.T_BC);
+        const se::Image<uint32_t> bg_gain_render = se::visualize_entropy(bg_gain, 0, 0, false);
+        lodepng_encode32_file((tmp + "/bg_gain_" + suffix.str()).c_str(),
+                              reinterpret_cast<const unsigned char*>(bg_gain_render.data()),
+                              bg_gain_render.width(),
+                              bg_gain_render.height());
+
 
         pipeline->saveMesh(tmp + "/mesh.ply");
         se::save_point_cloud_ply(rays_M, tmp + "/rays.ply", Eigen::Matrix4f::Identity());

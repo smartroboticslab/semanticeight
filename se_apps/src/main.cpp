@@ -79,9 +79,11 @@ int main(int argc, char** argv)
 
         se::Image<float> entropy_gain(image_res.x(), image_res.y());
         se::Image<float> obj_dist_gain(image_res.x(), image_res.y());
+        se::Image<float> bg_dist_gain(image_res.x(), image_res.y());
         se::Image<Eigen::Vector3f> entropy_hits_M(image_res.x(), image_res.y());
         se::Image<uint32_t> entropy_gain_render(image_res.x(), image_res.y());
         se::Image<uint32_t> obj_dist_gain_render(image_res.x(), image_res.y());
+        se::Image<uint32_t> bg_dist_gain_render(image_res.x(), image_res.y());
 
         // Setup semantic classes
         se::semantic_classes = se::SemanticClasses::coco_classes();
@@ -336,16 +338,23 @@ int main(int argc, char** argv)
                     entropy_gain, entropy_hits_M, *(pipeline->getMap()), sensor, T_MB, config.T_BC);
                 obj_dist_gain = se::object_dist_gain(
                     entropy_hits_M, pipeline->getObjectMaps(), sensor, T_MB, config.T_BC);
+                bg_dist_gain = se::bg_dist_gain(
+                    entropy_hits_M, *(pipeline->getMap()), sensor, T_MB, config.T_BC);
                 // TODO SEM compute weighted gain
 
                 entropy_gain_render = se::visualize_entropy(entropy_gain, 0, 0, false);
                 obj_dist_gain_render = se::visualize_entropy(obj_dist_gain, 0, 0, false);
+                bg_dist_gain_render = se::visualize_entropy(bg_dist_gain, 0, 0, false);
                 lodepng_encode32_file((render_prefix + "entropy_pre_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(entropy_gain_render.data()),
                                       image_res.x(),
                                       image_res.y());
                 lodepng_encode32_file((render_prefix + "obj_dist_pre_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(obj_dist_gain_render.data()),
+                                      image_res.x(),
+                                      image_res.y());
+                lodepng_encode32_file((render_prefix + "bg_dist_pre_" + render_suffix).c_str(),
+                                      reinterpret_cast<unsigned char*>(bg_dist_gain_render.data()),
                                       image_res.x(),
                                       image_res.y());
             }
@@ -477,16 +486,23 @@ int main(int argc, char** argv)
                     entropy_gain, entropy_hits_M, *(pipeline->getMap()), sensor, T_MB, config.T_BC);
                 obj_dist_gain = se::object_dist_gain(
                     entropy_hits_M, pipeline->getObjectMaps(), sensor, T_MB, config.T_BC);
+                bg_dist_gain = se::bg_dist_gain(
+                    entropy_hits_M, *(pipeline->getMap()), sensor, T_MB, config.T_BC);
                 // TODO SEM compute weighted gain
 
                 entropy_gain_render = se::visualize_entropy(entropy_gain, 0, 0, false);
                 obj_dist_gain_render = se::visualize_entropy(obj_dist_gain, 0, 0, false);
+                bg_dist_gain_render = se::visualize_entropy(bg_dist_gain, 0, 0, false);
                 lodepng_encode32_file((render_prefix + "entropy_post_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(entropy_gain_render.data()),
                                       image_res.x(),
                                       image_res.y());
                 lodepng_encode32_file((render_prefix + "obj_dist_post_" + render_suffix).c_str(),
                                       reinterpret_cast<unsigned char*>(obj_dist_gain_render.data()),
+                                      image_res.x(),
+                                      image_res.y());
+                lodepng_encode32_file((render_prefix + "bg_dist_post_" + render_suffix).c_str(),
+                                      reinterpret_cast<unsigned char*>(bg_dist_gain_render.data()),
                                       image_res.x(),
                                       image_res.y());
             }
