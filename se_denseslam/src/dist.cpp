@@ -18,6 +18,17 @@ float block_dist_gain(const typename VoxelT::VoxelBlockType* block,
     if (!block) {
         return 0.0f;
     }
+    // Only compute distance gain on occupied blocks in MultiresOFusion. We only care about the
+    // minimum observed distance of surfaces.
+    if constexpr (std::is_same_v<typename VoxelT::VoxelBlockType,
+                                 MultiresOFusion::VoxelBlockType>) {
+        const auto data = block->maxData(0, VoxelT::VoxelBlockType::max_scale);
+        const bool occupied = VoxelT::threshold(data) > MultiresOFusion::surface_boundary;
+        if (!occupied) {
+            return 0.0f;
+        }
+    }
+
     const float block_min_dist = block->minDistUpdated();
     // Get the coordinates of the VoxelBlock's centre in the sensor frame C.
     const Eigen::Vector3f block_centre_coord_f = se::get_sample_coord(
