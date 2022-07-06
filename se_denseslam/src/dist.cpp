@@ -53,7 +53,7 @@ float dist_gain(const float block_min_dist,
                 const float desired_dist)
 {
     // Test if the desired distance has already been achieved in this VoxelBlock.
-    if (block_min_dist <= block_expected_dist) {
+    if (block_min_dist <= desired_dist) {
         return 0.0f;
     }
     // Test if there's possibility of improving the distance from this view.
