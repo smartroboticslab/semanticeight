@@ -370,7 +370,7 @@ struct Configuration {
 
     float frontier_sampling_probability;
 
-    Eigen::Vector2f utility_weights;
+    Eigen::VectorXf utility_weights;
 
     bool use_pose_history;
 
@@ -471,7 +471,7 @@ struct Configuration {
             enable_exploration(true),
             num_candidates(10),
             frontier_sampling_probability(0.5f),
-            utility_weights(1.0f / 3.0f, 1.0f / 3.0f),
+            utility_weights(3),
             use_pose_history(true),
             raycast_width(36),
             raycast_height(10),
@@ -488,6 +488,9 @@ struct Configuration {
             goal_roll_pitch_threshold(math::deg_to_rad(10.0f)),
             goal_yaw_threshold(math::deg_to_rad(5.0f))
     {
+        for (int i = 0; i < utility_weights.size(); ++i) {
+            utility_weights[i] = 1.0f / i;
+        }
     }
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

@@ -17,7 +17,12 @@ namespace se {
 
 struct CandidateConfig {
     // Utility settings
-    Eigen::Vector2f utility_weights;
+    /** The weights correspond to:
+     * 0. Entropy gain
+     * 1. Object distance gain
+     * 2. Background distance gain
+     */
+    Eigen::VectorXf utility_weights;
     bool use_pose_history;
     // Raycasting parameters
     int raycast_width;

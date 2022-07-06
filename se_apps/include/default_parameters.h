@@ -662,8 +662,11 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
             }
             // Utility weights
             if (has_yaml_exploration_config && yaml_exploration_config["utility_weights"]) {
-                config.utility_weights = Eigen::Vector2f(
-                    yaml_map_config["utility_weights"].as<std::vector<float>>().data());
+                const auto v = yaml_exploration_config["utility_weights"].as<std::vector<float>>();
+                config.utility_weights = Eigen::VectorXf(v.size());
+                for (int i = 0; i < config.utility_weights.size(); ++i) {
+                    config.utility_weights[i] = v[i];
+                }
             }
             // use_pose_history
             if (has_yaml_exploration_config && yaml_exploration_config["use_pose_history"]) {

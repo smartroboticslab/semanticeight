@@ -105,12 +105,8 @@ CandidateView::CandidateView(const se::Octree<VoxelImpl::VoxelType>& map,
         object_dist_utility_(-1.0f),
         bg_dist_utility_(-1.0f),
         config_(config),
-        weights_(config_.utility_weights.size() + 1)
+        weights_(config_.utility_weights / config_.utility_weights.sum())
 {
-    weights_ = (Eigen::VectorXf(weights_.size()) << config_.utility_weights[0],
-                config_.utility_weights[1],
-                1.0f - config_.utility_weights.sum())
-                   .finished();
     // Reject based on the pose history.
     if (config_.use_pose_history && T_MB_history->rejectPosition(desired_t_MB_, sensor)) {
         path_MB_.push_back(Eigen::Matrix4f::Identity());
