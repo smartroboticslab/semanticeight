@@ -16,8 +16,9 @@ namespace se {
 static constexpr float default_desired_distance_bg = 3.0f;
 static constexpr float default_desired_distance_object = 1.0f;
 
-/** \brief Compute the distance gain by observing a VoxelBlock with minimum observation distance
- * block_min_dist at block_expected_dist expected_scale.
+/** \brief Compute the distance gain attained by observing a VoxelBlock whose minimum observation
+ * distance is block_min_dist at block_expected_dist given that the desired observation distance is
+ * desired_dist.
  */
 float dist_gain(const float block_min_dist,
                 const float block_expected_dist,
