@@ -85,10 +85,7 @@ Image<float> bg_dist_gain(const Image<Eigen::Vector3f>& bg_hits_M,
     for (int y = 0; y < gain_image.height(); ++y) {
 #pragma omp simd
         for (int x = 0; x < gain_image.width(); ++x) {
-            if (isnan(bg_hits_M(x, y).x())) {
-                gain_image(x, y) = 0.0f;
-            }
-            else {
+            if (!isnan(bg_hits_M(x, y).x())) {
                 const auto* block = map.fetch(map.pointToVoxel(bg_hits_M(x, y)));
                 const float gain = block_dist_gain(block, map, sensor, T_CM, desired_dist);
                 gain_image(x, y) = gain / max_dist_gain;
