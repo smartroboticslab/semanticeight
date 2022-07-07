@@ -622,7 +622,11 @@ Image<float> CandidateView::computeGainImage(const ImageVec<float>& gain_images,
                                              const Eigen::VectorXf& weights)
 {
     assert(!gain_images.empty());
-    assert(gain_images.size() <= static_cast<size_t>(weights.size()));
+    // Set missing weights to 0 and ignore extra weights.
+    const size_t num_valid_weights =
+        std::min(gain_images.size(), static_cast<size_t>(weights.size()));
+    Eigen::VectorXf w = Eigen::VectorXf::Zero(gain_images.size());
+    w.head(num_valid_weights) = weights.head(num_valid_weights);
     for (size_t i = 0; i < gain_images.size() - 1; ++i) {
         assert(gain_images[i].width() == gain_images[i + 1].width());
         assert(gain_images[i].height() == gain_images[i + 1].height());
@@ -631,7 +635,7 @@ Image<float> CandidateView::computeGainImage(const ImageVec<float>& gain_images,
 #pragma omp parallel for
     for (size_t p = 0; p < gain.size(); ++p) {
         for (size_t i = 0; i < gain_images.size(); ++i) {
-            gain[p] += weights[i] * gain_images[i][p];
+            gain[p] += w[i] * gain_images[i][p];
         }
     }
     return gain;
