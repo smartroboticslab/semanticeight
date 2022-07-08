@@ -21,8 +21,8 @@ ObjectHit raycast_objects(const Objects& objects,
             && !raycasting_masks.at(o->instance_id).at<se::mask_elem_t>(pixel.y(), pixel.x())) {
             continue;
         }
-        const Eigen::Vector3f ray_dir_O = se::math::to_rotation(o->T_OM_) * ray_dir_M;
         const Eigen::Vector3f t_OC = (o->T_OM_ * ray_origin_MC.homogeneous()).head(3);
+        const Eigen::Vector3f ray_dir_O = se::math::to_rotation(o->T_OM_) * ray_dir_M;
         const Eigen::Vector4f hit_O = raycast(*(o->map_), t_OC, ray_dir_O, near_dist, far_dist);
         if (hit_O.w() >= 0.0f) {
             const float hit_distance = (t_OC - hit_O.head<3>()).norm();

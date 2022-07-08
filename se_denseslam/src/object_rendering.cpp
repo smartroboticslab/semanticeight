@@ -41,6 +41,8 @@ void raycastObjectListKernel(const Objects& objects,
     }
 #endif
 
+    const Eigen::Vector3f t_MC = se::math::to_translation(raycast_T_MC);
+    const Eigen::Matrix3f C_MC = se::math::to_rotation(raycast_T_MC);
 #pragma omp parallel for
     for (int y = 0; y < surface_point_cloud_M.height(); ++y) {
 #pragma omp simd
@@ -49,9 +51,7 @@ void raycastObjectListKernel(const Objects& objects,
             const Eigen::Vector2f pixel(x, y);
             Eigen::Vector3f ray_dir_C;
             sensor.model.backProject(pixel, &ray_dir_C);
-            const Eigen::Vector3f t_MC = se::math::to_translation(raycast_T_MC);
-            const Eigen::Vector3f ray_dir_M =
-                se::math::to_rotation(raycast_T_MC) * ray_dir_C.normalized();
+            const Eigen::Vector3f ray_dir_M = C_MC * ray_dir_C.normalized();
             const ObjectHit hit = raycast_objects(visible_objects,
                                                   raycasting_masks,
                                                   pixel,
