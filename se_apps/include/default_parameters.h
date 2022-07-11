@@ -635,11 +635,19 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
             if (has_yaml_sensor_config && yaml_sensor_config["T_BC"]) {
                 config.T_BC =
                     Eigen::Matrix4f(toT(yaml_sensor_config["T_BC"].as<std::vector<float>>()));
+                if (!se::math::is_valid_transformation(config.T_BC)) {
+                    std::cerr << "Error: supplied T_BC is not a homogeneous tranformation\n";
+                    exit(EXIT_FAILURE);
+                }
             }
             // Initial Body pose
             if (has_yaml_sensor_config && yaml_sensor_config["init_T_WB"]) {
                 config.init_T_WB =
                     Eigen::Matrix4f(toT(yaml_sensor_config["init_T_WB"].as<std::vector<float>>()));
+                if (!se::math::is_valid_transformation(config.init_T_WB)) {
+                    std::cerr << "Error: supplied init_T_WB is not a homogeneous tranformation\n";
+                    exit(EXIT_FAILURE);
+                }
             }
             // Near plane
             if (has_yaml_sensor_config && yaml_sensor_config["near_plane"]) {

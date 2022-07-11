@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <Eigen/LU>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -114,6 +115,21 @@ static inline bool in(const Scalar v, const Scalar a, const Scalar b)
 constexpr int log2_const(int n)
 {
     return (n < 2 ? 0 : 1 + log2_const(n / 2));
+}
+
+static inline bool is_valid_transformation(const Eigen::Matrix4f& T)
+{
+    if (!T.row(3).isApprox(Eigen::RowVector4f(0.0f, 0.0f, 0.0f, 1.0f))) {
+        return false;
+    }
+    const Eigen::Matrix3f C = T.topLeftCorner<3,3>();
+    if (std::fabs(C.determinant() - 1.0f) > Eigen::NumTraits<float>::dummy_precision()) {
+        return false;
+    }
+    if (!(C.transpose() * C).isApprox(Eigen::Matrix3f::Identity())) {
+        return false;
+    }
+    return true;
 }
 
 static inline Eigen::Vector3f to_translation(const Eigen::Matrix4f& T)

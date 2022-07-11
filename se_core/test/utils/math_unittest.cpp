@@ -55,6 +55,21 @@ TEST(EigenUtils, ClampFixVec2)
     ASSERT_TRUE(base.y() >= min.y() && base.y() <= max.y());
 }
 
+TEST(MathUtils, validTranformation)
+{
+    EXPECT_TRUE(se::math::is_valid_transformation(Eigen::Matrix4f::Identity()));
+    {
+        Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+        T(3, 3) += 0.01f;
+        EXPECT_FALSE(se::math::is_valid_transformation(T));
+    }
+    {
+        Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+        T(0, 0) -= 0.0001f;
+        EXPECT_FALSE(se::math::is_valid_transformation(T));
+    }
+}
+
 TEST(MathUtils, median)
 {
     std::vector<int> v1{1, 2, 3, 4};
