@@ -20,6 +20,7 @@ TEST(System, gainRaycasting)
 {
     se::Configuration config;
     config.sequence_type = "raw";
+    config.sequence_name = "experiment"; // Disable depth noise.
     config.sequence_path = SEQUENCE_PATH "/scene.raw";
     config.ground_truth_file = SEQUENCE_PATH "/association.txt";
     config.map_size = Eigen::Vector3i::Constant(256);
