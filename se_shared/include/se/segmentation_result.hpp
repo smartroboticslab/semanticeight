@@ -43,6 +43,16 @@ struct SegmentationResult {
     bool read(const std::string& base_dir, const std::string& base_name);
 
     /**
+     * Write the segmentation for a single frame in numpy format.
+     *
+     * \param[in] base_dir  The base directory of the segmentation results. The subdirectories
+     *                      confidence_all and masks will be created if they don't exist.
+     * \param[in] base_name The base name of the files to write. This should be the current frame
+     *                      timestamp for TUM datasets.
+     */
+    bool write(const std::string& base_dir, const std::string& base_name) const;
+
+    /**
      * Write the segmentation masks and the combined mask for a single frame as
      * PNG images inside base_dir.
      *

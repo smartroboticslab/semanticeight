@@ -7,6 +7,7 @@
 
 #include <cnpy.h>
 
+#include "se/filesystem.hpp"
 #include "se/semanticeight_definitions.hpp"
 
 // Types used for reading segmentation data from NumPy arrays.
@@ -79,6 +80,27 @@ bool read_masks(const std::string& filename, std::vector<cv::Mat>& masks)
 #endif
         return true;
     }
+}
+
+
+
+bool write_masks(const std::string& filename, const std::vector<cv::Mat>& masks)
+{
+    const size_t w = !masks.empty() ? masks.front().cols : 640u;
+    const size_t h = !masks.empty() ? masks.front().rows : 480u;
+    const size_t s = w * h;
+    // Fill a buffer with the concatenated data of all masks.
+    std::vector<se::mask_elem_t> data(masks.size() * s);
+    for (size_t i = 0; i < masks.size(); ++i) {
+        std::copy(masks[i].begin<se::mask_elem_t>(),
+                  masks[i].end<se::mask_elem_t>(),
+                  data.begin() + i * s);
+    }
+    // Change elements from {0,255} to {0,1}.
+    std::transform(
+        data.begin(), data.end(), data.begin(), [](se::mask_elem_t x) { return x / 255; });
+    cnpy::npy_save(filename, data.data(), {masks.size(), h, w});
+    return true;
 }
 
 
@@ -208,6 +230,22 @@ bool read_all_confs(const std::string& filename, se::VecDetectionConfidence& all
 
 
 
+bool write_all_confs(const std::string& filename, const se::VecDetectionConfidence& all_probs)
+{
+    const size_t s = se::semantic_classes.size() - 1;
+    // Fill a buffer with the concatenated data of all masks.
+    std::vector<float> data(all_probs.size() * s);
+    for (size_t i = 0; i < all_probs.size(); ++i) {
+        for (size_t j = 1; j < s; ++j) {
+            data[i * s + j] = all_probs[i][j];
+        }
+    }
+    cnpy::npy_save(filename, data.data(), {all_probs.size(), s});
+    return true;
+}
+
+
+
 namespace se {
 // SegmentationResult ///////////////////////////////////////////////////////
 SegmentationResult::SegmentationResult(const int w, const int h) : width(w), height(h)
@@ -269,6 +307,38 @@ bool SegmentationResult::read(const std::string& base_dir, const std::string& ba
     size_t num_objects = all_probs.size();
     for (size_t i = 0; i < num_objects; ++i) {
         object_instances.push_back(InstanceSegmentation(se::instance_new, all_probs[i], masks[i]));
+    }
+
+    return true;
+}
+
+
+
+bool SegmentationResult::write(const std::string& base_dir, const std::string& base_name) const
+{
+    std::vector<cv::Mat> masks(object_instances.size());
+    se::VecDetectionConfidence all_probs(object_instances.size());
+    for (size_t i = 0; i < object_instances.size(); ++i) {
+        masks[i] = object_instances[i].instance_mask;
+        all_probs[i] = object_instances[i].conf;
+    }
+
+    // Write masks
+    stdfs::create_directories(base_dir + "/" + segmentation_masks_dir);
+    const std::string filename_masks =
+        base_dir + "/" + segmentation_masks_dir + "/" + base_name + ".npy";
+    if (!write_masks(filename_masks, masks)) {
+        std::cerr << "Could not write segmentation masks to " << filename_masks << "\n";
+        return false;
+    }
+
+    // Write class probabilities
+    stdfs::create_directories(base_dir + "/" + segmentation_confidence_all_dir);
+    const std::string filename_all_probs =
+        base_dir + "/" + segmentation_confidence_all_dir + "/" + base_name + ".npy";
+    if (!write_all_confs(filename_all_probs, all_probs)) {
+        std::cerr << "Could not write class confidence to " << filename_all_probs << "\n";
+        return false;
     }
 
     return true;
