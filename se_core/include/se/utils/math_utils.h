@@ -132,6 +132,15 @@ static inline bool is_valid_transformation(const Eigen::Matrix4f& T)
     return true;
 }
 
+static inline Eigen::Matrix4f transformation_normalized(const Eigen::Matrix4f& T)
+{
+    Eigen::Matrix4f T_n = T;
+    T_n.row(3) = Eigen::RowVector4f(0.0f, 0.0f, 0.0f, 1.0f);
+    T_n.topLeftCorner<3,3>() =
+        Eigen::Quaternionf(T_n.topLeftCorner<3,3>()).normalized().toRotationMatrix();
+    return T_n;
+}
+
 static inline Eigen::Vector3f to_translation(const Eigen::Matrix4f& T)
 {
     Eigen::Vector3f t = T.block<3, 1>(0, 3);
