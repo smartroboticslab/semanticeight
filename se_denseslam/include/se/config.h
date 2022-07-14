@@ -488,9 +488,8 @@ struct Configuration {
             goal_roll_pitch_threshold(math::deg_to_rad(10.0f)),
             goal_yaw_threshold(math::deg_to_rad(5.0f))
     {
-        for (int i = 0; i < utility_weights.size(); ++i) {
-            utility_weights[i] = 1.0f / i;
-        }
+        utility_weights =
+            Eigen::VectorXf::Constant(utility_weights.size(), 1.0f / utility_weights.size());
     }
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
