@@ -254,8 +254,6 @@ struct Configuration {
      */
     Eigen::Vector4f sensor_intrinsics;
 
-    Eigen::Vector4f sensor_distortion;
-
     /**
      * Indicates if the sensor uses a left hand coordinate system
      */
@@ -451,7 +449,6 @@ struct Configuration {
             T_BC(Eigen::Matrix4f::Identity()),
             init_T_WB(Eigen::Matrix4f::Identity()),
             sensor_intrinsics(0.0f, 0.0f, 0.0f, 0.0f),
-            sensor_distortion(0.0f, 0.0f, 0.0f, 0.0f),
             left_hand_frame(false),
             near_plane(0.4f),
             far_plane(4.0f),
@@ -559,9 +556,6 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
     out << str_utils::header_to_pretty_str("SENSOR") << "\n";
     out << str_utils::vector_to_pretty_str(
         config.sensor_intrinsics, "Sensor intrinsics", {"fx", "fy", "cx", "cy"})
-        << "\n";
-    out << str_utils::vector_to_pretty_str(
-        config.sensor_distortion, "Sensor distortion", {"k1", "k2", "p1", "p2"})
         << "\n";
     out << str_utils::bool_to_pretty_str(config.left_hand_frame, "Left-handed-coordinate system")
         << "\n";

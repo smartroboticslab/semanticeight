@@ -64,10 +64,6 @@ TEST(System, gainRaycasting)
          config.sensor_intrinsics[1] / config.sensor_downsampling_factor,
          ((config.sensor_intrinsics[2] + 0.5f) / config.sensor_downsampling_factor - 0.5f),
          ((config.sensor_intrinsics[3] + 0.5f) / config.sensor_downsampling_factor - 0.5f),
-         config.sensor_intrinsics[0],
-         config.sensor_intrinsics[1],
-         config.sensor_intrinsics[2],
-         config.sensor_intrinsics[3],
          (Eigen::VectorXf(1) << 0.0f).finished(),
          (Eigen::VectorXf(1) << 0.0f).finished()});
     std::unique_ptr<DenseSLAMSystem> pipeline(

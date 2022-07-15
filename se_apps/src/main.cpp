@@ -230,10 +230,6 @@ int main(int argc, char** argv)
              config.sensor_intrinsics[1] / config.sensor_downsampling_factor,
              ((config.sensor_intrinsics[2] + 0.5f) / config.sensor_downsampling_factor - 0.5f),
              ((config.sensor_intrinsics[3] + 0.5f) / config.sensor_downsampling_factor - 0.5f),
-             config.sensor_distortion[0],
-             config.sensor_distortion[1],
-             config.sensor_distortion[2],
-             config.sensor_distortion[3],
              azimuth_angles,
              elevation_angles});
 

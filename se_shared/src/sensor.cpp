@@ -8,7 +8,10 @@
 #include "se/utils/math_utils.h"
 
 // Explicit template class instantiation
-template class srl::projection::PinholeCamera<srl::projection::RadialTangentialDistortion>;
+template class srl::projection::PinholeCamera<srl::projection::NoDistortion>;
+
+// Used for initializing a PinholeCamera.
+const srl::projection::NoDistortion _distortion;
 
 // Static variables
 constexpr int se::PinholeCamera::num_frustum_vertices_;
@@ -17,18 +20,11 @@ constexpr int se::PinholeCamera::num_frustum_normals_;
 
 
 se::PinholeCamera::PinholeCamera(const SensorConfig& c) :
-        model(c.width,
-              c.height,
-              c.fx,
-              c.fy,
-              c.cx,
-              c.cy,
-              srl::projection::RadialTangentialDistortion(c.k1, c.k2, c.p1, c.p2)),
+        model(c.width, c.height, c.fx, c.fy, c.cx, c.cy, _distortion),
         left_hand_frame(c.left_hand_frame),
         near_plane(c.near_plane),
         far_plane(c.far_plane),
-        scaled_pixel(1 / c.fx),
-        config(c)
+        scaled_pixel(1 / c.fx)
 {
     computeFrustumVertices();
     computeFrustumNormals();
@@ -55,14 +51,10 @@ se::PinholeCamera::PinholeCamera(const PinholeCamera& pc, const float sf) :
               pc.model.focalLengthV() * sf,
               ((pc.model.imageCenterU() + 0.5f) * sf - 0.5f),
               ((pc.model.imageCenterV() + 0.5f) * sf - 0.5f),
-              srl::projection::RadialTangentialDistortion(pc.config.k1,
-                                                          pc.config.k2,
-                                                          pc.config.p1,
-                                                          pc.config.p2)),
+              _distortion),
         left_hand_frame(pc.left_hand_frame),
         near_plane(pc.near_plane),
-        far_plane(pc.far_plane),
-        config(pc.config)
+        far_plane(pc.far_plane)
 {
     computeFrustumVertices();
     computeFrustumNormals();
