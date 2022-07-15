@@ -28,6 +28,10 @@ struct SensorConfig {
     float fy = nan("");
     float cx = nan("");
     float cy = nan("");
+    float k1 = 0.0f;
+    float k2 = 0.0f;
+    float p1 = 0.0f;
+    float p2 = 0.0f;
     // LIDAR
     Eigen::VectorXf beam_azimuth_angles = Eigen::VectorXf(1);
     Eigen::VectorXf beam_elevation_angles = Eigen::VectorXf(1);
@@ -240,7 +244,7 @@ struct PinholeCamera {
 
 
 
-    srl::projection::PinholeCamera<srl::projection::NoDistortion> model;
+    srl::projection::PinholeCamera<srl::projection::RadialTangentialDistortion> model;
     bool left_hand_frame;
     float near_plane;
     float far_plane;
@@ -258,6 +262,8 @@ struct PinholeCamera {
 
     /** The radius of the sphere centered on the camera frame and containing the frustum. */
     float radius;
+
+    SensorConfig config;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

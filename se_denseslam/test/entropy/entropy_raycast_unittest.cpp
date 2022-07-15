@@ -163,6 +163,10 @@ TEST_F(EntropyRaycast, rayImage)
                              205.46963709898583,
                              320.5,
                              240.5,
+                             0.0f,
+                             0.0f,
+                             0.0f,
+                             0.0f,
                              azimuth_angles,
                              elevation_angles});
 

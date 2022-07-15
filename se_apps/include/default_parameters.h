@@ -626,6 +626,11 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
                     config.left_hand_frame = true;
                 }
             }
+            // Sensor distortion
+            if (has_yaml_sensor_config && yaml_sensor_config["distortion"]) {
+                config.sensor_distortion = Eigen::Vector4f(
+                    (yaml_sensor_config["distortion"].as<std::vector<float>>()).data());
+            }
             // Sensor downsamling factor
             if (has_yaml_sensor_config && yaml_sensor_config["downsampling_factor"]) {
                 config.sensor_downsampling_factor =
