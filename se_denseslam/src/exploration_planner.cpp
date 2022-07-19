@@ -89,37 +89,28 @@ bool ExplorationPlanner::needsNewGoal() const
 
 
 
+bool ExplorationPlanner::inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB)
+{
+    const Eigen::Matrix4f T_MB = T_MW_ * T_WB;
+    return withinThreshold(T_MB, goalView().goalT_MB());
+}
+
+
+
 bool ExplorationPlanner::goalReached()
 {
     // If there is no goal, we have reached the goal.
     if (goal_path_T_MB_.empty()) {
         return true;
     }
-    // Compute the error's between the current pose and the next vertex of the goal path.
     const Eigen::Matrix4f& current_T_MB = T_MB_history_.poses.back();
     const Eigen::Matrix4f& goal_T_MB = goal_path_T_MB_.front();
-    const Eigen::Vector3f pos_error = math::position_error(goal_T_MB, current_T_MB);
-    if (pos_error.head<2>().norm() > config_.candidate_config.goal_xy_threshold) {
-        return false;
+    const bool reached = withinThreshold(goal_T_MB, current_T_MB);
+    if (reached) {
+        // Remove the reached pose from the goal path.
+        goal_path_T_MB_.pop();
     }
-    if (pos_error.tail<1>().norm() > config_.candidate_config.goal_z_threshold) {
-        return false;
-    }
-    if (fabsf(math::yaw_error(goal_T_MB, current_T_MB))
-        > config_.candidate_config.goal_yaw_threshold) {
-        return false;
-    }
-    if (fabsf(math::pitch_error(goal_T_MB, current_T_MB))
-        > config_.candidate_config.goal_roll_pitch_threshold) {
-        return false;
-    }
-    if (fabsf(math::roll_error(goal_T_MB, current_T_MB))
-        > config_.candidate_config.goal_roll_pitch_threshold) {
-        return false;
-    }
-    // Remove the reached pose from the goal path.
-    goal_path_T_MB_.pop();
-    return true;
+    return reached;
 }
 
 
@@ -272,6 +263,34 @@ int ExplorationPlanner::writePathTSV(const std::string& filename, const Eigen::M
 bool ExplorationPlanner::explorationDominant() const
 {
     return exploration_dominant_;
+}
+
+
+
+bool ExplorationPlanner::withinThreshold(const Eigen::Matrix4f& T_WB_1,
+                                         const Eigen::Matrix4f& T_WB_2)
+{
+    const Eigen::Matrix4f T_MB_1 = T_MW_ * T_WB_1;
+    const Eigen::Matrix4f T_MB_2 = T_MW_ * T_WB_2;
+    const Eigen::Vector3f pos_error = math::position_error(T_MB_1, T_MB_2);
+    if (pos_error.head<2>().norm() > config_.candidate_config.goal_xy_threshold) {
+        return false;
+    }
+    if (pos_error.tail<1>().norm() > config_.candidate_config.goal_z_threshold) {
+        return false;
+    }
+    if (fabsf(math::yaw_error(T_MB_1, T_MB_2)) > config_.candidate_config.goal_yaw_threshold) {
+        return false;
+    }
+    if (fabsf(math::pitch_error(T_MB_1, T_MB_2))
+        > config_.candidate_config.goal_roll_pitch_threshold) {
+        return false;
+    }
+    if (fabsf(math::roll_error(T_MB_1, T_MB_2))
+        > config_.candidate_config.goal_roll_pitch_threshold) {
+        return false;
+    }
+    return true;
 }
 
 } // namespace se

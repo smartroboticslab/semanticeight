@@ -36,6 +36,8 @@ class ExplorationPlanner {
 
     bool needsNewGoal() const;
 
+    bool inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB);
+
     bool goalReached();
 
     bool goalT_WB(Eigen::Matrix4f& T_WB) const;
@@ -115,6 +117,8 @@ class ExplorationPlanner {
     size_t goal_view_idx_;
     PathQueue goal_path_T_MB_;
     bool exploration_dominant_;
+
+    bool withinThreshold(const Eigen::Matrix4f& T_WB_1, const Eigen::Matrix4f& T_WB_2);
 };
 } // namespace se
 
