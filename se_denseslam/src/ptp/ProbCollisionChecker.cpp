@@ -1021,12 +1021,11 @@ bool ProbCollisionChecker::checkSegmentFlightCorridor(const Eigen::Vector3f& sta
                                                       const Eigen::Vector3f& end_point_M,
                                                       const float radius_m) const
 {
-    /**
-     * Check if the start and end position are in the allocated map
-     */
-    if (!ow_.inMapBoundsMeter(start_point_M)) {
-        return false;
-    }
+    // Don't test the segment start because:
+    // 1) Testing the endpoint is enough to test every vertex in the path except the first one.
+    // 2) We don't want to test the very first path vertex because it might have ended up slightly
+    //    outside the map due to tracking inaccuracy. In that case we still want to be able to plan
+    //    and not get stuck due to the start being occupied.
 
     if (!ow_.inMapBoundsMeter(end_point_M)) {
         return false;
