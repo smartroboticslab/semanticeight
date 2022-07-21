@@ -407,8 +407,8 @@ Image<uint32_t> visualize_entropy(const Image<float>& entropy,
 {
     Image<uint32_t> entropy_render(entropy.width(), entropy.height());
     for (size_t i = 0; i < entropy.size(); ++i) {
-        // Halve the entropy for visualization to allow having white overlays.
-        const uint8_t e = UINT8_MAX * (entropy[i] / 2.0f);
+        // Halve the entropy when visualizing yaw to allow having white overlays.
+        const uint8_t e = UINT8_MAX * (entropy[i] / (visualize_yaw ? 2.0f : 1.0f));
         entropy_render[i] = se::pack_rgba(e, e, e, 0xFF);
     }
     if (visualize_yaw) {
