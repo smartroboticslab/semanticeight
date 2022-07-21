@@ -182,7 +182,7 @@ bool DenseSLAMSystem::preprocessDepth(const float* input_depth_image_data,
                     depth_image_.data(),
                     sizeof(float) * image_res_.x() * image_res_.y());
     }
-    if (config_.sequence_name.find("experiment") == std::string::npos) {
+    if (!config_.isExperiment()) {
         const float far_plane = 10.0f;
         const float min_sigma = 0.005f;
         const float max_sigma = 0.200f;

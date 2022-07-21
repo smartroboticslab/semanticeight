@@ -492,6 +492,11 @@ struct Configuration {
             Eigen::VectorXf::Constant(utility_weights.size(), 1.0f / utility_weights.size());
     }
 
+    bool isExperiment() const
+    {
+        return sequence_name.find("experiment") != std::string::npos;
+    }
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
