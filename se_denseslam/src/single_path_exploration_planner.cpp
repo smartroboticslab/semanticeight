@@ -105,6 +105,13 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         rejected_candidates_.push_back(candidates_.back());
         candidates_.pop_back();
     }
+    const Eigen::Vector3f xyz_threshold(config_.candidate_config.goal_xy_threshold,
+                                        config_.candidate_config.goal_xy_threshold,
+                                        config_.candidate_config.goal_z_threshold);
+    const Eigen::Vector3f sampling_min_M_reduced =
+        config_.candidate_config.planner_config.sampling_min_M_ + xyz_threshold;
+    const Eigen::Vector3f sampling_max_M_reduced =
+        config_.candidate_config.planner_config.sampling_max_M_ - xyz_threshold;
     // Sample the candidate views aborting after a number of failed retries
     const size_t max_failed = 5 * config_.num_candidates;
     //const int sampling_step = std::ceil(remaining_frontiers.size() / config_.num_candidates);
@@ -117,19 +124,19 @@ SinglePathExplorationPlanner::SinglePathExplorationPlanner(
         //                    remaining_frontiers,
         //                    objects,
         //                    sampling_step,
-        //                    config_.candidate_config.planner_config.sampling_min_M_,
-        //                    config_.candidate_config.planner_config.sampling_max_M_);
+        //                    sampling_min_M_reduced,
+        //                    sampling_max_M_reduced);
         //const Eigen::Vector3f candidate_t_MB =
         //    sampleCandidate(*map,
         //                    candidate_sampling_tree,
-        //                    config_.candidate_config.planner_config.sampling_min_M_,
-        //                    config_.candidate_config.planner_config.sampling_max_M_);
+        //                    sampling_min_M_reduced,
+        //                    sampling_max_M_reduced);
         const Eigen::Vector3f candidate_t_MB =
             sampleCandidate(*map,
                             remaining_frontiers,
                             remaining_objects,
-                            config_.candidate_config.planner_config.sampling_min_M_,
-                            config_.candidate_config.planner_config.sampling_max_M_,
+                            sampling_min_M_reduced,
+                            sampling_max_M_reduced,
                             config_.frontier_sampling_probability);
         // Create the config for this particular candidate
         CandidateConfig candidate_config = config_.candidate_config;
