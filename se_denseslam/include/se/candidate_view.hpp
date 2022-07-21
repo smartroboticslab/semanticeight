@@ -134,6 +134,9 @@ class CandidateView {
                              float velocity_angular,
                              float resolution);
 
+    static Image<float> computeGainImage(const ImageVec<float>& gain_images,
+                                         const Eigen::VectorXf& weights);
+
     /** The position initially desired for the candidate. The actual position can be different due
      * to partial path planning.
      */
@@ -193,9 +196,6 @@ class CandidateView {
     void entropyRaycast(const PoseHistory* T_MB_history);
 
     void computeUtility();
-
-    static Image<float> computeGainImage(const ImageVec<float>& gain_images,
-                                         const Eigen::VectorXf& weights);
 
     /** \brief Create a rotation matrix C_MB from a yaw angle in the Map frame.
      */
