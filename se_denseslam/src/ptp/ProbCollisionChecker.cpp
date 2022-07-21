@@ -1039,12 +1039,8 @@ bool ProbCollisionChecker::checkSegmentFlightCorridor(const Eigen::Vector3f& sta
         return false;
     }
 
-    // Check Sphere
-    if (!checkSphere(start_point_M, radius_m)) {
-        return false;
-    }
-
-    // Check Sphere
+    // Don't check the sphere at the segment start for the same reasons that the in-map test is
+    // skipped.
     if (!checkSphere(end_point_M, radius_m)) {
         return false;
     }

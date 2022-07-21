@@ -61,10 +61,6 @@ SafeFlightCorridorGenerator::SafeFlightCorridorGenerator(
 PlanningResult SafeFlightCorridorGenerator::planPath(const Eigen::Vector3f& start_point_M,
                                                      const Eigen::Vector3f& goal_point_M)
 {
-    if (!pcc_.checkSphere(start_point_M, min_flight_corridor_radius_)) {
-        return PlanningResult::StartOccupied;
-    }
-
     // Don't test the goal point occupancy to allow planning partial paths.
     //if(!pcc_.checkSphere(goal_point_M, min_flight_corridor_radius_)) {
     //  return PlanningResult::GoalOccupied;
