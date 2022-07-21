@@ -22,7 +22,9 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
         T_CB_(se::math::to_inverse_transformation(config.T_BC)),
         sensor_(sensor),
         T_MB_grid_history_(Eigen::Vector3f::Constant(map_->dim()),
-                           Eigen::Vector4f(0.5f, 0.5f, 0.5f, se::math::deg_to_rad(30.0f))),
+                           config.isExperiment()
+                               ? Eigen::Vector4f(2.0f, 2.0f, 2.0f, se::math::deg_to_rad(60.0f))
+                               : Eigen::Vector4f(0.5f, 0.5f, 0.5f, se::math::deg_to_rad(30.0f))),
         T_MB_mask_history_(Eigen::Vector2i(config.raycast_width, config.raycast_height),
                            sensor,
                            config.T_BC,
