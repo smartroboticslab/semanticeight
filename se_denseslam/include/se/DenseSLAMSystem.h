@@ -236,15 +236,6 @@ class DenseSLAMSystem {
 
     void generateUndetectedInstances(se::SegmentationResult& detections);
 
-    // Exploration only ///////////////////////////////////////////////////////
-    /** Set cylinder whose curved face is just inside the camera frustum to free.
-     * This is used to create some free space around the robot's starting position.
-     * The frontier status of voxels in the cylinder is also set correctly.
-     */
-    void freeInitCylinder(const SensorImpl& sensor);
-
-    void freeInitSphere();
-
 
 
     public:
@@ -901,6 +892,16 @@ class DenseSLAMSystem {
     }
 
     // Exploration only ///////////////////////////////////////////////////////
+    /** Set cylinder whose curved face is just inside the camera frustum to free.
+     * This is used to create some free space around the robot's starting position.
+     * The frontier status of voxels in the cylinder is also set correctly.
+     */
+    void freeCylinder(const Eigen::Vector3f& centre_M,
+                      const float radius_M,
+                      const float height_M);
+
+    void freeSphere(const Eigen::Vector3f& centre_M, const float radius_M);
+
     /**
      * Create some free space around the robot's starting position.
      * The frontier status of the free voxels is set correctly.

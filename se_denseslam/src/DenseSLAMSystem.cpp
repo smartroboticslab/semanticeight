@@ -893,16 +893,22 @@ DenseSLAMSystem::objectTriangleMeshesV(const se::meshing::ScaleMode scale_mode)
 // Exploration only ///////////////////////////////////////////////////////
 void DenseSLAMSystem::freeInitialPosition(const SensorImpl& sensor, const std::string& type)
 {
+    const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
     if (type == "cylinder") {
-        freeInitCylinder(sensor);
+        constexpr float min_height = 0.5f;
+        const float robot_height = 2.0f * (config_.robot_radius + config_.safety_radius);
+        const float height_M = std::max(3.0f * robot_height, min_height);
+        const float radius_M =
+            std::max(height_M, (height_M / 2.0f) / tan(sensor.vertical_fov / 2.0f));
+        freeCylinder(centre_M, radius_M, height_M);
     }
     else {
-        freeInitSphere();
+        // 2.4 because the same ratio was used in the ICRA 2020 paper.
+        constexpr float min_radius = 0.5f;
+        const float radius_M =
+            std::max(2.4f * (config_.robot_radius + config_.safety_radius), min_radius);
+        freeSphere(centre_M, radius_M);
     }
-    // Update the frontier status
-    update_frontiers(*map_, frontiers_, config_.frontier_cluster_min_ratio);
-    // Up-propagate free space to the root
-    VoxelImpl::propagateToRoot(*map_);
 }
 
 
@@ -1146,30 +1152,25 @@ void DenseSLAMSystem::generateUndetectedInstances(se::SegmentationResult& detect
 
 
 // Exploration only ///////////////////////////////////////////////////////
-void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor)
+void DenseSLAMSystem::freeCylinder(const Eigen::Vector3f& centre_M,
+                                   const float radius_M,
+                                   const float height_M)
 {
-    if (!std::is_same<VoxelImpl, MultiresOFusion>::value) {
-        throw std::domain_error("Only MultiresOFusion is supported");
-    }
-    // Compute the cylinder parameters and increase the height by some percentage
-    constexpr float min_height = 0.5f;
-    const float robot_height = 2.0f * (config_.robot_radius + config_.safety_radius);
-    const float height = std::max(3.0f * robot_height, min_height);
-    const float radius = std::max(height, (height / 2.0f) / tan(sensor.vertical_fov / 2.0f));
-    const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
-    // Compute the cylinder's AABB corners in metres and voxels
-    const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f(radius, radius, height);
-    const Eigen::Vector3f aabb_max_M = centre_M + Eigen::Vector3f(radius, radius, height);
-    // Compute the coordinates of all the points corresponding to voxels in the AABB
+    static_assert(std::is_same<VoxelImpl, MultiresOFusion>::value,
+                  "Only MultiresOFusion is supported");
+    const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f(radius_M, radius_M, height_M);
+    const Eigen::Vector3f aabb_max_M = centre_M + Eigen::Vector3f(radius_M, radius_M, height_M);
+    // Compute the coordinates of all the points corresponding to voxels in the AABB.
+    const float voxel_dim = map_->voxelDim();
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> aabb_points_M;
-    for (float z = aabb_min_M.z(); z <= aabb_max_M.z(); z += map_->voxelDim()) {
-        for (float y = aabb_min_M.y(); y <= aabb_max_M.y(); y += map_->voxelDim()) {
-            for (float x = aabb_min_M.x(); x <= aabb_max_M.x(); x += map_->voxelDim()) {
-                aabb_points_M.push_back(Eigen::Vector3f(x, y, z));
+    for (float z = aabb_min_M.z(); z <= aabb_max_M.z(); z += voxel_dim) {
+        for (float y = aabb_min_M.y(); y <= aabb_max_M.y(); y += voxel_dim) {
+            for (float x = aabb_min_M.x(); x <= aabb_max_M.x(); x += voxel_dim) {
+                aabb_points_M.emplace_back(x, y, z);
             }
         }
     }
-    // Allocate the required VoxelBlocks
+    // Allocate the required VoxelBlocks.
     std::set<se::key_t> code_set;
     for (const auto& point_M : aabb_points_M) {
         const Eigen::Vector3i voxel = map_->pointToVoxel(point_M);
@@ -1197,7 +1198,7 @@ void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor)
     // Set the cylinder voxels to free
     for (const auto& point_M : aabb_points_M) {
         const Eigen::Vector3f voxel_dist_M = (centre_M - point_M).array().abs().matrix();
-        if (voxel_dist_M.head<2>().norm() <= radius && voxel_dist_M.z() <= height) {
+        if (voxel_dist_M.head<2>().norm() <= radius_M && voxel_dist_M.z() <= height_M) {
             VoxelImpl::VoxelType::VoxelData current_data;
             map_->getAtPoint(point_M, current_data, scale);
             if (!VoxelImpl::VoxelType::isInside(current_data)) {
@@ -1205,30 +1206,27 @@ void DenseSLAMSystem::freeInitCylinder(const SensorImpl& sensor)
             }
         }
     }
+    // Update the frontier status
+    update_frontiers(*map_, frontiers_, config_.frontier_cluster_min_ratio);
+    // Up-propagate free space to the root
+    VoxelImpl::propagateToRoot(*map_);
 }
 
 
 
-void DenseSLAMSystem::freeInitSphere()
+void DenseSLAMSystem::freeSphere(const Eigen::Vector3f& centre_M, const float radius_M)
 {
-    if (!std::is_same<VoxelImpl, MultiresOFusion>::value) {
-        throw std::domain_error("Only MultiresOFusion is supported");
-    }
-    // Compute the sphere parameters
-    const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
-    // 2.4 because the same ratio was used in the ICRA 2020 paper.
-    constexpr float min_radius = 0.5f;
-    const float radius_M =
-        std::max(2.4f * (config_.robot_radius + config_.safety_radius), min_radius);
-    // Compute the cylinder's AABB corners in metres and voxels
-    const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f(radius_M, radius_M, radius_M);
-    const Eigen::Vector3f aabb_max_M = centre_M + Eigen::Vector3f(radius_M, radius_M, radius_M);
+    static_assert(std::is_same<VoxelImpl, MultiresOFusion>::value,
+                  "Only MultiresOFusion is supported");
+    const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f::Constant(radius_M);
+    const Eigen::Vector3f aabb_max_M = centre_M + Eigen::Vector3f::Constant(radius_M);
     // Compute the coordinates of all the points corresponding to voxels in the AABB
+    const float voxel_dim = map_->voxelDim();
     std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> aabb_points_M;
-    for (float z = aabb_min_M.z(); z <= aabb_max_M.z(); z += map_->voxelDim()) {
-        for (float y = aabb_min_M.y(); y <= aabb_max_M.y(); y += map_->voxelDim()) {
-            for (float x = aabb_min_M.x(); x <= aabb_max_M.x(); x += map_->voxelDim()) {
-                aabb_points_M.push_back(Eigen::Vector3f(x, y, z));
+    for (float z = aabb_min_M.z(); z <= aabb_max_M.z(); z += voxel_dim) {
+        for (float y = aabb_min_M.y(); y <= aabb_max_M.y(); y += voxel_dim) {
+            for (float x = aabb_min_M.x(); x <= aabb_max_M.x(); x += voxel_dim) {
+                aabb_points_M.emplace_back(x, y, z);
             }
         }
     }
@@ -1268,4 +1266,8 @@ void DenseSLAMSystem::freeInitSphere()
             }
         }
     }
+    // Update the frontier status
+    update_frontiers(*map_, frontiers_, config_.frontier_cluster_min_ratio);
+    // Up-propagate free space to the root
+    VoxelImpl::propagateToRoot(*map_);
 }
