@@ -91,7 +91,7 @@ bool ExplorationPlanner::needsNewGoal() const
 
 
 
-bool ExplorationPlanner::inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB)
+bool ExplorationPlanner::inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB) const
 {
     const Eigen::Matrix4f T_MB = T_MW_ * T_WB;
     return withinThreshold(T_MB, goalView().goalT_MB());
@@ -270,7 +270,7 @@ bool ExplorationPlanner::explorationDominant() const
 
 
 bool ExplorationPlanner::withinThreshold(const Eigen::Matrix4f& T_WB_1,
-                                         const Eigen::Matrix4f& T_WB_2)
+                                         const Eigen::Matrix4f& T_WB_2) const
 {
     const Eigen::Matrix4f T_MB_1 = T_MW_ * T_WB_1;
     const Eigen::Matrix4f T_MB_2 = T_MW_ * T_WB_2;
