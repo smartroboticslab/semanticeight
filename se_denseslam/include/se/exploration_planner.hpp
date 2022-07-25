@@ -24,7 +24,7 @@ class ExplorationPlanner {
                        const SensorImpl& sensor,
                        const se::Configuration& config);
 
-    void setT_WB(const Eigen::Matrix4f& T_WB, const se::Image<float>& depth);
+    void recordT_WB(const Eigen::Matrix4f& T_WB, const se::Image<float>& depth);
 
     void setPlanningT_WB(const Eigen::Matrix4f& T_WB);
 

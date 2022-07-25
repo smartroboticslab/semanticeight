@@ -40,7 +40,7 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
 
 
 
-void ExplorationPlanner::setT_WB(const Eigen::Matrix4f& T_WB, const se::Image<float>& depth)
+void ExplorationPlanner::recordT_WB(const Eigen::Matrix4f& T_WB, const se::Image<float>& depth)
 {
     const Eigen::Matrix4f T_MB = T_MW_ * T_WB;
     T_MB_grid_history_.record(T_MB);
