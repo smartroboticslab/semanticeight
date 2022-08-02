@@ -29,8 +29,6 @@ dir="${1%%/}"
 out_dir="$dir"_gain_montage
 
 depth_renders=$(find "$dir" -name 'depth_[[:digit:]]*.png' | sort -n)
-mkdir -p "$out_dir"
-
 for depth in $depth_renders; do
 	rgba=$(printf '%s\n' "$depth" | sed 's/depth/rgba/' | null_if_not_file)
 	segm=$(printf '%s\n' "$depth" | sed 's/depth/segm/' | null_if_not_file)
@@ -45,11 +43,12 @@ for depth in $depth_renders; do
 	gain_post=$(printf '%s\n' "$depth" | sed 's/depth/gain_post/' | null_if_not_file)
 
 	n=$(frame_number "$depth")
+	mkdir -p "$out_dir"
 	out="$out_dir/render_$(printf '%05d' "$n").png"
 
-	printf 'montage -label %%t -font Liberation-Mono %s %s %s %s %s %s %s %s %s %s %s %s -geometry +2+2 -tile 4x %s\n' \
-		"$depth" "$volume" "$rgba" "$segm" \
-		"$entropy_pre" "$obj_dist_pre" "$bg_dist_pre" "$gain_pre" \
-		"$entropy_post" "$obj_dist_post" "$bg_dist_post" "$gain_post" \
-		"$out"
+	printf 'montage -label %%t -font Liberation-Mono '
+	printf '%s %s %s %s ' "$depth" "$volume" "$rgba" "$segm"
+	printf '%s %s %s %s ' "$entropy_pre" "$obj_dist_pre" "$bg_dist_pre" "$gain_pre"
+	printf '%s %s %s %s ' "$entropy_post" "$obj_dist_post" "$bg_dist_post" "$gain_post"
+	printf ' -geometry 320x+2+2 -tile 4x %s\n' "$out"
 done | parallel

@@ -48,11 +48,11 @@ for depth in $depth_renders; do
 	mkdir -p "$out_dir"
 	out="$out_dir/render_$(printf '%05d' "$n").png"
 
-	printf 'montage -label %%t -font Liberation-Mono %s %s %s null: %s %s %s %s %s %s %s %s -geometry +2+2 -tile 4x %s\n' \
-		"$rgba" "$segm" "$depth" \
-		"$instance" "$class" "$raycast" "$volume_color" \
-		"$volume" "$volume_aabb" "$volume_scale" "$volume_min_scale" \
-		"$out"
+	printf 'montage -label %%t -font Liberation-Mono '
+	printf '%s %s %s null: ' "$rgba" "$segm" "$depth"
+	printf '%s %s %s %s ' "$instance" "$class" "$raycast" "$volume_color"
+	printf '%s %s %s %s ' "$volume" "$volume_aabb" "$volume_scale" "$volume_min_scale"
+	printf ' -geometry 320x+2+2 -tile 4x %s\n' "$out"
 done | parallel
 
 out_dir_2="$dir"_montage_aabb_mask
