@@ -43,6 +43,7 @@ ExplorationPlanner::ExplorationPlanner(const DenseSLAMSystem& pipeline,
 void ExplorationPlanner::recordT_WB(const Eigen::Matrix4f& T_WB, const se::Image<float>& depth)
 {
     const Eigen::Matrix4f T_MB = T_MW_ * T_WB;
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     T_MB_grid_history_.record(T_MB);
     T_MB_mask_history_.record(T_MB, depth);
     T_MB_history_.record(T_MB);
@@ -52,6 +53,7 @@ void ExplorationPlanner::recordT_WB(const Eigen::Matrix4f& T_WB, const se::Image
 
 void ExplorationPlanner::setPlanningT_WB(const Eigen::Matrix4f& T_WB)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     planning_T_MB_ = T_MW_ * T_WB;
 }
 
@@ -59,6 +61,7 @@ void ExplorationPlanner::setPlanningT_WB(const Eigen::Matrix4f& T_WB)
 
 Eigen::Matrix4f ExplorationPlanner::getT_WB() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return T_WM_ * T_MB_history_.poses.back();
 }
 
@@ -66,6 +69,7 @@ Eigen::Matrix4f ExplorationPlanner::getT_WB() const
 
 Eigen::Matrix4f ExplorationPlanner::getPlanningT_WB() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return T_WM_ * planning_T_MB_;
 }
 
@@ -73,6 +77,7 @@ Eigen::Matrix4f ExplorationPlanner::getPlanningT_WB() const
 
 Path ExplorationPlanner::getT_WBHistory() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     const Path& T_MB_history = T_MB_history_.poses;
     Path T_WB_history(T_MB_history.size());
     std::transform(T_MB_history.begin(),
@@ -86,6 +91,7 @@ Path ExplorationPlanner::getT_WBHistory() const
 
 bool ExplorationPlanner::needsNewGoal() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return goal_path_T_MB_.empty();
 }
 
@@ -94,6 +100,7 @@ bool ExplorationPlanner::needsNewGoal() const
 bool ExplorationPlanner::inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB) const
 {
     const Eigen::Matrix4f T_MB = T_MW_ * T_WB;
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return withinThreshold(T_MB, goalView().goalT_MB());
 }
 
@@ -101,6 +108,7 @@ bool ExplorationPlanner::inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB) c
 
 bool ExplorationPlanner::goalReached()
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     // If there is no goal, we have reached the goal.
     if (goal_path_T_MB_.empty()) {
         return true;
@@ -119,6 +127,7 @@ bool ExplorationPlanner::goalReached()
 
 bool ExplorationPlanner::goalT_WB(Eigen::Matrix4f& T_WB) const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (goal_path_T_MB_.empty()) {
         return false;
     }
@@ -132,6 +141,7 @@ bool ExplorationPlanner::goalT_WB(Eigen::Matrix4f& T_WB) const
 
 void ExplorationPlanner::popGoalT_WB()
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     goal_path_T_MB_.pop();
 }
 
@@ -141,6 +151,7 @@ Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
                                             const Objects& objects)
 {
     const std::vector<key_t> frontier_vec(frontiers.begin(), frontiers.end());
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     SinglePathExplorationPlanner planner(map_,
                                          frontier_vec,
                                          objects,
@@ -172,6 +183,7 @@ Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
 
 const std::vector<CandidateView>& ExplorationPlanner::candidateViews() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return candidate_views_;
 }
 
@@ -179,6 +191,7 @@ const std::vector<CandidateView>& ExplorationPlanner::candidateViews() const
 
 const std::vector<CandidateView>& ExplorationPlanner::rejectedCandidateViews() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return rejected_candidate_views_;
 }
 
@@ -186,6 +199,7 @@ const std::vector<CandidateView>& ExplorationPlanner::rejectedCandidateViews() c
 
 const CandidateView& ExplorationPlanner::goalView() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return candidate_views_[goalViewIndex()];
 }
 
@@ -193,6 +207,7 @@ const CandidateView& ExplorationPlanner::goalView() const
 
 size_t ExplorationPlanner::goalViewIndex() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (goal_view_idx_ < candidate_views_.size()) {
         return goal_view_idx_;
     }
@@ -209,6 +224,7 @@ void ExplorationPlanner::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
                                                    Image<uint32_t>& depth,
                                                    const bool visualize_yaw)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     goalView().renderCurrentEntropyDepth(entropy, depth, visualize_yaw);
 }
 
@@ -216,6 +232,7 @@ void ExplorationPlanner::renderCurrentEntropyDepth(Image<uint32_t>& entropy,
 
 const PoseGridHistory& ExplorationPlanner::getPoseGridHistory() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return T_MB_grid_history_;
 }
 
@@ -223,6 +240,7 @@ const PoseGridHistory& ExplorationPlanner::getPoseGridHistory() const
 
 const PoseMaskHistory& ExplorationPlanner::getPoseMaskHistory() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return T_MB_mask_history_;
 }
 
@@ -231,6 +249,7 @@ const PoseMaskHistory& ExplorationPlanner::getPoseMaskHistory() const
 const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>&
 ExplorationPlanner::samplingAABBEdgesM() const
 {
+    // Only uses const members, no need to lock.
     return sampling_aabb_edges_M_;
 }
 
@@ -239,6 +258,7 @@ ExplorationPlanner::samplingAABBEdgesM() const
 int ExplorationPlanner::writePathPLY(const std::string& filename, const Eigen::Matrix4f& T_FW) const
 {
     const Eigen::Matrix4f T_FM = T_FW * T_WM_;
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     Path history_W(T_MB_history_.poses.size());
     std::transform(T_MB_history_.poses.begin(),
                    T_MB_history_.poses.end(),
@@ -252,6 +272,7 @@ int ExplorationPlanner::writePathPLY(const std::string& filename, const Eigen::M
 int ExplorationPlanner::writePathTSV(const std::string& filename, const Eigen::Matrix4f& T_FW) const
 {
     const Eigen::Matrix4f T_FM = T_FW * T_WM_;
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     Path history_W(T_MB_history_.poses.size());
     std::transform(T_MB_history_.poses.begin(),
                    T_MB_history_.poses.end(),
@@ -264,6 +285,7 @@ int ExplorationPlanner::writePathTSV(const std::string& filename, const Eigen::M
 
 bool ExplorationPlanner::explorationDominant() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return exploration_dominant_;
 }
 
@@ -272,6 +294,7 @@ bool ExplorationPlanner::explorationDominant() const
 bool ExplorationPlanner::withinThreshold(const Eigen::Matrix4f& T_WB_1,
                                          const Eigen::Matrix4f& T_WB_2) const
 {
+    // Only uses const members, no need to lock.
     const Eigen::Matrix4f T_MB_1 = T_MW_ * T_WB_1;
     const Eigen::Matrix4f T_MB_2 = T_MW_ * T_WB_2;
     const Eigen::Vector3f pos_error = math::position_error(T_MB_1, T_MB_2);

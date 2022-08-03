@@ -5,6 +5,8 @@
 #ifndef __EXPLORATION_PLANNER_HPP
 #define __EXPLORATION_PLANNER_HPP
 
+#include <mutex>
+
 #include "se/DenseSLAMSystem.h"
 #include "se/single_path_exploration_planner.hpp"
 
@@ -97,6 +99,7 @@ class ExplorationPlanner {
                        std::deque<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>>
         PathQueue;
 
+    mutable std::recursive_mutex mutex_;
     const ExplorationConfig config_;
     const OctreeConstPtr map_;
     const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>
