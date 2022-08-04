@@ -40,6 +40,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <octomap/octomap.h>
 #include <set>
 #include <vector>
@@ -68,6 +69,7 @@ class DenseSLAMSystem {
     using VoxelBlockType = typename VoxelImpl::VoxelType::VoxelBlockType;
 
     private:
+    mutable std::recursive_mutex mutex_;
     // Input images
     Eigen::Vector2i image_res_;
     se::Image<float> depth_image_;
@@ -458,21 +460,25 @@ class DenseSLAMSystem {
      */
     std::shared_ptr<se::Octree<VoxelImpl::VoxelType>> getMap()
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return map_;
     }
 
     std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> getMap() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return map_;
     }
 
     void saveMap(const std::string& map_filename)
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         map_->save(map_filename);
     }
 
     void loadMap(const std::string& map_filename)
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         map_->load(map_filename);
     }
 
@@ -487,6 +493,7 @@ class DenseSLAMSystem {
                            int y_ub = 0,
                            int z_ub = 0)
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         // Initialise default boundaries. Can't be set above as map_size_ is non-static.
         x_ub = (x_ub == 0) ? map_size_.x() : x_ub;
         y_ub = (y_ub == 0) ? map_size_.y() : y_ub;
@@ -539,6 +546,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector3f t_MW() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return se::math::to_translation(T_MW_);
     }
 
@@ -549,6 +557,7 @@ class DenseSLAMSystem {
      */
     Eigen::Matrix4f T_MW() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return T_MW_;
     }
 
@@ -559,6 +568,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector3f t_WM() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         Eigen::Vector3f t_WM = se::math::to_inverse_translation(T_MW_);
         return t_WM;
     }
@@ -581,6 +591,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector3f t_MC() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return se::math::to_translation(T_MC_);
     }
 
@@ -591,6 +602,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector3f t_WC() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
         Eigen::Vector3f t_WC = se::math::to_translation(T_WC);
         return t_WC;
@@ -603,6 +615,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector3f initt_MC() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return se::math::to_translation(T_MC_);
     }
 
@@ -613,6 +626,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector3f initt_WC() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
         Eigen::Vector3f initt_WC = se::math::to_translation(init_T_WC);
         return initt_WC;
@@ -625,6 +639,7 @@ class DenseSLAMSystem {
      */
     Eigen::Matrix4f T_MC() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return T_MC_;
     }
 
@@ -635,6 +650,7 @@ class DenseSLAMSystem {
      */
     Eigen::Matrix4f T_WC() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         Eigen::Matrix4f T_WC = se::math::to_inverse_transformation(T_MW_) * T_MC_;
         return T_WC;
     }
@@ -646,6 +662,7 @@ class DenseSLAMSystem {
      */
     Eigen::Matrix4f initT_MC() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return init_T_MC_;
     }
 
@@ -656,6 +673,7 @@ class DenseSLAMSystem {
      */
     Eigen::Matrix4f initT_WC() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         Eigen::Matrix4f init_T_WC = se::math::to_inverse_transformation(T_MW_) * init_T_MC_;
         return init_T_WC;
     }
@@ -667,6 +685,7 @@ class DenseSLAMSystem {
      */
     void setT_MC(const Eigen::Matrix4f& T_MC)
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         T_MC_ = T_MC;
     }
 
@@ -679,6 +698,7 @@ class DenseSLAMSystem {
      */
     void setT_WC(const Eigen::Matrix4f& T_WC)
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         T_MC_ = T_MW_ * T_WC;
     }
 
@@ -701,6 +721,7 @@ class DenseSLAMSystem {
      */
     void setInitT_WC(const Eigen::Matrix4f& init_T_WC)
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         init_T_MC_ = T_MW_ * init_T_WC;
     }
 
@@ -711,6 +732,7 @@ class DenseSLAMSystem {
      */
     void setRenderT_MC(Eigen::Matrix4f* render_T_MC = nullptr)
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         if (render_T_MC == nullptr) {
             render_T_MC_ = &T_MC_;
             need_render_ = false;
@@ -731,6 +753,7 @@ class DenseSLAMSystem {
      */
     Eigen::Matrix4f* renderT_MC_() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return render_T_MC_;
     }
 
@@ -741,6 +764,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector3f getMapDimension() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return (map_dim_);
     }
 
@@ -751,6 +775,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector3i getMapSize() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return (map_size_);
     }
 
@@ -762,6 +787,7 @@ class DenseSLAMSystem {
      */
     Eigen::Vector2i getImageResolution() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return (image_res_);
     }
 
@@ -814,6 +840,7 @@ class DenseSLAMSystem {
 
     void renderInputSegmentation(uint32_t* image_data, const Eigen::Vector2i& image_res)
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         renderMaskKernel<se::class_mask_elem_t>(
             image_data, image_res, rgba_image_, input_segmentation_.classMask());
     }
@@ -883,11 +910,13 @@ class DenseSLAMSystem {
 
     Objects& getObjectMaps()
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return objects_;
     }
 
     const Objects& getObjectMaps() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return objects_;
     }
 
@@ -910,6 +939,7 @@ class DenseSLAMSystem {
 
     std::set<se::key_t> getFrontiers() const
     {
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         return frontiers_;
     }
 

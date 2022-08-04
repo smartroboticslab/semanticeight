@@ -169,6 +169,7 @@ bool DenseSLAMSystem::preprocessDepth(const float* input_depth_image_data,
                                       const Eigen::Vector2i& input_depth_image_res,
                                       const bool filter_depth)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICKD("preprocessDepth")
     //downsampleDepthKernel(input_depth_image_data, input_depth_image_res, depth_image_);
     downsampleNearestNeighborKernel(input_depth_image_data, input_depth_image_res, depth_image_);
@@ -199,6 +200,7 @@ bool DenseSLAMSystem::preprocessDepth(const float* input_depth_image_data,
 bool DenseSLAMSystem::preprocessColor(const uint32_t* input_RGBA_image_data,
                                       const Eigen::Vector2i& input_RGBA_image_res)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICKD("preprocessColor")
     //downsampleImageKernel(input_RGBA_image_data, input_RGBA_image_res, rgba_image_);
     downsampleNearestNeighborKernel(input_RGBA_image_data, input_RGBA_image_res, rgba_image_);
@@ -210,6 +212,7 @@ bool DenseSLAMSystem::preprocessColor(const uint32_t* input_RGBA_image_data,
 
 bool DenseSLAMSystem::track(const SensorImpl& sensor, const float icp_threshold)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICK("TRACKING")
     // half sample the input depth maps into the pyramid levels
     for (unsigned int i = 1; i < iterations_.size(); ++i) {
@@ -265,6 +268,7 @@ bool DenseSLAMSystem::track(const SensorImpl& sensor, const float icp_threshold)
 
 bool DenseSLAMSystem::integrate(const SensorImpl& sensor, const unsigned frame)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICK("INTEGRATION")
     const int num_blocks_per_pixel = map_->size() / ((VoxelBlockType::size_li));
     const size_t num_blocks_total = num_blocks_per_pixel * image_res_.x() * image_res_.y();
@@ -306,6 +310,7 @@ bool DenseSLAMSystem::integrate(const SensorImpl& sensor, const unsigned frame)
 
 bool DenseSLAMSystem::raycast(const SensorImpl& sensor)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICK("RAYCASTING")
     raycast_T_MC_ = T_MC_;
     raycastKernel<VoxelImpl>(*map_,
@@ -326,6 +331,7 @@ void DenseSLAMSystem::renderVolume(uint32_t* volume_RGBA_image_data,
                                    const SensorImpl& sensor,
                                    const bool render_scale)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     se::Image<Eigen::Vector3f> render_surface_point_cloud_M(image_res_.x(), image_res_.y());
     se::Image<Eigen::Vector3f> render_surface_normals_M(image_res_.x(), image_res_.y());
     se::Image<int8_t> scale_image(image_res_.x(), image_res_.y());
@@ -368,6 +374,7 @@ void DenseSLAMSystem::renderVolume(uint32_t* volume_RGBA_image_data,
 void DenseSLAMSystem::renderTrack(uint32_t* tracking_RGBA_image_data,
                                   const Eigen::Vector2i& tracking_RGBA_image_res)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICKD("renderTrack")
     renderTrackKernel(tracking_RGBA_image_data, tracking_result_.data(), tracking_RGBA_image_res);
     TOCK("renderTrack")
@@ -379,6 +386,7 @@ void DenseSLAMSystem::renderDepth(uint32_t* depth_RGBA_image_data,
                                   const Eigen::Vector2i& depth_RGBA_image_res,
                                   const SensorImpl& sensor)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICKD("renderDepth")
     renderDepthKernel(depth_RGBA_image_data,
                       depth_image_.data(),
@@ -393,6 +401,7 @@ void DenseSLAMSystem::renderDepth(uint32_t* depth_RGBA_image_data,
 void DenseSLAMSystem::renderRGBA(uint32_t* output_RGBA_image_data,
                                  const Eigen::Vector2i& output_RGBA_image_res)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICKD("renderRGBA")
     renderRGBAKernel(output_RGBA_image_data, output_RGBA_image_res, rgba_image_);
     TOCK("renderRGBA")
@@ -402,6 +411,7 @@ void DenseSLAMSystem::renderRGBA(uint32_t* output_RGBA_image_data,
 
 int DenseSLAMSystem::saveMesh(const std::string& filename, const Eigen::Matrix4f& T_FW) const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICK("saveMesh")
     se::TriangleMesh mesh;
     VoxelImpl::dumpMesh(*map_, mesh);
@@ -427,6 +437,7 @@ int DenseSLAMSystem::saveMesh(const std::string& filename, const Eigen::Matrix4f
 
 std::vector<se::Triangle> DenseSLAMSystem::triangleMeshV(const se::meshing::ScaleMode scale_mode)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICK("triangleMesh")
     std::vector<se::Triangle> mesh;
     VoxelImpl::dumpMesh(*map_, mesh, scale_mode);
@@ -438,6 +449,7 @@ std::vector<se::Triangle> DenseSLAMSystem::triangleMeshV(const se::meshing::Scal
 
 void DenseSLAMSystem::saveStructure(const std::string base_filename)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICK("saveStructure")
     std::stringstream f_s;
     f_s << base_filename << ".ply";
@@ -512,6 +524,7 @@ void DenseSLAMSystem::saveStructure(const std::string base_filename)
 
 bool DenseSLAMSystem::saveThresholdSliceZ(const std::string filename, const float z_M)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     const int z_voxel = map_->pointToVoxel(Eigen::Vector3f(0, 0, z_M)).z();
     return save_3d_value_slice_vtk(*map_,
                                    filename,
@@ -526,6 +539,7 @@ void DenseSLAMSystem::structureStats(size_t& num_nodes,
                                      size_t& num_blocks,
                                      std::vector<size_t>& num_blocks_per_scale)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     TICK("structureStats")
     num_nodes = map_->pool().nodeBufferSize();
     num_blocks = map_->pool().blockBufferSize();
@@ -537,6 +551,7 @@ void DenseSLAMSystem::structureStats(size_t& num_nodes,
 
 const se::Image<float>& DenseSLAMSystem::getDepth() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return depth_image_;
 }
 
@@ -545,6 +560,7 @@ const se::Image<float>& DenseSLAMSystem::getDepth() const
 // Semanticeight-only /////////////////////////////////////////////////////
 bool DenseSLAMSystem::preprocessSegmentation(const se::SegmentationResult& segmentation)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
     printf("Preprocessing in:    Masks %dx%d   Objects %zu\n",
            segmentation.width,
@@ -573,6 +589,7 @@ bool DenseSLAMSystem::preprocessSegmentation(const se::SegmentationResult& segme
 
 bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
     printf("trackObjects in:   Number of current objects: %zu\n", objects_.size());
 #endif
@@ -623,6 +640,7 @@ bool DenseSLAMSystem::trackObjects(const SensorImpl& sensor, const int frame)
 
 bool DenseSLAMSystem::integrateObjects(const SensorImpl& sensor, const size_t frame)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
     printf("Integration in:    Number of objects to integrate: %zu\n",
            processed_segmentation_.object_instances.size());
@@ -670,6 +688,7 @@ bool DenseSLAMSystem::integrateObjects(const SensorImpl& sensor, const size_t fr
 
 bool DenseSLAMSystem::raycastObjectsAndBg(const SensorImpl& sensor, const int frame)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
 #if SE_VERBOSE >= SE_VERBOSE_NORMAL
     printf("Raycasting in:     \n");
 #endif
@@ -731,6 +750,7 @@ void DenseSLAMSystem::renderObjects(uint32_t* output_image_data,
                                     const RenderMode render_mode,
                                     const bool render_bounding_volumes)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     se::Image<Eigen::Vector3f> render_surface_point_cloud_M(image_res_.x(), image_res_.y());
     se::Image<Eigen::Vector3f> render_surface_normals_M(image_res_.x(), image_res_.y());
     se::Image<int8_t> scale_image(image_res_.x(), image_res_.y());
@@ -831,6 +851,7 @@ void DenseSLAMSystem::renderObjects(uint32_t* output_image_data,
 void DenseSLAMSystem::renderObjectClasses(uint32_t* output_image_data,
                                           const Eigen::Vector2i& output_image_res) const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     renderMaskKernel<se::class_mask_elem_t>(
         output_image_data, output_image_res, rgba_image_, processed_segmentation_.classMask());
 }
@@ -840,6 +861,7 @@ void DenseSLAMSystem::renderObjectClasses(uint32_t* output_image_data,
 void DenseSLAMSystem::renderObjectInstances(uint32_t* output_image_data,
                                             const Eigen::Vector2i& output_image_res) const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     renderMaskKernel<se::instance_mask_elem_t>(
         output_image_data, output_image_res, rgba_image_, processed_segmentation_.instanceMask());
 }
@@ -858,6 +880,7 @@ void DenseSLAMSystem::renderRaycast(uint32_t* output_image_data,
 void DenseSLAMSystem::saveObjectMeshes(const std::string& filename,
                                        const Eigen::Matrix4f& T_FW) const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     for (const auto& object : objects_) {
         std::vector<se::Triangle> mesh;
         ObjVoxelImpl::dumpMesh(*(object->map_), mesh, se::meshing::ScaleMode::Min);
@@ -880,6 +903,7 @@ void DenseSLAMSystem::saveObjectMeshes(const std::string& filename,
 std::vector<std::vector<se::Triangle>>
 DenseSLAMSystem::objectTriangleMeshesV(const se::meshing::ScaleMode scale_mode)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     std::vector<std::vector<se::Triangle>> meshes(objects_.size());
     for (size_t i = 0; i < objects_.size(); i++) {
         const auto& object = *objects_[i];
@@ -893,6 +917,7 @@ DenseSLAMSystem::objectTriangleMeshesV(const se::meshing::ScaleMode scale_mode)
 // Exploration only ///////////////////////////////////////////////////////
 void DenseSLAMSystem::freeInitialPosition(const SensorImpl& sensor, const std::string& type)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
     if (type == "cylinder") {
         constexpr float min_height = 0.5f;
@@ -916,6 +941,7 @@ void DenseSLAMSystem::freeInitialPosition(const SensorImpl& sensor, const std::s
 const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>&
 DenseSLAMSystem::environmentAABBEdgesM() const
 {
+    // Only uses const members, no need to lock.
     return aabb_edges_M_;
 }
 
@@ -923,6 +949,7 @@ DenseSLAMSystem::environmentAABBEdgesM() const
 
 std::vector<se::Volume<VoxelImpl::VoxelType>> DenseSLAMSystem::frontierVolumes() const
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return se::frontier_volumes(*map_, frontiers_);
 }
 
@@ -936,6 +963,7 @@ void DenseSLAMSystem::computeNewObjectParameters(Eigen::Matrix4f& T_OM,
                                                  const int class_id,
                                                  const Eigen::Matrix4f& T_MC)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     // Reference to the vertex map in camera coordinates.
     const se::Image<Eigen::Vector3f>& point_cloud_C = input_point_cloud_C_[0];
 
@@ -1002,6 +1030,7 @@ void DenseSLAMSystem::computeNewObjectParameters(Eigen::Matrix4f& T_OM,
 void DenseSLAMSystem::matchObjectInstances(se::SegmentationResult& detections,
                                            const float matching_threshold)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     // Loop over all detected objects.
     for (auto& detection : detections) {
         // Loop over all visible objects to find the best match.
@@ -1040,6 +1069,7 @@ void DenseSLAMSystem::matchObjectInstances(se::SegmentationResult& detections,
 
 void DenseSLAMSystem::generateObjects(se::SegmentationResult& masks, const SensorImpl& sensor)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     // TODO: Only call the below function once when tracking is run.
     // Generate the vertex map from the current depth frame. When tracking is
     // performed this step is redundant.
@@ -1107,6 +1137,7 @@ void DenseSLAMSystem::generateObjects(se::SegmentationResult& masks, const Senso
 
 void DenseSLAMSystem::updateValidDepthMask(const se::Image<float>& depth, const SensorImpl& sensor)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
 #pragma omp parallel for
     for (int y = 0; y < depth.height(); y++) {
         for (int x = 0; x < depth.width(); x++) {
@@ -1126,6 +1157,7 @@ void DenseSLAMSystem::updateValidDepthMask(const se::Image<float>& depth, const 
 
 void DenseSLAMSystem::generateUndetectedInstances(se::SegmentationResult& detections)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     // Find the set of visible but not detected/matched objects. No need to
     // consider the background.
     std::set<int> undetected_objects(visible_objects_);
@@ -1156,6 +1188,7 @@ void DenseSLAMSystem::freeCylinder(const Eigen::Vector3f& centre_M,
                                    const float radius_M,
                                    const float height_M)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     static_assert(std::is_same<VoxelImpl, MultiresOFusion>::value,
                   "Only MultiresOFusion is supported");
     const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f(radius_M, radius_M, height_M);
@@ -1216,6 +1249,7 @@ void DenseSLAMSystem::freeCylinder(const Eigen::Vector3f& centre_M,
 
 void DenseSLAMSystem::freeSphere(const Eigen::Vector3f& centre_M, const float radius_M)
 {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     static_assert(std::is_same<VoxelImpl, MultiresOFusion>::value,
                   "Only MultiresOFusion is supported");
     const Eigen::Vector3f aabb_min_M = centre_M - Eigen::Vector3f::Constant(radius_M);
