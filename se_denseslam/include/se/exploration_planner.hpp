@@ -38,6 +38,8 @@ class ExplorationPlanner {
 
     bool needsNewGoal() const;
 
+    math::PoseError goalCandidateError(const Eigen::Matrix4f& T_WB) const;
+
     bool inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB) const;
 
     bool goalReached();
@@ -121,7 +123,7 @@ class ExplorationPlanner {
     PathQueue goal_path_T_MB_;
     bool exploration_dominant_;
 
-    bool withinThreshold(const Eigen::Matrix4f& T_WB_1, const Eigen::Matrix4f& T_WB_2) const;
+    bool withinThreshold(const math::PoseError& error) const;
 };
 } // namespace se
 

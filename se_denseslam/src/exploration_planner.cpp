@@ -97,11 +97,19 @@ bool ExplorationPlanner::needsNewGoal() const
 
 
 
-bool ExplorationPlanner::inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB) const
+math::PoseError ExplorationPlanner::goalCandidateError(const Eigen::Matrix4f& T_WB) const
 {
     const Eigen::Matrix4f T_MB = T_MW_ * T_WB;
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    return withinThreshold(T_MB, goalView().goalT_MB());
+    return math::pose_error(T_MB, goalView().goalT_MB());
+}
+
+
+
+bool ExplorationPlanner::inGoalCandidateThreshold(const Eigen::Matrix4f& T_WB) const
+{
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
+    return withinThreshold(goalCandidateError(T_WB));
 }
 
 
@@ -115,7 +123,7 @@ bool ExplorationPlanner::goalReached()
     }
     const Eigen::Matrix4f& current_T_MB = T_MB_history_.poses.back();
     const Eigen::Matrix4f& goal_T_MB = goal_path_T_MB_.front();
-    const bool reached = withinThreshold(goal_T_MB, current_T_MB);
+    const bool reached = withinThreshold(math::pose_error(goal_T_MB, current_T_MB));
     if (reached) {
         // Remove the reached pose from the goal path.
         goal_path_T_MB_.pop();
@@ -291,28 +299,22 @@ bool ExplorationPlanner::explorationDominant() const
 
 
 
-bool ExplorationPlanner::withinThreshold(const Eigen::Matrix4f& T_WB_1,
-                                         const Eigen::Matrix4f& T_WB_2) const
+bool ExplorationPlanner::withinThreshold(const math::PoseError& error) const
 {
     // Only uses const members, no need to lock.
-    const Eigen::Matrix4f T_MB_1 = T_MW_ * T_WB_1;
-    const Eigen::Matrix4f T_MB_2 = T_MW_ * T_WB_2;
-    const Eigen::Vector3f pos_error = math::position_error(T_MB_1, T_MB_2);
-    if (pos_error.head<2>().norm() > config_.candidate_config.goal_xy_threshold) {
+    if (error.pos.head<2>().norm() > config_.candidate_config.goal_xy_threshold) {
         return false;
     }
-    if (pos_error.tail<1>().norm() > config_.candidate_config.goal_z_threshold) {
+    if (fabsf(error.pos.z()) > config_.candidate_config.goal_z_threshold) {
         return false;
     }
-    if (fabsf(math::yaw_error(T_MB_1, T_MB_2)) > config_.candidate_config.goal_yaw_threshold) {
+    if (fabsf(error.roll) > config_.candidate_config.goal_roll_pitch_threshold) {
         return false;
     }
-    if (fabsf(math::pitch_error(T_MB_1, T_MB_2))
-        > config_.candidate_config.goal_roll_pitch_threshold) {
+    if (fabsf(error.pitch) > config_.candidate_config.goal_roll_pitch_threshold) {
         return false;
     }
-    if (fabsf(math::roll_error(T_MB_1, T_MB_2))
-        > config_.candidate_config.goal_roll_pitch_threshold) {
+    if (fabsf(error.yaw) > config_.candidate_config.goal_yaw_threshold) {
         return false;
     }
     return true;
