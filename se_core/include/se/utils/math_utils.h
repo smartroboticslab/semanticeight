@@ -493,6 +493,22 @@ inline float roll_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f
     return angle_diff(start_roll, end_roll);
 }
 
+struct PoseError {
+    Eigen::Vector3f pos = Eigen::Vector3f::Zero();
+    float roll = 0.0f;
+    float pitch = 0.0f;
+    float yaw = 0.0f;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+inline PoseError pose_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
+{
+    return PoseError{position_error(start_pose, end_pose),
+                     roll_error(start_pose, end_pose),
+                     pitch_error(start_pose, end_pose),
+                     yaw_error(start_pose, end_pose)};
+}
+
 
 
 inline Eigen::Matrix3f yaw_to_rotm(const float yaw)
