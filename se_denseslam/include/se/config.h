@@ -389,11 +389,6 @@ struct Configuration {
      */
     float robot_radius;
 
-    /** An extra safety radius in metres added to that of the robot's bounding sphere.
-     * <br>\em Default: 0.0
-     */
-    float safety_radius;
-
     float min_control_point_radius;
 
     float skeleton_sample_precision;
@@ -479,7 +474,6 @@ struct Configuration {
             angular_velocity(0.1f),
             delta_t(0.1f),
             robot_radius(0.3f),
-            safety_radius(0.0f),
             min_control_point_radius(0.1f),
             skeleton_sample_precision(0.05f),
             solving_time(0.1f),
@@ -609,7 +603,6 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
     out << str_utils::value_to_pretty_str(config.angular_velocity, "Angular velocity") << "\n";
     out << str_utils::value_to_pretty_str(config.delta_t, "Delta t") << "\n";
     out << str_utils::value_to_pretty_str(config.robot_radius, "Robot radius") << "\n";
-    out << str_utils::value_to_pretty_str(config.safety_radius, "Safety radius") << "\n";
     out << str_utils::value_to_pretty_str(config.min_control_point_radius,
                                           "Min control point radius")
         << "\n";

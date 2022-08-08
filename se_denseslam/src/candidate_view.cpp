@@ -28,7 +28,6 @@ CandidateConfig::CandidateConfig(const Configuration& c, const Eigen::Matrix4f& 
         planner_config({Eigen::Vector3f::Zero(),
                         Eigen::Vector3f::Zero(),
                         c.robot_radius,
-                        c.safety_radius,
                         c.min_control_point_radius,
                         c.skeleton_sample_precision,
                         c.solving_time,

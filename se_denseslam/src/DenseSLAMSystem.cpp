@@ -921,7 +921,7 @@ void DenseSLAMSystem::freeInitialPosition(const SensorImpl& sensor, const std::s
     const Eigen::Vector3f centre_M = T_MC_.topRightCorner<3, 1>();
     if (type == "cylinder") {
         constexpr float min_height = 0.5f;
-        const float robot_height = 2.0f * (config_.robot_radius + config_.safety_radius);
+        const float robot_height = 2.0f * config_.robot_radius;
         const float height_M = std::max(3.0f * robot_height, min_height);
         const float radius_M =
             std::max(height_M, (height_M / 2.0f) / tan(sensor.vertical_fov / 2.0f));
@@ -930,8 +930,7 @@ void DenseSLAMSystem::freeInitialPosition(const SensorImpl& sensor, const std::s
     else {
         // 2.4 because the same ratio was used in the ICRA 2020 paper.
         constexpr float min_radius = 0.5f;
-        const float radius_M =
-            std::max(2.4f * (config_.robot_radius + config_.safety_radius), min_radius);
+        const float radius_M = std::max(2.4f * config_.robot_radius, min_radius);
         freeSphere(centre_M, radius_M);
     }
 }

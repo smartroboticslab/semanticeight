@@ -39,9 +39,8 @@ SafeFlightCorridorGenerator::SafeFlightCorridorGenerator(
         map_(map),
         ow_(*map, pp.sampling_min_M_, pp.sampling_max_M_),
         pcc_(ow_, pp),
-        flight_corridor_radius_reduction_(pp.robot_radius_ + pp.safety_radius_),
-        min_flight_corridor_radius_(pp.robot_radius_ + pp.safety_radius_
-                                    + pp.min_control_point_radius_),
+        flight_corridor_radius_reduction_(pp.robot_radius_),
+        min_flight_corridor_radius_(pp.robot_radius_ + pp.min_control_point_radius_),
         robot_radius_(pp.robot_radius_),
         solving_time_(pp.solving_time_),
         space_(new ob::RealVectorStateSpace(kDim)),
