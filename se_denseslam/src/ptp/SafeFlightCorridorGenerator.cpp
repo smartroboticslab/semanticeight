@@ -81,13 +81,13 @@ PlanningResult SafeFlightCorridorGenerator::planPath(const Eigen::Vector3f& star
         OmplToEigen::convertPath(path, path_, min_flight_corridor_radius_);
         reduceToControlPointCorridorRadius(path_);
 
-        if (!pdef_->hasApproximateSolution()) {
-            return PlanningResult::Success;
+        if (pdef_->hasApproximateSolution()) {
+            // TODO SEM Consider checking that the approximate solution is within some threshold of
+            // the goal, otherwise return PlanningResult::Failed.
+            return PlanningResult::Partial;
         }
         else {
-            // TODO SEM check that the approximate solution is within some threshold of the goal,
-            // otherwise return Failed
-            return PlanningResult::Partial;
+            return PlanningResult::Success;
         }
     }
     else {
