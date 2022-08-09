@@ -700,12 +700,6 @@ se::Configuration parseArgs(unsigned int argc, char** argv)
             if (has_yaml_exploration_config && yaml_exploration_config["robot_radius"]) {
                 config.robot_radius = yaml_exploration_config["robot_radius"].as<float>();
             }
-            // Min control point radius
-            if (has_yaml_exploration_config
-                && yaml_exploration_config["min_control_point_radius"]) {
-                config.min_control_point_radius =
-                    yaml_exploration_config["min_control_point_radius"].as<float>();
-            }
             // Skeleton sample precision
             if (has_yaml_exploration_config
                 && yaml_exploration_config["skeleton_sample_precision"]) {

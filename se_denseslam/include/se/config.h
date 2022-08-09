@@ -389,8 +389,6 @@ struct Configuration {
      */
     float robot_radius;
 
-    float min_control_point_radius;
-
     float skeleton_sample_precision;
 
     /** The maximum time in seconds that a path will be searched for by OMPL.
@@ -474,7 +472,6 @@ struct Configuration {
             angular_velocity(0.1f),
             delta_t(0.1f),
             robot_radius(0.3f),
-            min_control_point_radius(0.1f),
             skeleton_sample_precision(0.05f),
             solving_time(0.1f),
             goal_xy_threshold(0.2f),
@@ -603,9 +600,6 @@ static std::ostream& operator<<(std::ostream& out, const se::Configuration& conf
     out << str_utils::value_to_pretty_str(config.angular_velocity, "Angular velocity") << "\n";
     out << str_utils::value_to_pretty_str(config.delta_t, "Delta t") << "\n";
     out << str_utils::value_to_pretty_str(config.robot_radius, "Robot radius") << "\n";
-    out << str_utils::value_to_pretty_str(config.min_control_point_radius,
-                                          "Min control point radius")
-        << "\n";
     out << str_utils::value_to_pretty_str(config.skeleton_sample_precision,
                                           "Skeleton sample precision")
         << "\n";

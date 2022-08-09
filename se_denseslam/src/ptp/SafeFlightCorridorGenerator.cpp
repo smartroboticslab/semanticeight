@@ -39,8 +39,7 @@ SafeFlightCorridorGenerator::SafeFlightCorridorGenerator(
         map_(map),
         ow_(*map, pp.sampling_min_M_, pp.sampling_max_M_),
         pcc_(ow_, pp),
-        flight_corridor_radius_reduction_(pp.robot_radius_),
-        min_flight_corridor_radius_(pp.robot_radius_ + pp.min_control_point_radius_),
+        min_flight_corridor_radius_(pp.robot_radius_),
         robot_radius_(pp.robot_radius_),
         solving_time_(pp.solving_time_),
         space_(new ob::RealVectorStateSpace(kDim)),
@@ -78,7 +77,6 @@ PlanningResult SafeFlightCorridorGenerator::planPath(const Eigen::Vector3f& star
         prunePath(path);
         // Convert final path to Eigen
         OmplToEigen::convertPath(path, path_, min_flight_corridor_radius_);
-        reduceToControlPointCorridorRadius(path_);
 
         if (pdef_->hasApproximateSolution()) {
             // TODO SEM Consider checking that the approximate solution is within some threshold of
@@ -184,17 +182,6 @@ void SafeFlightCorridorGenerator::simplifyPath(ompl::geometric::PathGeometric& p
     int times = 0;
     while (tryMore && ptc == false && ++times <= 5) {
         tryMore = simplifier.reduceVertices(path);
-    }
-}
-
-
-
-void SafeFlightCorridorGenerator::reduceToControlPointCorridorRadius(Path<kDim>::Ptr path_m)
-{
-    for (std::vector<State<kDim>>::iterator it_i = path_m->states.begin();
-         it_i != path_m->states.end();
-         ++it_i) {
-        (*it_i).segment_radius = (*it_i).segment_radius - flight_corridor_radius_reduction_;
     }
 }
 } // namespace ptp

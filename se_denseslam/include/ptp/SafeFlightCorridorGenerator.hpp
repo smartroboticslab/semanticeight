@@ -74,13 +74,11 @@ class SafeFlightCorridorGenerator {
     void setupPlanner(const Eigen::Vector3f& start_m, const Eigen::Vector3f& goal_m);
     void prunePath(og::PathGeometric& path);
     void simplifyPath(ompl::geometric::PathGeometric& path);
-    void reduceToControlPointCorridorRadius(Path<kDim>::Ptr path_m);
 
     const std::shared_ptr<const se::Octree<VoxelImpl::VoxelType>> map_;
     const OccupancyWorld ow_;
     const ProbCollisionChecker pcc_;
 
-    const float flight_corridor_radius_reduction_;
     const float min_flight_corridor_radius_;
     const float robot_radius_;
     const float solving_time_;

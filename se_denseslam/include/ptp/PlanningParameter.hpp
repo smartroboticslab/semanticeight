@@ -31,7 +31,6 @@ struct PlanningParameter {
             start_t_MB_(Eigen::Vector3f::Zero()),
             goal_t_MB_(Eigen::Vector3f::Zero()),
             robot_radius_(0.15),
-            min_control_point_radius_(0.1),
             skeleton_sample_precision_(0.05),
             solving_time_(0.0),
             sampling_min_M_(-10000, -10000, -10000),
@@ -50,7 +49,6 @@ struct PlanningParameter {
     PlanningParameter(const Eigen::Vector3f& start_t_MB,
                       const Eigen::Vector3f& goal_t_MB,
                       const float& robot_radius,
-                      const float& min_control_point_radius,
                       const float& skeleton_sample_precision,
                       const float& solving_time,
                       const Eigen::Vector3f& sampling_min_M,
@@ -58,7 +56,6 @@ struct PlanningParameter {
             start_t_MB_(start_t_MB),
             goal_t_MB_(goal_t_MB),
             robot_radius_(robot_radius),
-            min_control_point_radius_(min_control_point_radius),
             skeleton_sample_precision_(skeleton_sample_precision),
             solving_time_(solving_time),
             sampling_min_M_(sampling_min_M),
@@ -69,7 +66,6 @@ struct PlanningParameter {
     Eigen::Vector3f start_t_MB_; ///> Start position for path planning
     Eigen::Vector3f goal_t_MB_;  ///> Goal position for path planning
     float robot_radius_;         ///> Robot bounding sphere radius
-    float min_control_point_radius_;
     float skeleton_sample_precision_;
     float solving_time_; ///> Solving time to find a path
     Eigen::Vector3f sampling_min_M_;
