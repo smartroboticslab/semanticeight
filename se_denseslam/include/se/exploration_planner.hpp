@@ -28,11 +28,7 @@ class ExplorationPlanner {
 
     void recordT_WB(const Eigen::Matrix4f& T_WB, const se::Image<float>& depth);
 
-    void setPlanningT_WB(const Eigen::Matrix4f& T_WB);
-
     Eigen::Matrix4f getT_WB() const;
-
-    Eigen::Matrix4f getPlanningT_WB() const;
 
     Path getT_WBHistory() const;
 
@@ -51,10 +47,11 @@ class ExplorationPlanner {
     void popGoalT_WB();
 
     /** Call the exploration planner and return the resulting camera path in the world frame.
-     * The returned path is a series of T_WB. The first T_WB is the same as the one returned by
-     * se::ExplorationPlanner::getPlanningT_WB().
+     * The returned path is a series of T_WB. The first T_WB is the same as start_T_WB.
      */
-    Path computeNextPath_WB(const std::set<key_t>& frontiers, const Objects& objects);
+    Path computeNextPath_WB(const std::set<key_t>& frontiers,
+                            const Objects& objects,
+                            const Eigen::Matrix4f& start_T_WB);
 
     const std::vector<CandidateView>& candidateViews() const;
 
@@ -111,8 +108,6 @@ class ExplorationPlanner {
     const Eigen::Matrix4f T_BC_;
     const Eigen::Matrix4f T_CB_;
     const SensorImpl sensor_;
-    // The pose planning the next path will start from.
-    Eigen::Matrix4f planning_T_MB_;
     // History of fusion poses.
     PoseGridHistory T_MB_grid_history_;
     PoseMaskHistory T_MB_mask_history_;

@@ -51,26 +51,10 @@ void ExplorationPlanner::recordT_WB(const Eigen::Matrix4f& T_WB, const se::Image
 
 
 
-void ExplorationPlanner::setPlanningT_WB(const Eigen::Matrix4f& T_WB)
-{
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    planning_T_MB_ = T_MW_ * T_WB;
-}
-
-
-
 Eigen::Matrix4f ExplorationPlanner::getT_WB() const
 {
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
     return T_WM_ * T_MB_history_.poses.back();
-}
-
-
-
-Eigen::Matrix4f ExplorationPlanner::getPlanningT_WB() const
-{
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    return T_WM_ * planning_T_MB_;
 }
 
 
@@ -156,7 +140,8 @@ void ExplorationPlanner::popGoalT_WB()
 
 
 Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
-                                            const Objects& objects)
+                                            const Objects& objects,
+                                            const Eigen::Matrix4f& start_T_WB)
 {
     const std::vector<key_t> frontier_vec(frontiers.begin(), frontiers.end());
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -164,7 +149,7 @@ Path ExplorationPlanner::computeNextPath_WB(const std::set<key_t>& frontiers,
                                          frontier_vec,
                                          objects,
                                          sensor_,
-                                         planning_T_MB_,
+                                         T_MW_ * start_T_WB,
                                          T_BC_,
                                          T_MB_grid_history_,
                                          T_MB_mask_history_,
