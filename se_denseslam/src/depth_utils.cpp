@@ -210,13 +210,14 @@ void add_depth_measurement_noise(se::Image<float>& depth,
                                  const float min_sigma,
                                  const float max_sigma)
 {
-    static std::random_device rd;
-    static std::mt19937 g(rd());
+    static std::mt19937 g(std::random_device{}());
 #pragma omp parallel for
     for (size_t i = 0; i < depth.size(); ++i) {
-        const float sigma = se::math::clamp(k_sigma * depth[i], min_sigma, max_sigma);
-        std::normal_distribution<float> N(depth[i], sigma);
-        depth[i] = N(g);
+        if (depth[i] > 0.0f && !std::isnan(depth[i])) {
+            const float sigma = se::math::clamp(k_sigma * depth[i], min_sigma, max_sigma);
+            std::normal_distribution<float> N(0.0f, sigma);
+            depth[i] += N(g);
+        }
     }
 }
 
