@@ -59,12 +59,16 @@ SafeFlightCorridorGenerator::SafeFlightCorridorGenerator(
 PlanningResult SafeFlightCorridorGenerator::planPath(const Eigen::Vector3f& start_point_M,
                                                      const Eigen::Vector3f& goal_point_M)
 {
+    const bool start_inside = ow_.inMapBoundsMeter(start_point_M);
+    const Eigen::Vector3f start_M =
+        start_inside ? start_point_M : ow_.closestPointMeter(start_point_M);
+
     // Don't test the goal point occupancy to allow planning partial paths.
     //if(!pcc_.checkSphere(goal_point_M, min_flight_corridor_radius_)) {
     //  return PlanningResult::GoalOccupied;
     //}
 
-    setupPlanner(start_point_M, goal_point_M);
+    setupPlanner(start_M, goal_point_M);
     path_->states.clear();
     ob::PlannerStatus solved = optimizingPlanner_->solve(solving_time_);
 
@@ -77,6 +81,10 @@ PlanningResult SafeFlightCorridorGenerator::planPath(const Eigen::Vector3f& star
         prunePath(path);
         // Convert final path to Eigen
         OmplToEigen::convertPath(path, path_, min_flight_corridor_radius_);
+        if (!start_inside) {
+            path_->states.emplace(path_->states.begin(),
+                                  State<kDim>{start_point_M, min_flight_corridor_radius_});
+        }
 
         if (pdef_->hasApproximateSolution()) {
             // TODO SEM Consider checking that the approximate solution is within some threshold of

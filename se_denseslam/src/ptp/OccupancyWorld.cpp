@@ -73,6 +73,15 @@ bool OccupancyWorld::isFreeAtPoint(const Eigen::Vector3f& point_M, const float t
     return isFree(map_.pointToVoxel(point_M), threshold);
 }
 
+Eigen::Vector3f OccupancyWorld::closestPointMeter(const Eigen::Vector3f& point_M) const
+{
+    const Eigen::Vector3f map_bounds_min_M = map_.voxelFToPoint(map_bounds_min_);
+    const Eigen::Vector3f map_bounds_max_M = map_.voxelFToPoint(map_bounds_max_);
+    Eigen::Vector3f closest_M = point_M;
+    se::math::clamp(closest_M, map_bounds_min_M, map_bounds_max_M);
+    return closest_M;
+}
+
 se::Node<MultiresOFusion::VoxelType>* OccupancyWorld::getNode(const Eigen::Vector3i& node_coord,
                                                               const int node_size) const
 {

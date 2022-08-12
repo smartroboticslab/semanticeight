@@ -46,6 +46,8 @@ class OccupancyWorld {
     bool isFree(const Eigen::Vector3i& voxel_coord, const float threshold = 0) const;
     bool isFreeAtPoint(const Eigen::Vector3f& point_M, const float threshold = 0) const;
 
+    Eigen::Vector3f closestPointMeter(const Eigen::Vector3f& point_M) const;
+
     se::Node<MultiresOFusion::VoxelType>* getNode(const Eigen::Vector3i& node_coord,
                                                   const int node_size) const;
 
