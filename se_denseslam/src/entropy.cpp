@@ -248,8 +248,10 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
                 }
             }
         }
-        // Normalize the entropy in the interval [0-1] using the number of rays in the window.
-        window_sums[w] /= rays_in_frustum;
+        if (rays_in_frustum) {
+            // Normalize the entropy in the interval [0-1] using the number of rays in the window.
+            window_sums[w] /= rays_in_frustum;
+        }
     }
     return window_sums;
 }
