@@ -215,7 +215,7 @@ std::pair<float, Eigen::Vector3f> entropy_along_ray(const Octree<VoxelImpl::Voxe
 int compute_window_width(const int image_width, const float hfov)
 {
     const float window_percentage = hfov / M_TAU_F;
-    // Even if the window width takes an extra column into account, the rayInFrustum() test will
+    // Even if the window width takes an extra column into account, the pointInFrustum() test will
     // reject it.
     return window_percentage * image_width + 0.5f;
 }
@@ -241,8 +241,8 @@ std::vector<float> sum_windows(const Image<float>& entropy_image,
         for (int y = 0; y < entropy_image.height(); y++) {
             for (int i = 0; i < window_width; i++) {
                 const int x = (w + i) % entropy_image.width();
-                const Eigen::Vector3f ray_C = (T_CM * entropy_hits_M(x, y).homogeneous()).head<3>();
-                if (sensor.rayInFrustum(ray_C)) {
+                const Eigen::Vector3f hit_C = (T_CM * entropy_hits_M(x, y).homogeneous()).head<3>();
+                if (sensor.pointInFrustum(hit_C)) {
                     window_sums[w] += entropy_image(x, y);
                     rays_in_frustum++;
                 }
