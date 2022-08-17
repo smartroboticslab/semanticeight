@@ -464,51 +464,6 @@ static constexpr T angle_diff(T start_angle_rad, T end_angle_rad)
     return angle_diff;
 }
 
-inline Eigen::Vector3f position_error(const Eigen::Matrix4f& start_pose,
-                                      const Eigen::Matrix4f& end_pose)
-{
-    return end_pose.topRightCorner<3, 1>() - start_pose.topRightCorner<3, 1>();
-}
-
-inline float yaw_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
-{
-    const float start_yaw = start_pose.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).x();
-    const float end_yaw = end_pose.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).x();
-    return angle_diff(start_yaw, end_yaw);
-}
-
-inline float pitch_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
-{
-    const float start_pitch =
-        wrap_angle_pi(start_pose.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
-    const float end_pitch = wrap_angle_pi(end_pose.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y());
-    return angle_diff(start_pitch, end_pitch);
-}
-
-inline float roll_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
-{
-    const float start_roll =
-        wrap_angle_pi(start_pose.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).z());
-    const float end_roll = wrap_angle_pi(end_pose.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).z());
-    return angle_diff(start_roll, end_roll);
-}
-
-struct PoseError {
-    Eigen::Vector3f pos = Eigen::Vector3f::Zero();
-    float roll = 0.0f;
-    float pitch = 0.0f;
-    float yaw = 0.0f;
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-inline PoseError pose_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
-{
-    return PoseError{position_error(start_pose, end_pose),
-                     roll_error(start_pose, end_pose),
-                     pitch_error(start_pose, end_pose),
-                     yaw_error(start_pose, end_pose)};
-}
-
 
 
 inline float quat_to_roll(const Eigen::Quaternionf& q)
@@ -554,6 +509,51 @@ inline Eigen::Matrix3f yaw_to_rotm(const float yaw)
     C(1, 1) = cos(yaw);
     C(2, 2) = 1.0f;
     return C;
+}
+
+
+
+inline Eigen::Vector3f position_error(const Eigen::Matrix4f& start_pose,
+                                      const Eigen::Matrix4f& end_pose)
+{
+    return end_pose.topRightCorner<3, 1>() - start_pose.topRightCorner<3, 1>();
+}
+
+inline float yaw_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
+{
+    const float start_yaw = rotm_to_yaw(start_pose.topLeftCorner<3, 3>());
+    const float end_yaw = rotm_to_yaw(end_pose.topLeftCorner<3, 3>());
+    return angle_diff(start_yaw, end_yaw);
+}
+
+inline float pitch_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
+{
+    const float start_pitch = rotm_to_pitch(start_pose.topLeftCorner<3, 3>());
+    const float end_pitch = rotm_to_pitch(end_pose.topLeftCorner<3, 3>());
+    return angle_diff(start_pitch, end_pitch);
+}
+
+inline float roll_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
+{
+    const float start_roll = rotm_to_roll(start_pose.topLeftCorner<3, 3>());
+    const float end_roll = rotm_to_roll(end_pose.topLeftCorner<3, 3>());
+    return angle_diff(start_roll, end_roll);
+}
+
+struct PoseError {
+    Eigen::Vector3f pos = Eigen::Vector3f::Zero();
+    float roll = 0.0f;
+    float pitch = 0.0f;
+    float yaw = 0.0f;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+inline PoseError pose_error(const Eigen::Matrix4f& start_pose, const Eigen::Matrix4f& end_pose)
+{
+    return PoseError{position_error(start_pose, end_pose),
+                     roll_error(start_pose, end_pose),
+                     pitch_error(start_pose, end_pose),
+                     yaw_error(start_pose, end_pose)};
 }
 
 
