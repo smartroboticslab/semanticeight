@@ -163,8 +163,7 @@ Image<Eigen::Vector3f> ray_M_360_image(const int width,
     const float reduced_vfov = sensor.vertical_fov - 2.0f * roll_pitch_threshold;
     // The pitch angle of the camera relative to the body frame. Take the vertical FoV reduction
     // into account.
-    const float pitch = math::wrap_angle_pi(T_MBc.topLeftCorner<3, 3>().eulerAngles(2, 1, 0).y())
-        - roll_pitch_threshold;
+    const float pitch = math::rotm_to_pitch(T_MBc.topLeftCorner<3, 3>());
     Image<Eigen::Vector3f> rays_M(width, height);
 #pragma omp parallel for
     for (int y = 0; y < height; ++y) {
