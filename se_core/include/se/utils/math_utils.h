@@ -511,6 +511,40 @@ inline PoseError pose_error(const Eigen::Matrix4f& start_pose, const Eigen::Matr
 
 
 
+inline float quat_to_roll(const Eigen::Quaternionf& q)
+{
+    return atan2f(2.0f * (q.x() * q.w() + q.z() * q.y()),
+                  (q.w() * q.w() - q.x() * q.x() - q.y() * q.y() + q.z() * q.z()));
+}
+
+inline float quat_to_pitch(const Eigen::Quaternionf& q)
+{
+    return asinf(2.0f * (q.y() * q.w() - q.x() * q.z()));
+}
+
+inline float quat_to_yaw(const Eigen::Quaternionf& q)
+{
+    return atan2f(2.0f * (q.x() * q.y() + q.z() * q.w()),
+                  (q.w() * q.w() + q.x() * q.x() - q.y() * q.y() - q.z() * q.z()));
+}
+
+inline float rotm_to_roll(const Eigen::Matrix3f& C)
+{
+    return quat_to_roll(Eigen::Quaternionf(C));
+}
+
+inline float rotm_to_pitch(const Eigen::Matrix3f& C)
+{
+    return quat_to_pitch(Eigen::Quaternionf(C));
+}
+
+inline float rotm_to_yaw(const Eigen::Matrix3f& C)
+{
+    return quat_to_yaw(Eigen::Quaternionf(C));
+}
+
+
+
 inline Eigen::Matrix3f yaw_to_rotm(const float yaw)
 {
     Eigen::Matrix3f C = Eigen::Matrix3f::Zero();
@@ -520,13 +554,6 @@ inline Eigen::Matrix3f yaw_to_rotm(const float yaw)
     C(1, 1) = cos(yaw);
     C(2, 2) = 1.0f;
     return C;
-}
-
-
-
-inline float rotm_to_yaw(const Eigen::Matrix3f& C)
-{
-    return atan2f(C(1,0), C(0,0));;
 }
 
 
