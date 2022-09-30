@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5...3.16)
 
 find_package(octomap)
-find_package(OMPL REQUIRED)
+find_package(ompl REQUIRED)
 
 # Generate the appropriate include line for each voxel implementation.
 foreach(VOXEL_IMPL ${SE_VOXEL_IMPLS})
